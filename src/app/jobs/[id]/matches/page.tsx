@@ -7,7 +7,7 @@ import { JobCandidateStatusControl } from "./JobCandidateStatusControl";
 
 function formatScore(score?: number | null) {
   if (score == null) return "—";
-  return score.toLocaleString();
+  return score.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 export default async function JobMatchesPage({
@@ -92,16 +92,10 @@ export default async function JobMatchesPage({
                   Candidate
                 </th>
                 <th scope="col" className="px-4 py-3">
-                  Score
+                  Match Score
                 </th>
                 <th scope="col" className="px-4 py-3">
-                  Skill
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Seniority
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Location
+                  Status
                 </th>
                 <th scope="col" className="px-4 py-3">
                   Outreach
@@ -121,18 +115,17 @@ export default async function JobMatchesPage({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-800">{formatScore(match.score)}</td>
-                    <td className="px-4 py-3 text-gray-800">{formatScore(match.skillScore)}</td>
-                    <td className="px-4 py-3 text-gray-800">{formatScore(match.seniorityScore)}</td>
-                    <td className="px-4 py-3 text-gray-800">{formatScore(match.locationScore)}</td>
-                    <td className="px-4 py-3 text-gray-600 space-y-2">
+                    <td className="px-4 py-3 text-gray-800">
                       {jobCandidate ? (
                         <JobCandidateStatusControl
                           jobCandidateId={jobCandidate.id}
                           initialStatus={jobCandidate.status as JobCandidateStatus}
                         />
                       ) : (
-                        <span className="text-xs text-gray-500">No job candidate record</span>
+                        <span className="text-xs text-gray-500">No status available</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
                       <OutreachGenerator
                         candidateId={match.candidateId ?? match.candidate.id}
                         jobReqId={job.id}
