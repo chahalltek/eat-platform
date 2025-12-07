@@ -31,6 +31,11 @@ async function findRelatedAgentRun(candidateId: string) {
   return runs[0];
 }
 
+function formatScore(score?: number | null) {
+  if (score == null) return "—";
+  return score.toLocaleString();
+}
+
 export default async function CandidateDetail({
   params,
 }: {
@@ -47,6 +52,23 @@ export default async function CandidateDetail({
           proficiency: true,
           yearsOfExperience: true,
         },
+      },
+      jobCandidates: {
+        include: {
+          jobReq: {
+            include: {
+              customer: {
+                select: { name: true },
+              },
+            },
+          },
+          lastMatch: {
+            select: {
+              score: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -129,6 +151,87 @@ export default async function CandidateDetail({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-gray-900">Job Opportunities</h2>
+          <Link href="/jobs" className="text-sm text-blue-600 hover:text-blue-800">
+            View all jobs
+          </Link>
+        </div>
+        {candidate.jobCandidates.length === 0 ? (
+          <p className="mt-2 text-gray-600">No job opportunities yet.</p>
+        ) : (
+          <div className="mt-4 overflow-hidden rounded-md border border-gray-100">
+            <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
+              <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <tr>
+                  <th scope="col" className="px-4 py-3">
+                    Job
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Customer
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Status
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Score
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Codex prompt
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Links
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {candidate.jobCandidates.map((jobCandidate) => (
+                  <tr key={jobCandidate.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      <Link
+                        href={`/jobs/${jobCandidate.jobReqId}`}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        {jobCandidate.jobReq.title}
+                      </Link>
+                      <div className="text-xs font-normal text-gray-600">
+                        {jobCandidate.jobReq.location ?? "—"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-800">
+                      {jobCandidate.jobReq.customer?.name ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-800">{jobCandidate.status}</td>
+                    <td className="px-4 py-3 text-gray-800">
+                      {formatScore(jobCandidate.lastMatch?.score)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-800">
+                      <div className="max-w-xs text-xs text-gray-700 line-clamp-3">
+                        {jobCandidate.jobReq.rawDescription}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-blue-600">
+                      <div className="flex flex-col space-y-1">
+                        <Link href={`/jobs/${jobCandidate.jobReqId}`} className="hover:text-blue-800">
+                          Job details
+                        </Link>
+                        <Link
+                          href={`/jobs/${jobCandidate.jobReqId}/matches`}
+                          className="hover:text-blue-800"
+                        >
+                          Matches
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
