@@ -75,9 +75,17 @@ export default async function JobDetail({
           <h1 className="text-3xl font-semibold text-gray-900">{job.title}</h1>
           <p className="text-gray-600">ID: {job.id}</p>
         </div>
-        <Link href="/jobs" className="text-blue-600 hover:text-blue-800">
-          Back to list
-        </Link>
+        <div className="flex items-center gap-4 text-sm font-medium">
+          <Link
+            href={`/jobs/${job.id}/matches`}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            View Matches
+          </Link>
+          <Link href="/jobs" className="text-blue-600 hover:text-blue-800">
+            Back to list
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:grid-cols-2">
