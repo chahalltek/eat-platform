@@ -37,6 +37,14 @@ function extractCandidateId(log: { input: unknown; output: unknown }) {
 
 export default async function AgentRunsPage() {
   const runs = await prisma.agentRunLog.findMany({
+    select: {
+      id: true,
+      agentName: true,
+      status: true,
+      startedAt: true,
+      input: true,
+      output: true,
+    },
     orderBy: { startedAt: "desc" },
     take: 50,
   });

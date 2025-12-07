@@ -17,6 +17,15 @@ export default async function AgentRunDetail({
   params: { id: string };
 }) {
   const run = await prisma.agentRunLog.findUnique({
+    select: {
+      id: true,
+      agentName: true,
+      status: true,
+      startedAt: true,
+      finishedAt: true,
+      input: true,
+      output: true,
+    },
     where: { id: params.id },
   });
 
