@@ -1,3 +1,5 @@
+import { MatchResult } from "@prisma/client";
+
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
@@ -33,38 +35,37 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
     existingResults.map((result) => [result.candidateId, result]),
   );
 
-  const matchResults = await Promise.all(
-    candidates.map(async (candidate) => {
-      const matchScore = computeMatchScore({ candidate, jobReq });
-      const data = {
-        candidateId: candidate.id,
-        jobReqId,
-        score: matchScore.score,
-        reasons: matchScore.reasons,
-        skillScore: matchScore.skillScore,
-        seniorityScore: matchScore.seniorityScore,
-        locationScore: matchScore.locationScore,
-      };
+  const matchResults: MatchResult[] = [];
 
-      const existing = existingByCandidateId.get(candidate.id);
-      if (existing) {
-        const matchResult = await prisma.matchResult.update({
-          where: { id: existing.id },
-          data,
-        });
+  for (const candidate of candidates) {
+    const matchScore = computeMatchScore({ candidate, jobReq });
+    const data = {
+      candidateId: candidate.id,
+      jobReqId,
+      score: matchScore.score,
+      reasons: matchScore.reasons,
+      skillScore: matchScore.skillScore,
+      seniorityScore: matchScore.seniorityScore,
+      locationScore: matchScore.locationScore,
+    };
 
-        await upsertJobCandidateForMatch(jobReqId, candidate.id, matchResult.id);
+    const existing = existingByCandidateId.get(candidate.id);
 
-        return matchResult;
-      }
+    const matchResult = await prisma.$transaction(async (tx) => {
+      const savedResult = existing
+        ? await tx.matchResult.update({
+            where: { id: existing.id },
+            data,
+          })
+        : await tx.matchResult.create({ data });
 
-      const matchResult = await prisma.matchResult.create({ data });
+      await upsertJobCandidateForMatch(jobReqId, candidate.id, savedResult.id, tx);
 
-      await upsertJobCandidateForMatch(jobReqId, candidate.id, matchResult.id);
+      return savedResult;
+    });
 
-      return matchResult;
-    }),
-  );
+    matchResults.push(matchResult);
+  }
 
   return matchResults.sort((a, b) => b.score - a.score);
 }
