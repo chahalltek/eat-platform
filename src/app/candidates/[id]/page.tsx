@@ -163,7 +163,7 @@ export default async function CandidateDetail({
           </Link>
         </div>
         {candidate.jobCandidates.length === 0 ? (
-          <p className="mt-2 text-gray-600">No job opportunities yet.</p>
+          <p className="mt-2 text-gray-600">This candidate has not been linked to any jobs yet.</p>
         ) : (
           <div className="mt-4 overflow-hidden rounded-md border border-gray-100">
             <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
@@ -179,10 +179,7 @@ export default async function CandidateDetail({
                     Status
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Score
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Codex prompt
+                    Match score
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Links
@@ -209,11 +206,6 @@ export default async function CandidateDetail({
                     <td className="px-4 py-3 text-gray-800">{jobCandidate.status}</td>
                     <td className="px-4 py-3 text-gray-800">
                       {formatScore(jobCandidate.lastMatch?.score)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-800">
-                      <div className="max-w-xs text-xs text-gray-700 line-clamp-3">
-                        {jobCandidate.jobReq.rawDescription}
-                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-blue-600">
                       <div className="flex flex-col space-y-1">
