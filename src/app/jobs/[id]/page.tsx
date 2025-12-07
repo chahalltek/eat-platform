@@ -31,19 +31,24 @@ export default async function JobDetail({
 }: {
   params: { id: string };
 }) {
-  const job = await prisma.jobReq.findUnique({
-    where: { id: params.id },
-    include: {
-      customer: { select: { name: true } },
-      skills: {
-        orderBy: [
-          { required: "desc" },
-          { name: "asc" },
-        ],
-        select: { id: true, name: true, required: true, weight: true },
+  const job = await prisma.jobReq
+    .findUnique({
+      where: { id: params.id },
+      include: {
+        customer: { select: { name: true } },
+        skills: {
+          orderBy: [
+            { required: "desc" },
+            { name: "asc" },
+          ],
+          select: { id: true, name: true, required: true, weight: true },
+        },
       },
-    },
-  });
+    })
+    .catch((error) => {
+      console.error("Failed to load job requisition", error);
+      return null;
+    });
 
   if (!job) {
     return (
