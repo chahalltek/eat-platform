@@ -47,7 +47,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
     let result: T;
     let outputSnapshot: Prisma.InputJsonValue | Prisma.JsonNullValueInput | undefined;
 
-      if (isStructuredResult(fnResult)) {
+    if (isStructuredResult(fnResult)) {
       result = fnResult.result;
       outputSnapshot = fnResult.outputSnapshot;
     } else {
@@ -86,10 +86,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       where: { id: agentRun.id },
       data: {
         output: { durationMs },
-<<<<<<< ours
         durationMs,
-=======
->>>>>>> theirs
         status: 'ERROR',
         errorMessage: err instanceof Error ? err.message : 'Unknown error',
         finishedAt,
