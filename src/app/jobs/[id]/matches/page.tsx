@@ -98,9 +98,9 @@ export default async function JobMatchesPage({
               {job.matchResults.map((match) => (
                 <tr key={match.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">
-                    <div>{match.candidate.name ?? "Unknown"}</div>
+                    <div>{match.candidate.fullName ?? "Unknown"}</div>
                     <div className="text-xs font-normal text-gray-600">
-                      {match.candidate.title ?? "—"}
+                      {match.candidate.currentTitle ?? "—"}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-800">{formatScore(match.score)}</td>
