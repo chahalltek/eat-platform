@@ -68,17 +68,20 @@ export async function runRua(
 ): Promise<{ jobReqId: string; agentRunId: string }> {
   const { recruiterId, rawJobText, sourceType, sourceTag } = input;
 
+  const runInput = {
+    recruiterId,
+    rawJobText: rawJobText.slice(0, 4000),
+    sourceType,
+    sourceTag,
+  };
+
   const agentRun = await prisma.agentRunLog.create({
     data: {
       agentName: 'EAT-TS.RUA',
       // Until we wire real auth, don’t link to a User row
       userId: null,
-      input: {
-        recruiterId,
-        rawJobText: rawJobText.slice(0, 4000),
-        sourceType,
-        sourceTag,
-      },
+      input: runInput,
+      inputSnapshot: runInput,
       status: 'RUNNING',
       startedAt: new Date(),
     },
