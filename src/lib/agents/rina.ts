@@ -1,6 +1,11 @@
 // src/lib/agents/rina.ts
-import { prisma } from '@/lib/prisma';
 import { callLLM } from '@/lib/llm';
+<<<<<<< ours
+import { AgentRunStatus } from '@prisma/client';
+=======
+import { prisma } from '@/lib/prisma';
+import { withAgentRun } from '@/lib/agents/agentRun';
+>>>>>>> theirs
 
 export type RinaInput = {
   recruiterId?: string;
@@ -72,32 +77,58 @@ export async function runRina(
   input: RinaInput,
 ): Promise<{ candidateId: string; agentRunId: string }> {
   const { rawResumeText, sourceType, sourceTag } = input;
+<<<<<<< ours
 
+<<<<<<< ours
     const agentRun = await prisma.agentRunLog.create({
+=======
+  const startedAt = new Date();
+  const startTime = startedAt.getTime();
+  const inputSnapshot = {
+    rawResumeText: rawResumeText.slice(0, 4000),
+    sourceType,
+    sourceTag,
+  };
+
+  const agentRun = await prisma.agentRunLog.create({
+>>>>>>> theirs
     data: {
       agentName: 'EAT-TS.RINA',
       // Until we wire real auth, don’t link to a User row
       userId: null,
-      input: {
+      input: inputSnapshot,
+      inputSnapshot,
+      status: AgentRunStatus.RUNNING,
+      startedAt,
+    },
+  });
+
+  let llmRaw: string | null = null;
+
+  try {
+    const userPrompt = `
+=======
+  const [result, agentRunId] = await withAgentRun<{ candidateId: string }>(
+    {
+      agentName: 'EAT-TS.RINA',
+      recruiterId,
+      inputSnapshot: {
         rawResumeText: rawResumeText.slice(0, 4000),
         sourceType,
         sourceTag,
       },
-      status: 'Running',
-      startedAt: new Date(),
     },
-  });
-
-
-  try {
-    const userPrompt = `
+    async () => {
+      const userPrompt = `
+>>>>>>> theirs
 Resume:
 """
 ${rawResumeText}
 """
 `;
 
-    const llmRaw = await callLLM({
+<<<<<<< ours
+    llmRaw = await callLLM({
       systemPrompt: SYSTEM_PROMPT,
       userPrompt,
     });
@@ -136,16 +167,61 @@ ${rawResumeText}
             proficiency: skill.proficiency ?? null,
             yearsOfExperience: skill.yearsOfExperience ?? null,
           })),
-        },
-      },
-    });
+=======
+      const llmRaw = await callLLM({
+        systemPrompt: SYSTEM_PROMPT,
+        userPrompt,
+      });
 
+      let parsed: ParsedCandidate;
+      try {
+        parsed = JSON.parse(llmRaw) as ParsedCandidate;
+      } catch (err) {
+        console.error('Failed to parse LLM JSON for RINA:', err, llmRaw);
+        throw new Error('Failed to parse LLM JSON');
+      }
+
+      if (!parsed.fullName || !Array.isArray(parsed.skills)) {
+        throw new Error('Parsed candidate missing required fields');
+      }
+
+      const candidate = await prisma.candidate.create({
+        data: {
+          fullName: parsed.fullName,
+          email: parsed.email ?? null,
+          phone: parsed.phone ?? null,
+          location: parsed.location ?? null,
+          currentTitle: parsed.currentTitle ?? null,
+          currentCompany: parsed.currentCompany ?? null,
+          totalExperienceYears: parsed.totalExperienceYears ?? null,
+          seniorityLevel: parsed.seniorityLevel ?? null,
+          summary: parsed.summary ?? null,
+          rawResumeText,
+          sourceType: sourceType ?? null,
+          sourceTag: sourceTag ?? null,
+          parsingConfidence: parsed.parsingConfidence ?? null,
+          skills: {
+            create: parsed.skills.map((skill) => ({
+              name: skill.name,
+              normalizedName: skill.normalizedName || skill.name,
+              proficiency: skill.proficiency ?? null,
+              yearsOfExperience: skill.yearsOfExperience ?? null,
+            })),
+          },
+>>>>>>> theirs
+        },
+      });
+
+<<<<<<< ours
+    const finishedAt = new Date();
     const updatedRun = await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
         output: parsed,
-        status: 'Success',
-        finishedAt: new Date(),
+        outputSnapshot: llmRaw,
+        status: AgentRunStatus.SUCCESS,
+        finishedAt,
+        durationMs: finishedAt.getTime() - startTime,
       },
     });
 
@@ -153,6 +229,7 @@ ${rawResumeText}
       candidateId: candidate.id,
       agentRunId: updatedRun.id,
     };
+<<<<<<< ours
     } catch (err) {
       await prisma.agentRunLog.update({
         where: { id: agentRun.id },
@@ -163,7 +240,35 @@ ${rawResumeText}
           finishedAt: new Date(),
         },
       });
+=======
+  } catch (err: unknown) {
+    const finishedAt = new Date();
+    const errorMessage =
+      (err instanceof Error ? err.message : String(err ?? 'Unknown error')) ??
+      'Unknown error';
 
-    throw err;
-  }
+    await prisma.agentRunLog.update({
+      where: { id: agentRun.id },
+      data: {
+        status: AgentRunStatus.ERROR,
+        errorMessage: errorMessage.slice(0, 500),
+        outputSnapshot: llmRaw,
+        finishedAt,
+        durationMs: finishedAt.getTime() - startTime,
+      },
+    });
+>>>>>>> theirs
+=======
+      return {
+        result: { candidateId: candidate.id },
+        outputSnapshot: parsed,
+      };
+    },
+  );
+>>>>>>> theirs
+
+  return {
+    ...result,
+    agentRunId,
+  };
 }

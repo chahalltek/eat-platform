@@ -8,12 +8,21 @@ type RinaResponse = {
   [key: string]: unknown;
 };
 
+type RinaResult = {
+  candidateId: string;
+  agentRunId: string;
+};
+
 export default function RinaTestPage() {
   const [resumeText, setResumeText] = useState<string>(
     "Jane Doe\nSenior Data Engineer\n8 years experience in Python, SQL, Snowflake, Airflow.\nPreviously at Amazon and Target.\nBased in Minneapolis, MN."
   );
   const [loading, setLoading] = useState(false);
+<<<<<<< ours
   const [result, setResult] = useState<RinaResponse | null>(null);
+=======
+  const [result, setResult] = useState<RinaResult | null>(null);
+>>>>>>> theirs
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -41,11 +50,18 @@ export default function RinaTestPage() {
         throw new Error(message);
       }
 
+<<<<<<< ours
       const data = (await response.json()) as RinaResponse;
       setResult(data);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";
+=======
+      const data = (await res.json()) as RinaResult;
+      setResult(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+>>>>>>> theirs
       setError(message);
     } finally {
       setLoading(false);

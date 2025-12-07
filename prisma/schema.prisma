@@ -7,6 +7,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum AgentRunStatus {
+  RUNNING
+  SUCCESS
+  ERROR
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -112,8 +118,11 @@ model AgentRunLog {
   userId           String?
   input            Json
   output           Json?
-  status           String   // "Success", "Failure"
+  status           AgentRunStatus @default(RUNNING)
   errorMessage     String?
+  durationMs       Int?
+  inputSnapshot    Json
+  outputSnapshot   Json?
   tokensPrompt     Int?
   tokensCompletion Int?
   startedAt        DateTime @default(now())
