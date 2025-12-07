@@ -22,6 +22,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "jobCandidateId and status are required" }, { status: 400 });
   }
 
+  if (typeof jobCandidateId !== "string" || typeof status !== "string") {
+    return NextResponse.json({ error: "jobCandidateId and status must be strings" }, { status: 400 });
+  }
+
   const parsedStatus = status as JobCandidateStatus;
   const validStatuses = new Set(Object.values(JobCandidateStatus));
 
@@ -29,18 +33,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
   }
 
-  const jobCandidate = await prisma.jobCandidate.findUnique({
-    where: { id: jobCandidateId },
-  });
+  try {
+    const jobCandidate = await prisma.jobCandidate.findUnique({
+      where: { id: jobCandidateId },
+    });
 
-  if (!jobCandidate) {
-    return NextResponse.json({ error: "JobCandidate not found" }, { status: 404 });
+    if (!jobCandidate) {
+      return NextResponse.json({ error: "JobCandidate not found" }, { status: 404 });
+    }
+
+    const updatedJobCandidate = await prisma.jobCandidate.update({
+      where: { id: jobCandidateId },
+      data: { status: parsedStatus },
+    });
+
+    return NextResponse.json(updatedJobCandidate);
+  } catch (error) {
+    console.error("Failed to update job candidate status", error);
+    return NextResponse.json({ error: "Unable to update job candidate status" }, { status: 500 });
   }
-
-  const updatedJobCandidate = await prisma.jobCandidate.update({
-    where: { id: jobCandidateId },
-    data: { status: parsedStatus },
-  });
-
-  return NextResponse.json(updatedJobCandidate);
 }
