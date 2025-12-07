@@ -1,4 +1,6 @@
 // src/lib/agents/agentRun.ts
+import type { Prisma } from '@prisma/client';
+
 import { prisma } from '@/lib/prisma';
 
 type AgentRunInput = {
