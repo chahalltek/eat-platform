@@ -45,6 +45,7 @@ model Candidate {
 
   skills   CandidateSkill[]
   matches  Match[]
+  matchResults MatchResult[]
 }
 
 model CandidateSkill {
@@ -89,6 +90,7 @@ model JobReq {
 
   skills  JobSkill[]
   matches Match[]
+  matchResults MatchResult[]
 }
 
 model JobSkill {
@@ -123,6 +125,30 @@ model Match {
   @@index([candidateId])
 }
 
+model MatchResult {
+  id              String        @id @default(cuid())
+  candidate       Candidate     @relation(fields: [candidateId], references: [id])
+  candidateId     String
+
+  jobReq          JobReq        @relation(fields: [jobReqId], references: [id])
+  jobReqId        String
+
+  score           Int
+  reasons         Json?
+  createdAt       DateTime      @default(now())
+
+  skillScore      Int?
+  seniorityScore  Int?
+  locationScore   Int?
+
+  agentRun        AgentRunLog?  @relation(fields: [agentRunId], references: [id])
+  agentRunId      String?
+
+  @@index([candidateId])
+  @@index([jobReqId])
+  @@index([agentRunId])
+}
+
 model AgentRunLog {
   id               String   @id @default(cuid())
   agentName        String   // "EAT-TS.RINA", etc.
@@ -139,6 +165,8 @@ model AgentRunLog {
   tokensCompletion Int?
   startedAt        DateTime @default(now())
   finishedAt       DateTime?
+
+  matchResults     MatchResult[]
 
   @@index([agentName])
 }
