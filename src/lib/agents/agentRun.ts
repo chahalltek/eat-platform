@@ -30,6 +30,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       agentName,
       userId: recruiterId ?? null,
       input: inputSnapshot,
+      inputSnapshot,
       status: 'RUNNING',
       startedAt,
     },
@@ -48,6 +49,8 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       where: { id: agentRun.id },
       data: {
         output: { snapshot: outputSnapshot ?? result, durationMs },
+        outputSnapshot: outputSnapshot ?? result,
+        durationMs,
         status: 'SUCCESS',
         finishedAt,
       },
@@ -62,6 +65,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       where: { id: agentRun.id },
       data: {
         output: { durationMs },
+        durationMs,
         status: 'ERROR',
         errorMessage: err instanceof Error ? err.message : 'Unknown error',
         finishedAt,
