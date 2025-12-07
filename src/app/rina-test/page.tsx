@@ -7,11 +7,6 @@ type RinaResult = {
   agentRunId: string;
 };
 
-type RinaResult = {
-  candidateId: string;
-  agentRunId: string;
-};
-
 export default function RinaTestPage() {
   const [resumeText, setResumeText] = useState<string>(
     "Jane Doe\nSenior Data Engineer\n8 years experience in Python, SQL, Snowflake, Airflow.\nPreviously at Amazon and Target.\nBased in Minneapolis, MN."
@@ -45,17 +40,10 @@ export default function RinaTestPage() {
         throw new Error(message);
       }
 
-<<<<<<< ours
       const data = (await response.json()) as RinaResult;
       setResult(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
-=======
-      const data = (await res.json()) as RinaResult;
-      setResult(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
->>>>>>> theirs
       setError(message);
     } finally {
       setLoading(false);
