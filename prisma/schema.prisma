@@ -144,6 +144,9 @@ model MatchResult {
   jobReq          JobReq        @relation(fields: [jobReqId], references: [id])
   jobReqId        String
 
+  jobCandidate    JobCandidate? @relation("JobCandidateMatchResults", fields: [jobCandidateId], references: [id])
+  jobCandidateId  String?
+
   score           Int
   reasons         Json?
   createdAt       DateTime      @default(now())
@@ -155,11 +158,12 @@ model MatchResult {
   agentRun        AgentRunLog?  @relation(fields: [agentRunId], references: [id])
   agentRunId      String?
 
-  jobCandidates   JobCandidate[]
+  lastMatchFor    JobCandidate? @relation("JobCandidateLastMatch")
 
   @@index([candidateId])
   @@index([jobReqId])
   @@index([agentRunId])
+  @@index([jobCandidateId])
 }
 
 model AgentRunLog {
@@ -189,15 +193,16 @@ model JobCandidate {
   jobReq            JobReq             @relation(fields: [jobReqId], references: [id])
   jobReqId          String
 
-  candidate         Candidate         @relation(fields: [candidateId], references: [id])
+  candidate         Candidate          @relation(fields: [candidateId], references: [id])
   candidateId       String
 
   status            JobCandidateStatus @default(POTENTIAL)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
-  lastMatch         MatchResult?       @relation(fields: [lastMatchResultId], references: [id])
-  lastMatchResultId String?
+  lastMatch         MatchResult?       @relation("JobCandidateLastMatch", fields: [lastMatchResultId], references: [id])
+  lastMatchResultId String?            @unique
+  matchResults      MatchResult[]      @relation("JobCandidateMatchResults")
 
   notes             String?
 
