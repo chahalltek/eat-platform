@@ -1,5 +1,5 @@
 // src/lib/agents/agentRun.ts
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 
@@ -42,14 +42,18 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       ? fnResult
       : { result: fnResult };
 
+    const normalizedOutputSnapshot =
+      outputSnapshot === Prisma.JsonNull ? null : outputSnapshot;
+    const outputSnapshotValue = normalizedOutputSnapshot ?? result;
+
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - startedAt.getTime();
 
     const updatedRun = await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
-        output: { snapshot: outputSnapshot ?? result, durationMs },
-        outputSnapshot: outputSnapshot ?? result,
+        output: { snapshot: outputSnapshotValue, durationMs },
+        outputSnapshot: outputSnapshotValue,
         durationMs,
         status: 'SUCCESS',
         finishedAt,
