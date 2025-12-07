@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 type LooseRecord = Record<string, unknown>;
 
 function formatDate(date: Date) {

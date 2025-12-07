@@ -1,9 +1,5 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 type CallLLMParams = {
   systemPrompt: string;
   userPrompt: string;
@@ -16,7 +12,12 @@ export async function callLLM({
   model = 'gpt-4.1-mini',
 }: CallLLMParams): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
+    }
+
+    const response = await new OpenAI({ apiKey }).chat.completions.create({
       model,
       messages: [
         { role: 'system', content: systemPrompt },
