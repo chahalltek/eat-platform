@@ -42,9 +42,12 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       ? fnResult
       : { result: fnResult };
 
-    const normalizedOutputSnapshot =
-      outputSnapshot === Prisma.JsonNull ? null : outputSnapshot;
-    const outputSnapshotValue = normalizedOutputSnapshot ?? result;
+    const normalizedOutputSnapshot: Prisma.InputJsonValue | null =
+      outputSnapshot === Prisma.JsonNull
+        ? null
+        : (outputSnapshot ?? null);
+    const outputSnapshotValue: Prisma.InputJsonValue =
+      normalizedOutputSnapshot ?? result;
 
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - startedAt.getTime();
