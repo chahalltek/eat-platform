@@ -1,10 +1,14 @@
 // src/lib/agents/rina.ts
 import { callLLM } from '@/lib/llm';
 <<<<<<< ours
+<<<<<<< ours
 import { AgentRunStatus } from '@prisma/client';
 =======
 import { prisma } from '@/lib/prisma';
 import { withAgentRun } from '@/lib/agents/agentRun';
+>>>>>>> theirs
+=======
+import { AgentRunStatus } from '@prisma/client';
 >>>>>>> theirs
 
 export type RinaInput = {
@@ -78,10 +82,13 @@ export async function runRina(
 ): Promise<{ candidateId: string; agentRunId: string }> {
   const { rawResumeText, sourceType, sourceTag } = input;
 <<<<<<< ours
+<<<<<<< ours
 
 <<<<<<< ours
     const agentRun = await prisma.agentRunLog.create({
 =======
+=======
+>>>>>>> theirs
   const startedAt = new Date();
   const startTime = startedAt.getTime();
   const inputSnapshot = {
@@ -91,6 +98,9 @@ export async function runRina(
   };
 
   const agentRun = await prisma.agentRunLog.create({
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     data: {
       agentName: 'EAT-TS.RINA',
@@ -128,6 +138,9 @@ ${rawResumeText}
 `;
 
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
     llmRaw = await callLLM({
       systemPrompt: SYSTEM_PROMPT,
       userPrompt,
@@ -213,6 +226,9 @@ ${rawResumeText}
       });
 
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
     const finishedAt = new Date();
     const updatedRun = await prisma.agentRunLog.update({
       where: { id: agentRun.id },
@@ -230,6 +246,7 @@ ${rawResumeText}
       agentRunId: updatedRun.id,
     };
 <<<<<<< ours
+<<<<<<< ours
     } catch (err) {
       await prisma.agentRunLog.update({
         where: { id: agentRun.id },
@@ -241,6 +258,8 @@ ${rawResumeText}
         },
       });
 =======
+=======
+>>>>>>> theirs
   } catch (err: unknown) {
     const finishedAt = new Date();
     const errorMessage =
