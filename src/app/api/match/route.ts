@@ -42,18 +42,30 @@ export async function POST(req: Request) {
 
   const matchScore = computeMatchScore({ candidate, jobReq });
 
-  const matchResult = await prisma.matchResult.create({
-    data: {
-      candidateId,
-      jobReqId,
-      score: matchScore.score,
-      reasons: matchScore.reasons,
-      skillScore: matchScore.skillScore,
-      seniorityScore: matchScore.seniorityScore,
-      locationScore: matchScore.locationScore,
-    },
+  const data = {
+    candidateId,
+    jobReqId,
+    score: matchScore.score,
+    reasons: matchScore.reasons,
+    skillScore: matchScore.skillScore,
+    seniorityScore: matchScore.seniorityScore,
+    locationScore: matchScore.locationScore,
+  };
+
+  const existingMatch = await prisma.matchResult.findFirst({
+    where: { candidateId, jobReqId },
   });
 
+<<<<<<< ours
+=======
+  const matchResult = existingMatch
+    ? await prisma.matchResult.update({
+        where: { id: existingMatch.id },
+        data,
+      })
+    : await prisma.matchResult.create({ data });
+
+>>>>>>> theirs
   await upsertJobCandidateForMatch(jobReqId, candidateId, matchResult.id);
 
   return NextResponse.json(matchResult);
