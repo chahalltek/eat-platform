@@ -60,36 +60,48 @@ model CandidateSkill {
   @@index([normalizedName])
 }
 
-model JobReq {
-  id                      String   @id @default(cuid())
-  clientName              String?
-  title                   String
-  seniorityLevel          String?
-  location                String?
-  remoteType              String?
-  employmentType          String?
-  descriptionRaw          String
-  responsibilitiesSummary String?
-  teamContext             String?
-  priority                String?       // "Low", "Medium", "High"
-  status                  String?       // "Open", "On Hold", "Closed"
-  ambiguityScore          Float?
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  contact   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  skills  JobSkillRequirement[]
+  jobReqs JobReq[]
+}
+
+model JobReq {
+  id               String    @id @default(cuid())
+  customer         Customer? @relation(fields: [customerId], references: [id])
+  customerId       String?
+  title            String
+  location         String?
+  employmentType   String?
+  salaryMin        Int?
+  salaryMax        Int?
+  salaryCurrency   String?
+  salaryInterval   String?   // "year", "month", etc.
+  seniorityLevel   String?
+  rawDescription   String
+  status           String?   // "Open", "On Hold", "Closed"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  skills  JobSkill[]
   matches Match[]
 }
 
-model JobSkillRequirement {
+model JobSkill {
   id             String  @id @default(cuid())
   jobReq         JobReq  @relation(fields: [jobReqId], references: [id])
   jobReqId       String
   name           String
   normalizedName String
-  isMustHave     Boolean
+  required       Boolean @default(false)
+  weight         Float?
 
   @@index([jobReqId])
+  @@index([normalizedName])
 }
 
 model Match {
