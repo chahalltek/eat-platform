@@ -1,4 +1,5 @@
 import { computeMatchScore } from "@/lib/matching/msa";
+import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
 
 export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
@@ -47,13 +48,21 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
       const existing = existingByCandidateId.get(candidate.id);
       if (existing) {
-        return prisma.matchResult.update({
+        const matchResult = await prisma.matchResult.update({
           where: { id: existing.id },
           data,
         });
+
+        await upsertJobCandidateForMatch(jobReqId, candidate.id, matchResult.id);
+
+        return matchResult;
       }
 
-      return prisma.matchResult.create({ data });
+      const matchResult = await prisma.matchResult.create({ data });
+
+      await upsertJobCandidateForMatch(jobReqId, candidate.id, matchResult.id);
+
+      return matchResult;
     }),
   );
 

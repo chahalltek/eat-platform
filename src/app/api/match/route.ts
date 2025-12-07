@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { computeMatchScore } from "@/lib/matching/msa";
+import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -8,7 +9,7 @@ export async function POST(req: Request) {
 
   try {
     body = await req.json();
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
@@ -52,6 +53,8 @@ export async function POST(req: Request) {
       locationScore: matchScore.locationScore,
     },
   });
+
+  await upsertJobCandidateForMatch(jobReqId, candidateId, matchResult.id);
 
   return NextResponse.json(matchResult);
 }

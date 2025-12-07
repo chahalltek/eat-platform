@@ -204,4 +204,5 @@ model JobCandidate {
   @@index([jobReqId])
   @@index([candidateId])
   @@index([lastMatchResultId])
+  @@unique([jobReqId, candidateId])
 }
