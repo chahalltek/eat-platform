@@ -18,7 +18,8 @@ export default function Home() {
             EAT – Talent System (MVP)
           </h1>
           <p className="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-            Quick links to the core workflows for the Emerging Agent Toolkit.
+            Quick links to the core workflows for the EDGE (Emerging, Disruptive &
+            Growth Enabling) Agent Toolkit.
           </p>
         </header>
 
