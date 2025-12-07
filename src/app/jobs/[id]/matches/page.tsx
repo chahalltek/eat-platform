@@ -1,11 +1,7 @@
 import Link from "next/link";
 
-<<<<<<< ours
 import { JobCandidateStatus } from "@prisma/client";
-
-=======
 import { OutreachGenerator } from "./OutreachGenerator";
->>>>>>> theirs
 import { prisma } from "@/lib/prisma";
 import { JobCandidateStatusControl } from "./JobCandidateStatusControl";
 
@@ -113,7 +109,6 @@ export default async function JobMatchesPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-<<<<<<< ours
               {job.matchResults.map((match) => {
                 const jobCandidate = jobCandidateByCandidateId.get(match.candidateId);
 
@@ -129,7 +124,7 @@ export default async function JobMatchesPage({
                     <td className="px-4 py-3 text-gray-800">{formatScore(match.skillScore)}</td>
                     <td className="px-4 py-3 text-gray-800">{formatScore(match.seniorityScore)}</td>
                     <td className="px-4 py-3 text-gray-800">{formatScore(match.locationScore)}</td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-gray-600 space-y-2">
                       {jobCandidate ? (
                         <JobCandidateStatusControl
                           jobCandidateId={jobCandidate.id}
@@ -138,32 +133,14 @@ export default async function JobMatchesPage({
                       ) : (
                         <span className="text-xs text-gray-500">No job candidate record</span>
                       )}
+                      <OutreachGenerator
+                        candidateId={match.candidateId ?? match.candidate.id}
+                        jobReqId={job.id}
+                      />
                     </td>
                   </tr>
                 );
               })}
-=======
-              {job.matchResults.map((match) => (
-                <tr key={match.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    <div>{match.candidate.fullName ?? "Unknown"}</div>
-                    <div className="text-xs font-normal text-gray-600">
-                      {match.candidate.currentTitle ?? "—"}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-800">{formatScore(match.score)}</td>
-                  <td className="px-4 py-3 text-gray-800">{formatScore(match.skillScore)}</td>
-                  <td className="px-4 py-3 text-gray-800">{formatScore(match.seniorityScore)}</td>
-                  <td className="px-4 py-3 text-gray-800">{formatScore(match.locationScore)}</td>
-                  <td className="px-4 py-3 text-gray-600">
-                    <OutreachGenerator
-                      candidateId={match.candidateId ?? match.candidate.id}
-                      jobReqId={job.id}
-                    />
-                  </td>
-                </tr>
-              ))}
->>>>>>> theirs
             </tbody>
           </table>
         )}

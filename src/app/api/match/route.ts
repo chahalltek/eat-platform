@@ -56,8 +56,6 @@ export async function POST(req: Request) {
     where: { candidateId, jobReqId },
   });
 
-<<<<<<< ours
-=======
   const matchResult = existingMatch
     ? await prisma.matchResult.update({
         where: { id: existingMatch.id },
@@ -65,7 +63,6 @@ export async function POST(req: Request) {
       })
     : await prisma.matchResult.create({ data });
 
->>>>>>> theirs
   await upsertJobCandidateForMatch(jobReqId, candidateId, matchResult.id);
 
   return NextResponse.json(matchResult);
