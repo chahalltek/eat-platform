@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
+import { MatchRunner } from "./MatchRunner";
 
 function formatDate(date?: Date | null) {
   if (!date) return "—";
@@ -129,6 +130,8 @@ export default async function JobDetail({
           <div className="mt-1 whitespace-pre-line text-gray-800">{job.rawDescription}</div>
         </div>
       </div>
+
+      <MatchRunner jobReqId={job.id} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
