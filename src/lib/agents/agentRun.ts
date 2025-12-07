@@ -38,9 +38,17 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 
   try {
     const fnResult = await fn();
-    const { result, outputSnapshot } = isStructuredResult<T>(fnResult)
-      ? fnResult
-      : { result: fnResult };
+    
+    let result: T;
+    let outputSnapshot: Prisma.InputJsonValue | Prisma.JsonNullValueInput | undefined;
+
+    if (isStructuredResult<T>(fnResult)) {
+      result = fnResult.result;
+      outputSnapshot = fnResult.outputSnapshot;
+    } else {
+      result = fnResult;
+      outputSnapshot = undefined;
+    }
 
     const normalizedOutputSnapshot: Prisma.InputJsonValue | null = (() => {
       if (outputSnapshot === undefined || outputSnapshot === null) return null;
