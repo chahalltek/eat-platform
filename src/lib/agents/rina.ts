@@ -73,19 +73,21 @@ export async function runRina(
 ): Promise<{ candidateId: string; agentRunId: string }> {
   const { recruiterId, rawResumeText, sourceType, sourceTag } = input;
 
-  const agentRun = await prisma.agentRunLog.create({
+    const agentRun = await prisma.agentRunLog.create({
     data: {
       agentName: 'EAT-TS.RINA',
-      userId: recruiterId ?? null,
+      // Until we wire real auth, don’t link to a User row
+      userId: null,
       input: {
         rawResumeText: rawResumeText.slice(0, 4000),
         sourceType,
         sourceTag,
       },
-      status: 'Success',
+      status: 'Running',
       startedAt: new Date(),
     },
   });
+
 
   try {
     const userPrompt = `
