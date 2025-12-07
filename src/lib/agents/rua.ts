@@ -79,7 +79,7 @@ export async function runRua(
         sourceType,
         sourceTag,
       },
-      status: 'Running',
+      status: 'RUNNING',
       startedAt: new Date(),
     },
   });
@@ -137,7 +137,7 @@ ${rawJobText}
       where: { id: agentRun.id },
       data: {
         output: parsed,
-        status: 'Success',
+        status: 'SUCCESS',
         finishedAt: new Date(),
       },
     });
@@ -150,7 +150,7 @@ ${rawJobText}
     await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
-        status: 'Failure',
+        status: 'ERROR',
         errorMessage: err?.message ?? 'Unknown error',
         finishedAt: new Date(),
       },
