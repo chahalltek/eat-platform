@@ -8,9 +8,26 @@ export async function POST(req: NextRequest) {
 
     const { recruiterId, rawResumeText, sourceType, sourceTag } = body ?? {};
 
-    if (!rawResumeText || typeof rawResumeText !== 'string') {
+    if (typeof rawResumeText !== 'string') {
       return NextResponse.json(
         { error: 'rawResumeText is required' },
+        { status: 400 },
+      );
+    }
+
+    const trimmedResumeText = rawResumeText.trim();
+    const MAX_RESUME_LENGTH = 16000;
+
+    if (!trimmedResumeText) {
+      return NextResponse.json(
+        { error: 'rawResumeText is required' },
+        { status: 400 },
+      );
+    }
+
+    if (trimmedResumeText.length > MAX_RESUME_LENGTH) {
+      return NextResponse.json(
+        { error: `rawResumeText must be at most ${MAX_RESUME_LENGTH} characters` },
         { status: 400 },
       );
     }
