@@ -8,7 +8,8 @@
     "vercel-build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
@@ -26,6 +27,7 @@
     "eslint-config-next": "16.0.7",
     "prisma": "^5.19.0",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
