@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import { JobCandidateStatus } from "@prisma/client";
 
@@ -30,7 +30,7 @@ export function JobCandidateStatusControl({
 }) {
   const [status, setStatus] = useState<JobCandidateStatus>(initialStatus);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleStatusChange = (nextStatus: JobCandidateStatus) => {
     if (nextStatus === status) return;
@@ -39,25 +39,31 @@ export function JobCandidateStatusControl({
     setStatus(nextStatus);
     setError(null);
 
-    startTransition(async () => {
-      const response = await fetch("/api/job-candidate/status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobCandidateId, status: nextStatus }),
-      });
+    setIsSaving(true);
 
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+    fetch("/api/job-candidate/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobCandidateId, status: nextStatus }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const data = (await response.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(data?.error ?? "Failed to update status");
+        }
+
+        const data = (await response.json().catch(() => null)) as { status?: JobCandidateStatus } | null;
+        if (data?.status) {
+          setStatus(data.status);
+        }
+      })
+      .catch((error: Error) => {
         setStatus(previousStatus);
-        setError(data?.error ?? "Failed to update status");
-        return;
-      }
-
-      const data = (await response.json().catch(() => null)) as { status?: JobCandidateStatus } | null;
-      if (data?.status) {
-        setStatus(data.status);
-      }
-    });
+        setError(error.message ?? "Failed to update status");
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
   };
 
   return (
@@ -67,7 +73,7 @@ export function JobCandidateStatusControl({
         <select
           className="rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           value={status}
-          disabled={isPending}
+          disabled={isSaving}
           onChange={(event) => handleStatusChange(event.target.value as JobCandidateStatus)}
         >
           {STATUS_OPTIONS.map((option) => (
@@ -76,7 +82,7 @@ export function JobCandidateStatusControl({
             </option>
           ))}
         </select>
-        {isPending ? <span className="text-xs text-gray-500">Saving…</span> : null}
+        {isSaving ? <span className="text-xs text-gray-500">Saving…</span> : null}
       </div>
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
