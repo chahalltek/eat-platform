@@ -71,7 +71,7 @@ JSON shape:
 export async function runRina(
   input: RinaInput,
 ): Promise<{ candidateId: string; agentRunId: string }> {
-  const { recruiterId, rawResumeText, sourceType, sourceTag } = input;
+  const { rawResumeText, sourceType, sourceTag } = input;
 
     const agentRun = await prisma.agentRunLog.create({
     data: {
@@ -153,15 +153,16 @@ ${rawResumeText}
       candidateId: candidate.id,
       agentRunId: updatedRun.id,
     };
-  } catch (err: any) {
-    await prisma.agentRunLog.update({
-      where: { id: agentRun.id },
-      data: {
-        status: 'Failure',
-        errorMessage: err?.message ?? 'Unknown error',
-        finishedAt: new Date(),
-      },
-    });
+    } catch (err) {
+      await prisma.agentRunLog.update({
+        where: { id: agentRun.id },
+        data: {
+          status: 'Failure',
+          errorMessage:
+            err instanceof Error ? err.message : 'Unknown error',
+          finishedAt: new Date(),
+        },
+      });
 
     throw err;
   }

@@ -1,86 +1,114 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+
+type RinaResponse = {
+  candidateId: string;
+  agentRunId: string;
+  [key: string]: unknown;
+};
 
 export default function RinaTestPage() {
-  const [resumeText, setResumeText] = useState(
-    'Jane Doe\nSenior Data Engineer\n8 years experience in Python, SQL, Snowflake, Airflow.\nPreviously at Amazon and Target.\nBased in Minneapolis, MN.'
+  const [resumeText, setResumeText] = useState<string>(
+    "Jane Doe\nSenior Data Engineer\n8 years experience in Python, SQL, Snowflake, Airflow.\nPreviously at Amazon and Target.\nBased in Minneapolis, MN."
   );
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<RinaResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      const res = await fetch('/api/agents/rina', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/agents/rina", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recruiterId: 'charlie',
+          recruiterId: "charlie",
           rawResumeText: resumeText,
         }),
       });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Request failed with ${res.status}`);
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const message =
+          typeof errorBody.error === "string"
+            ? errorBody.error
+            : `Request failed with status ${response.status}`;
+        throw new Error(message);
       }
 
-      const data = await res.json();
+      const data = (await response.json()) as RinaResponse;
       setResult(data);
-    } catch (err: any) {
-      setError(err.message || 'Unknown error');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setError(message);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-start p-8 gap-6 bg-slate-50">
-      <div className="w-full max-w-3xl space-y-4">
-        <h1 className="text-2xl font-semibold">EAT-TS · RINA Test Console</h1>
-        <p className="text-sm text-slate-600">
-          Paste a resume below and send it through the RINA agent. 
-          On success you&apos;ll get back a candidateId and agentRunId.
-        </p>
+    <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 rounded-2xl bg-white p-8 shadow-sm ring-1 ring-zinc-200">
+        <header className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+            EAT-001
+          </p>
+          <h1 className="text-3xl font-semibold">RINA Test Console</h1>
+          <p className="text-sm text-zinc-600">
+            Paste a resume below and send it through the RINA agent. The response
+            should mirror the JSON you get from curl today.
+          </p>
+        </header>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-sm font-medium text-zinc-800" htmlFor="resume">
+            Resume text
+          </label>
           <textarea
-            className="w-full h-64 border rounded-md p-3 text-sm font-mono shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            id="resume"
+            className="h-64 w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm shadow-inner focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
             value={resumeText}
-            onChange={(e) => setResumeText(e.target.value)}
+            onChange={(event) => setResumeText(event.target.value)}
+            placeholder="Paste raw resume text..."
           />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 rounded-md text-white bg-indigo-600 disabled:opacity-60"
-          >
-            {loading ? 'Sending to RINA…' : 'Run RINA'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "Sending to RINA…" : "Run RINA"}
+            </button>
+            <p className="text-xs text-zinc-500">
+              Payload: &#123; recruiterId: &quot;charlie&quot;, rawResumeText &#125;
+            </p>
+          </div>
         </form>
 
         {error && (
-          <div className="mt-4 text-sm text-red-600">
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             Error: {error}
           </div>
         )}
 
         {result && (
-          <div className="mt-4 text-sm">
-            <h2 className="font-semibold mb-2">Result</h2>
-            <pre className="bg-white border rounded-md p-3 overflow-x-auto text-xs">
+          <section className="space-y-2 text-sm">
+            <h2 className="text-base font-semibold text-zinc-800">Response</h2>
+            <pre className="overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-800">
               {JSON.stringify(result, null, 2)}
             </pre>
-            <p className="mt-2 text-slate-600">
-              Use <code>candidateId</code> to look up the full record in the database.
+            <p className="text-zinc-600">
+              Use <code>candidateId</code> to find the record and <code>agentRunId</code>
+              for the agent log.
             </p>
-          </div>
+          </section>
         )}
       </div>
     </main>
