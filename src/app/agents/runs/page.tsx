@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 type LooseRecord = Record<string, unknown>;
@@ -35,19 +36,39 @@ function extractCandidateId(log: { input: unknown; output: unknown }) {
   return undefined;
 }
 
+type AgentRunRow = {
+  id: string;
+  agentName: string;
+  status: string | null;
+  startedAt: Date;
+  input: unknown;
+  output: unknown;
+};
+
+function formatStatus(status: string | null) {
+  if (!status) return "Unknown";
+  const normalized = status.toLowerCase();
+
+  if (normalized === "running") return "Running";
+  if (normalized === "success") return "Success";
+  if (normalized === "error" || normalized === "failure") return "Error";
+
+  return status;
+}
+
 export default async function AgentRunsPage() {
-  const runs = await prisma.agentRunLog.findMany({
-    select: {
-      id: true,
-      agentName: true,
-      status: true,
-      startedAt: true,
-      input: true,
-      output: true,
-    },
-    orderBy: { startedAt: "desc" },
-    take: 50,
-  });
+  const runs = await prisma.$queryRaw<AgentRunRow[]>(Prisma.sql`
+    SELECT
+      id,
+      "agentName",
+      status::text AS status,
+      "startedAt",
+      input,
+      output
+    FROM "AgentRunLog"
+    ORDER BY "startedAt" DESC
+    LIMIT 50
+  `);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -86,7 +107,7 @@ export default async function AgentRunsPage() {
                   <td className="px-4 py-3">{run.agentName}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
-                      {run.status}
+                      {formatStatus(run.status)}
                     </span>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-600">
