@@ -42,10 +42,11 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       ? fnResult
       : { result: fnResult };
 
-    const normalizedOutputSnapshot: Prisma.InputJsonValue | null =
-      outputSnapshot === Prisma.JsonNull
-        ? null
-        : (outputSnapshot ?? null);
+    const normalizedOutputSnapshot: Prisma.InputJsonValue | null = (() => {
+      if (outputSnapshot === undefined || outputSnapshot === null) return null;
+      if (outputSnapshot === Prisma.JsonNull) return null;
+      return outputSnapshot as Prisma.InputJsonValue;
+    })();
     const outputSnapshotValue: Prisma.InputJsonValue =
       normalizedOutputSnapshot ?? result;
 
