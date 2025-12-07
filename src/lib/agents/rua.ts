@@ -114,23 +114,17 @@ ${rawJobText}
 
     const jobReq = await prisma.jobReq.create({
       data: {
-        clientName: parsed.clientName ?? null,
         title: parsed.title,
         seniorityLevel: parsed.seniorityLevel ?? null,
         location: parsed.location ?? null,
-        remoteType: parsed.remoteType ?? null,
         employmentType: parsed.employmentType ?? null,
-        descriptionRaw: rawJobText,
-        responsibilitiesSummary: parsed.responsibilitiesSummary ?? null,
-        teamContext: parsed.teamContext ?? null,
-        priority: parsed.priority ?? null,
+        rawDescription: rawJobText,
         status: parsed.status ?? null,
-        ambiguityScore: parsed.ambiguityScore ?? null,
         skills: {
           create: parsed.skills.map((skill) => ({
             name: skill.name,
             normalizedName: skill.normalizedName || skill.name,
-            isMustHave: skill.isMustHave ?? false,
+            required: skill.isMustHave ?? false,
           })),
         },
       },
