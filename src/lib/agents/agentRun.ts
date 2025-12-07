@@ -4,16 +4,20 @@ import { prisma } from '@/lib/prisma';
 type AgentRunInput = {
   agentName: string;
   recruiterId?: string;
-  inputSnapshot: unknown;
+  inputSnapshot: Prisma.InputJsonValue | Prisma.JsonNullValueInput;
 };
 
-type AgentRunResult<T> = { result: T; outputSnapshot?: unknown } | T;
+type AgentRunResult<T extends Prisma.InputJsonValue> =
+  | { result: T; outputSnapshot?: Prisma.InputJsonValue | Prisma.JsonNullValueInput }
+  | T;
 
-function isStructuredResult<T>(value: AgentRunResult<T>): value is { result: T; outputSnapshot?: unknown } {
+function isStructuredResult<T extends Prisma.InputJsonValue>(
+  value: AgentRunResult<T>,
+): value is { result: T; outputSnapshot?: Prisma.InputJsonValue | Prisma.JsonNullValueInput } {
   return typeof value === 'object' && value !== null && 'result' in value;
 }
 
-export async function withAgentRun<T>(
+export async function withAgentRun<T extends Prisma.InputJsonValue>(
   { agentName, recruiterId, inputSnapshot }: AgentRunInput,
   fn: () => Promise<AgentRunResult<T>>,
 ): Promise<[T, string]> {
