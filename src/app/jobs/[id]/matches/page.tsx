@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { JobCandidateStatus } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
+import { JobCandidateStatusControl } from "./JobCandidateStatusControl";
 
 function formatScore(score?: number | null) {
   if (score == null) return "—";
@@ -23,6 +26,13 @@ export default async function JobMatchesPage({
           },
           orderBy: { score: "desc" },
         },
+        jobCandidates: {
+          select: {
+            id: true,
+            candidateId: true,
+            status: true,
+          },
+        },
       },
     })
     .catch((error) => {
@@ -41,6 +51,10 @@ export default async function JobMatchesPage({
       </div>
     );
   }
+
+  const jobCandidateByCandidateId = new Map(
+    job.jobCandidates.map((jobCandidate) => [jobCandidate.candidateId, jobCandidate]),
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 space-y-6">
@@ -95,21 +109,34 @@ export default async function JobMatchesPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {job.matchResults.map((match) => (
-                <tr key={match.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    <div>{match.candidate.fullName ?? "Unknown"}</div>
-                    <div className="text-xs font-normal text-gray-600">
-                      {match.candidate.currentTitle ?? "—"}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-800">{formatScore(match.score)}</td>
-                  <td className="px-4 py-3 text-gray-800">{formatScore(match.skillScore)}</td>
-                  <td className="px-4 py-3 text-gray-800">{formatScore(match.seniorityScore)}</td>
-                  <td className="px-4 py-3 text-gray-800">{formatScore(match.locationScore)}</td>
-                  <td className="px-4 py-3 text-gray-600">Coming soon</td>
-                </tr>
-              ))}
+              {job.matchResults.map((match) => {
+                const jobCandidate = jobCandidateByCandidateId.get(match.candidateId);
+
+                return (
+                  <tr key={match.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      <div>{match.candidate.fullName ?? "Unknown"}</div>
+                      <div className="text-xs font-normal text-gray-600">
+                        {match.candidate.currentTitle ?? "—"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-800">{formatScore(match.score)}</td>
+                    <td className="px-4 py-3 text-gray-800">{formatScore(match.skillScore)}</td>
+                    <td className="px-4 py-3 text-gray-800">{formatScore(match.seniorityScore)}</td>
+                    <td className="px-4 py-3 text-gray-800">{formatScore(match.locationScore)}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {jobCandidate ? (
+                        <JobCandidateStatusControl
+                          jobCandidateId={jobCandidate.id}
+                          initialStatus={jobCandidate.status as JobCandidateStatus}
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-500">No job candidate record</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
