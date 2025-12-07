@@ -13,6 +13,15 @@ enum AgentRunStatus {
   ERROR
 }
 
+enum JobCandidateStatus {
+  POTENTIAL   // AI suggests
+  SHORTLISTED // recruiter likes
+  SUBMITTED   // sent to client
+  INTERVIEWING
+  HIRED
+  REJECTED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -46,6 +55,7 @@ model Candidate {
   skills   CandidateSkill[]
   matches  Match[]
   matchResults MatchResult[]
+  jobCandidates JobCandidate[]
 }
 
 model CandidateSkill {
@@ -91,6 +101,7 @@ model JobReq {
   skills  JobSkill[]
   matches Match[]
   matchResults MatchResult[]
+  jobCandidates JobCandidate[]
 }
 
 model JobSkill {
@@ -144,6 +155,8 @@ model MatchResult {
   agentRun        AgentRunLog?  @relation(fields: [agentRunId], references: [id])
   agentRunId      String?
 
+  jobCandidates   JobCandidate[]
+
   @@index([candidateId])
   @@index([jobReqId])
   @@index([agentRunId])
@@ -169,4 +182,26 @@ model AgentRunLog {
   matchResults     MatchResult[]
 
   @@index([agentName])
+}
+
+model JobCandidate {
+  id                String             @id @default(cuid())
+  jobReq            JobReq             @relation(fields: [jobReqId], references: [id])
+  jobReqId          String
+
+  candidate         Candidate         @relation(fields: [candidateId], references: [id])
+  candidateId       String
+
+  status            JobCandidateStatus @default(POTENTIAL)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  lastMatch         MatchResult?       @relation(fields: [lastMatchResultId], references: [id])
+  lastMatchResultId String?
+
+  notes             String?
+
+  @@index([jobReqId])
+  @@index([candidateId])
+  @@index([lastMatchResultId])
 }
