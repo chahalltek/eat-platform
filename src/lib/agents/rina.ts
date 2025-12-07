@@ -1,13 +1,7 @@
 // src/lib/agents/rina.ts
-<<<<<<< ours
 import { withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { prisma } from '@/lib/prisma';
-=======
-import { callLLM } from '@/lib/llm';
-import { prisma } from '@/lib/prisma';
-import { withAgentRun } from '@/lib/agents/agentRun';
->>>>>>> theirs
 
 export type RinaInput = {
   recruiterId?: string;
@@ -91,16 +85,7 @@ export async function runRina(
       },
     },
     async () => {
-<<<<<<< ours
       const userPrompt = `Resume:\n"""\n${rawResumeText}\n"""`;
-=======
-      const userPrompt = `
-Resume:
-"""
-${rawResumeText}
-"""
-`;
->>>>>>> theirs
 
       const llmRaw = await callLLM({
         systemPrompt: SYSTEM_PROMPT,

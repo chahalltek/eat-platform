@@ -143,12 +143,12 @@ ${rawJobText}
       jobReqId: jobReq.id,
       agentRunId: updatedRun.id,
     };
-  } catch (err: any) {
+    } catch (err) {
     await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
         status: 'ERROR',
-        errorMessage: err?.message ?? 'Unknown error',
+        errorMessage: err instanceof Error ? err.message : 'Unknown error',
         finishedAt: new Date(),
       },
     });
