@@ -1,15 +1,25 @@
 // src/app/api/agents/rina/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { runRina } from '@/lib/agents/rina';
+import { getCurrentUser } from '@/lib/auth/user';
 import { validateRecruiterId } from '../recruiterValidation';
 
 export async function POST(req: NextRequest) {
   try {
+    const currentUser = await getCurrentUser(req);
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
 
     const { recruiterId, rawResumeText, sourceType, sourceTag } = body ?? {};
 
-    const recruiterValidation = await validateRecruiterId(recruiterId);
+    const recruiterValidation = await validateRecruiterId(
+      recruiterId ?? currentUser.id,
+      { required: true },
+    );
 
     if ('error' in recruiterValidation) {
       return NextResponse.json(

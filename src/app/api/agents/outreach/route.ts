@@ -2,10 +2,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { runOutreach } from '@/lib/agents/outreach';
+<<<<<<< ours
+=======
+import { getCurrentUser } from '@/lib/auth/user';
+
+>>>>>>> theirs
 import { validateRecruiterId } from '../recruiterValidation';
 
 export async function POST(req: NextRequest) {
   let body: unknown;
+
+  const currentUser = await getCurrentUser(req);
+
+  if (!currentUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     body = await req.json();
@@ -21,11 +32,24 @@ export async function POST(req: NextRequest) {
       jobReqId?: unknown;
     };
 
+<<<<<<< ours
     const recruiterValidation = await validateRecruiterId(recruiterId, { required: true });
 
     if ('error' in recruiterValidation) {
       return NextResponse.json(
       { error: recruiterValidation.error },
+=======
+    const recruiterValidation = await validateRecruiterId(
+      typeof recruiterId === 'string' && recruiterId.trim()
+        ? recruiterId.trim()
+        : currentUser.id,
+      { required: true },
+    );
+
+    if ('error' in recruiterValidation) {
+      return NextResponse.json(
+        { error: recruiterValidation.error },
+>>>>>>> theirs
         { status: recruiterValidation.status },
       );
     }
@@ -54,14 +78,14 @@ export async function POST(req: NextRequest) {
     });
 
     const result = await runOutreach({
-      recruiterId: trimmedRecruiterId,
+      recruiterId: recruiterValidation.recruiterId ?? undefined,
       candidateId: trimmedCandidateId,
       jobReqId: trimmedJobReqId,
     });
 
     console.log('OUTREACH API success:', {
       agentRunId: result.agentRunId,
-      recruiterId: trimmedRecruiterId,
+      recruiterId: recruiterValidation.recruiterId,
     });
 
     return NextResponse.json(result, { status: 200 });
