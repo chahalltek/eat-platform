@@ -1,5 +1,6 @@
 import { prisma } from '@/src/lib/prisma';
-import { JobMatchesTable, JobMatchRow } from '@/src/components/JobMatchesTable';
+import { JobMatchesView } from '@/src/components/JobMatchesView';
+import type { JobMatchRow } from '@/src/components/JobMatchesTable';
 
 type Props = {
   params: { jobId: string };
@@ -35,24 +36,8 @@ export default async function JobMatchesPage({ params }: Props) {
   const data = await getMatches(params.jobId);
 
   return (
-    <div className="max-w-4xl mx-auto py-8 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">
-          Matches for job: {params.jobId}
-        </h1>
-        {/* For now, you can manually hit the POST /api/jobs/[jobId]/matcher
-            via curl or add a button wired to that endpoint later */}
-      </div>
-
-      <JobMatchesTable data={data} />
-
-      <p className="text-xs text-slate-500">
-        Tip: run the MATCHER via
-        <code className="mx-1 rounded bg-slate-100 px-1">
-          POST /api/jobs/{params.jobId}/matcher
-        </code>
-        to refresh these results.
-      </p>
+    <div className="max-w-4xl mx-auto py-8">
+      <JobMatchesView jobId={params.jobId} initialData={data} />
     </div>
   );
 }
