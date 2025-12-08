@@ -1,6 +1,7 @@
 // src/app/api/agents/outreach/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
+import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
 import { runOutreach } from "@/lib/agents/outreach";
 import { getCurrentUser } from "@/lib/auth/user";
 import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
@@ -21,6 +22,12 @@ export async function POST(req: NextRequest) {
 
   if (flagCheck) {
     return flagCheck;
+  }
+
+  const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.OUTREACH);
+
+  if (killSwitchResponse) {
+    return killSwitchResponse;
   }
 
   try {

@@ -2,12 +2,13 @@
 import { Prisma } from '@prisma/client';
 
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
+import { assertAgentKillSwitchDisarmed, type AgentName } from '@/lib/agents/killSwitch';
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from '@/lib/killSwitch';
 import { prisma } from '@/lib/prisma';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 type AgentRunInput = {
-  agentName: string;
+  agentName: AgentName;
   recruiterId?: string;
   inputSnapshot: Prisma.InputJsonValue | Prisma.JsonNullValueInput;
   sourceType?: string | null;
@@ -54,6 +55,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
   fn: () => Promise<AgentRunResult<T>>,
 ): Promise<[T, string]> {
   assertKillSwitchDisarmed(KILL_SWITCHES.AGENTS, { componentName: agentName });
+  await assertAgentKillSwitchDisarmed(agentName);
 
   const startedAt = new Date();
 

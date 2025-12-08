@@ -1,6 +1,7 @@
 // src/app/api/agents/rina/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { runRina } from '@/lib/agents/rina';
+import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 import { getCurrentUser } from '@/lib/auth/user';
 import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
 import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
@@ -19,6 +20,12 @@ export async function POST(req: NextRequest) {
 
     if (flagCheck) {
       return flagCheck;
+    }
+
+    const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.RINA);
+
+    if (killSwitchResponse) {
+      return killSwitchResponse;
     }
 
     const body = await req.json();

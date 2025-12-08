@@ -1,6 +1,7 @@
 // src/app/api/agents/rua/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { runRua } from '@/lib/agents/rua';
+import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 import { getCurrentUser } from '@/lib/auth/user';
 import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
@@ -19,6 +20,12 @@ export async function POST(req: NextRequest) {
 
     if (flagCheck) {
       return flagCheck;
+    }
+
+    const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.RUA);
+
+    if (killSwitchResponse) {
+      return killSwitchResponse;
     }
 
     const body = await req.json();
