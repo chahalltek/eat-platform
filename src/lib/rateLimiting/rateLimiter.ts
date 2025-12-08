@@ -318,3 +318,11 @@ export function resetRateLimiter() {
 export function isRateLimitError(error: unknown): error is RateLimitError {
   return error instanceof RateLimitError;
 }
+
+export function getRateLimitDefaults(): Record<RateLimitAction, RateLimitConfig> {
+  return { ...DEFAULT_CONFIG };
+}
+
+export function getRateLimitPlanOverrides(plan: SubscriptionPlan | null) {
+  return parsePlanRateLimits(plan);
+}

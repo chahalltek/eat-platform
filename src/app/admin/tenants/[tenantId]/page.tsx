@@ -33,19 +33,26 @@ export default async function TenantDetailPage({ params }: { params: { tenantId:
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-10">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
-        <header className="flex items-center justify-between gap-4">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Tenant</p>
             <h1 className="text-3xl font-semibold text-zinc-900">{detail.tenant.name}</h1>
             <p className="text-sm text-zinc-600">Manage plan assignment and trial settings.</p>
           </div>
-
-          <Link
-            href="/admin/tenants"
-            className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
-          >
-            Back to list
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/admin/tenant/${params.tenantId}/diagnostics`}
+              className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-white"
+            >
+              View diagnostics
+            </Link>
+            <Link
+              href="/admin/tenants"
+              className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
+            >
+              Back to list
+            </Link>
+          </div>
         </header>
 
         <TenantPlanEditor
