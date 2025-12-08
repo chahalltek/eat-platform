@@ -16,6 +16,7 @@ const CORE_MODELS = [
   'AgentRunLog',
   'OutreachInteraction',
   'JobCandidate',
+  'TenantSubscription',
 ];
 
 function readModelBlock(schema: string, model: string) {
