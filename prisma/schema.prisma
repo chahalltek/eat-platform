@@ -42,7 +42,6 @@ model User {
   @@index([tenantId])
 }
 
-<<<<<<< ours
 model UserIdentity {
   id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id])
@@ -54,15 +53,16 @@ model UserIdentity {
 
   @@unique([provider, subject])
   @@index([userId])
-=======
+}
+
 model Tenant {
   id        String   @id @default(cuid())
   name      String
   status    String   @default("active")
   createdAt DateTime @default(now())
 
-  users          User[]
-  subscriptions  TenantSubscription[]
+  users         User[]
+  subscriptions TenantSubscription[]
 
   @@unique([name])
 }
@@ -77,19 +77,18 @@ model SubscriptionPlan {
 }
 
 model TenantSubscription {
-  id        String   @id @default(cuid())
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  id        String           @id @default(cuid())
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
   tenantId  String
   plan      SubscriptionPlan @relation(fields: [planId], references: [id])
   planId    String
   startAt   DateTime
   endAt     DateTime?
-  isTrial   Boolean  @default(false)
-  createdAt DateTime @default(now())
+  isTrial   Boolean          @default(false)
+  createdAt DateTime         @default(now())
 
   @@index([tenantId])
   @@index([tenantId, startAt])
->>>>>>> theirs
 }
 
 model FeatureFlag {
