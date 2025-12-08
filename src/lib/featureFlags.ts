@@ -1,15 +1,11 @@
+import type { FeatureFlag as FeatureFlagModel } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
+import { DEFAULT_FLAG_DESCRIPTIONS, FEATURE_FLAGS, type FeatureFlagName } from './featureFlags/constants';
+import { isFeatureEnabledForPlan } from './featureFlags/planMapping';
 import { prisma } from './prisma';
+import { getTenantPlan } from './subscriptionPlans';
 import { getCurrentTenantId } from './tenant';
-
-export const FEATURE_FLAGS = {
-  AGENTS: 'agents',
-  SCORING: 'scoring',
-  UI_BLOCKS: 'ui-blocks',
-} as const;
-
-export type FeatureFlagName = (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS];
 
 export type FeatureFlagRecord = {
   name: FeatureFlagName;
@@ -18,13 +14,9 @@ export type FeatureFlagRecord = {
   updatedAt: Date;
 };
 
-const DEFAULT_FLAG_DESCRIPTIONS: Record<FeatureFlagName, string> = {
-  [FEATURE_FLAGS.AGENTS]: 'Controls all agent execution (RINA, RUA, Outreach, retries).',
-  [FEATURE_FLAGS.SCORING]: 'Gates scoring and match computation flows.',
-  [FEATURE_FLAGS.UI_BLOCKS]: 'Turns UI-only surfaces on or off.',
-};
+export { FEATURE_FLAGS, type FeatureFlagName } from './featureFlags/constants';
 
-const flagCache = new Map<FeatureFlagName, boolean>();
+const flagCache = new Map<string, boolean>();
 
 function buildFallbackFlag(name: FeatureFlagName, enabled = false) {
   return {
@@ -42,51 +34,93 @@ function coerceFlagName(value: unknown): FeatureFlagName | null {
   return (candidates.find((flag) => flag === normalized) as FeatureFlagName | undefined) ?? null;
 }
 
-async function ensureFlagExists(name: FeatureFlagName) {
-  const tenantId = await getCurrentTenantId();
+function cacheKey(tenantId: string, name: FeatureFlagName) {
+  return `${tenantId}:${name}`;
+}
 
-  const flag = await prisma.featureFlag.upsert({
-    where: { tenantId_name: { tenantId, name } },
-    update: {},
-    create: { tenantId, name, description: DEFAULT_FLAG_DESCRIPTIONS[name] },
-  }).catch((error) => {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
-      return buildFallbackFlag(name);
-    }
+export function resetFeatureFlagCache() {
+  flagCache.clear();
+}
 
+function isMissingTableError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021';
+}
+
+async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) {
+  try {
+    return await prisma.featureFlag.findUnique({ where: { tenantId_name: { tenantId, name } } });
+  } catch (error) {
+    if (isMissingTableError(error)) return null;
     throw error;
-  });
+  }
+}
 
-  flagCache.set(name, flag.enabled);
+async function fetchFeatureFlagOverrides(tenantId: string) {
+  try {
+    const overrides = await prisma.featureFlag.findMany({ where: { tenantId } });
 
-  return flag;
+    return new Map(overrides.map((flag) => [flag.name as FeatureFlagName, flag]));
+  } catch (error) {
+    if (isMissingTableError(error)) return new Map<FeatureFlagName, FeatureFlagModel>();
+    throw error;
+  }
 }
 
 export async function listFeatureFlags(): Promise<FeatureFlagRecord[]> {
-  const flags = await Promise.all(
-    (Object.values(FEATURE_FLAGS) as FeatureFlagName[]).map((name) => ensureFlagExists(name)),
-  );
+  const tenantId = await getCurrentTenantId();
+  const [overrides, plan] = await Promise.all([
+    fetchFeatureFlagOverrides(tenantId),
+    getTenantPlan(tenantId),
+  ]);
 
-  return flags
-    .map((flag) => ({
-      name: flag.name as FeatureFlagName,
-      description: flag.description,
-      enabled: flag.enabled,
-      updatedAt: flag.updatedAt,
-    }))
+  const planId = plan?.plan.id;
+
+  return (Object.values(FEATURE_FLAGS) as FeatureFlagName[])
+    .map((name) => {
+      const override = overrides.get(name);
+      const enabledByPlan = planId ? isFeatureEnabledForPlan(planId, name) : false;
+      const enabled = override?.enabled ?? enabledByPlan ?? false;
+
+      if (override) {
+        flagCache.set(cacheKey(tenantId, name), override.enabled);
+      }
+
+      return {
+        name,
+        description: override?.description ?? DEFAULT_FLAG_DESCRIPTIONS[name],
+        enabled,
+        updatedAt: override?.updatedAt ?? new Date(0),
+      } satisfies FeatureFlagRecord;
+    })
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function isFeatureEnabled(name: FeatureFlagName): Promise<boolean> {
-  const cached = flagCache.get(name);
+export async function isFeatureEnabledForTenant(
+  tenantId: string,
+  name: FeatureFlagName,
+): Promise<boolean> {
+  const cached = flagCache.get(cacheKey(tenantId, name));
 
   if (cached != null) {
     return cached;
   }
 
-  const flag = await ensureFlagExists(name);
+  const override = await findFeatureFlagOverride(tenantId, name);
 
-  return flag.enabled;
+  if (override) {
+    flagCache.set(cacheKey(tenantId, name), override.enabled);
+    return override.enabled;
+  }
+
+  const plan = await getTenantPlan(tenantId);
+
+  return plan ? isFeatureEnabledForPlan(plan.plan.id, name) : false;
+}
+
+export async function isFeatureEnabled(name: FeatureFlagName): Promise<boolean> {
+  const tenantId = await getCurrentTenantId();
+
+  return isFeatureEnabledForTenant(tenantId, name);
 }
 
 export const isEnabled = isFeatureEnabled;
@@ -106,7 +140,7 @@ export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): P
     throw error;
   });
 
-  flagCache.set(name, flag.enabled);
+  flagCache.set(cacheKey(tenantId, name), flag.enabled);
 
   return {
     name: flag.name as FeatureFlagName,
