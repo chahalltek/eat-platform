@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { prisma } from "@/lib/prisma";
@@ -100,4 +101,52 @@ export async function runMatcher(
     ...result,
     agentRunId,
   };
+=======
+import { MatchResult } from "@prisma/client";
+
+import { withAgentRun } from "@/lib/agents/agentRun";
+import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
+import { matchJobToAllCandidates } from "@/lib/matching/batch";
+
+export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
+
+export async function generateMatchExplanation(match: MatchResult): Promise<MatchResult> {
+  // Placeholder for LLM-backed enrichment; kept simple for determinism in tests
+  return match;
+}
+
+type MatcherAgentInput = {
+  jobReqId: string;
+  recruiterId?: string;
+  limit?: number;
+};
+
+type MatcherAgentResult = { matches: MatchResult[] };
+type MatcherAgentDependencies = { explainMatch?: typeof generateMatchExplanation };
+
+export async function runMatcherAgent({
+  jobReqId,
+  recruiterId,
+  limit = 200,
+}: MatcherAgentInput, deps: MatcherAgentDependencies = {}): Promise<[MatcherAgentResult, string]> {
+  const explainMatch = deps.explainMatch ?? generateMatchExplanation;
+
+  return withAgentRun<MatcherAgentResult>(
+    {
+      agentName: MATCHER_AGENT_NAME,
+      recruiterId,
+      inputSnapshot: { jobReqId, limit },
+      sourceType: "agent",
+      sourceTag: "matcher",
+    },
+    async () => {
+      const matches = await matchJobToAllCandidates(jobReqId, limit);
+      const enrichedMatches = await Promise.all(matches.map((match) => explainMatch(match)));
+
+      const sortedMatches = [...enrichedMatches].sort((a, b) => b.score - a.score);
+
+      return { result: { matches: sortedMatches } };
+    },
+  );
+>>>>>>> theirs
 }
