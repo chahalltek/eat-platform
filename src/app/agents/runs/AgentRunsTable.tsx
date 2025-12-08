@@ -65,11 +65,13 @@ export function AgentRunsTable({ runs }: { runs: AgentRunTableRow[] }) {
           new Date(rowA.original.startedAt).getTime() - new Date(rowB.original.startedAt).getTime(),
         cell: ({ getValue }) => new Date(getValue<string>()).toLocaleString(),
       },
-      createTextColumn<AgentRunTableRow, "agentName">({
-        accessorKey: "agentName",
-        header: "Agent Name",
-      }),
-      filterFn: multiSelectFilter,
+      {
+        ...createTextColumn<AgentRunTableRow, "agentName">({
+          accessorKey: "agentName",
+          header: "Agent Name",
+        }),
+        filterFn: multiSelectFilter,
+      },
       {
         ...createStatusBadgeColumn<AgentRunTableRow, "status">({
           accessorKey: "status",

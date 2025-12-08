@@ -4,8 +4,8 @@ import type { NextRequest } from 'next/server';
 import { DEFAULT_TENANT_ID, TENANT_HEADER, TENANT_QUERY_PARAM } from './auth/config';
 import { getSessionClaims } from './auth/session';
 
-function extractTenantIdFromRequest(req: NextRequest) {
-  const sessionTenant = getSessionClaims(req)?.tenantId;
+async function extractTenantIdFromRequest(req: NextRequest) {
+  const sessionTenant = (await getSessionClaims(req))?.tenantId;
   if (sessionTenant && sessionTenant.trim()) {
     return sessionTenant.trim();
   }
@@ -27,7 +27,7 @@ function extractTenantIdFromRequest(req: NextRequest) {
 
 async function extractTenantIdFromHeaders() {
   try {
-    const sessionTenant = getSessionClaims()?.tenantId;
+    const sessionTenant = (await getSessionClaims())?.tenantId;
     if (sessionTenant && sessionTenant.trim()) {
       return sessionTenant.trim();
     }
@@ -46,7 +46,7 @@ async function extractTenantIdFromHeaders() {
 }
 
 export async function getCurrentTenantId(req?: NextRequest) {
-  const tenantId = (req ? extractTenantIdFromRequest(req) : await extractTenantIdFromHeaders()) ?? DEFAULT_TENANT_ID;
+  const tenantId = (req ? await extractTenantIdFromRequest(req) : await extractTenantIdFromHeaders()) ?? DEFAULT_TENANT_ID;
 
   return tenantId;
 }

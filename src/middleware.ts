@@ -30,7 +30,7 @@ const RECRUITER_ROLES = new Set<UserRole>([
 
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
-  const session = getSessionClaims(request);
+  const session = await getSessionClaims(request);
   const searchParams = request.nextUrl.searchParams;
 
   if (PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path))) {

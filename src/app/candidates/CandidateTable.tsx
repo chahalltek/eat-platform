@@ -16,12 +16,8 @@ export type CandidateRow = {
   fullName: string;
   currentTitle: string | null;
   location: string | null;
-<<<<<<< ours
   status: string | null;
   parsingConfidence: number | null;
-=======
-  confidenceScore: number;
->>>>>>> theirs
   updatedAt: string;
 };
 
@@ -87,13 +83,8 @@ export function useCandidateTable(candidates: CandidateRow[]) {
       },
       {
         ...createNumberColumn({
-<<<<<<< ours
           accessorKey: "parsingConfidence",
           header: "Score",
-=======
-          accessorKey: "confidenceScore",
-          header: "Confidence",
->>>>>>> theirs
         }),
         cell: ({ getValue }) => {
           const value = getValue<number | null>();

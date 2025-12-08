@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     return NextResponse.json(VALIDATION_ERROR, { status: 401 });
   }
 
-  const cookie = createSessionCookie({
+  const cookie = await createSessionCookie({
     id: user.id,
     email: user.email,
     displayName: user.displayName,

@@ -24,8 +24,8 @@ describe("session helpers", () => {
     vi.resetAllMocks();
   });
 
-  it("creates a signed session that can be parsed", () => {
-    const cookie = createSessionCookie({
+  it("creates a signed session that can be parsed", async () => {
+    const cookie = await createSessionCookie({
       id: "user-123",
       email: "test@example.com",
       displayName: "Test User",
@@ -33,30 +33,30 @@ describe("session helpers", () => {
       tenantId: "tenant-xyz",
     });
 
-    const payload = parseSessionToken(cookie.value);
+    const payload = await parseSessionToken(cookie.value);
     expect(cookie.name).toBe(SESSION_COOKIE_NAME);
     expect(payload?.userId).toBe("user-123");
     expect(payload?.tenantId).toBe("tenant-xyz");
     expect(payload?.email).toBe("test@example.com");
   });
 
-  it("rejects expired sessions", () => {
-    const cookie = createSessionCookie({ id: "user-123" });
+  it("rejects expired sessions", async () => {
+    const cookie = await createSessionCookie({ id: "user-123" });
 
-    const payload = parseSessionToken(cookie.value);
+    const payload = await parseSessionToken(cookie.value);
     expect(payload?.userId).toBe("user-123");
 
     vi.advanceTimersByTime((SESSION_DURATION_SECONDS + 1) * 1000);
 
-    expect(parseSessionToken(cookie.value)).toBeNull();
+    expect(await parseSessionToken(cookie.value)).toBeNull();
   });
 
-  it("reads the session from mocked cookies when no request is provided", () => {
-    const cookie = createSessionCookie({ id: "user-cookie" });
+  it("reads the session from mocked cookies when no request is provided", async () => {
+    const cookie = await createSessionCookie({ id: "user-cookie" });
     cookiesMock.mockReturnValue({
       get: (name: string) => (name === SESSION_COOKIE_NAME ? { value: cookie.value } : undefined),
     });
 
-    expect(getSessionClaims()).toMatchObject({ userId: "user-cookie" });
+    await expect(getSessionClaims()).resolves.toMatchObject({ userId: "user-cookie" });
   });
 });

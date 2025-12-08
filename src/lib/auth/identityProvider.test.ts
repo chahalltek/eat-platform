@@ -30,8 +30,8 @@ describe("identity provider abstraction", () => {
     resetIdentityProvider();
   });
 
-  function setMockSessionCookie() {
-    const cookie = createSessionCookie({
+  async function setMockSessionCookie() {
+    const cookie = await createSessionCookie({
       id: "session-user",
       email: "session@example.com",
       displayName: "Session User",
@@ -49,7 +49,7 @@ describe("identity provider abstraction", () => {
   }
 
   it("reads the session cookie when no request is provided", async () => {
-    setMockSessionCookie();
+    await setMockSessionCookie();
 
     const user = await getCurrentUser();
     const claims = await getUserClaims();
@@ -91,7 +91,7 @@ describe("identity provider abstraction", () => {
   });
 
   it("parses sessions directly from the incoming request", async () => {
-    const cookieValue = setMockSessionCookie();
+    const cookieValue = await setMockSessionCookie();
     const request = new NextRequest("http://localhost/api/test", {
       headers: { cookie: `${SESSION_COOKIE_NAME}=${cookieValue}` },
     });
