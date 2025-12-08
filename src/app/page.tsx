@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 type HomeLink = {
   label: string;
   href: string;

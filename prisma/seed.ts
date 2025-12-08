@@ -123,15 +123,17 @@ async function seedJobs() {
   ];
 
   for (const job of jobReqs) {
+    const { skills, ...jobData } = job;
+
     await prisma.jobReq.upsert({
       where: { id: job.id },
-      update: { ...job, createdAt: job.createdAt, tenantId: DEFAULT_TENANT_ID },
-      create: { ...job, tenantId: DEFAULT_TENANT_ID },
+      update: { ...jobData, createdAt: job.createdAt, tenantId: DEFAULT_TENANT_ID },
+      create: { ...jobData, tenantId: DEFAULT_TENANT_ID },
     });
 
     await prisma.jobSkill.deleteMany({ where: { jobReqId: job.id, tenantId: DEFAULT_TENANT_ID } });
     await prisma.jobSkill.createMany({
-      data: job.skills.map((skill) => ({ ...skill, jobReqId: job.id, tenantId: DEFAULT_TENANT_ID })),
+      data: skills.map((skill) => ({ ...skill, jobReqId: job.id, tenantId: DEFAULT_TENANT_ID })),
     });
   }
 }
@@ -216,15 +218,17 @@ async function seedCandidates() {
   ];
 
   for (const candidate of candidates) {
+    const { skills, ...candidateData } = candidate;
+
     await prisma.candidate.upsert({
       where: { id: candidate.id },
-      update: { ...candidate, createdAt: candidate.createdAt, tenantId: DEFAULT_TENANT_ID },
-      create: { ...candidate, tenantId: DEFAULT_TENANT_ID },
+      update: { ...candidateData, createdAt: candidate.createdAt, tenantId: DEFAULT_TENANT_ID },
+      create: { ...candidateData, tenantId: DEFAULT_TENANT_ID },
     });
 
     await prisma.candidateSkill.deleteMany({ where: { candidateId: candidate.id, tenantId: DEFAULT_TENANT_ID } });
     await prisma.candidateSkill.createMany({
-      data: candidate.skills.map((skill) => ({ ...skill, candidateId: candidate.id, tenantId: DEFAULT_TENANT_ID })),
+      data: skills.map((skill) => ({ ...skill, candidateId: candidate.id, tenantId: DEFAULT_TENANT_ID })),
     });
   }
 }
@@ -271,10 +275,17 @@ async function seedAgentRuns() {
   ];
 
   for (const run of runs) {
+    const runData = {
+      ...run,
+      tenantId: DEFAULT_TENANT_ID,
+      inputSnapshot: run.input,
+      outputSnapshot: run.output ?? run.errorMessage ?? null,
+    };
+
     await prisma.agentRunLog.upsert({
       where: { id: run.id },
-      update: { ...run, tenantId: DEFAULT_TENANT_ID },
-      create: { ...run, tenantId: DEFAULT_TENANT_ID },
+      update: runData,
+      create: runData,
     });
   }
 }

@@ -153,20 +153,22 @@ export async function parseSessionToken(token: string | undefined): Promise<Sess
   return payload;
 }
 
-function getTokenFromRequest(req?: NextRequest) {
+async function getTokenFromRequest(req?: NextRequest) {
   if (req) {
     return req.cookies.get(SESSION_COOKIE_NAME)?.value;
   }
 
   try {
-    return cookies().get(SESSION_COOKIE_NAME)?.value;
+    const cookieStore = await cookies();
+
+    return cookieStore.get(SESSION_COOKIE_NAME)?.value;
   } catch {
     return undefined;
   }
 }
 
 export async function getSessionClaims(req?: NextRequest) {
-  const token = getTokenFromRequest(req);
+  const token = await getTokenFromRequest(req);
   return parseSessionToken(token);
 }
 

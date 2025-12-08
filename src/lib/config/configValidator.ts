@@ -1,18 +1,16 @@
 import { z } from "zod";
 
+const FALLBACK_DATABASE_URL = "postgresql://placeholder.invalid:5432/placeholder";
+
 const EnvSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"], {
-    required_error: "NODE_ENV must be set",
-  }),
-  APP_ENV: z
-    .enum(["development", "staging", "production"], {
-      required_error: "APP_ENV must be set to development, staging, or production",
-    })
-    .default("development"),
+  NODE_ENV: z.enum(["development", "production", "test"]),
+  APP_ENV: z.enum(["development", "staging", "production"]).default("development"),
   DATABASE_URL: z
-    .string({ required_error: "DATABASE_URL is required" })
+    .string()
     .min(1, "DATABASE_URL is required")
-    .regex(/^postgres(ql)?:\/\//i, "DATABASE_URL must be a PostgreSQL connection string"),
+    .regex(/^postgres(ql)?:\/\//i, "DATABASE_URL must be a PostgreSQL connection string")
+    .optional()
+    .transform((value) => value ?? FALLBACK_DATABASE_URL),
   SSO_ISSUER_URL: z.string().url().optional(),
   SSO_CLIENT_ID: z.string().min(1).optional(),
   SSO_CLIENT_SECRET: z.string().min(1).optional(),
@@ -22,7 +20,17 @@ const EnvSchema = z.object({
 });
 
 const ConfigSchema = EnvSchema.superRefine((value, ctx) => {
+  const isPlaceholderDatabaseUrl = value.DATABASE_URL === FALLBACK_DATABASE_URL;
+
   if (value.APP_ENV === "production") {
+    if (isPlaceholderDatabaseUrl) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["DATABASE_URL"],
+        message: "DATABASE_URL is required for production environments",
+      });
+    }
+
     const missingSso = ["SSO_ISSUER_URL", "SSO_CLIENT_ID", "SSO_CLIENT_SECRET"].filter(
       (key) => !value[key as keyof typeof value],
     );

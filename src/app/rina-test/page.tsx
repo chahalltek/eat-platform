@@ -4,6 +4,9 @@ import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
 import { RinaTestClient } from "./RinaTestClient";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 export default async function RinaTestPage() {
   const [uiEnabled, agentsEnabled] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),

@@ -47,9 +47,7 @@ export const STATUS_FILTER_OPTIONS = (Object.keys(STATUS_LABELS) as AgentRunStat
   label: STATUS_LABELS[value],
 }));
 
-const ERROR_CATEGORY_FILTER_OPTIONS = (
-  Object.keys(ERROR_CATEGORY_LABELS) as (keyof typeof ERROR_CATEGORY_LABELS)[],
-).map((value) => ({
+const ERROR_CATEGORY_FILTER_OPTIONS = (Object.keys(ERROR_CATEGORY_LABELS) as (keyof typeof ERROR_CATEGORY_LABELS)[]).map((value) => ({
   value,
   label: ERROR_CATEGORY_LABELS[value],
 }));

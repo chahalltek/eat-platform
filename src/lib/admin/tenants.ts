@@ -51,7 +51,7 @@ function activeSubscriptionWhere(now: Date) {
   return {
     startAt: { lte: now },
     OR: [{ endAt: null }, { endAt: { gt: now } }],
-  } as const;
+  };
 }
 
 export async function listTenantsWithPlans(): Promise<TenantPlanSummary[]> {

@@ -22,7 +22,7 @@ export type RateLimitConfig = {
   bucket: 'tenant' | 'user';
 };
 
-type RateLimitPlanOverrides = Partial<Pick<RateLimitConfig, 'dailyLimit' | 'burstLimit' | 'burstWindowMs'>> & {
+export type RateLimitPlanOverrides = Partial<Pick<RateLimitConfig, 'dailyLimit' | 'burstLimit' | 'burstWindowMs'>> & {
   bucket?: RateLimitConfig['bucket'];
 };
 

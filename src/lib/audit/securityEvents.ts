@@ -42,7 +42,9 @@ function sanitizeMetadata(metadata?: Record<string, unknown>): Prisma.InputJsonV
   if (!metadata) return undefined;
 
   const entries = Object.entries(metadata).filter(([, value]) => value !== undefined);
-  return Object.fromEntries(entries);
+  const sanitized = Object.fromEntries(entries) as Record<string, Prisma.InputJsonValue>;
+
+  return sanitized;
 }
 
 function normalizeMetadata(metadata: Prisma.JsonValue | null | undefined): Record<string, unknown> {

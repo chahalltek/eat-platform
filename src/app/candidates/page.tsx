@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 
-import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { prisma } from "@/lib/prisma";
 import { CandidateTable, type CandidateRow } from "./CandidateTable";
 
@@ -12,20 +11,7 @@ export default async function CandidatesPage() {
 
   try {
     const candidates = await prisma.candidate.findMany({
-      select: {
-        id: true,
-        fullName: true,
-        currentTitle: true,
-        location: true,
-        status: true,
-        parsingConfidence: true,
-        summary: true,
-        rawResumeText: true,
-        email: true,
-        phone: true,
-        sourceType: true,
-        sourceTag: true,
-        updatedAt: true,
+      include: {
         skills: {
           select: {
             id: true,
@@ -40,14 +26,13 @@ export default async function CandidatesPage() {
     });
 
     rows = candidates.map((candidate) => {
-      const confidence = computeCandidateConfidenceScore({ candidate });
-
       return {
         id: candidate.id,
         fullName: candidate.fullName,
         currentTitle: candidate.currentTitle,
         location: candidate.location,
-        confidenceScore: confidence.score,
+        status: candidate.status,
+        parsingConfidence: candidate.parsingConfidence,
         updatedAt: candidate.updatedAt.toISOString(),
       } satisfies CandidateRow;
     });

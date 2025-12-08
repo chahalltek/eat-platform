@@ -14,14 +14,8 @@ import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 import { getCurrentTenantId } from "@/lib/tenant";
 
 const matchRequestSchema = z.object({
-  jobReqId: z
-    .string({ required_error: "jobReqId is required" })
-    .trim()
-    .min(1, "jobReqId must be a non-empty string"),
-  candidateId: z
-    .string({ required_error: "candidateId is required" })
-    .trim()
-    .min(1, "candidateId must be a non-empty string"),
+  jobReqId: z.string().trim().min(1, "jobReqId must be a non-empty string"),
+  candidateId: z.string().trim().min(1, "candidateId must be a non-empty string"),
 });
 
 export async function POST(req: Request) {

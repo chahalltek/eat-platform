@@ -219,9 +219,10 @@ export default async function CandidateDetail({
                 </div>
               </div>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
-                <li>{confidence.breakdown.sourceQuality.reason}</li>
-                <li>{confidence.breakdown.agentConsistency.reason}</li>
                 <li>{confidence.breakdown.resumeCompleteness.reason}</li>
+                <li>{confidence.breakdown.skillCoverage.reason}</li>
+                <li>{confidence.breakdown.agentAgreement.reason}</li>
+                <li>{confidence.breakdown.unknownFields.reason}</li>
               </ul>
             </div>
             <div>

@@ -84,8 +84,17 @@ describe("validateConfig", () => {
 
   it("surfaces missing base environment variables", () => {
     expect(() => validateConfig({} as NodeJS.ProcessEnv)).toThrow(
-      /NODE_ENV: Invalid option: expected one of "development"\|"production"\|"test"; DATABASE_URL: Invalid input: expected string, received undefined/,
+      /NODE_ENV: Invalid option: expected one of "development"\|"production"\|"test"/,
     );
+  });
+
+  it("requires an explicit database URL when running in production", () => {
+    expect(() =>
+      validateConfig({
+        NODE_ENV: "production",
+        APP_ENV: "production",
+      } as NodeJS.ProcessEnv),
+    ).toThrow("DATABASE_URL is required for production environments");
   });
 
   it("formats errors without a path as environment-level issues", () => {

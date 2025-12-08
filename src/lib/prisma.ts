@@ -1,5 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 
+const FALLBACK_DATABASE_URL = 'postgresql://placeholder.invalid:5432/placeholder';
+
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = FALLBACK_DATABASE_URL;
+}
+
 import { getCurrentTenantId } from './tenant';
 
 type PrismaAction =
