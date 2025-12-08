@@ -66,7 +66,6 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
       const result = await runRina(
         {
-          recruiterId: asString(input?.recruiterId) ?? currentUser.id,
           rawResumeText,
           sourceType: asString(input?.sourceType),
           sourceTag: asString(input?.sourceTag),

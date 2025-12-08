@@ -1,10 +1,10 @@
-import type { AgentRunLogCreateInput, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { getCurrentUser } from "@/lib/auth/user";
 
 export async function createAgentRunLog(
   prisma: PrismaClient,
-  data: Omit<AgentRunLogCreateInput, "userId">,
+  data: Omit<Prisma.AgentRunLogUncheckedCreateInput, "userId">,
 ) {
   const user = await getCurrentUser();
 

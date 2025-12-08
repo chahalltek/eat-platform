@@ -146,7 +146,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
     await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
-        status: 'ERROR',
+        status: 'FAILED',
         output: { snapshot: { error: (err as Error)?.message ?? 'unknown error' } },
         outputSnapshot: { error: (err as Error)?.message ?? 'unknown error' },
       },

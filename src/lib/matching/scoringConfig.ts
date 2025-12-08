@@ -1,11 +1,6 @@
 import { TS_CONFIG } from "@/config/ts";
 
-export type MatchScoringWeights = {
-  skills: number;
-  seniority: number;
-  location: number;
-  candidateSignals: number;
-};
+export type MatchScoringWeights = typeof TS_CONFIG.matcher.weight;
 
 export type CandidateSignalWeights = {
   recentActivity: number;

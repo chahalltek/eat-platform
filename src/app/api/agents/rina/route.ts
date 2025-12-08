@@ -69,7 +69,6 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await runRina({
-      recruiterId: recruiterValidation.recruiterId ?? undefined,
       rawResumeText,
       sourceType,
       sourceTag,
