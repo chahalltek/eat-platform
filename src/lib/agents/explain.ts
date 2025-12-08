@@ -1,9 +1,10 @@
+import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '../prisma';
 import { callLLM } from '../llm';
 import { createAgentRunLog } from './agentRunLog';
 
 export type RunExplainInput = {
-  recruiterId: string;
+  recruiterId?: string;
   jobId: string;
   maxMatches?: number; // limit per run
 };
@@ -58,7 +59,14 @@ function extractSummary(text: string): string {
 }
 
 export async function runExplainForJob(input: RunExplainInput): Promise<RunExplainResult> {
-  const { recruiterId, jobId, maxMatches = 20 } = input;
+  const { jobId, maxMatches = 20 } = input;
+  const user = await getCurrentUser();
+
+  if (!user) {
+    throw new Error('Current user is required to run explain agent');
+  }
+
+  // User identity is derived from auth; recruiterId in payload is ignored.
 
   const job = await prisma.job.findUnique({
     where: { id: jobId },
@@ -82,11 +90,22 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
   const toProcess = matchesNeedingExplain.slice(0, maxMatches);
   const runInput = { jobId, toProcess: toProcess.length };
 
+<<<<<<< ours
   const agentRun = await createAgentRunLog(prisma, {
     agentName: 'EAT-TS.EXPLAIN',
     input: runInput,
     inputSnapshot: runInput,
     status: 'RUNNING',
+=======
+  const agentRun = await prisma.agentRunLog.create({
+    data: {
+      agentName: 'EAT-TS.EXPLAIN',
+      userId: user.id,
+      input: runInput,
+      inputSnapshot: runInput,
+      status: 'RUNNING',
+    },
+>>>>>>> theirs
   });
 
   let processedCount = 0;

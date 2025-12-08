@@ -2,6 +2,7 @@ import { TS_CONFIG } from "@/config/ts";
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { rankCandidates } from "@/lib/agents/ranker";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export type RunShortlistInput = {
@@ -55,10 +56,17 @@ function buildShortlistReason(priorityScore: number, recencyScore: number, rank:
 }
 
 export async function runShortlist(
-  { jobId, recruiterId, shortlistLimit }: RunShortlistInput,
+  { jobId, recruiterId: _recruiterId, shortlistLimit }: RunShortlistInput,
   deps: ShortlistDependencies = {},
   retryMetadata?: AgentRetryMetadata,
 ): Promise<RunShortlistResult & { agentRunId: string }> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    throw new Error("Current user is required to run shortlist agent");
+  }
+
+  // User identity is derived from auth; recruiterId in payload is ignored.
   const clock = deps.now ?? (() => new Date());
   const { shortlist } = TS_CONFIG;
   const effectiveShortlistLimit = shortlistLimit ?? shortlist.topN;
@@ -66,7 +74,7 @@ export async function runShortlist(
   const [result, agentRunId] = await withAgentRun<RunShortlistResult>(
     {
       agentName: AGENT_KILL_SWITCHES.RANKER,
-      recruiterId,
+      recruiterId: user.id,
       inputSnapshot: { jobId, shortlistLimit: effectiveShortlistLimit },
       sourceType: "agent",
       sourceTag: "shortlist",

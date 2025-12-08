@@ -4,6 +4,7 @@ import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { matchJobToAllCandidates } from "@/lib/matching/batch";
+import { getCurrentUser } from "@/lib/auth";
 
 export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
 
@@ -35,16 +36,23 @@ export async function generateMatchExplanation(match: MatchResult): Promise<Matc
 }
 
 export async function runMatcherAgent(
-  { jobReqId, recruiterId, limit = 200 }: MatcherAgentInput,
+  { jobReqId, recruiterId: _recruiterId, limit = 200 }: MatcherAgentInput,
   deps: MatcherAgentDependencies = {},
   retryMetadata?: AgentRetryMetadata,
 ): Promise<[MatcherAgentResult, string]> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    throw new Error("Current user is required to run matcher agent");
+  }
+
+  // User identity is derived from auth; recruiterId in payload is ignored.
   const explainMatch = deps.explainMatch ?? generateMatchExplanation;
 
   return withAgentRun<MatcherAgentResult>(
     {
       agentName: MATCHER_AGENT_NAME,
-      recruiterId,
+      recruiterId: user.id,
       inputSnapshot: { jobReqId, limit },
       sourceType: "agent",
       sourceTag: "matcher",
@@ -65,10 +73,10 @@ export async function runMatcher(
   input: RunMatcherInput,
   retryMetadata?: AgentRetryMetadata,
 ): Promise<RunMatcherResult> {
-  const { recruiterId, jobId, topN } = input;
+  const { jobId, topN } = input;
 
   const [result, agentRunId] = await runMatcherAgent(
-    { jobReqId: jobId, recruiterId, limit: topN },
+    { jobReqId: jobId, limit: topN },
     {},
     retryMetadata,
   );

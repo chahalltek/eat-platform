@@ -8,10 +8,10 @@ import { AGENT_PROMPTS, resolveAgentPrompt } from '@/lib/agents/promptRegistry';
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
+import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export type RinaInput = {
-  recruiterId?: string;
   rawResumeText: string;
   sourceType?: string;
   sourceTag?: string;
@@ -22,7 +22,14 @@ export async function runRina(
   retryMetadata?: AgentRetryMetadata,
   llmAdapter?: OpenAIAdapter,
 ): Promise<{ candidateId: string; agentRunId: string }> {
-  const { recruiterId, rawResumeText, sourceType, sourceTag } = input;
+  const { rawResumeText, sourceType, sourceTag } = input;
+  const user = await getCurrentUser();
+
+  if (!user) {
+    throw new Error('Current user is required to run RINA agent');
+  }
+
+  // User identity is derived from auth; recruiterId in payload is ignored.
 
   const promptContract = await resolveAgentPrompt(AGENT_PROMPTS.RINA_SYSTEM, {
     version: RINA_PROMPT_VERSION,
@@ -31,7 +38,7 @@ export async function runRina(
   const [result, agentRunId] = await withAgentRun<{ candidateId: string }>(
     {
       agentName: 'EAT-TS.RINA',
-      recruiterId,
+      recruiterId: user.id,
       inputSnapshot: {
         rawResumeText: rawResumeText.slice(0, 4000),
         sourceType,
