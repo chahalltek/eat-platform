@@ -84,7 +84,7 @@ describe("validateConfig", () => {
 
   it("surfaces missing base environment variables", () => {
     expect(() => validateConfig({} as NodeJS.ProcessEnv)).toThrow(
-      /APP_ENV: Invalid option: expected one of "development"\|"staging"\|"production"/,
+      /NODE_ENV: Invalid option: expected one of "development"\|"production"\|"test"; DATABASE_URL: Invalid input: expected string, received undefined/,
     );
   });
 

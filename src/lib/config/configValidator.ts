@@ -4,9 +4,11 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"], {
     required_error: "NODE_ENV must be set",
   }),
-  APP_ENV: z.enum(["development", "staging", "production"], {
-    required_error: "APP_ENV must be set to development, staging, or production",
-  }),
+  APP_ENV: z
+    .enum(["development", "staging", "production"], {
+      required_error: "APP_ENV must be set to development, staging, or production",
+    })
+    .default("development"),
   DATABASE_URL: z
     .string({ required_error: "DATABASE_URL is required" })
     .min(1, "DATABASE_URL is required")
