@@ -12,53 +12,83 @@ type Props = {
 export function JobMatchesView({ jobId, initialData }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunningMatcher, setIsRunningMatcher] = useState(false);
+  const [isRunningExplain, setIsRunningExplain] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function callJobAgent(
+    path: 'matcher' | 'explain',
+    body: Record<string, unknown> = {}
+  ) {
+    const res = await fetch(`/api/jobs/${jobId}/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}));
+      throw new Error(payload.error || `${path} failed with ${res.status}`);
+    }
+  }
 
   async function handleRunMatcher() {
     setError(null);
-    setIsRunning(true);
-
+    setIsRunningMatcher(true);
     try {
-      const res = await fetch(`/api/jobs/${jobId}/matcher`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}), // recruiterId can be inferred/hardcoded in API for now
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Matcher failed with ${res.status}`);
-      }
-
-      // Re-fetch server data
-      startTransition(() => {
-        router.refresh();
-      });
+      await callJobAgent('matcher', {});
+      startTransition(() => router.refresh());
     } catch (e) {
       console.error('Run matcher failed', e);
       setError(
         e instanceof Error ? e.message : 'Failed to run matcher. Please try again.'
       );
     } finally {
-      setIsRunning(false);
+      setIsRunningMatcher(false);
     }
   }
 
-  const isBusy = isRunning || isPending;
+  async function handleRunExplain() {
+    setError(null);
+    setIsRunningExplain(true);
+    try {
+      await callJobAgent('explain', { maxMatches: 20 });
+      startTransition(() => router.refresh());
+    } catch (e) {
+      console.error('Run explain failed', e);
+      setError(
+        e instanceof Error ? e.message : 'Failed to generate explanations.'
+      );
+    } finally {
+      setIsRunningExplain(false);
+    }
+  }
+
+  const busyMatcher = isRunningMatcher || isPending;
+  const busyExplain = isRunningExplain || isPending;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Matches</h1>
-        <button
-          type="button"
-          onClick={handleRunMatcher}
-          disabled={isBusy}
-          className="inline-flex items-center rounded-md border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-        >
-          {isBusy ? 'Running…' : 'Run Matcher'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleRunMatcher}
+            disabled={busyMatcher}
+            className="inline-flex items-center rounded-md border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          >
+            {busyMatcher ? 'Running Matcher…' : 'Run Matcher'}
+          </button>
+          <button
+            type="button"
+            onClick={handleRunExplain}
+            disabled={busyExplain}
+            className="inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 disabled:opacity-60"
+          >
+            {busyExplain ? 'Generating Why…' : 'Run Explain'}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -70,8 +100,8 @@ export function JobMatchesView({ jobId, initialData }: Props) {
       <JobMatchesTable data={initialData} />
 
       <p className="text-xs text-slate-500">
-        This view shows the latest stored matches for this job. Click “Run Matcher”
-        to recompute matches and refresh the table.
+        Run Matcher to recompute candidate matches for this job. Run Explain to
+        generate recruiter-friendly reasons for each match.
       </p>
     </div>
   );
