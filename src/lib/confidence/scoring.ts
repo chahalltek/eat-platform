@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 export type ComputeConfidenceScoreInput = {
 =======
 export type ConfidenceContext = {
@@ -7,10 +8,14 @@ export type ConfidenceContext = {
 =======
 export type ConfidenceScoreInput = {
 >>>>>>> theirs
+=======
+export type ConfidenceContext = {
+>>>>>>> theirs
   jobSkills: string[];
   candidateSkills: string[];
   hasTitle: boolean;
   hasLocation: boolean;
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
   createdAt: Date;
@@ -51,8 +56,14 @@ export function computeConfidenceScore({
 
   return { total, skillOverlap, metadataScore, recencyScore };
 =======
+=======
+>>>>>>> theirs
   createdAt: Date; // candidate createdAt
 };
+
+// Preserve legacy input names used before conflict resolution.
+export type ComputeConfidenceScoreInput = ConfidenceContext;
+export type ConfidenceScoreInput = ConfidenceContext;
 
 export type ConfidenceBreakdown = {
   dataCompleteness: number; // 0–40
@@ -106,7 +117,7 @@ function recencyFactor(createdAt: Date): number {
  * - recency
  */
 export function computeConfidenceScore(
-  ctx: ConfidenceContext
+  ctx: ConfidenceContext,
 ): ConfidenceBreakdown {
   // 1) Data completeness (0–40)
   let completeness = 0;
@@ -137,6 +148,7 @@ export function computeConfidenceScore(
     recency,
     total,
   };
+<<<<<<< ours
 >>>>>>> theirs
 =======
   dataCompleteness: number;
@@ -186,5 +198,7 @@ export function computeConfidenceScore(input: ConfidenceScoreInput): ConfidenceB
     skillCoverage,
     recency,
   };
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 }

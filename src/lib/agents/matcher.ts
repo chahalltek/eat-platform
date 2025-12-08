@@ -2,6 +2,7 @@ import { MatchResult } from "@prisma/client";
 
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
+<<<<<<< ours
 import { matchJobToAllCandidates } from "@/lib/matching/batch";
 <<<<<<< ours
 <<<<<<< ours
@@ -15,6 +16,10 @@ import { computeMatchScore as computeBasicMatchScore } from "@/lib/matching/scor
 import { prisma } from "@/lib/prisma";
 import { computeConfidenceScore } from "../confidence/scoring";
 >>>>>>> theirs
+=======
+import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
+import { matchJobToAllCandidates } from "@/lib/matching/batch";
+>>>>>>> theirs
 
 export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
 
@@ -27,20 +32,16 @@ export type RunMatcherInput = {
 export type RunMatcherResult = {
   jobId: string;
   matches: Array<{
-    id: string;
     candidateId: string;
-<<<<<<< ours
     jobReqId: string;
-    score: number;
-=======
     matchScore: number;
     confidence: number;
     explanationId: string;
->>>>>>> theirs
   }>;
   agentRunId: string;
 };
 
+<<<<<<< ours
 <<<<<<< ours
 export async function runMatcher(
   input: RunMatcherInput,
@@ -166,9 +167,11 @@ type MatcherAgentInput = {
 type MatcherAgentResult = { matches: MatchResult[] };
 type MatcherAgentDependencies = { explainMatch?: typeof generateMatchExplanation };
 
+=======
+>>>>>>> theirs
 export async function runMatcherAgent(
-  { jobReqId, recruiterId, limit = 200 }: MatcherAgentInput,
-  deps: MatcherAgentDependencies = {},
+  { jobReqId, recruiterId, limit = 200 }: { jobReqId: string; recruiterId?: string; limit?: number },
+  deps: { explainMatch?: typeof generateMatchExplanation } = {},
   retryMetadata?: AgentRetryMetadata,
 ): Promise<[MatcherAgentResult, string]> {
   const explainMatch = deps.explainMatch ?? generateMatchExplanation;
@@ -191,8 +194,6 @@ export async function runMatcherAgent(
       return { result: { matches: sortedMatches } };
     },
   );
-<<<<<<< ours
-=======
 }
 
 export async function runMatcher(
@@ -207,15 +208,31 @@ export async function runMatcher(
     retryMetadata,
   );
 
+  const matchesWithConfidence = await Promise.all(
+    result.matches.map(async (match) => {
+      const confidence = await persistCandidateConfidenceScore({ candidateId: match.candidateId });
+
+      return {
+        candidateId: match.candidateId,
+        jobReqId: match.jobReqId,
+        matchScore: match.score,
+        confidence: confidence.score,
+        explanationId: match.id,
+      };
+    }),
+  );
+
   return {
     jobId,
     agentRunId,
-    matches: result.matches.map((match) => ({
-      id: match.id,
-      candidateId: match.candidateId,
-      jobReqId: match.jobReqId,
-      score: match.score,
-    })),
+    matches: matchesWithConfidence,
   };
->>>>>>> theirs
 }
+
+export async function generateMatchExplanation(match: MatchResult): Promise<MatchResult> {
+  // Placeholder for LLM-backed enrichment; kept simple for determinism in tests
+  return match;
+}
+
+type MatcherAgentInput = { jobReqId: string; recruiterId?: string; limit?: number };
+type MatcherAgentResult = { matches: MatchResult[] };
