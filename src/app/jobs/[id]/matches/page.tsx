@@ -58,7 +58,7 @@ export default async function JobMatchesPage({
       candidateId,
       jobId: job.id,
       candidateName: match.candidate.fullName ?? "Unknown",
-      currentTitle: match.candidate.currentTitle ?? match.candidate.role ?? null,
+      currentTitle: match.candidate.currentTitle ?? match.candidate.currentCompany ?? null,
       score: match.score,
       jobCandidateId: jobCandidate?.id,
       jobCandidateStatus: jobCandidate?.status,
