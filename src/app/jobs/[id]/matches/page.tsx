@@ -62,6 +62,14 @@ export default async function JobMatchesPage({
       score: match.score,
       jobCandidateId: jobCandidate?.id,
       jobCandidateStatus: jobCandidate?.status,
+      explanation: match.reasons,
+      skillScore: match.skillScore,
+      seniorityScore: match.seniorityScore,
+      locationScore: match.locationScore,
+      candidateSignalScore: match.candidateSignalScore,
+      candidateSignalBreakdown: match.candidateSignalBreakdown as
+        | MatchRow["candidateSignalBreakdown"]
+        | undefined,
     };
   });
 

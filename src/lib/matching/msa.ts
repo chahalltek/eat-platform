@@ -1,7 +1,7 @@
 import { Candidate, CandidateSkill, JobReq, JobSkill } from '@prisma/client';
 
 import { CandidateSignalResult } from '@/lib/matching/candidateSignals';
-import { MatchExplanation, SkillOverlap } from '@/lib/matching/explanation';
+import { MatchExplanation, SkillOverlap, makeDeterministicExplanation } from '@/lib/matching/explanation';
 import { MATCH_SCORING_WEIGHTS, normalizeWeights } from '@/lib/matching/scoringConfig';
 
 export type MatchContext = {
@@ -184,7 +184,7 @@ export function computeMatchScore(
   const totalPreferredText = `${preferredMatched}/${preferredTotal || 0} preferred skills matched`;
   const riskSummary = riskAreas.length > 0 ? riskAreas.join('; ') : 'No major risks detected.';
 
-  const explanation: MatchExplanation = {
+  const rawExplanation: MatchExplanation = {
     topReasons,
     allReasons: reasons,
     skillOverlapMap,
@@ -197,6 +197,8 @@ export function computeMatchScore(
     ].join(' '),
   };
 
+  const explanation = makeDeterministicExplanation(rawExplanation);
+
   return {
     score,
     jobFreshnessScore,
@@ -205,7 +207,7 @@ export function computeMatchScore(
     locationScore,
     candidateSignalScore,
     candidateSignalBreakdown: candidateSignals?.breakdown,
-    reasons,
+    reasons: explanation.allReasons,
     explanation,
   };
 }

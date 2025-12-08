@@ -66,6 +66,49 @@ export function validateMatchExplanation(payload: unknown): payload is MatchExpl
   return compiledValidator(payload) as boolean;
 }
 
+const compareSkillOverlap = (a: SkillOverlap, b: SkillOverlap) => {
+  if (a.skill.toLowerCase() !== b.skill.toLowerCase()) {
+    return a.skill.toLowerCase().localeCompare(b.skill.toLowerCase());
+  }
+
+  if (a.importance !== b.importance) {
+    return a.importance === "required" ? -1 : 1;
+  }
+
+  if (a.status !== b.status) {
+    return a.status === "matched" ? -1 : 1;
+  }
+
+  return a.weight - b.weight;
+};
+
+export function makeDeterministicExplanation(explanation: MatchExplanation): MatchExplanation {
+  const dedupedReasons = Array.from(new Set(explanation.allReasons));
+  const topReasons = dedupedReasons.slice(0, 5);
+  const riskAreas = Array.from(new Set(explanation.riskAreas)).sort((a, b) => a.localeCompare(b));
+  const skillOverlapMap = [...explanation.skillOverlapMap].sort(compareSkillOverlap);
+
+  const exportableText = [
+    `Top reasons: ${topReasons.join("; ") || "None"}.`,
+    skillOverlapMap.length > 0
+      ? `Skill overlap: ${skillOverlapMap
+          .map((entry) => `${entry.skill} (${entry.importance}) - ${entry.status}`)
+          .join("; ")}.`
+      : "Skill overlap: No additional details recorded.",
+    riskAreas.length > 0 ? `Risk areas: ${riskAreas.join("; ")}.` : "Risk areas: None recorded.",
+    `Overall score: ${explanation.exportableText.match(/Overall score: ([^.]*)/)?.[1] ?? "See details"}.`,
+  ].join(" ");
+
+  return {
+    ...explanation,
+    topReasons,
+    allReasons: dedupedReasons,
+    riskAreas,
+    skillOverlapMap,
+    exportableText,
+  };
+}
+
 function coerceReasons(reasons: string[]): MatchExplanation {
   const topReasons = reasons.slice(0, 5);
   return {
