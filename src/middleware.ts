@@ -1,14 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-<<<<<<< ours
-import { DEFAULT_TENANT_ID, TENANT_HEADER, USER_HEADER } from './lib/auth/config';
-import { getSessionClaims } from './lib/auth/session';
-import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
-import { toRateLimitResponse } from './lib/rateLimiting/http';
-
-const AUTH_EXEMPT_PATHS = ['/api/auth/login', '/api/auth/logout'];
-=======
 import {
   DEFAULT_TENANT_ID,
   DEFAULT_USER_ID,
@@ -19,6 +11,7 @@ import {
   USER_QUERY_PARAM,
 } from './lib/auth/config';
 import { isAdminRole, normalizeRole, USER_ROLES, type UserRole } from './lib/auth/roles';
+import { getSessionClaims } from './lib/auth/session';
 import { prisma } from './lib/prisma';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from './lib/rateLimiting/http';
@@ -34,29 +27,18 @@ const RECRUITER_ROLES = new Set<UserRole>([
   USER_ROLES.SALES,
   USER_ROLES.SYSTEM_ADMIN,
 ]);
->>>>>>> theirs
 
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   const session = getSessionClaims(request);
+  const searchParams = request.nextUrl.searchParams;
 
-<<<<<<< ours
-  if (session) {
-    requestHeaders.set(USER_HEADER, session.userId);
-    requestHeaders.set(TENANT_HEADER, session.tenantId ?? DEFAULT_TENANT_ID);
-  }
-
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api');
-  const isAuthRoute = AUTH_EXEMPT_PATHS.includes(request.nextUrl.pathname);
-
-  if (isApiRoute && !isAuthRoute) {
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-=======
   if (PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path))) {
     return NextResponse.next();
   }
+
+  const queryUserId = searchParams.get(USER_QUERY_PARAM)?.trim();
+  const resolvedUserId = queryUserId || session?.userId || DEFAULT_USER_ID;
 
   const user = await prisma.user.findUnique({
     where: { id: resolvedUserId },
@@ -68,9 +50,9 @@ export async function middleware(request: NextRequest) {
   }
 
   const queryTenantId = searchParams.get(TENANT_QUERY_PARAM)?.trim();
-  const resolvedTenantId = queryTenantId || user.tenantId || DEFAULT_TENANT_ID;
+  const resolvedTenantId = queryTenantId || user.tenantId || session?.tenantId || DEFAULT_TENANT_ID;
 
-  const normalizedRole = normalizeRole(user.role);
+  const normalizedRole = normalizeRole(user.role ?? session?.role);
 
   if (!normalizedRole) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -92,16 +74,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const requestHeaders = new Headers(request.headers);
   requestHeaders.set(USER_HEADER, user.id);
   requestHeaders.set(TENANT_HEADER, resolvedTenantId);
   requestHeaders.set(ROLE_HEADER, normalizedRole);
->>>>>>> theirs
 
+  if (requestPath.startsWith('/api')) {
     try {
       await consumeRateLimit({
-        tenantId: session.tenantId ?? DEFAULT_TENANT_ID,
-        userId: session.userId,
+        tenantId: resolvedTenantId,
+        userId: resolvedUserId,
         action: RATE_LIMIT_ACTIONS.API,
       });
     } catch (error) {
