@@ -77,7 +77,8 @@ export function createStatusBadgeColumn<TData, TKey extends TableAccessorKey<TDa
     accessorKey,
     header,
     enableSorting: sortable,
-    cell: ({ getValue }) => renderStatusBadge(getValue(), formatLabel, getVariant),
+    cell: ({ getValue }) =>
+      renderStatusBadge<TData[TKey]>(getValue() as TData[TKey], formatLabel, getVariant),
   } satisfies EATTableColumn<TData, TData[TKey]>;
 }
 
