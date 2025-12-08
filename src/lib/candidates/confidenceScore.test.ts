@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { computeCandidateConfidenceScore } from "./confidenceScore";
 
-const baseCandidate = {
+type CandidateInput = Parameters<typeof computeCandidateConfidenceScore>[0]["candidate"];
+
+const baseCandidate: CandidateInput = {
   id: "cand_123",
   fullName: "A Candidate",
   createdAt: new Date("2025-01-01T00:00:00Z"),
@@ -25,7 +27,7 @@ const baseCandidate = {
 
 describe("computeCandidateConfidenceScore", () => {
   it("calculates weighted confidence score and breakdown", () => {
-    const result = computeCandidateConfidenceScore({ candidate: baseCandidate as any });
+    const result = computeCandidateConfidenceScore({ candidate: baseCandidate });
 
     expect(result.score).toBe(92);
     expect(result.breakdown.sourceQuality.score).toBeGreaterThan(0);
@@ -41,7 +43,7 @@ describe("computeCandidateConfidenceScore", () => {
         rawResumeText: "",
         summary: "",
         skills: [],
-      } as any,
+      },
       weights: { sourceQuality: 0, agentConsistency: 0, resumeCompleteness: 0 },
     });
 

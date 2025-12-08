@@ -11,6 +11,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "predeploy": "node scripts/deployment-health.js",
     "seed": "ts-node prisma/seed.ts",
     "prisma:guard": "node scripts/db-safety.js"
   },

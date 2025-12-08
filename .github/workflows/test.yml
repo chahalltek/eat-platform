@@ -26,3 +26,9 @@ jobs:
 
       - name: Run tests with coverage thresholds
         run: npm run test:coverage
+
+      - name: Run deployment health gates
+        run: npm run predeploy
+
+      - name: Run build to mirror production
+        run: npm run build
