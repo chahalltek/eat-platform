@@ -1,0 +1,42 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Outreach automation agent (OAA) > renders email and SMS content from templates and match insight > email and SMS drafts are templated using match insights :: snapshot 1`] = `
+{
+  "agentRunId": "agent-run-oaa",
+  "disposition": "EMAIL_READY | SMS_READY",
+  "email": {
+    "body": "Hi Sam Candidate,
+
+I’m Jordan Recruiter from Strategic Systems. I reviewed your background and believe you’d be a strong fit for our Lead Backend Engineer role with Globex. Your Node.js leadership fits the role focus on backend services.
+
+If you’re interested, could we schedule a quick 15-minute intro call this week?
+
+If you prefer not to receive updates, reply STOP or let me know.",
+    "subject": "Opportunity: Lead Backend Engineer @ Globex",
+  },
+  "sms": {
+    "body": "Hi Sam Candidate, this is Jordan Recruiter with Strategic Systems about a Lead Backend Engineer role at Globex. Your Node.js leadership fits the role focus on backend services. could we schedule a quick 15-minute intro call this week? If you prefer not to receive updates, reply STOP or let me know.",
+  },
+}
+`;
+
+exports[`Outreach automation agent (OAA) > snapshots the default templates and prompt version for coverage 1`] = `
+{
+  "templates": {
+    "email": {
+      "body": "Hi {{candidateName}},
+
+I’m {{recruiterName}} from Strategic Systems. I reviewed your background and believe you’d be a strong fit for our {{roleTitle}} role with {{companyName}}. {{matchReason}}
+
+If you’re interested, {{nextStep}}
+
+{{optOutLine}}",
+      "subject": "Opportunity: {{roleTitle}} @ {{companyName}}",
+    },
+    "sms": {
+      "body": "Hi {{candidateName}}, this is {{recruiterName}} with Strategic Systems about a {{roleTitle}} role at {{companyName}}. {{matchReason}} {{nextStep}} {{optOutLine}}",
+    },
+  },
+  "version": "v1.0.0",
+}
+`;
