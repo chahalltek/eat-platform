@@ -17,11 +17,11 @@ export type JobMatchRow = {
   explanationSummary: string;
 };
 
-type Props = {
+export type JobMatchesTableProps = {
   data: JobMatchRow[];
 };
 
-export function JobMatchesTable({ data }: Props) {
+export function JobMatchesTable({ data }: JobMatchesTableProps) {
   const columns = useMemo<ColumnDef<JobMatchRow>[]>(
     () => [
       {
