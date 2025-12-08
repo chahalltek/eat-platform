@@ -70,12 +70,25 @@ export function JobMatchesView({ jobId, initialData }: Props) {
     setError(null);
     setIsRunningShortlist(true);
     try {
+<<<<<<< ours
       await callJobAgent('shortlist');
+=======
+      await callJobAgent('shortlist', {
+        // thresholds are tunable later:
+        minMatchScore: 60,
+        minConfidence: 50,
+        maxShortlisted: 5,
+      });
+>>>>>>> theirs
       startTransition(() => router.refresh());
     } catch (e) {
       console.error('Run shortlist failed', e);
       setError(
+<<<<<<< ours
         e instanceof Error ? e.message : 'Failed to run shortlist. Please try again.'
+=======
+        e instanceof Error ? e.message : 'Failed to generate shortlist.'
+>>>>>>> theirs
       );
     } finally {
       setIsRunningShortlist(false);
@@ -86,7 +99,11 @@ export function JobMatchesView({ jobId, initialData }: Props) {
   const busyExplain = isRunningExplain || isPending;
   const busyShortlist = isRunningShortlist || isPending;
 
+<<<<<<< ours
   const visibleData = useMemo(
+=======
+  const displayData = useMemo(
+>>>>>>> theirs
     () =>
       showShortlistedOnly
         ? initialData.filter((row) => row.shortlisted)
@@ -97,8 +114,22 @@ export function JobMatchesView({ jobId, initialData }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Matches</h1>
-        <div className="flex gap-2">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold">Matches</h1>
+          <div className="flex items-center gap-2 text-xs text-slate-600">
+            <label className="inline-flex items-center gap-1">
+              <input
+                type="checkbox"
+                className="h-3 w-3 rounded border-slate-300"
+                checked={showShortlistedOnly}
+                onChange={(e) => setShowShortlistedOnly(e.target.checked)}
+              />
+              <span>Show shortlisted only</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handleRunMatcher}
@@ -107,6 +138,7 @@ export function JobMatchesView({ jobId, initialData }: Props) {
           >
             {busyMatcher ? 'Running Matcher…' : 'Run Matcher'}
           </button>
+
           <button
             type="button"
             onClick={handleRunExplain}
@@ -115,13 +147,23 @@ export function JobMatchesView({ jobId, initialData }: Props) {
           >
             {busyExplain ? 'Generating Why…' : 'Run Explain'}
           </button>
+<<<<<<< ours
+=======
+
+>>>>>>> theirs
           <button
             type="button"
             onClick={handleRunShortlist}
             disabled={busyShortlist}
+<<<<<<< ours
             className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-900 disabled:opacity-60"
           >
             {busyShortlist ? 'Running Shortlist…' : 'Run Shortlist'}
+=======
+            className="inline-flex items-center rounded-md border border-emerald-300 bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          >
+            {busyShortlist ? 'Shortlisting…' : 'Run Shortlist'}
+>>>>>>> theirs
           </button>
         </div>
       </div>
@@ -144,11 +186,16 @@ export function JobMatchesView({ jobId, initialData }: Props) {
         </div>
       )}
 
+<<<<<<< ours
       <JobMatchesTable data={visibleData} />
+=======
+      <JobMatchesTable data={displayData} />
+>>>>>>> theirs
 
       <p className="text-xs text-slate-500">
-        Run Matcher to recompute candidate matches for this job. Run Explain to
-        generate recruiter-friendly reasons for each match.
+        Run Matcher to recompute candidate matches. Run Explain to generate
+        recruiter-friendly reasons. Run Shortlist to mark the best candidates for
+        submit based on match and confidence.
       </p>
     </div>
   );
