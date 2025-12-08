@@ -1,12 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-<<<<<<< ours
-import clsx from "clsx";
-import { flexRender, type FilterFn } from "@tanstack/react-table";
-=======
 import type { FilterFn } from "@tanstack/react-table";
->>>>>>> theirs
 
 import { StandardTable } from "@/components/table/StandardTable";
 import { TableFilterDropdown, type TableFilterOption } from "@/components/table/TableFilterDropdown";
@@ -17,10 +12,6 @@ import {
   createStatusBadgeColumn,
   createTextColumn,
 } from "@/components/table/tableTypes";
-<<<<<<< ours
-import { getTableCellClasses, getTableClassNames, getTableRowClasses } from "@/components/table/tableStyles";
-=======
->>>>>>> theirs
 import type { AgentRunStatusValue, SerializableLog } from "./types";
 
 export type AgentRunLogTableRow = SerializableLog;
@@ -151,7 +142,9 @@ export function AgentRunLogsTable({
             <TableSearchInput table={table} placeholder="Search runs" label="Search" className="w-full md:w-72" />
             <TableFilterDropdown table={table} columnId="agentName" label="Agent" options={agentOptions} />
             <TableFilterDropdown table={table} columnId="status" label="Status" options={STATUS_FILTER_OPTIONS} />
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{table.getRowModel().rows.length} results</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {table.getRowModel().rows.length} results
+            </p>
           </>
         )}
         emptyState={<p className="py-4 text-center text-sm text-slate-600">No runs match the selected filters.</p>}
