@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-<<<<<<< ours
-import { DEFAULT_USER_ID, USER_HEADER, USER_QUERY_PARAM } from './lib/auth/config';
-import { consumeRateLimit, isRateLimitError } from './lib/rateLimiting/rateLimiter';
-import { toRateLimitResponse } from './lib/rateLimiting/http';
-=======
 import {
   DEFAULT_TENANT_ID,
   DEFAULT_USER_ID,
@@ -14,7 +9,8 @@ import {
   USER_HEADER,
   USER_QUERY_PARAM,
 } from './lib/auth/config';
->>>>>>> theirs
+import { consumeRateLimit, isRateLimitError } from './lib/rateLimiting/rateLimiter';
+import { toRateLimitResponse } from './lib/rateLimiting/http';
 
 export function middleware(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
