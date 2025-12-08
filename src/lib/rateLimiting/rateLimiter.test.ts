@@ -136,6 +136,30 @@ describe('RateLimiter', () => {
     expect(getTenantPlan).toHaveBeenCalledWith('tenant-global');
   });
 
+  it('avoids plan resolution in edge runtime', async () => {
+    vi.resetModules();
+    (globalThis as unknown as { EdgeRuntime?: string }).EdgeRuntime = 'edge';
+    (globalThis as { __EAT_RATE_LIMITER?: unknown }).__EAT_RATE_LIMITER = undefined;
+
+    const rateLimiterModule = await import('./rateLimiter');
+    const subscriptionsModule = await import('@/lib/subscriptionPlans');
+
+    subscriptionsModule.getTenantPlan.mockClear();
+
+    await rateLimiterModule.consumeRateLimit({
+      tenantId: 'edge-tenant',
+      userId: 'edge-user',
+      action: RATE_LIMIT_ACTIONS.API,
+    });
+
+    rateLimiterModule.resetRateLimiter();
+
+    expect(subscriptionsModule.getTenantPlan).not.toHaveBeenCalled();
+
+    delete (globalThis as { EdgeRuntime?: string }).EdgeRuntime;
+    vi.resetModules();
+  });
+
   it('parses string based plan overrides', async () => {
     const limiter = new RateLimiter(
       DEFAULT_CONFIG,

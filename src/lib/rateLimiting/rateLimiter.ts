@@ -295,15 +295,23 @@ function toNumber(value: unknown) {
   return undefined;
 }
 
+function isEdgeRuntime() {
+  if (typeof globalThis !== 'undefined' && 'EdgeRuntime' in globalThis) {
+    return true;
+  }
+
+  return typeof process !== 'undefined' && process.env?.NEXT_RUNTIME === 'edge';
+}
+
 const globalRateLimiter = (() => {
   const globalObj = globalThis as typeof globalThis & {
     __EAT_RATE_LIMITER?: RateLimiter;
   };
 
   if (!globalObj.__EAT_RATE_LIMITER) {
-    const isEdgeRuntime = typeof process !== 'undefined' && process.env.NEXT_RUNTIME === 'edge';
-    const planResolver = isEdgeRuntime ? async () => null : defaultPlanResolver;
-    const securityLogger = isEdgeRuntime ? () => {} : defaultSecurityLogger;
+    const edgeRuntime = isEdgeRuntime();
+    const planResolver = edgeRuntime ? async () => null : defaultPlanResolver;
+    const securityLogger = edgeRuntime ? () => {} : defaultSecurityLogger;
 
     globalObj.__EAT_RATE_LIMITER = new RateLimiter(DEFAULT_CONFIG, planResolver, securityLogger);
   }
