@@ -58,7 +58,7 @@ export async function withAgentRunLog<T>({
     await prisma.agentRunLog.update({
       where: { id: runLog.id },
       data: {
-        status: AgentRunStatus.ERROR,
+        status: AgentRunStatus.FAILED,
         errorMessage,
         durationMs,
         finishedAt: new Date(),
