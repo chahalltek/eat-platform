@@ -13,6 +13,16 @@ vi.mock("@/lib/agents/killSwitch", () => ({
   AGENT_KILL_SWITCHES: { MATCHER: "EAT-TS.MATCHER" },
 }));
 
+vi.mock("@/lib/auth/user", () => ({
+  getCurrentUser: vi.fn().mockResolvedValue({
+    id: "test-user",
+    email: null,
+    displayName: null,
+    role: null,
+    tenantId: "tenant",
+  }),
+}));
+
 vi.mock("@/lib/subscription/usageLimits", () => ({
   assertTenantWithinLimits: vi.fn(),
 }));

@@ -1,5 +1,6 @@
 import { prisma } from '../prisma';
 import { callLLM } from '../llm';
+import { createAgentRunLog } from './agentRunLog';
 
 export type RunExplainInput = {
   recruiterId: string;
@@ -81,14 +82,11 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
   const toProcess = matchesNeedingExplain.slice(0, maxMatches);
   const runInput = { jobId, toProcess: toProcess.length };
 
-  const agentRun = await prisma.agentRunLog.create({
-    data: {
-      agentName: 'EAT-TS.EXPLAIN',
-      userId: recruiterId ?? null,
-      input: runInput,
-      inputSnapshot: runInput,
-      status: 'RUNNING',
-    },
+  const agentRun = await createAgentRunLog(prisma, {
+    agentName: 'EAT-TS.EXPLAIN',
+    input: runInput,
+    inputSnapshot: runInput,
+    status: 'RUNNING',
   });
 
   let processedCount = 0;

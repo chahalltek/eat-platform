@@ -2,6 +2,7 @@
 import { Prisma } from '@prisma/client';
 
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
+import { createAgentRunLog } from '@/lib/agents/agentRunLog';
 import { assertAgentKillSwitchDisarmed, type AgentName } from '@/lib/agents/killSwitch';
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from '@/lib/killSwitch';
 import { prisma } from '@/lib/prisma';
@@ -65,20 +66,17 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 
   await assertTenantWithinLimits(tenantId, 'createAgentRun');
 
-  const agentRun = await prisma.agentRunLog.create({
-    data: {
-      agentName,
-      tenantId,
-      userId: user?.id,
-      sourceType: sourceType ?? null,
-      sourceTag: sourceTag ?? null,
-      input: inputSnapshot,
-      inputSnapshot,
-      status: 'RUNNING',
-      startedAt,
-      retryCount: retryCount ?? 0,
-      retryOfId: retryOfId ?? null,
-    },
+  const agentRun = await createAgentRunLog(prisma, {
+    agentName,
+    tenantId,
+    sourceType: sourceType ?? null,
+    sourceTag: sourceTag ?? null,
+    input: inputSnapshot,
+    inputSnapshot,
+    status: 'RUNNING',
+    startedAt,
+    retryCount: retryCount ?? 0,
+    retryOfId: retryOfId ?? null,
   });
 
   try {
