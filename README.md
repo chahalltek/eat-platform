@@ -4,7 +4,7 @@ This project is a [Next.js](https://nextjs.org) application with CI guardrails b
 
 The CI workflow enforces our enterprise DoD. A build will fail when any of the following protections do not pass:
 
-- **Coverage must stay at 100%.** `vitest` thresholds are pinned to 100% across statements/branches/functions/lines. Run `npm run test:coverage` locally to verify before opening a PR.
+- **Coverage must stay at 100%.** `vitest` thresholds are pinned to 100% across statements/branches/functions/lines. Run `npm test` (or `npm run coverage`) locally to verify before opening a PR.
 - **No TODO/FIXME markers in protected domains.** Auth, billing, and tenant code (`src/lib/auth/**`, `src/lib/billing/**`, `src/lib/tenant/**`) are scanned via `npm run ci:todo-scan`.
 - **Configuration validation for the target environment.** `npm run ci:config-validate` exercises `src/lib/config/configValidator` with production-like variables to ensure required secrets and flags are present.
 - **Deployment health gates.** `npm run predeploy` remains part of the pipeline to mirror production deploy checks.
@@ -25,7 +25,7 @@ TENANT_MODE=multi \
 npm run ci:config-validate
 
 npm run ci:todo-scan
-npm run test:coverage
+npm test
 npm run predeploy
 ```
 

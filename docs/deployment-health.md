@@ -10,7 +10,7 @@ To fail before production does, deployments now run an explicit set of health ga
 Run the gate locally with:
 
 ```bash
-npm run test:coverage
+npm test
 npm run predeploy
 ```
 

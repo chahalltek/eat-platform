@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports */
 const fs = require("fs");
 const path = require("path");
-const DEFAULT_PIPELINE_COMMANDS = ["npm run lint", "npm run test:coverage", "npm run build"];
-const DEFAULT_COVERAGE_THRESHOLD = 95;
+const DEFAULT_PIPELINE_COMMANDS = ["npm run lint", "npm test", "npm run build"];
+const DEFAULT_COVERAGE_THRESHOLD = 100;
 const DEFAULT_MAX_COVERAGE_AGE_HOURS = 24;
 
 function fail(message) {

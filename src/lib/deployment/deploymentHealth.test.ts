@@ -66,7 +66,7 @@ describe("deployment health gates", () => {
     const workflowPath = writeWorkflow(["npm run lint"]);
 
     expect(() => checkPipelineCompleteness(workflowPath)).toThrow(
-      /missing required steps: npm run test:coverage, npm run build/,
+      /missing required steps: npm test, npm run build/,
     );
   });
 
