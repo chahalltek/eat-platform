@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { prismaAdmin } from "@/lib/prismaAdmin";
+import { runTenantRetentionJob } from "@/lib/retention";
 
 export type CronJobResult = {
   message: string;
@@ -34,5 +36,10 @@ export const cronJobs: Record<string, CronJob> = {
         },
       };
     },
+  },
+  "tenant-data-retention": {
+    name: "tenant-data-retention",
+    description: "Applies tenant-level data retention and deletion rules.",
+    run: () => runTenantRetentionJob(prismaAdmin),
   },
 };

@@ -7,6 +7,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum TenantDeletionMode {
+  SOFT_DELETE
+  HARD_DELETE
+}
+
 enum AgentRunStatus {
   RUNNING
   SUCCESS
@@ -57,10 +62,12 @@ model UserIdentity {
 }
 
 model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  status    String   @default("active")
-  createdAt DateTime @default(now())
+  id                String             @id @default(cuid())
+  name              String
+  status            String             @default("active")
+  dataRetentionDays Int?
+  deletionMode      TenantDeletionMode @default(SOFT_DELETE)
+  createdAt         DateTime           @default(now())
 
   users         User[]
   subscriptions TenantSubscription[]
@@ -91,6 +98,7 @@ model TenantSubscription {
   @@index([tenantId])
   @@index([tenantId, startAt])
 <<<<<<< ours
+<<<<<<< ours
 =======
 }
 
@@ -105,6 +113,8 @@ model SecurityEventLog {
 
   @@index([tenantId])
   @@index([tenantId, eventType])
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 }
 
@@ -154,6 +164,7 @@ model Candidate {
   status               String? // "Active", "Placed", etc.
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+  deletedAt            DateTime?
 
   skills               CandidateSkill[]
   matches              Match[]
@@ -162,6 +173,7 @@ model Candidate {
   outreachInteractions OutreachInteraction[]
 
   @@index([tenantId])
+  @@index([tenantId, deletedAt])
 }
 
 model CandidateSkill {
@@ -252,10 +264,12 @@ model Match {
   status         String? // "Suggested", "Shortlisted", "Submitted", "Rejected"
   createdAt      DateTime  @default(now())
   createdByAgent String?
+  deletedAt      DateTime?
 
   @@index([tenantId])
   @@index([tenantId, jobReqId])
   @@index([tenantId, candidateId])
+  @@index([tenantId, deletedAt])
 }
 
 model MatchResult {
@@ -273,6 +287,7 @@ model MatchResult {
   score     Int
   reasons   Json?
   createdAt DateTime @default(now())
+  deletedAt DateTime?
 
   skillScore               Int?
   seniorityScore           Int?
@@ -290,6 +305,7 @@ model MatchResult {
   @@index([tenantId, jobReqId])
   @@index([tenantId, agentRunId])
   @@index([tenantId, jobCandidateId])
+  @@index([tenantId, deletedAt])
 }
 
 model AgentRunLog {
@@ -312,6 +328,7 @@ model AgentRunLog {
   startedAt        DateTime       @default(now())
   finishedAt       DateTime?
   retryCount       Int            @default(0)
+  deletedAt        DateTime?
 
   retryOf   AgentRunLog?  @relation("AgentRunRetry", fields: [retryOfId], references: [id])
   retryOfId String?
@@ -323,6 +340,7 @@ model AgentRunLog {
   @@index([tenantId])
   @@index([tenantId, agentName])
   @@index([tenantId, retryOfId])
+  @@index([tenantId, deletedAt])
 }
 
 model OutreachInteraction {
