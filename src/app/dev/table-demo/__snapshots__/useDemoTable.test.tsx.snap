@@ -1,0 +1,12 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`useDemoTable > matches the initial dataset snapshot 1`] = `
+[
+  "Alex Rivera",
+  "Priya Desai",
+  "Jordan Smith",
+  "Taylor Brooks",
+  "Chen Wei",
+  "Samira Khan",
+]
+`;
