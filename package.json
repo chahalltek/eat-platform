@@ -20,7 +20,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^5.19.0",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^0.0.1-alpha.0",
     "ajv": "^8.17.1",
     "clsx": "^2.1.1",
     "jszip": "^3.10.1",
@@ -45,8 +45,8 @@
     "jsdom": "^27.3.0",
     "prisma": "^5.19.0",
     "tailwindcss": "^4",
-    "tsx": "^4.19.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^4.0.15"
   }
