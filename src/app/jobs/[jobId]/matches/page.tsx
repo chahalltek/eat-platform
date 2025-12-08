@@ -41,6 +41,7 @@ async function getMatches(jobId: string): Promise<JobMatchRow[]> {
       confidence: m.confidence,
       explanationSummary: explanation.summary ?? "(no explanation summary)",
       confidenceDetails,
+      shortlisted: m.shortlisted,
     };
   });
 }
