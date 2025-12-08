@@ -97,9 +97,6 @@ model TenantSubscription {
 
   @@index([tenantId])
   @@index([tenantId, startAt])
-<<<<<<< ours
-<<<<<<< ours
-=======
 }
 
 model SecurityEventLog {
@@ -113,9 +110,6 @@ model SecurityEventLog {
 
   @@index([tenantId])
   @@index([tenantId, eventType])
->>>>>>> theirs
-=======
->>>>>>> theirs
 }
 
 model FeatureFlag {
