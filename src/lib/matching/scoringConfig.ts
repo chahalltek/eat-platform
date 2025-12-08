@@ -12,9 +12,10 @@ export type CandidateSignalWeights = {
 };
 
 export type CandidateConfidenceWeights = {
-  sourceQuality: number;
-  agentConsistency: number;
   resumeCompleteness: number;
+  skillCoverage: number;
+  agentAgreement: number;
+  unknownFields: number;
 };
 
 export const MATCH_SCORING_WEIGHTS: MatchScoringWeights = {
@@ -31,9 +32,10 @@ export const CANDIDATE_SIGNAL_WEIGHTS: CandidateSignalWeights = {
 };
 
 export const CANDIDATE_CONFIDENCE_WEIGHTS: CandidateConfidenceWeights = {
-  sourceQuality: 0.4,
-  agentConsistency: 0.35,
-  resumeCompleteness: 0.25,
+  resumeCompleteness: 0.35,
+  skillCoverage: 0.25,
+  agentAgreement: 0.25,
+  unknownFields: 0.15,
 };
 
 export function normalizeWeights<T extends Record<string, number>>(weights: T): T {

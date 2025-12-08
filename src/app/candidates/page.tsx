@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 
+import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { prisma } from "@/lib/prisma";
 import { CandidateTable, type CandidateRow } from "./CandidateTable";
 
@@ -18,16 +19,38 @@ export default async function CandidatesPage() {
         location: true,
         status: true,
         parsingConfidence: true,
+        summary: true,
+        rawResumeText: true,
+        email: true,
+        phone: true,
+        sourceType: true,
+        sourceTag: true,
         updatedAt: true,
+        skills: {
+          select: {
+            id: true,
+            name: true,
+            proficiency: true,
+            yearsOfExperience: true,
+          },
+        },
       },
       orderBy: { updatedAt: "desc" },
       take: 200,
     });
 
-    rows = candidates.map((candidate) => ({
-      ...candidate,
-      updatedAt: candidate.updatedAt.toISOString(),
-    }));
+    rows = candidates.map((candidate) => {
+      const confidence = computeCandidateConfidenceScore({ candidate });
+
+      return {
+        id: candidate.id,
+        fullName: candidate.fullName,
+        currentTitle: candidate.currentTitle,
+        location: candidate.location,
+        confidenceScore: confidence.score,
+        updatedAt: candidate.updatedAt.toISOString(),
+      } satisfies CandidateRow;
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
       errorMessage = "Candidates are temporarily unavailable while the database is being updated.";

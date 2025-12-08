@@ -22,16 +22,19 @@ const baseCandidate: CandidateInput = {
   sourceTag: null,
   parsingConfidence: 0.82,
   status: null,
-  skills: [{ id: "skill-1" }],
+  skills: [
+    { id: "skill-1", name: "TypeScript", proficiency: "High", yearsOfExperience: 5 },
+  ],
 };
 
 describe("computeCandidateConfidenceScore", () => {
   it("calculates weighted confidence score and breakdown", () => {
     const result = computeCandidateConfidenceScore({ candidate: baseCandidate });
 
-    expect(result.score).toBe(92);
-    expect(result.breakdown.sourceQuality.score).toBeGreaterThan(0);
+    expect(result.score).toBe(80);
     expect(result.breakdown.resumeCompleteness.completedFields).toBeGreaterThan(0);
+    expect(result.breakdown.skillCoverage.recordedSkills).toBeGreaterThan(0);
+    expect(result.breakdown.unknownFields.score).toBe(100);
   });
 
   it("normalizes weights safely when all weights are zero", () => {
@@ -44,7 +47,7 @@ describe("computeCandidateConfidenceScore", () => {
         summary: "",
         skills: [],
       },
-      weights: { sourceQuality: 0, agentConsistency: 0, resumeCompleteness: 0 },
+      weights: { resumeCompleteness: 0, skillCoverage: 0, agentAgreement: 0, unknownFields: 0 },
     });
 
     expect(result.score).toBeGreaterThanOrEqual(0);

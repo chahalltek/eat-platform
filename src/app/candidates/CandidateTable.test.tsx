@@ -13,8 +13,12 @@ const candidates: CandidateRow[] = [
     fullName: "Alice Doe",
     currentTitle: "Frontend Engineer",
     location: "New York, NY",
+<<<<<<< ours
     status: "Active",
     parsingConfidence: 0.82,
+=======
+    confidenceScore: 82,
+>>>>>>> theirs
     updatedAt: "2024-05-01T12:00:00.000Z",
   },
   {
@@ -22,8 +26,12 @@ const candidates: CandidateRow[] = [
     fullName: "Bob Smith",
     currentTitle: null,
     location: "Remote",
+<<<<<<< ours
     status: "Active",
     parsingConfidence: 0.61,
+=======
+    confidenceScore: 61,
+>>>>>>> theirs
     updatedAt: "2024-05-03T12:00:00.000Z",
   },
   {
@@ -31,8 +39,12 @@ const candidates: CandidateRow[] = [
     fullName: "Carol Lee",
     currentTitle: "Product Manager",
     location: null,
+<<<<<<< ours
     status: "Placed",
     parsingConfidence: 0.95,
+=======
+    confidenceScore: 95,
+>>>>>>> theirs
     updatedAt: "2024-04-25T12:00:00.000Z",
   },
   {
@@ -40,8 +52,12 @@ const candidates: CandidateRow[] = [
     fullName: "Dana Null",
     currentTitle: "Quality Analyst",
     location: "Chicago, IL",
+<<<<<<< ours
     status: null,
     parsingConfidence: null,
+=======
+    confidenceScore: 55,
+>>>>>>> theirs
     updatedAt: "2024-05-04T12:00:00.000Z",
   },
 ];
@@ -67,7 +83,7 @@ describe("CandidateTable", () => {
     const rows = screen.getAllByRole("row");
     expect(rows).toHaveLength(candidates.length + 1);
     expect(screen.getAllByText("Frontend Engineer")).toHaveLength(2);
-    expect(screen.getAllByText("—")).toHaveLength(3);
+    expect(screen.getAllByText("—")).toHaveLength(2);
   });
 
   it("sorts by confidence score when the header is clicked", async () => {

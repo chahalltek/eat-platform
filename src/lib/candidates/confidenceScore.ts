@@ -7,7 +7,7 @@ import {
 } from "@/lib/matching/scoringConfig";
 
 type CandidateProfile = Candidate & {
-  skills?: Array<Pick<CandidateSkill, "id">>;
+  skills?: Array<Pick<CandidateSkill, "id" | "name" | "proficiency" | "yearsOfExperience">>;
 };
 
 type ScoreResult = { score: number; reason: string };
@@ -18,10 +18,20 @@ type ResumeCompletenessResult = ScoreResult & {
   missingFields: string[];
 };
 
+type SkillCoverageResult = ScoreResult & {
+  recordedSkills: number;
+  skillsWithDepth: number;
+};
+
+type UnknownFieldsResult = ScoreResult & {
+  unknownFieldLabels: string[];
+};
+
 type CandidateConfidenceBreakdown = {
-  sourceQuality: ScoreResult;
-  agentConsistency: ScoreResult;
   resumeCompleteness: ResumeCompletenessResult;
+  skillCoverage: SkillCoverageResult;
+  agentAgreement: ScoreResult;
+  unknownFields: UnknownFieldsResult;
 };
 
 export type CandidateConfidenceResult = {
@@ -31,46 +41,19 @@ export type CandidateConfidenceResult = {
 
 const clampScore = (score: number) => Math.max(0, Math.min(100, Math.round(score)));
 
-function normalizeSourceValue(value?: string | null) {
-  return value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_") ?? "";
-}
-
-function scoreSourceQuality(candidate: CandidateProfile): ScoreResult {
-  const sourceKey = normalizeSourceValue(candidate.sourceTag) || normalizeSourceValue(candidate.sourceType);
-
-  const SOURCE_SCORES: Record<string, number> = {
-    referral: 95,
-    internal: 90,
-    inbound: 85,
-    sourced: 75,
-    outbound: 75,
-    job_board: 70,
-    agency: 65,
-  };
-
-  const score = clampScore(sourceKey ? SOURCE_SCORES[sourceKey] ?? 65 : 55);
-
-  const label = sourceKey || "unspecified source";
-  const reason = sourceKey
-    ? `Source quality derived from ${label.replace(/_/g, " ")}.`
-    : "No source recorded; using conservative baseline.";
-
-  return { score, reason };
-}
-
-function scoreAgentConsistency(candidate: CandidateProfile): ScoreResult {
+function scoreAgentAgreement(candidate: CandidateProfile): ScoreResult {
   if (typeof candidate.parsingConfidence === "number") {
     const normalized = Math.max(0, Math.min(1, candidate.parsingConfidence));
     const score = clampScore(normalized * 100);
     return {
       score,
-      reason: `Parsing confidence at ${(normalized * 100).toFixed(0)}% reflects agent consistency.`,
+      reason: `Agent parsing confidence at ${(normalized * 100).toFixed(0)}% indicates agreement across runs.`,
     };
   }
 
   return {
-    score: 55,
-    reason: "No parsing confidence available; defaulting to neutral consistency.",
+    score: 60,
+    reason: "No parsing confidence available; using neutral agent agreement.",
   };
 }
 
@@ -112,6 +95,58 @@ function scoreResumeCompleteness(candidate: CandidateProfile): ResumeCompletenes
   };
 }
 
+function scoreSkillCoverage(candidate: CandidateProfile): SkillCoverageResult {
+  const skills = candidate.skills ?? [];
+  const recordedSkills = skills.length;
+  const skillsWithDepth = skills.filter((skill) => skill.proficiency || typeof skill.yearsOfExperience === "number").length;
+
+  if (recordedSkills === 0) {
+    return {
+      score: 30,
+      recordedSkills,
+      skillsWithDepth,
+      reason: "No skills recorded; confidence relies on other signals.",
+    };
+  }
+
+  const coveragePortion = Math.min(recordedSkills, 8) / 8; // encourage a healthy breadth without over-weighting extremes
+  const depthPortion = skillsWithDepth / recordedSkills;
+
+  const score = clampScore(coveragePortion * 70 + depthPortion * 30);
+  const reason =
+    `Skills coverage includes ${recordedSkills} skill${recordedSkills === 1 ? "" : "s"}` +
+    (skillsWithDepth ? ` with depth on ${skillsWithDepth}.` : "; add proficiency or experience for more confidence.");
+
+  return { score, recordedSkills, skillsWithDepth, reason };
+}
+
+function scoreUnknownFields(candidate: CandidateProfile): UnknownFieldsResult {
+  const UNKNOWN_PATTERN = /\b(?:unknown|n\/a|na|not provided|unspecified)\b/i;
+  const fields: Array<[string, unknown]> = [
+    ["full name", candidate.fullName],
+    ["summary", candidate.summary],
+    ["location", candidate.location],
+    ["current title", candidate.currentTitle],
+    ["email", candidate.email],
+    ["phone", candidate.phone],
+    ["source type", candidate.sourceType],
+    ["source tag", candidate.sourceTag],
+  ];
+
+  const unknownFieldLabels = fields
+    .filter(([, value]) => typeof value === "string" && UNKNOWN_PATTERN.test(value))
+    .map(([label]) => label);
+
+  const penalty = unknownFieldLabels.length * 15;
+  const score = clampScore(100 - penalty);
+  const reason =
+    unknownFieldLabels.length === 0
+      ? "No fields marked as unknown or unspecified."
+      : `Detected ${unknownFieldLabels.length} unknown field${unknownFieldLabels.length === 1 ? "" : "s"}: ${unknownFieldLabels.join(", ")}.`;
+
+  return { score, unknownFieldLabels, reason };
+}
+
 export function computeCandidateConfidenceScore({
   candidate,
   weights = CANDIDATE_CONFIDENCE_WEIGHTS,
@@ -121,18 +156,20 @@ export function computeCandidateConfidenceScore({
 }): CandidateConfidenceResult {
   const normalizedWeights = normalizeWeights(weights);
 
-  const sourceQuality = scoreSourceQuality(candidate);
-  const agentConsistency = scoreAgentConsistency(candidate);
   const resumeCompleteness = scoreResumeCompleteness(candidate);
+  const skillCoverage = scoreSkillCoverage(candidate);
+  const agentAgreement = scoreAgentAgreement(candidate);
+  const unknownFields = scoreUnknownFields(candidate);
 
   const score = clampScore(
-    sourceQuality.score * normalizedWeights.sourceQuality +
-      agentConsistency.score * normalizedWeights.agentConsistency +
-      resumeCompleteness.score * normalizedWeights.resumeCompleteness,
+    resumeCompleteness.score * normalizedWeights.resumeCompleteness +
+      skillCoverage.score * normalizedWeights.skillCoverage +
+      agentAgreement.score * normalizedWeights.agentAgreement +
+      unknownFields.score * normalizedWeights.unknownFields,
   );
 
   return {
     score,
-    breakdown: { sourceQuality, agentConsistency, resumeCompleteness },
+    breakdown: { resumeCompleteness, skillCoverage, agentAgreement, unknownFields },
   };
 }
