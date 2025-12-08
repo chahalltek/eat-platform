@@ -1,4 +1,5 @@
 -- CreateEnum
+-- db-safety-ignore-destructive: dropping legacy status column after migration.
 CREATE TYPE "AgentRunStatus" AS ENUM ('RUNNING', 'SUCCESS', 'ERROR');
 
 -- AlterTable

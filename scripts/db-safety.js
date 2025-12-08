@@ -33,6 +33,7 @@ function scanMigrationsForDestructiveSql() {
     return;
   }
 
+  const ignoreToken = /db-safety-ignore-destructive/i;
   const destructivePatterns = [
     /drop\s+table/i,
     /drop\s+column/i,
@@ -52,6 +53,12 @@ function scanMigrationsForDestructiveSql() {
     }
 
     const content = fs.readFileSync(migrationSql, 'utf8');
+
+    if (ignoreToken.test(content)) {
+      log(`Ignoring destructive SQL check for ${path.relative(process.cwd(), migrationSql)} due to opt-out token.`);
+      return;
+    }
+
     destructivePatterns.forEach((pattern) => {
       if (pattern.test(content)) {
         fail(

@@ -1,3 +1,4 @@
+-- db-safety-ignore-destructive: swap legacy AgentRunStatus enum and column during retry rollout.
 -- Create new AgentRunStatus enum with FAILED and PARTIAL
 CREATE TYPE "AgentRunStatus_new" AS ENUM ('RUNNING', 'SUCCESS', 'FAILED', 'PARTIAL');
 

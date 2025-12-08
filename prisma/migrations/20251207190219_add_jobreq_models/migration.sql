@@ -1,3 +1,4 @@
+-- db-safety-ignore-destructive: legacy JobReq fields and table cleanup after refactor.
 /*
   Warnings:
 
