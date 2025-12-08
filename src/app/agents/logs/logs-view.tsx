@@ -14,6 +14,12 @@ const STATUS_LABELS: Record<AgentRunStatusValue, { label: string; tone: "success
   PARTIAL: { label: "Partial", tone: "warning" },
 };
 
+const ERROR_CATEGORY_LABELS = {
+  AI: "AI failure",
+  DATA: "Data failure",
+  AUTH: "Auth failure",
+} as const;
+
 function LogDetail({
   log,
   onRetry,
@@ -65,6 +71,10 @@ function LogDetail({
           <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Status</div>
           <StatusPill status={log.status} />
         </div>
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Error type</div>
+          <ErrorCategoryBadge category={log.errorCategory} />
+        </div>
         {log.durationMs ? (
           <div>
             <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Duration</div>
@@ -111,6 +121,19 @@ function LogDetail({
       ) : null}
     </div>
   );
+}
+
+function ErrorCategoryBadge({ category }: { category: SerializableLog["errorCategory"] }) {
+  if (!category) return <span className="text-slate-400">—</span>;
+
+  const label = ERROR_CATEGORY_LABELS[category];
+  const styles: Record<typeof category, string> = {
+    AI: "bg-blue-100 text-blue-800",
+    DATA: "bg-amber-100 text-amber-800",
+    AUTH: "bg-red-100 text-red-800",
+  };
+
+  return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles[category]}`}>{label}</span>;
 }
 
 function StatusPill({ status }: { status: AgentRunStatusValue }) {

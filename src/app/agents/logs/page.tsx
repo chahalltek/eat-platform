@@ -38,6 +38,7 @@ export default async function AgentRunLogsPage() {
       },
       inputSnapshot: true,
       outputSnapshot: true,
+      output: true,
       errorMessage: true,
       retryCount: true,
       retryOfId: true,
@@ -58,6 +59,10 @@ export default async function AgentRunLogsPage() {
     inputSnapshot: log.inputSnapshot,
     outputSnapshot: log.outputSnapshot,
     errorMessage: log.errorMessage,
+    errorCategory:
+      typeof log.output === "object" && log.output !== null && "errorCategory" in log.output
+        ? (log.output as { errorCategory?: SerializableLog["errorCategory"] }).errorCategory ?? null
+        : null,
     retryCount: log.retryCount,
     retryOfId: log.retryOfId,
   }));

@@ -23,6 +23,18 @@ const STATUS_LABELS: Record<AgentRunStatusValue, string> = {
   PARTIAL: "Partial",
 };
 
+const ERROR_CATEGORY_LABELS = {
+  AI: "AI failure",
+  DATA: "Data failure",
+  AUTH: "Auth failure",
+} as const;
+
+const ERROR_CATEGORY_VARIANTS = {
+  AI: "info",
+  DATA: "warning",
+  AUTH: "error",
+} as const;
+
 const STATUS_VARIANTS: Record<AgentRunStatusValue, "success" | "error" | "info" | "warning"> = {
   RUNNING: "info",
   SUCCESS: "success",
@@ -33,6 +45,13 @@ const STATUS_VARIANTS: Record<AgentRunStatusValue, "success" | "error" | "info" 
 export const STATUS_FILTER_OPTIONS = (Object.keys(STATUS_LABELS) as AgentRunStatusValue[]).map((value) => ({
   value,
   label: STATUS_LABELS[value],
+}));
+
+const ERROR_CATEGORY_FILTER_OPTIONS = (
+  Object.keys(ERROR_CATEGORY_LABELS) as (keyof typeof ERROR_CATEGORY_LABELS)[],
+).map((value) => ({
+  value,
+  label: ERROR_CATEGORY_LABELS[value],
 }));
 
 export function formatTimestamp(timestamp: string): string {
@@ -62,12 +81,32 @@ const globalFilterFn: FilterFn<AgentRunLogTableRow> = (row, _columnId, filterVal
   const query = typeof filterValue === "string" ? filterValue.trim().toLowerCase() : "";
   if (!query) return true;
 
-  const haystack = [row.original.agentName, row.original.userLabel, STATUS_LABELS[row.original.status]]
+  const haystack = [
+    row.original.agentName,
+    row.original.userLabel,
+    STATUS_LABELS[row.original.status],
+    row.original.errorCategory ? ERROR_CATEGORY_LABELS[row.original.errorCategory] : "",
+  ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
   return haystack.includes(query);
 };
+
+function ErrorCategoryBadge({ category }: { category: SerializableLog["errorCategory"] }) {
+  if (!category) return <span className="text-slate-400">—</span>;
+
+  const label = ERROR_CATEGORY_LABELS[category];
+  const variant = ERROR_CATEGORY_VARIANTS[category];
+
+  const styles: Record<typeof variant, string> = {
+    info: "bg-blue-100 text-blue-800",
+    warning: "bg-amber-100 text-amber-800",
+    error: "bg-red-100 text-red-800",
+  };
+
+  return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles[variant]}`}>{label}</span>;
+}
 
 export function AgentRunLogsTable({
   logs,
@@ -106,6 +145,12 @@ export function AgentRunLogsTable({
         cell: ({ getValue }) => getValue<string | null>() ?? "—",
       }),
       {
+        accessorKey: "errorCategory",
+        header: "Error type",
+        filterFn: multiSelectFilter,
+        cell: ({ row }) => <ErrorCategoryBadge category={row.original.errorCategory} />, // eslint-disable-line react/jsx-no-bind
+      },
+      {
         ...createStatusBadgeColumn<AgentRunLogTableRow, "status">({
           accessorKey: "status",
           header: "Status",
@@ -141,6 +186,7 @@ export function AgentRunLogsTable({
           <>
             <TableSearchInput table={table} placeholder="Search runs" label="Search" className="w-full md:w-72" />
             <TableFilterDropdown table={table} columnId="agentName" label="Agent" options={agentOptions} />
+            <TableFilterDropdown table={table} columnId="errorCategory" label="Error type" options={ERROR_CATEGORY_FILTER_OPTIONS} />
             <TableFilterDropdown table={table} columnId="status" label="Status" options={STATUS_FILTER_OPTIONS} />
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               {table.getRowModel().rows.length} results

@@ -8,6 +8,7 @@ import {
 import { getCurrentUserId } from '@/lib/auth/user';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
+import { AIFailureError } from '@/lib/errors';
 
 type CallLLMParams = {
   systemPrompt: string;
@@ -67,6 +68,6 @@ export async function callLLM({
     }
 
     console.error('Error calling LLM:', err);
-    throw new Error('LLM call failed');
+    throw new AIFailureError('LLM call failed');
   }
 }

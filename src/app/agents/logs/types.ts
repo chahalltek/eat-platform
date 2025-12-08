@@ -1,3 +1,5 @@
+import type { ErrorCategory } from '@/lib/errors';
+
 export type AgentRunStatusValue = "RUNNING" | "SUCCESS" | "FAILED" | "PARTIAL";
 
 export type SerializableLog = {
@@ -9,6 +11,7 @@ export type SerializableLog = {
   inputSnapshot: unknown;
   outputSnapshot: unknown;
   errorMessage?: string | null;
+  errorCategory?: ErrorCategory | null;
   retryCount: number;
   retryOfId?: string | null;
   durationMs?: number | null;

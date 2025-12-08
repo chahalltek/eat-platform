@@ -22,6 +22,7 @@ const baseLog: AgentRunLogTableRow = {
   inputSnapshot: {},
   outputSnapshot: {},
   errorMessage: null,
+  errorCategory: null,
   retryCount: 0,
   retryOfId: null,
   durationMs: 1200,
@@ -38,6 +39,7 @@ const sampleLogs: AgentRunLogTableRow[] = [
     startedAt: "2024-06-02T15:00:00.000Z",
     durationMs: 2500,
     userLabel: "Recruiter B",
+    errorCategory: "AI",
   },
   {
     ...baseLog,
@@ -46,6 +48,7 @@ const sampleLogs: AgentRunLogTableRow[] = [
     status: "PARTIAL",
     startedAt: "2024-06-03T08:30:00.000Z",
     durationMs: 800,
+    errorCategory: "DATA",
   },
 ];
 
@@ -84,6 +87,19 @@ describe("AgentRunLogsTable", () => {
     const rowsAfterFilter = getBodyRows();
     expect(rowsAfterFilter).toHaveLength(1);
     expect(within(rowsAfterFilter[0]).getByText("Agent Alpha")).toBeInTheDocument();
+  });
+
+  it("filters rows by error type", () => {
+    render(<AgentRunLogsTable logs={sampleLogs} selectedId="base" onSelect={() => {}} />);
+
+    const errorFilter = screen.getByRole("button", { name: /Error type: All/i });
+    fireEvent.click(errorFilter);
+
+    fireEvent.click(screen.getByLabelText("AI failure"));
+
+    const rowsAfterFilter = getBodyRows();
+    expect(rowsAfterFilter).toHaveLength(1);
+    expect(within(rowsAfterFilter[0]).getByText("Agent Beta")).toBeInTheDocument();
   });
 
   it("applies search and filter selections together", () => {

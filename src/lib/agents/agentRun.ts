@@ -6,6 +6,7 @@ import { assertAgentKillSwitchDisarmed, type AgentName } from '@/lib/agents/kill
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from '@/lib/killSwitch';
 import { prisma } from '@/lib/prisma';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
+import { normalizeError } from '@/lib/errors';
 
 type AgentRunInput = {
   agentName: AgentName;
@@ -118,16 +119,17 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 
     return [result, updatedRun.id];
   } catch (err) {
+    const { category, userMessage } = normalizeError(err);
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - startedAt.getTime();
 
     await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
-        output: { durationMs },
+        output: { durationMs, errorCategory: category },
         durationMs,
         status: 'FAILED',
-        errorMessage: err instanceof Error ? err.message : 'Unknown error',
+        errorMessage: userMessage,
         finishedAt,
       },
     });
