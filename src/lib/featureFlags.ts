@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 import { prisma } from './prisma';
 
 export const FEATURE_FLAGS = {
@@ -23,6 +25,15 @@ const DEFAULT_FLAG_DESCRIPTIONS: Record<FeatureFlagName, string> = {
 
 const flagCache = new Map<FeatureFlagName, boolean>();
 
+function buildFallbackFlag(name: FeatureFlagName, enabled = false) {
+  return {
+    name,
+    description: DEFAULT_FLAG_DESCRIPTIONS[name],
+    enabled,
+    updatedAt: new Date(0),
+  };
+}
+
 function coerceFlagName(value: unknown): FeatureFlagName | null {
   const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
   const candidates = Object.values(FEATURE_FLAGS) as FeatureFlagName[];
@@ -35,6 +46,12 @@ async function ensureFlagExists(name: FeatureFlagName) {
     where: { name },
     update: {},
     create: { name, description: DEFAULT_FLAG_DESCRIPTIONS[name] },
+  }).catch((error) => {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
+      return buildFallbackFlag(name);
+    }
+
+    throw error;
   });
 
   flagCache.set(name, flag.enabled);
@@ -76,6 +93,12 @@ export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): P
     where: { name },
     update: { enabled },
     create: { name, enabled, description: DEFAULT_FLAG_DESCRIPTIONS[name] },
+  }).catch((error) => {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
+      return buildFallbackFlag(name, enabled);
+    }
+
+    throw error;
   });
 
   flagCache.set(name, flag.enabled);
