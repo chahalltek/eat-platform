@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
+import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 
 type AgentRunRow = {
   id: string;
@@ -98,6 +99,7 @@ export default async function CandidateDetail({
   }
 
   const agentRun = await findRelatedAgentRun(candidate.id);
+  const confidence = computeCandidateConfidenceScore({ candidate });
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 space-y-8">
@@ -129,6 +131,24 @@ export default async function CandidateDetail({
           <div className="text-lg font-medium text-gray-900">
             {formatSource(candidate)}
           </div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Confidence score</div>
+          <div className="mt-1 flex items-center space-x-3">
+            <div className="text-3xl font-semibold text-gray-900">{confidence.score}</div>
+            <div className="h-2 w-full max-w-[200px] overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full bg-green-500"
+                style={{ width: `${confidence.score}%` }}
+                aria-hidden
+              />
+            </div>
+          </div>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+            <li>{confidence.breakdown.sourceQuality.reason}</li>
+            <li>{confidence.breakdown.agentConsistency.reason}</li>
+            <li>{confidence.breakdown.resumeCompleteness.reason}</li>
+          </ul>
         </div>
         <div>
           <div className="text-xs uppercase tracking-wide text-gray-500">Created</div>

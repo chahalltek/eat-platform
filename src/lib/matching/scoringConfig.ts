@@ -11,6 +11,12 @@ export type CandidateSignalWeights = {
   statusProgression: number;
 };
 
+export type CandidateConfidenceWeights = {
+  sourceQuality: number;
+  agentConsistency: number;
+  resumeCompleteness: number;
+};
+
 export const MATCH_SCORING_WEIGHTS: MatchScoringWeights = {
   skills: 0.6,
   seniority: 0.15,
@@ -24,10 +30,21 @@ export const CANDIDATE_SIGNAL_WEIGHTS: CandidateSignalWeights = {
   statusProgression: 0.25,
 };
 
+export const CANDIDATE_CONFIDENCE_WEIGHTS: CandidateConfidenceWeights = {
+  sourceQuality: 0.4,
+  agentConsistency: 0.35,
+  resumeCompleteness: 0.25,
+};
+
 export function normalizeWeights<T extends Record<string, number>>(weights: T): T {
   const total = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
+
   if (total === 0) {
-    return weights;
+    const keys = Object.keys(weights);
+    if (keys.length === 0) return weights;
+
+    const equalWeight = 1 / keys.length;
+    return Object.fromEntries(keys.map((key) => [key, equalWeight])) as T;
   }
 
   return Object.fromEntries(
