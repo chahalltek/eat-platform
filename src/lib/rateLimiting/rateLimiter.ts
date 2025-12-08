@@ -303,8 +303,9 @@ const globalRateLimiter = (() => {
   if (!globalObj.__EAT_RATE_LIMITER) {
     const isEdgeRuntime = typeof process !== 'undefined' && process.env.NEXT_RUNTIME === 'edge';
     const planResolver = isEdgeRuntime ? async () => null : defaultPlanResolver;
+    const securityLogger = isEdgeRuntime ? () => {} : defaultSecurityLogger;
 
-    globalObj.__EAT_RATE_LIMITER = new RateLimiter(DEFAULT_CONFIG, planResolver);
+    globalObj.__EAT_RATE_LIMITER = new RateLimiter(DEFAULT_CONFIG, planResolver, securityLogger);
   }
 
   return globalObj.__EAT_RATE_LIMITER;
