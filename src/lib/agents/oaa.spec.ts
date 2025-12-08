@@ -3,6 +3,7 @@
 import {
   DEFAULT_OAA_TEMPLATES,
   OAA_PROMPT_VERSION,
+  renderOaaTemplate,
   runOutreachAutomation,
 } from '@/lib/agents/oaa';
 import { AgentBehaviorSpec, runAgentBehavior } from '@/lib/agents/testing/agentTestRunner';
@@ -155,5 +156,60 @@ describe('Outreach automation agent (OAA)', () => {
     );
     expect(interactionTypes).toContain('OAA_EMAIL_READY');
     expect(interactionTypes).toContain('OAA_SMS_SUPPRESSED');
+  });
+
+  it('enforces safety guards when contact details are unavailable', async () => {
+    vi.mocked(prisma.candidate.findUnique).mockResolvedValue({
+      ...(candidateRecord as any),
+      email: null,
+      phone: null,
+    } as any);
+
+    const result = await runOutreachAutomation({
+      recruiterId: 'user-1',
+      candidateId: 'candidate-1',
+      jobReqId: 'job-1',
+      optOut: { email: true },
+    });
+
+    expect(result.email).toBeNull();
+    expect(result.sms).toBeNull();
+    expect(result.disposition).toBe('EMAIL_SUPPRESSED | SMS_SUPPRESSED');
+
+    const interactionTypes = vi.mocked(prisma.outreachInteraction.create).mock.calls.map(
+      (call) => call[0]?.data?.interactionType,
+    );
+    expect(interactionTypes).toContain('OAA_EMAIL_SUPPRESSED');
+    expect(interactionTypes).toContain('OAA_SMS_SUPPRESSED');
+  });
+
+  it('applies template replacement and tone preferences for outreach copy', async () => {
+    const result = await runOutreachAutomation({
+      recruiterId: 'user-1',
+      candidateId: 'candidate-1',
+      jobReqId: 'job-1',
+      tone: 'formal',
+      templates: {
+        email: {
+          subject: 'Formal hello to {{candidateName}} about {{roleTitle}}',
+          body: 'Greetings {{candidateName}}, {{toneTagline}} Next: {{nextStep}}',
+        },
+        sms: { body: 'SMS for {{candidateName}} :: {{nextStep}}' },
+      },
+    });
+
+    expect(result.email?.subject).toBe('Formal hello to Sam Candidate about Lead Backend Engineer');
+    expect(result.email?.body).toContain('Thank you for your consideration.');
+    expect(result.sms?.body).toContain('brief introductory call');
+  });
+
+  it('replaces template variables safely', () => {
+    const rendered = renderOaaTemplate('Hi {{candidateName}} about {{roleTitle}} at {{companyName}}', {
+      candidateName: 'Sam Candidate',
+      roleTitle: 'Lead Backend Engineer',
+      companyName: 'Globex',
+    });
+
+    expect(rendered).toBe('Hi Sam Candidate about Lead Backend Engineer at Globex');
   });
 });

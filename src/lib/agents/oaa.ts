@@ -1,7 +1,7 @@
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { prisma } from '@/lib/prisma';
 
-export const OAA_PROMPT_VERSION = 'v1.0.0';
+export const OAA_PROMPT_VERSION = 'v1.1.0';
 
 export type OutreachAutomationTemplates = {
   email: { subject: string; body: string };
@@ -15,6 +15,7 @@ export type OutreachAutomationInput = {
   matchId?: string;
   templates?: Partial<OutreachAutomationTemplates>;
   optOut?: { email?: boolean; sms?: boolean };
+  tone?: 'casual' | 'formal' | 'enthusiastic' | 'concise';
 };
 
 export type OutreachAutomationResult = {
@@ -48,6 +49,12 @@ function resolveTemplates(customTemplates?: Partial<OutreachAutomationTemplates>
 
 function renderTemplate(template: string, context: Record<string, string>): string {
   return template.replace(/{{\s*(\w+)\s*}}/g, (_match, key) => context[key] ?? '');
+}
+
+function assertResolvedTemplate(output: string, channel: 'email' | 'sms', field: 'subject' | 'body') {
+  if (/{{\s*\w+\s*}}/.test(output)) {
+    throw new Error(`Unresolved placeholder detected in ${channel} ${field}`);
+  }
 }
 
 function buildOptOutLine(optOut?: { email?: boolean; sms?: boolean }): string {
@@ -125,6 +132,32 @@ async function buildTemplateContext({
   };
 }
 
+function resolveToneSettings(tone?: 'casual' | 'formal' | 'enthusiastic' | 'concise') {
+  switch (tone) {
+    case 'formal':
+      return {
+        nextStep: 'would you be available for a brief introductory call this week?',
+        toneTagline: 'Thank you for your consideration.',
+      };
+    case 'enthusiastic':
+      return {
+        nextStep: "I'd love to set up a quick 15-minute call to share why this team is excited about your background!",
+        toneTagline: 'Looking forward to collaborating.',
+      };
+    case 'concise':
+      return {
+        nextStep: 'can we schedule a quick 10-minute chat to confirm mutual fit?',
+        toneTagline: 'Keeping this brief—happy to share more details live.',
+      };
+    case 'casual':
+    default:
+      return {
+        nextStep: 'could we schedule a quick 15-minute intro call this week?',
+        toneTagline: 'Happy to share more details or answer questions.',
+      };
+  }
+}
+
 async function persistDispositionEntries({
   candidateId,
   jobReqId,
@@ -186,13 +219,16 @@ export async function runOutreachAutomation(
       const emailSuppressed = input.optOut?.email === true || !candidate.email;
       const smsSuppressed = input.optOut?.sms === true || !candidate.phone;
 
+      const { nextStep, toneTagline } = resolveToneSettings(input.tone);
+
       const context = {
         candidateName: candidate.fullName,
         roleTitle: jobReq.title,
         companyName: jobReq.customer?.name ?? 'our client',
         recruiterName,
         matchReason,
-        nextStep: 'could we schedule a quick 15-minute intro call this week?',
+        nextStep,
+        toneTagline,
         optOutLine: buildOptOutLine(input.optOut),
       } satisfies Record<string, string>;
 
@@ -208,6 +244,15 @@ export async function runOutreachAutomation(
         : {
             body: renderTemplate(templates.sms.body, context),
           };
+
+      if (email) {
+        assertResolvedTemplate(email.subject, 'email', 'subject');
+        assertResolvedTemplate(email.body, 'email', 'body');
+      }
+
+      if (sms) {
+        assertResolvedTemplate(sms.body, 'sms', 'body');
+      }
 
       const disposition = summarizeDisposition(emailSuppressed, smsSuppressed);
 

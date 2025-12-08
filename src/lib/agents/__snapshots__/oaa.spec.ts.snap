@@ -37,6 +37,6 @@ If you’re interested, {{nextStep}}
       "body": "Hi {{candidateName}}, this is {{recruiterName}} with Strategic Systems about a {{roleTitle}} role at {{companyName}}. {{matchReason}} {{nextStep}} {{optOutLine}}",
     },
   },
-  "version": "v1.0.0",
+  "version": "v1.1.0",
 }
 `;
