@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runExplainForJob } from '@/src/lib/agents/explain';
+import { runExplainForJob } from '@/lib/agents/explain';
 
 export async function POST(
   req: NextRequest,

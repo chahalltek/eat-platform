@@ -1,64 +1,9 @@
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-export type ComputeConfidenceScoreInput = {
-=======
 export type ConfidenceContext = {
->>>>>>> theirs
-=======
-export type ConfidenceScoreInput = {
->>>>>>> theirs
-=======
-export type ConfidenceContext = {
->>>>>>> theirs
   jobSkills: string[];
   candidateSkills: string[];
   hasTitle: boolean;
   hasLocation: boolean;
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-  createdAt: Date;
-=======
   createdAt?: Date | null;
->>>>>>> theirs
-};
-
-export type ConfidenceBreakdown = {
-  total: number;
-<<<<<<< ours
-  skillOverlap: number;
-  metadataScore: number;
-  recencyScore: number;
-};
-
-// Basic confidence scoring based on skill overlap, metadata completeness, and recency.
-export function computeConfidenceScore({
-  jobSkills,
-  candidateSkills,
-  hasTitle,
-  hasLocation,
-  createdAt,
-}: ComputeConfidenceScoreInput): ConfidenceBreakdown {
-  const normalizedJobSkills = new Set(jobSkills.map((skill) => skill.toLowerCase()));
-  const normalizedCandidateSkills = new Set(candidateSkills.map((skill) => skill.toLowerCase()));
-
-  const overlapCount = [...normalizedCandidateSkills].filter((skill) => normalizedJobSkills.has(skill))
-    .length;
-  const skillOverlap = Math.min(100, Math.round((overlapCount / Math.max(normalizedJobSkills.size || 1, 1)) * 100));
-
-  const metadataScore = (hasTitle ? 40 : 0) + (hasLocation ? 40 : 0);
-
-  const daysSinceCreation = Math.max(0, (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-  const recencyScore = Math.max(0, Math.min(100, Math.round(100 - daysSinceCreation)));
-
-  const total = Math.round(skillOverlap * 0.5 + metadataScore * 0.3 + recencyScore * 0.2);
-
-  return { total, skillOverlap, metadataScore, recencyScore };
-=======
-=======
->>>>>>> theirs
-  createdAt: Date; // candidate createdAt
 };
 
 // Preserve legacy input names used before conflict resolution.
@@ -96,7 +41,9 @@ function jaccardSimilarity(a: string[], b: string[]): number {
  * - 30–180 days: linear down to 0.2
  * - 180+ days: 0.1
  */
-function recencyFactor(createdAt: Date): number {
+function recencyFactor(createdAt?: Date | null): number {
+  if (!createdAt) return 0.5; // neutral default
+
   const now = new Date();
   const diffMs = now.getTime() - createdAt.getTime();
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -148,57 +95,4 @@ export function computeConfidenceScore(
     recency,
     total,
   };
-<<<<<<< ours
->>>>>>> theirs
-=======
-  dataCompleteness: number;
-  skillCoverage: number;
-  recency: number;
-};
-
-function computeSkillCoverage(jobSkills: string[], candidateSkills: string[]): number {
-  if (jobSkills.length === 0) return 50;
-
-  const jobSkillSet = new Set(jobSkills.map((s) => s.toLowerCase()));
-  const candidateSkillSet = new Set(candidateSkills.map((s) => s.toLowerCase()));
-
-  let matched = 0;
-  jobSkillSet.forEach((skill) => {
-    if (candidateSkillSet.has(skill)) {
-      matched += 1;
-    }
-  });
-
-  return Math.round((matched / jobSkillSet.size) * 100);
-}
-
-function computeRecencyScore(createdAt?: Date | null): number {
-  if (!createdAt) return 50;
-
-  const now = Date.now();
-  const ageMs = now - createdAt.getTime();
-  const ageDays = ageMs / (1000 * 60 * 60 * 24);
-
-  const cappedDays = Math.min(Math.max(ageDays, 0), 365);
-  const score = 100 - (cappedDays / 365) * 80; // decay from 100 to 20 over a year
-
-  return Math.round(Math.max(20, score));
-}
-
-export function computeConfidenceScore(input: ConfidenceScoreInput): ConfidenceBreakdown {
-  const dataCompleteness = ((Number(input.hasTitle) + Number(input.hasLocation)) / 2) * 100;
-  const skillCoverage = computeSkillCoverage(input.jobSkills, input.candidateSkills);
-  const recency = computeRecencyScore(input.createdAt ?? undefined);
-
-  const total = Math.round(skillCoverage * 0.5 + dataCompleteness * 0.3 + recency * 0.2);
-
-  return {
-    total,
-    dataCompleteness,
-    skillCoverage,
-    recency,
-  };
->>>>>>> theirs
-=======
->>>>>>> theirs
 }

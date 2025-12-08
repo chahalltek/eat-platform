@@ -1,14 +1,6 @@
-<<<<<<< ours
-import { computeCandidateConfidenceScore } from '@/lib/candidates/confidenceScore';
-import { normalizeMatchExplanation } from '@/lib/matching/explanation';
-import { prisma } from '@/lib/prisma';
-import { JobMatchesView } from '@/components/JobMatchesView';
-import type { ConfidenceDetails, JobMatchRow } from '@/components/JobMatchesTable';
-=======
 import { prisma } from "@/lib/prisma";
 import { JobMatchesView } from "@/components/JobMatchesView";
-import type { JobMatchRow } from "@/components/JobMatchesTable";
->>>>>>> theirs
+import type { ConfidenceDetails, JobMatchRow } from "@/components/JobMatchesTable";
 
 type Props = {
   params: { jobId: string };
@@ -33,33 +25,22 @@ async function getMatches(jobId: string): Promise<JobMatchRow[]> {
     const explanation: any = m.explanation ?? {};
     const confidenceReasons: any = (m as any).confidenceReasons ?? null;
 
-    const confidenceDetails =
-      (match as { confidenceReasons?: ConfidenceDetails | null }).confidenceReasons ?? null;
+    const confidenceDetails: ConfidenceDetails | null = confidenceReasons
+      ? {
+          dataCompleteness: confidenceReasons.dataCompleteness ?? 0,
+          skillCoverage: confidenceReasons.skillCoverage ?? 0,
+          recency: confidenceReasons.recency ?? 0,
+        }
+      : null;
 
     return {
-<<<<<<< ours
-      candidateId: match.candidateId,
-      candidateName: match.candidate.fullName,
-      candidateTitle: match.candidate.currentTitle,
-      matchScore: match.score,
-      confidence,
-      explanationSummary,
-      confidenceDetails,
-=======
       candidateId: m.candidateId,
       candidateName: m.candidate.fullName,
       candidateTitle: m.candidate.currentTitle,
       matchScore: m.matchScore,
       confidence: m.confidence,
       explanationSummary: explanation.summary ?? "(no explanation summary)",
-      confidenceDetails: confidenceReasons
-        ? {
-            dataCompleteness: confidenceReasons.dataCompleteness ?? 0,
-            skillCoverage: confidenceReasons.skillCoverage ?? 0,
-            recency: confidenceReasons.recency ?? 0,
-          }
-        : null,
->>>>>>> theirs
+      confidenceDetails,
     };
   });
 }
