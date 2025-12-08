@@ -1,8 +1,10 @@
 import { Prisma, type AgentPrompt } from '@prisma/client';
 
+import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
 import { RUA_PROMPT_VERSION, RUA_SYSTEM_PROMPT } from '@/lib/agents/contracts/ruaContract';
 import { prisma } from '@/lib/prisma';
+import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 export const AGENT_PROMPTS = {
   RINA_SYSTEM: 'EAT-TS.RINA',
@@ -63,6 +65,10 @@ function buildFallbackPrompt(definition: AgentPromptDefinition): AgentPrompt {
 }
 
 async function ensurePromptVersion(definition: AgentPromptDefinition): Promise<AgentPrompt> {
+  if (!prisma.agentPrompt?.upsert) {
+    return buildFallbackPrompt(definition);
+  }
+
   try {
     return await prisma.agentPrompt.upsert({
       where: { agentName_version: { agentName: definition.agentName, version: definition.version } },
@@ -78,7 +84,38 @@ async function ensurePromptVersion(definition: AgentPromptDefinition): Promise<A
   }
 }
 
-export async function registerPromptVersion(definition: AgentPromptDefinition): Promise<AgentPrompt> {
+async function ensureAgentDefinitionCapacity(
+  agentName: AgentPromptName,
+  version: string,
+  tenantId: string,
+) {
+  if (!prisma.agentPrompt?.findUnique) {
+    await assertTenantWithinLimits(tenantId, 'createAgentDefinition');
+    return;
+  }
+
+  try {
+    const existing = await prisma.agentPrompt.findUnique({
+      where: { agentName_version: { agentName, version } },
+    });
+
+    if (existing) return;
+  } catch (error) {
+    if (isMissingTableError(error)) return;
+
+    throw error;
+  }
+
+  await assertTenantWithinLimits(tenantId, 'createAgentDefinition');
+}
+
+export async function registerPromptVersion(
+  definition: AgentPromptDefinition,
+  options: { tenantId?: string } = {},
+): Promise<AgentPrompt> {
+  const tenantId = options.tenantId ?? DEFAULT_TENANT_ID;
+
+  await ensureAgentDefinitionCapacity(definition.agentName, definition.version, tenantId);
   return ensurePromptVersion(definition);
 }
 
@@ -86,7 +123,9 @@ export async function activatePromptVersion(
   agentName: AgentPromptName,
   version: string,
   rollbackVersion?: string | null,
+  options: { tenantId?: string } = {},
 ): Promise<AgentPrompt> {
+  const tenantId = options.tenantId ?? DEFAULT_TENANT_ID;
   const fallbackDefinition = selectDefaultPrompt(agentName, version);
   const definition: AgentPromptDefinition = {
     ...fallbackDefinition,
@@ -96,6 +135,11 @@ export async function activatePromptVersion(
   };
 
   try {
+    await ensureAgentDefinitionCapacity(agentName, version, tenantId);
+    if (!prisma.agentPrompt?.updateMany || !prisma.agentPrompt?.upsert) {
+      return buildFallbackPrompt(definition);
+    }
+
     await prisma.agentPrompt.updateMany({
       where: { agentName },
       data: { active: false },
@@ -120,10 +164,15 @@ export async function resolveAgentPrompt(
   { version }: { version?: string } = {},
 ): Promise<AgentPrompt> {
   const fallbackDefinition = selectDefaultPrompt(agentName, version);
+  const agentPromptClient = prisma.agentPrompt;
+
+  if (!agentPromptClient) {
+    return buildFallbackPrompt(fallbackDefinition);
+  }
 
   try {
     if (version) {
-      const pinned = await prisma.agentPrompt.findUnique({
+      const pinned = await agentPromptClient.findUnique({
         where: { agentName_version: { agentName, version } },
       });
 
@@ -136,7 +185,7 @@ export async function resolveAgentPrompt(
 
     await ensurePromptVersion(fallbackDefinition);
 
-    const active = await prisma.agentPrompt.findFirst({
+    const active = await agentPromptClient.findFirst({
       where: { agentName, active: true },
       orderBy: { updatedAt: 'desc' },
     });

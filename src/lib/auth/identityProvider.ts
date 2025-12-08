@@ -92,6 +92,8 @@ async function resolveRequestedTenantId(req?: NextRequest) {
 }
 
 async function fetchUserById(userId: string) {
+  if (!prisma.user?.findUnique) return null;
+
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },

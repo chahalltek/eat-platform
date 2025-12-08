@@ -1,8 +1,10 @@
 // src/lib/agents/agentRun.ts
 import { Prisma } from '@prisma/client';
 
+import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from '@/lib/killSwitch';
 import { prisma } from '@/lib/prisma';
+import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 type AgentRunInput = {
   agentName: string;
@@ -16,14 +18,17 @@ type AgentRunInput = {
 
 export type AgentRetryMetadata = Pick<AgentRunInput, 'retryCount' | 'retryOfId'>;
 
-async function validateRecruiter(recruiterId: string): Promise<string> {
-  const user = await prisma.user.findUnique({ where: { id: recruiterId }, select: { id: true } });
+async function validateRecruiter(recruiterId: string): Promise<{ id: string; tenantId: string }> {
+  const user = await prisma.user.findUnique({
+    where: { id: recruiterId },
+    select: { id: true, tenantId: true },
+  });
 
   if (!user) {
     throw new Error('User not found for recruiterId');
   }
 
-  return user.id;
+  return user;
 }
 
 type AgentRunResult<T extends Prisma.InputJsonValue> =
@@ -52,12 +57,16 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 
   const startedAt = new Date();
 
-  const userId = recruiterId != null ? await validateRecruiter(recruiterId) : null;
+  const user = recruiterId != null ? await validateRecruiter(recruiterId) : null;
+  const tenantId = user?.tenantId ?? DEFAULT_TENANT_ID;
+
+  await assertTenantWithinLimits(tenantId, 'createAgentRun');
 
   const agentRun = await prisma.agentRunLog.create({
     data: {
       agentName,
-      userId,
+      tenantId,
+      userId: user?.id,
       sourceType: sourceType ?? null,
       sourceTag: sourceTag ?? null,
       input: inputSnapshot,

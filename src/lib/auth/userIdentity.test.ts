@@ -17,8 +17,14 @@ const prismaMock = vi.hoisted(() => ({
   },
 }));
 
+const assertTenantWithinLimits = vi.hoisted(() => vi.fn());
+
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
+}));
+
+vi.mock('@/lib/subscription/usageLimits', () => ({
+  assertTenantWithinLimits,
 }));
 
 describe('findOrCreateUserFromIdentity', () => {
@@ -72,6 +78,7 @@ describe('findOrCreateUserFromIdentity', () => {
 
     const user = await findOrCreateUserFromIdentity(baseClaims);
 
+    expect(assertTenantWithinLimits).toHaveBeenCalledWith(DEFAULT_TENANT_ID, 'createUser');
     expect(prismaMock.user.create).toHaveBeenCalledWith({
       data: {
         tenantId: DEFAULT_TENANT_ID,
@@ -132,6 +139,7 @@ describe('findOrCreateUserFromIdentity', () => {
     expect(prismaMock.userIdentity.findFirst).toHaveBeenCalledWith({
       where: { userId: 'existing-user', provider: 'okta' },
     });
+    expect(assertTenantWithinLimits).not.toHaveBeenCalled();
     expect(user.id).toBe('existing-user');
   });
 

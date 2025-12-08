@@ -1,6 +1,7 @@
 import { Prisma, type User } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
+import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 import { DEFAULT_TENANT_ID } from './config';
 import { USER_ROLES, normalizeRole } from './roles';
@@ -103,6 +104,8 @@ export async function findOrCreateUserFromIdentity(
     await attachIdentityToUser(emailLookupUser.id, provider, subject);
     return emailLookupUser;
   }
+
+  await assertTenantWithinLimits(tenantId, 'createUser');
 
   const newUser = await prisma.user.create({ data: resolveUserProfile(claims, tenantId) });
   await attachIdentityToUser(newUser.id, provider, subject);
