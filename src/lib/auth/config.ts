@@ -1,6 +1,7 @@
 export const USER_QUERY_PARAM = 'userId';
 export const USER_HEADER = 'x-eat-user-id';
 export const DEFAULT_USER_ID = process.env.DEFAULT_USER_ID ?? 'charlie';
+export const ROLE_HEADER = 'x-eat-user-role';
 export const TENANT_QUERY_PARAM = 'tenantId';
 export const TENANT_HEADER = 'x-eat-tenant-id';
 export const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID ?? 'default-tenant';
