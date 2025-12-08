@@ -73,9 +73,10 @@ export async function POST(req: NextRequest) {
     });
 
     const validatedRecruiterId = recruiterValidation.recruiterId;
+    const recruiterIdForOutreach = validatedRecruiterId ?? undefined;
 
     const result = await runOutreach({
-      recruiterId: validatedRecruiterId,
+      recruiterId: recruiterIdForOutreach,
       candidateId: trimmedCandidateId,
       jobReqId: trimmedJobReqId,
     });
