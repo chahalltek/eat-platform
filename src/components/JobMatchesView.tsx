@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useState, useTransition, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { JobMatchesTable, JobMatchRow } from './JobMatchesTable';
 
@@ -70,25 +70,16 @@ export function JobMatchesView({ jobId, initialData }: Props) {
     setError(null);
     setIsRunningShortlist(true);
     try {
-<<<<<<< ours
-      await callJobAgent('shortlist');
-=======
       await callJobAgent('shortlist', {
-        // thresholds are tunable later:
         minMatchScore: 60,
         minConfidence: 50,
         maxShortlisted: 5,
       });
->>>>>>> theirs
       startTransition(() => router.refresh());
     } catch (e) {
       console.error('Run shortlist failed', e);
       setError(
-<<<<<<< ours
-        e instanceof Error ? e.message : 'Failed to run shortlist. Please try again.'
-=======
         e instanceof Error ? e.message : 'Failed to generate shortlist.'
->>>>>>> theirs
       );
     } finally {
       setIsRunningShortlist(false);
@@ -99,24 +90,71 @@ export function JobMatchesView({ jobId, initialData }: Props) {
   const busyExplain = isRunningExplain || isPending;
   const busyShortlist = isRunningShortlist || isPending;
 
-<<<<<<< ours
-  const visibleData = useMemo(
-=======
-  const displayData = useMemo(
->>>>>>> theirs
-    () =>
-      showShortlistedOnly
-        ? initialData.filter((row) => row.shortlisted)
-        : initialData,
-    [initialData, showShortlistedOnly]
+  const shortlistedRows = useMemo(
+    () => initialData.filter((row) => row.shortlisted),
+    [initialData]
   );
+
+  const displayData = useMemo(
+    () => (showShortlistedOnly ? shortlistedRows : initialData),
+    [initialData, shortlistedRows, showShortlistedOnly]
+  );
+
+  function handleDownloadShortlistCsv() {
+    if (shortlistedRows.length === 0) return;
+
+    const headers = [
+      'Candidate ID',
+      'Candidate Name',
+      'Title',
+      'Match Score',
+      'Confidence',
+      'Why (Summary)',
+    ];
+
+    const escape = (value: unknown) =>
+      `"${String(value ?? '')
+        .replace(/"/g, '""')
+        .replace(/\r?\n/g, ' ')}"`;
+
+    const rows = shortlistedRows.map((r) => [
+      r.candidateId,
+      r.candidateName,
+      r.candidateTitle ?? '',
+      `${r.matchScore}`,
+      `${r.confidence}`,
+      r.explanationSummary ?? '',
+    ]);
+
+    const csvLines = [
+      headers.map(escape).join(','),
+      ...rows.map((row) => row.map(escape).join(',')),
+    ];
+
+    const csvContent = csvLines.join('\r\n');
+    const blob = new Blob([csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `shortlist_${jobId}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  const hasShortlist = shortlistedRows.length > 0;
 
   return (
     <div className="space-y-4">
+      {/* Header + controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Matches</h1>
-          <div className="flex items-center gap-2 text-xs text-slate-600">
+          <div className="flex items-center gap-3 text-xs text-slate-600">
             <label className="inline-flex items-center gap-1">
               <input
                 type="checkbox"
@@ -126,6 +164,9 @@ export function JobMatchesView({ jobId, initialData }: Props) {
               />
               <span>Show shortlisted only</span>
             </label>
+            <span className="text-slate-400">
+              Shortlisted: {shortlistedRows.length}
+            </span>
           </div>
         </div>
 
@@ -147,37 +188,25 @@ export function JobMatchesView({ jobId, initialData }: Props) {
           >
             {busyExplain ? 'Generating Why…' : 'Run Explain'}
           </button>
-<<<<<<< ours
-=======
 
->>>>>>> theirs
           <button
             type="button"
             onClick={handleRunShortlist}
             disabled={busyShortlist}
-<<<<<<< ours
-            className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-900 disabled:opacity-60"
-          >
-            {busyShortlist ? 'Running Shortlist…' : 'Run Shortlist'}
-=======
             className="inline-flex items-center rounded-md border border-emerald-300 bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
           >
             {busyShortlist ? 'Shortlisting…' : 'Run Shortlist'}
->>>>>>> theirs
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadShortlistCsv}
+            disabled={!hasShortlist}
+            className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 disabled:opacity-40"
+          >
+            Download Shortlist CSV
           </button>
         </div>
-      </div>
-
-      <div className="flex items-center justify-end">
-        <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-            checked={showShortlistedOnly}
-            onChange={(e) => setShowShortlistedOnly(e.target.checked)}
-          />
-          Shortlisted only
-        </label>
       </div>
 
       {error && (
@@ -186,16 +215,13 @@ export function JobMatchesView({ jobId, initialData }: Props) {
         </div>
       )}
 
-<<<<<<< ours
-      <JobMatchesTable data={visibleData} />
-=======
       <JobMatchesTable data={displayData} />
->>>>>>> theirs
 
       <p className="text-xs text-slate-500">
         Run Matcher to recompute candidate matches. Run Explain to generate
         recruiter-friendly reasons. Run Shortlist to mark the best candidates for
-        submit based on match and confidence.
+        submit based on match and confidence, then export them as CSV for client
+        sharing or ATS upload.
       </p>
     </div>
   );
