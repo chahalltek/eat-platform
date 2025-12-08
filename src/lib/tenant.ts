@@ -2,8 +2,14 @@ import { headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 
 import { DEFAULT_TENANT_ID, TENANT_HEADER, TENANT_QUERY_PARAM } from './auth/config';
+import { getSessionClaims } from './auth/session';
 
 function extractTenantIdFromRequest(req: NextRequest) {
+  const sessionTenant = getSessionClaims(req)?.tenantId;
+  if (sessionTenant && sessionTenant.trim()) {
+    return sessionTenant.trim();
+  }
+
   const queryValue = req.nextUrl.searchParams.get(TENANT_QUERY_PARAM);
 
   if (queryValue && queryValue.trim()) {
@@ -21,6 +27,11 @@ function extractTenantIdFromRequest(req: NextRequest) {
 
 async function extractTenantIdFromHeaders() {
   try {
+    const sessionTenant = getSessionClaims()?.tenantId;
+    if (sessionTenant && sessionTenant.trim()) {
+      return sessionTenant.trim();
+    }
+
     const headerList = await headers();
     const headerValue = headerList.get(TENANT_HEADER);
 

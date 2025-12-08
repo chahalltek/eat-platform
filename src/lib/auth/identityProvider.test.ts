@@ -1,17 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prisma } from "@/lib/prisma";
-
-import {
-  DEFAULT_TENANT_ID,
-  DEFAULT_USER_ID,
-  TENANT_HEADER,
-  TENANT_QUERY_PARAM,
-  USER_HEADER,
-  USER_QUERY_PARAM,
-} from "./config";
 import {
   getCurrentUser,
   getCurrentUserId,
@@ -23,21 +12,16 @@ import {
   type IdentityProvider,
 } from "./identityProvider";
 import { USER_ROLES, isAdminRole, normalizeRole } from "./roles";
+import { createSessionCookie, SESSION_COOKIE_NAME } from "./session";
 
-const { headersMock } = vi.hoisted(() => ({
+const { cookiesMock, headersMock } = vi.hoisted(() => ({
+  cookiesMock: vi.fn(),
   headersMock: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
+  cookies: cookiesMock,
   headers: headersMock,
-}));
-
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn(),
-    },
-  },
 }));
 
 describe("identity provider abstraction", () => {
@@ -46,238 +30,79 @@ describe("identity provider abstraction", () => {
     resetIdentityProvider();
   });
 
-  it("pulls user, tenant, and roles from query parameters when provided", async () => {
-    const request = new NextRequest(
-      `http://localhost/api/test?${USER_QUERY_PARAM}=dev-user&${TENANT_QUERY_PARAM}=tenant-query`,
-    );
-
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "dev-user",
-      email: "dev@example.com",
-      displayName: "Dev User",
+  function setMockSessionCookie() {
+    const cookie = createSessionCookie({
+      id: "session-user",
+      email: "session@example.com",
+      displayName: "Session User",
       role: USER_ROLES.ADMIN,
-      tenantId: "tenant-from-user",
-    } as never);
+      tenantId: "tenant-session",
+    });
 
-    const currentUser = await getCurrentUser(request);
-    const roles = await getUserRoles(request);
-    const tenantId = await getUserTenantId(request);
-    const claims = await getUserClaims(request);
+    cookiesMock.mockReturnValue({
+      get: (name: string) => (name === SESSION_COOKIE_NAME ? { value: cookie.value } : undefined),
+    });
 
-    expect(currentUser?.id).toBe("dev-user");
-    expect(prisma.user.findUnique).toHaveBeenCalledWith({
-      where: { id: "dev-user" },
-      select: { id: true, email: true, displayName: true, role: true, tenantId: true },
+    headersMock.mockReturnValue(new Headers({ "x-eat-tenant-id": "tenant-session" }));
+
+    return cookie.value;
+  }
+
+  it("reads the session cookie when no request is provided", async () => {
+    setMockSessionCookie();
+
+    const user = await getCurrentUser();
+    const claims = await getUserClaims();
+    const roles = await getUserRoles();
+    const tenantId = await getUserTenantId();
+    const userId = await getCurrentUserId();
+
+    expect(user).toEqual({
+      id: "session-user",
+      email: "session@example.com",
+      displayName: "Session User",
+      role: USER_ROLES.ADMIN,
+      tenantId: "tenant-session",
+    });
+    expect(claims).toEqual({
+      userId: "session-user",
+      tenantId: "tenant-session",
+      roles: [USER_ROLES.ADMIN],
+      email: "session@example.com",
+      displayName: "Session User",
     });
     expect(roles).toEqual([USER_ROLES.ADMIN]);
-    expect(tenantId).toBe("tenant-query");
-    expect(claims).toEqual({
-      userId: "dev-user",
-      tenantId: "tenant-query",
-      roles: [USER_ROLES.ADMIN],
-      email: "dev@example.com",
-      displayName: "Dev User",
-    });
+    expect(tenantId).toBe("tenant-session");
+    expect(userId).toBe("session-user");
   });
 
-  it("uses request headers when query params are absent", async () => {
-    const request = new NextRequest("http://localhost/api/test", {
-      headers: {
-        [USER_HEADER]: "request-user",
-        [TENANT_HEADER]: "request-tenant",
-      },
-    });
-
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "request-user",
-      email: "request@example.com",
-      displayName: "Request User",
-      role: USER_ROLES.SOURCER,
-      tenantId: "tenant-from-profile",
-    } as never);
-
-    expect(await getCurrentUserId(request)).toBe("request-user");
-    expect(await getUserTenantId(request)).toBe("request-tenant");
-  });
-
-  it("falls back to headers when no request is provided", async () => {
-    headersMock.mockReturnValue(new Headers({
-      [USER_HEADER]: "header-user",
-      [TENANT_HEADER]: "header-tenant",
-    }));
-
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "header-user",
-      email: "header@example.com",
-      displayName: "Header User",
-      role: USER_ROLES.RECRUITER,
-      tenantId: "tenant-header-user",
-    } as never);
-
-    const userId = await getCurrentUserId();
-    const tenantId = await getUserTenantId();
-    const roles = await getUserRoles();
-
-    expect(userId).toBe("header-user");
-    expect(tenantId).toBe("header-tenant");
-    expect(roles).toEqual([USER_ROLES.RECRUITER]);
-  });
-
-  it("uses defaults when headers are empty", async () => {
+  it("returns null claims when no session cookie is available", async () => {
+    cookiesMock.mockReturnValue({ get: () => undefined });
     headersMock.mockReturnValue(new Headers());
-
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: DEFAULT_USER_ID,
-      email: "default@example.com",
-      displayName: "Default User",
-      role: USER_ROLES.ADMIN,
-      tenantId: "tenant-from-default",
-    } as never);
-
-    expect(await getCurrentUserId()).toBe(DEFAULT_USER_ID);
-  });
-
-  it("gracefully handles users missing profile fields", async () => {
-    headersMock.mockReturnValue(new Headers({ [USER_HEADER]: "missing-fields" }));
-
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "missing-fields",
-      email: null,
-      displayName: null,
-      role: USER_ROLES.RECRUITER,
-      tenantId: null,
-    } as never);
-
-    const user = await getCurrentUser();
-    const claims = await getUserClaims();
-
-    expect(user?.displayName).toBeNull();
-    expect(claims.email).toBeNull();
-    expect(claims.displayName).toBeNull();
-  });
-
-  it("uses default identifiers and Prisma fallback when auth headers are missing", async () => {
-    headersMock.mockImplementation(() => {
-      throw new Error("headers unavailable");
-    });
-
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Missing column", {
-      clientVersion: "0",
-      code: "P2022",
-    });
-
-    vi.mocked(prisma.user.findUnique)
-      .mockRejectedValueOnce(prismaError as never)
-      .mockResolvedValue({
-        id: DEFAULT_USER_ID,
-        email: "fallback@example.com",
-        displayName: null,
-        role: "sales",
-        tenantId: null,
-      } as never);
-
-    const user = await getCurrentUser();
-    const userId = await getCurrentUserId();
-    const tenantId = await getUserTenantId();
-    const roles = await getUserRoles();
-    const claims = await getUserClaims();
-
-    expect(user?.displayName).toBe("fallback@example.com");
-    expect(userId).toBe(DEFAULT_USER_ID);
-    expect(tenantId).toBe(DEFAULT_TENANT_ID);
-    expect(roles).toEqual([USER_ROLES.SALES]);
-    expect(claims).toEqual({
-      userId: DEFAULT_USER_ID,
-      tenantId: DEFAULT_TENANT_ID,
-      roles: [USER_ROLES.SALES],
-      email: "fallback@example.com",
-      displayName: "fallback@example.com",
-    });
-  });
-
-  it("returns null when fallback user cannot be loaded after schema mismatch", async () => {
-    headersMock.mockReturnValue(new Headers());
-
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Missing column", {
-      clientVersion: "0",
-      code: "P2022",
-    });
-
-    vi.mocked(prisma.user.findUnique)
-      .mockRejectedValueOnce(prismaError as never)
-      .mockResolvedValue(null as never);
 
     expect(await getCurrentUser()).toBeNull();
     expect(await getUserClaims()).toEqual({
-      userId: DEFAULT_USER_ID,
-      tenantId: DEFAULT_TENANT_ID,
+      userId: null,
+      tenantId: "default-tenant",
       roles: [],
       email: null,
       displayName: null,
     });
   });
 
-  it("keeps null display names when fallback users lack email data", async () => {
-    headersMock.mockReturnValue(new Headers());
-
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Missing column", {
-      clientVersion: "0",
-      code: "P2022",
+  it("parses sessions directly from the incoming request", async () => {
+    const cookieValue = setMockSessionCookie();
+    const request = new NextRequest("http://localhost/api/test", {
+      headers: { cookie: `${SESSION_COOKIE_NAME}=${cookieValue}` },
     });
 
-    vi.mocked(prisma.user.findUnique)
-      .mockRejectedValueOnce(prismaError as never)
-      .mockResolvedValue({
-        id: DEFAULT_USER_ID,
-        email: null,
-        displayName: null,
-        role: USER_ROLES.SALES,
-        tenantId: null,
-      } as never);
+    const user = await getCurrentUser(request);
+    const claims = await getUserClaims(request);
+    const tenantId = await getUserTenantId(request);
 
-    const user = await getCurrentUser();
-    expect(user?.displayName).toBeNull();
-  });
-
-  it("uses tenant from the user profile when no override is supplied", async () => {
-    headersMock.mockReturnValue(new Headers());
-
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: DEFAULT_USER_ID,
-      email: "tenantuser@example.com",
-      displayName: "Tenant User",
-      role: USER_ROLES.SALES,
-      tenantId: "tenant-from-user",
-    } as never);
-
-    expect(await getUserTenantId()).toBe("tenant-from-user");
-  });
-
-  it("returns empty roles when normalization fails", async () => {
-    const request = new NextRequest("http://localhost/no-role");
-
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: DEFAULT_USER_ID,
-      email: "no-role@example.com",
-      displayName: "No Role",
-      role: "unrecognized",
-      tenantId: "tenant-x",
-    } as never);
-
-    expect(await getUserRoles(request)).toEqual([]);
-  });
-
-  it("propagates unexpected Prisma errors", async () => {
-    headersMock.mockReturnValue(new Headers({ [USER_HEADER]: "user-with-error" }));
-
-    const prismaError = new Prisma.PrismaClientKnownRequestError("other failure", {
-      clientVersion: "0",
-      code: "P2021",
-    });
-
-    vi.mocked(prisma.user.findUnique).mockRejectedValue(prismaError as never);
-
-    await expect(getCurrentUser()).rejects.toThrow("other failure");
+    expect(user?.id).toBe("session-user");
+    expect(claims.userId).toBe("session-user");
+    expect(tenantId).toBe("tenant-session");
   });
 
   it("allows swapping identity providers for future adapters", async () => {

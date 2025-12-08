@@ -1,47 +1,43 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import {
-  DEFAULT_TENANT_ID,
-  DEFAULT_USER_ID,
-  TENANT_HEADER,
-  TENANT_QUERY_PARAM,
-  USER_HEADER,
-  USER_QUERY_PARAM,
-} from './lib/auth/config';
+import { DEFAULT_TENANT_ID, TENANT_HEADER, USER_HEADER } from './lib/auth/config';
+import { getSessionClaims } from './lib/auth/session';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from './lib/rateLimiting/http';
 
-export async function middleware(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const queryUserId = searchParams.get(USER_QUERY_PARAM)?.trim();
-  const resolvedUserId = queryUserId || DEFAULT_USER_ID;
+const AUTH_EXEMPT_PATHS = ['/api/auth/login', '/api/auth/logout'];
 
-  if (!resolvedUserId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function middleware(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  const session = getSessionClaims(request);
+
+  if (session) {
+    requestHeaders.set(USER_HEADER, session.userId);
+    requestHeaders.set(TENANT_HEADER, session.tenantId ?? DEFAULT_TENANT_ID);
   }
 
-  const queryTenantId = searchParams.get(TENANT_QUERY_PARAM)?.trim();
-  const resolvedTenantId = queryTenantId || DEFAULT_TENANT_ID;
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api');
+  const isAuthRoute = AUTH_EXEMPT_PATHS.includes(request.nextUrl.pathname);
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set(USER_HEADER, resolvedUserId);
-  requestHeaders.set(TENANT_HEADER, resolvedTenantId);
+  if (isApiRoute && !isAuthRoute) {
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  try {
-    if (request.nextUrl.pathname.startsWith('/api')) {
+    try {
       await consumeRateLimit({
-        tenantId: resolvedTenantId,
-        userId: resolvedUserId,
+        tenantId: session.tenantId ?? DEFAULT_TENANT_ID,
+        userId: session.userId,
         action: RATE_LIMIT_ACTIONS.API,
       });
-    }
-  } catch (error) {
-    if (isRateLimitError(error)) {
-      return toRateLimitResponse(error);
-    }
+    } catch (error) {
+      if (isRateLimitError(error)) {
+        return toRateLimitResponse(error);
+      }
 
-    throw error;
+      throw error;
+    }
   }
 
   return NextResponse.next({

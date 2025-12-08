@@ -1,18 +1,8 @@
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 
-import { Prisma } from "@prisma/client";
-
-import { prisma } from "@/lib/prisma";
-
-import {
-  DEFAULT_TENANT_ID,
-  DEFAULT_USER_ID,
-  TENANT_HEADER,
-  TENANT_QUERY_PARAM,
-  USER_HEADER,
-  USER_QUERY_PARAM,
-} from "./config";
+import { DEFAULT_TENANT_ID } from "./config";
+import { getSessionClaims } from "./session";
 import { normalizeRole, type UserRole } from "./roles";
 
 export type IdentityUser = {
@@ -38,99 +28,29 @@ export interface IdentityProvider {
   getUserRoles(req?: NextRequest): Promise<UserRole[]>;
 }
 
-function extractValueFromRequest(req: NextRequest, queryKey: string, headerKey: string) {
-  const queryValue = req.nextUrl.searchParams.get(queryKey);
-
-  if (queryValue && queryValue.trim()) {
-    return queryValue.trim();
-  }
-
-  const headerValue = req.headers.get(headerKey);
-
-  if (headerValue && headerValue.trim()) {
-    return headerValue.trim();
-  }
-
-  return null;
+async function resolveSession(req?: NextRequest) {
+  return getSessionClaims(req);
 }
 
-async function extractValueFromHeaders(headerKey: string) {
-  const headerList = await headers();
-
-  const headerValue = headerList.get(headerKey);
-
-  if (headerValue && headerValue.trim()) {
-    return headerValue.trim();
-  }
-
-  return null;
-}
-
-async function resolveUserId(req?: NextRequest) {
-  if (req) {
-    return extractValueFromRequest(req, USER_QUERY_PARAM, USER_HEADER) ?? DEFAULT_USER_ID;
-  }
-
-  try {
-    const headerUserId = await extractValueFromHeaders(USER_HEADER);
-    return headerUserId ?? DEFAULT_USER_ID;
-  } catch {
-    return DEFAULT_USER_ID;
-  }
-}
-
-async function resolveRequestedTenantId(req?: NextRequest) {
-  if (req) {
-    return extractValueFromRequest(req, TENANT_QUERY_PARAM, TENANT_HEADER);
-  }
-
-  try {
-    return await extractValueFromHeaders(TENANT_HEADER);
-  } catch {
-    return null;
-  }
-}
-
-async function fetchUserById(userId: string) {
-  if (!prisma.user?.findUnique) return null;
-
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, displayName: true, role: true, tenantId: true },
-    });
-
-    return user ? { ...user, displayName: user.displayName ?? user.email ?? null } : null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
-      const fallbackUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, email: true, role: true, tenantId: true },
-      });
-
-      return fallbackUser
-        ? { ...fallbackUser, displayName: fallbackUser.email ?? null }
-        : null;
-    }
-
-    throw error;
-  }
-}
-
-function resolveRoles(user: IdentityUser | null) {
-  const normalized = normalizeRole(user?.role);
+function resolveRoles(role: string | null | undefined) {
+  const normalized = normalizeRole(role);
   return normalized ? [normalized] : [];
 }
 
-async function resolveTenantId(req: NextRequest | undefined, user: IdentityUser | null) {
-  const requestedTenant = await resolveRequestedTenantId(req);
-
-  if (requestedTenant) {
-    return requestedTenant;
+async function resolveTenantId(req: NextRequest | undefined, tenantId: string | null | undefined) {
+  if (tenantId && tenantId.trim()) {
+    return tenantId.trim();
   }
 
-  if (user?.tenantId && user.tenantId.trim()) {
-    return user.tenantId.trim();
+  try {
+    const headerList = await headers();
+    const headerValue = headerList.get("x-eat-tenant-id");
+
+    if (headerValue && headerValue.trim()) {
+      return headerValue.trim();
+    }
+  } catch {
+    // ignore header access errors
   }
 
   return DEFAULT_TENANT_ID;
@@ -139,38 +59,48 @@ async function resolveTenantId(req: NextRequest | undefined, user: IdentityUser 
 function createLocalIdentityProvider(): IdentityProvider {
   return {
     async getCurrentUser(req?: NextRequest) {
-      const userId = await resolveUserId(req);
+      const session = await resolveSession(req);
+      if (!session) return null;
 
-      return fetchUserById(userId);
+      return {
+        id: session.userId,
+        email: session.email ?? null,
+        displayName: session.displayName ?? session.email ?? null,
+        role: session.role ?? null,
+        tenantId: session.tenantId ?? DEFAULT_TENANT_ID,
+      };
     },
 
     async getUserRoles(req?: NextRequest) {
-      const user = await this.getCurrentUser(req);
-      return resolveRoles(user);
+      const session = await resolveSession(req);
+      if (!session) return [];
+
+      return resolveRoles(session.role);
     },
 
     async getUserTenantId(req?: NextRequest) {
-      const user = await this.getCurrentUser(req);
-      return resolveTenantId(req, user);
+      const session = await resolveSession(req);
+      return resolveTenantId(req, session?.tenantId ?? null);
     },
 
     async getUserClaims(req?: NextRequest) {
-      const userPromise = this.getCurrentUser(req);
-      const userIdPromise = resolveUserId(req);
+      const session = await resolveSession(req);
 
-      const [user, roles, tenantId, userId] = await Promise.all([
-        userPromise,
-        this.getUserRoles(req),
-        this.getUserTenantId(req),
-        userIdPromise,
+      if (!session) {
+        return { userId: null, tenantId: DEFAULT_TENANT_ID, roles: [], email: null, displayName: null };
+      }
+
+      const [roles, tenantId] = await Promise.all([
+        resolveRoles(session.role),
+        resolveTenantId(req, session.tenantId ?? null),
       ]);
 
       return {
-        userId,
+        userId: session.userId,
         tenantId,
         roles,
-        email: user?.email ?? null,
-        displayName: user?.displayName ?? null,
+        email: session.email ?? null,
+        displayName: session.displayName ?? session.email ?? null,
       };
     },
   };
