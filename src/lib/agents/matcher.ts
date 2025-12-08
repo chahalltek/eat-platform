@@ -4,11 +4,8 @@ import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { matchJobToAllCandidates } from "@/lib/matching/batch";
-<<<<<<< ours
 import { getCurrentUser } from "@/lib/auth";
-=======
 import { TS_CONFIG } from "@/config/ts";
->>>>>>> theirs
 
 export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
 

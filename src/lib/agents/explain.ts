@@ -90,22 +90,11 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
   const toProcess = matchesNeedingExplain.slice(0, maxMatches);
   const runInput = { jobId, toProcess: toProcess.length };
 
-<<<<<<< ours
   const agentRun = await createAgentRunLog(prisma, {
     agentName: 'EAT-TS.EXPLAIN',
     input: runInput,
     inputSnapshot: runInput,
     status: 'RUNNING',
-=======
-  const agentRun = await prisma.agentRunLog.create({
-    data: {
-      agentName: 'EAT-TS.EXPLAIN',
-      userId: user.id,
-      input: runInput,
-      inputSnapshot: runInput,
-      status: 'RUNNING',
-    },
->>>>>>> theirs
   });
 
   let processedCount = 0;
@@ -138,36 +127,32 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
           explanation: {
             summary,
             markdown: explanationText,
-            generatedAt: new Date().toISOString(),
           },
         },
       });
 
-      processedCount++;
+      processedCount += 1;
     }
 
     await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
         status: 'SUCCESS',
-        output: { summary: `Generated explanations for ${processedCount} matches on job ${jobId}` },
-        outputSnapshot: { summary: `Generated explanations for ${processedCount} matches on job ${jobId}` },
+        output: { snapshot: { processedCount } },
+        outputSnapshot: { processedCount },
       },
     });
-
-    return {
-      jobId,
-      processedCount,
-      agentRunId: agentRun.id,
-    };
   } catch (err) {
     await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
-        status: 'FAILED',
-        errorMessage: (err as Error).message,
+        status: 'ERROR',
+        output: { snapshot: { error: (err as Error)?.message ?? 'unknown error' } },
+        outputSnapshot: { error: (err as Error)?.message ?? 'unknown error' },
       },
     });
     throw err;
   }
+
+  return { jobId, processedCount, agentRunId: agentRun.id };
 }

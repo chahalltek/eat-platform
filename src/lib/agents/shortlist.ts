@@ -1,10 +1,4 @@
-<<<<<<< ours
-<<<<<<< ours
 import { TS_CONFIG } from "@/config/ts";
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { rankCandidates } from "@/lib/agents/ranker";
