@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { JobMatchesTable, type MatchRow } from "./JobMatchesTable";
+import { RunMatcherButton } from "./RunMatcherButton";
 import { prisma } from "@/lib/prisma";
 
 export default async function JobMatchesPage({
@@ -87,6 +88,7 @@ export default async function JobMatchesPage({
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <RunMatcherButton jobId={job.id} />
           <Link href={`/jobs/${job.id}`} className="text-blue-600 hover:text-blue-800">
             Back to job
           </Link>
