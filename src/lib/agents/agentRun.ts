@@ -1,6 +1,7 @@
 // src/lib/agents/agentRun.ts
 import { Prisma } from '@prisma/client';
 
+import { assertKillSwitchDisarmed, KILL_SWITCHES } from '@/lib/killSwitch';
 import { prisma } from '@/lib/prisma';
 
 type AgentRunInput = {
@@ -47,6 +48,8 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
   }: AgentRunInput,
   fn: () => Promise<AgentRunResult<T>>,
 ): Promise<[T, string]> {
+  assertKillSwitchDisarmed(KILL_SWITCHES.AGENTS, { componentName: agentName });
+
   const startedAt = new Date();
 
   const userId = recruiterId != null ? await validateRecruiter(recruiterId) : null;

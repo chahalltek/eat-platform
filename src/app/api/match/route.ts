@@ -4,11 +4,19 @@ import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
+import { KILL_SWITCHES } from "@/lib/killSwitch";
+import { enforceKillSwitch } from "@/lib/killSwitch/middleware";
 import { prisma } from "@/lib/prisma";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 
 export async function POST(req: Request) {
+  const killSwitchResponse = enforceKillSwitch(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
+
+  if (killSwitchResponse) {
+    return killSwitchResponse;
+  }
+
   let body: unknown;
 
   try {
