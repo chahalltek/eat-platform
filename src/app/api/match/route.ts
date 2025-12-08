@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { z } from "zod";
+
 import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
@@ -10,6 +12,17 @@ import { prisma } from "@/lib/prisma";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 import { getCurrentTenantId } from "@/lib/tenant";
+
+const matchRequestSchema = z.object({
+  jobReqId: z
+    .string({ required_error: "jobReqId is required" })
+    .trim()
+    .min(1, "jobReqId must be a non-empty string"),
+  candidateId: z
+    .string({ required_error: "candidateId is required" })
+    .trim()
+    .min(1, "candidateId must be a non-empty string"),
+});
 
 export async function POST(req: Request) {
   const killSwitchResponse = enforceKillSwitch(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
@@ -26,16 +39,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { jobReqId, candidateId } = (body ?? {}) as {
-    jobReqId?: string;
-    candidateId?: string;
-  };
+  const parsedBody = matchRequestSchema.safeParse(body);
+
+  if (!parsedBody.success) {
+    const issues = parsedBody.error.issues.map((issue) => issue.message).join("; ");
+    console.warn("Match payload validation failed", { issues, body });
+    return NextResponse.json(
+      { error: "jobReqId and candidateId must be non-empty strings" },
+      { status: 400 },
+    );
+  }
+
+  const { jobReqId, candidateId } = parsedBody.data;
 
   const tenantId = await getCurrentTenantId();
-
-  if (!jobReqId || !candidateId) {
-    return NextResponse.json({ error: "jobReqId and candidateId are required" }, { status: 400 });
-  }
 
   const flagCheck = await enforceFeatureFlag(FEATURE_FLAGS.SCORING, {
     featureName: "Scoring",

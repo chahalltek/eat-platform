@@ -73,11 +73,71 @@ describe('POST /api/upload/resume', () => {
       body: formData,
     });
 
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const response = await POST(request);
     const payload = await response.json();
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe('Unsupported file type');
+    expect(warnSpy).toHaveBeenCalledWith('Resume upload validation failed', {
+      fileName: 'notes.txt',
+      mimeType: 'text/plain',
+      reason: 'Unsupported file type',
+    });
+    warnSpy.mockRestore();
+  });
+
+  it('rejects empty files before attempting extraction', async () => {
+    const buffer = Buffer.from('');
+    const file = new File([buffer], 'empty.pdf', { type: 'application/pdf' });
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const request = new Request('http://localhost/api/upload/resume', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toBe('Uploaded file is empty');
+    expect(warnSpy).toHaveBeenCalledWith('Resume upload validation failed', {
+      fileName: 'empty.pdf',
+      reason: 'Empty file',
+    });
+
+    warnSpy.mockRestore();
+  });
+
+  it('rejects files that exceed the upload size limit', async () => {
+    const buffer = Buffer.alloc(5 * 1024 * 1024 + 1, 'a');
+    const file = new File([buffer], 'big.pdf', { type: 'application/pdf' });
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const request = new Request('http://localhost/api/upload/resume', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(413);
+    expect(payload.error).toBe('Uploaded file exceeds size limits');
+    expect(warnSpy).toHaveBeenCalledWith('Resume upload validation failed', {
+      fileName: 'big.pdf',
+      reason: 'File too large',
+      size: buffer.byteLength,
+    });
+
+    warnSpy.mockRestore();
   });
 
   it('sanitizes suspicious content to prevent injection', () => {
