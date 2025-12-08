@@ -13,9 +13,7 @@ const jobSkillSchema = z.object({
 });
 
 const jobSchema = z.object({
-  title: z
-    .string({ required_error: "title is required", invalid_type_error: "title is required" })
-    .min(1, "title is required"),
+  title: z.string().min(1, "title is required"),
   location: z.string().nullable().optional(),
   seniorityLevel: z.string().nullable().optional(),
   rawDescription: z.string().nullable().optional(),

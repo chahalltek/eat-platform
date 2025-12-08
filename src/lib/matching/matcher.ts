@@ -26,8 +26,10 @@ export type JobIngestionInput = {
 
 export const normalizeSkillName = (name: string): string => name.trim().toLowerCase();
 
-export function normalizeJobSkills(skills: RawJobSkillInput[] = []): Omit<JobSkill, "id" | "jobReqId">[] {
-  const uniqueSkills = new Map<string, Omit<JobSkill, "id" | "jobReqId">>();
+export function normalizeJobSkills(
+  skills: RawJobSkillInput[] = [],
+): Omit<JobSkill, "id" | "jobReqId" | "tenantId">[] {
+  const uniqueSkills = new Map<string, Omit<JobSkill, "id" | "jobReqId" | "tenantId">>();
 
   skills.forEach((skill) => {
     const normalizedName = normalizeSkillName(skill.name);
@@ -61,7 +63,7 @@ export async function ingestJob(
       title: job.title,
       location: job.location ?? null,
       seniorityLevel: job.seniorityLevel ?? null,
-      rawDescription: job.rawDescription ?? null,
+      rawDescription: job.rawDescription ?? "",
       sourceType: job.sourceType ?? null,
       sourceTag: job.sourceTag ?? null,
       skills: { create: normalizedSkills },

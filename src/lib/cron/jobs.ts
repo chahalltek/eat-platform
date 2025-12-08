@@ -46,6 +46,13 @@ export const cronJobs: Record<string, CronJob> = {
   "compliance-scan": {
     name: "compliance-scan",
     description: "Runs TS-A6 COMPLY to classify data, enforce retention, and log access events.",
-    run: () => runScheduledComplianceScan(prismaAdmin),
+    run: async () => {
+      const result = await runScheduledComplianceScan(prismaAdmin);
+
+      return {
+        message: "Compliance scan completed",
+        details: result,
+      } satisfies CronJobResult;
+    },
   },
 };

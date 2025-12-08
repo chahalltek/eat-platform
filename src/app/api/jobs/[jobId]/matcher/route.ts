@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runMatcher } from '@/lib/agents/matcher';
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
+type RouteParams = { jobId: string };
+
+type RouteContext = { params: RouteParams | Promise<RouteParams> };
+
+export async function POST(req: NextRequest, context: RouteContext) {
   try {
+    const params = await context.params;
     const jobId = params.jobId;
     const body = await req.json().catch(() => ({}));
 
-    const recruiterId =
-      body.recruiterId ?? 'recruiter@example.com'; // MVP: hard-code or derive from auth later
+    const recruiterId = body.recruiterId ?? 'recruiter@example.com';
     const topN = body.topN ?? 10;
 
     const result = await runMatcher({
