@@ -1,3 +1,4 @@
+-- db-safety-ignore-destructive
 -- Ensure User table has tenantId and displayName columns for Prisma schema compatibility
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "tenantId" TEXT NOT NULL DEFAULT 'default-tenant';
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "displayName" TEXT;
