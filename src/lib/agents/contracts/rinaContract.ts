@@ -1,4 +1,4 @@
-import Ajv, { JSONSchemaType } from 'ajv';
+import Ajv from 'ajv';
 
 export type RinaLLMResponseSkill = {
   name: string;
@@ -61,7 +61,7 @@ JSON shape:
   "warnings": string[]
 }`;
 
-const rinaResponseSchema: JSONSchemaType<RinaLLMResponse> = {
+const rinaResponseSchema: object = {
   $id: 'https://schemas.eat-ts/rina-response.json',
   type: 'object',
   additionalProperties: false,
@@ -114,11 +114,17 @@ const validate = ajv.compile(rinaResponseSchema);
 
 export function assertValidRinaResponse(payload: unknown): RinaLLMResponse {
   if (validate(payload)) {
-    return payload;
+    return payload as RinaLLMResponse;
   }
 
   const errors = validate.errors
-    ?.map((err) => `${err.instancePath || '/'} ${err.message ?? 'is invalid'}`)
+    ?.map((err) => {
+      const path = (err as { instancePath?: string; dataPath?: string }).instancePath ??
+        (err as { instancePath?: string; dataPath?: string }).dataPath ??
+        '/';
+
+      return `${path || '/'} ${err.message ?? 'is invalid'}`;
+    })
     .join('; ');
 
   throw new Error(`RINA response failed schema validation: ${errors ?? 'Unknown validation error'}`);

@@ -1,4 +1,4 @@
-import Ajv, { JSONSchemaType } from 'ajv';
+import Ajv from 'ajv';
 
 export type RuaLLMSkill = {
   name: string;
@@ -57,7 +57,7 @@ JSON shape:
   ]
 }`;
 
-const ruaResponseSchema: JSONSchemaType<RuaLLMResponse> = {
+const ruaResponseSchema: object = {
   $id: 'https://schemas.eat-ts/rua-response.json',
   type: 'object',
   additionalProperties: false,
@@ -108,11 +108,17 @@ const validate = ajv.compile(ruaResponseSchema);
 
 export function assertValidRuaResponse(payload: unknown): RuaLLMResponse {
   if (validate(payload)) {
-    return payload;
+    return payload as RuaLLMResponse;
   }
 
   const errors = validate.errors
-    ?.map((err) => `${err.instancePath || '/'} ${err.message ?? 'is invalid'}`)
+    ?.map((err) => {
+      const path = (err as { instancePath?: string; dataPath?: string }).instancePath ??
+        (err as { instancePath?: string; dataPath?: string }).dataPath ??
+        '/';
+
+      return `${path || '/'} ${err.message ?? 'is invalid'}`;
+    })
     .join('; ');
 
   throw new Error(`RUA response failed schema validation: ${errors ?? 'Unknown validation error'}`);

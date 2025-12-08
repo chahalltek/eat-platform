@@ -1,18 +1,9 @@
-import { mapBullhornCandidate, mapBullhornJob, mapBullhornPlacement } from './mappings';
-import type {
-  BullhornJob,
-  BullhornCandidate,
-  BullhornPlacement,
-  SyncSummary,
-  SyncStore,
-  BullhornMappingConfig,
-} from './types';
+import type { MappedJob, MappedCandidate, MappedPlacement, SyncSummary, SyncStore } from './types';
 
 export interface SyncDependencies {
-  fetchJobs: () => Promise<BullhornJob[]>;
-  fetchCandidates: () => Promise<BullhornCandidate[]>;
-  fetchPlacements: () => Promise<BullhornPlacement[]>;
-  mapping: BullhornMappingConfig;
+  fetchJobs: () => Promise<MappedJob[]>;
+  fetchCandidates: () => Promise<MappedCandidate[]>;
+  fetchPlacements: () => Promise<MappedPlacement[]>;
   store: SyncStore;
 }
 
@@ -20,7 +11,6 @@ export async function syncBullhorn({
   fetchJobs,
   fetchCandidates,
   fetchPlacements,
-  mapping,
   store,
 }: SyncDependencies): Promise<SyncSummary> {
   const [jobs, candidates, placements] = await Promise.all([
@@ -29,49 +19,37 @@ export async function syncBullhorn({
     fetchPlacements(),
   ]);
 
-  const mappedJobs = jobs.map((job) => mapBullhornJob(job, mapping.job));
-  const mappedCandidates = candidates.map((candidate) =>
-    mapBullhornCandidate(candidate, mapping.candidate),
-  );
-  const mappedPlacements = placements.map((placement) =>
-    mapBullhornPlacement(placement, mapping.placement),
-  );
-
   await Promise.all([
-    store.upsertJobs(mappedJobs),
-    store.upsertCandidates(mappedCandidates),
-    store.upsertPlacements(mappedPlacements),
+    store.upsertJobs(jobs),
+    store.upsertCandidates(candidates),
+    store.upsertPlacements(placements),
   ]);
 
   return {
-    jobsSynced: mappedJobs.length,
-    candidatesSynced: mappedCandidates.length,
-    placementsSynced: mappedPlacements.length,
+    jobsSynced: jobs.length,
+    candidatesSynced: candidates.length,
+    placementsSynced: placements.length,
   };
 }
 
 export class InMemorySyncStore implements SyncStore {
-  readonly jobs = new Map<string, ReturnType<typeof mapBullhornJob>>();
-  readonly candidates = new Map<string, ReturnType<typeof mapBullhornCandidate>>();
-  readonly placements = new Map<string, ReturnType<typeof mapBullhornPlacement>>();
+  readonly jobs = new Map<string, MappedJob>();
+  readonly candidates = new Map<string, MappedCandidate>();
+  readonly placements = new Map<string, MappedPlacement>();
 
-  async upsertJobs(jobs: ReturnType<typeof mapBullhornJob>[]): Promise<void> {
+  async upsertJobs(jobs: MappedJob[]): Promise<void> {
     for (const job of jobs) {
       this.jobs.set(job.id, job);
     }
   }
 
-  async upsertCandidates(
-    candidates: ReturnType<typeof mapBullhornCandidate>[],
-  ): Promise<void> {
+  async upsertCandidates(candidates: MappedCandidate[]): Promise<void> {
     for (const candidate of candidates) {
       this.candidates.set(candidate.id, candidate);
     }
   }
 
-  async upsertPlacements(
-    placements: ReturnType<typeof mapBullhornPlacement>[],
-  ): Promise<void> {
+  async upsertPlacements(placements: MappedPlacement[]): Promise<void> {
     for (const placement of placements) {
       this.placements.set(placement.id, placement);
     }

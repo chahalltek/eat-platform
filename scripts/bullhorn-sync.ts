@@ -1,5 +1,4 @@
 import { BullhornClient } from '@/lib/integrations/bullhorn/client';
-import { defaultMappingConfig } from '@/lib/integrations/bullhorn/mappings';
 import { InMemorySyncStore, syncBullhorn } from '@/lib/integrations/bullhorn/sync';
 
 async function main() {
@@ -18,7 +17,6 @@ async function main() {
     fetchJobs: () => client.getJobs(),
     fetchCandidates: () => client.getCandidates(),
     fetchPlacements: () => client.getPlacements(),
-    mapping: defaultMappingConfig,
     store,
   });
 

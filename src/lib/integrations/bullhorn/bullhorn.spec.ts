@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BullhornClient } from './client';
-import { defaultMappingConfig, mapBullhornCandidate, mapBullhornJob, mapBullhornPlacement } from './mappings';
+import { mapBullhornCandidate, mapBullhornJob, mapBullhornPlacement } from './mappings';
 import { MockBullhornApi } from './mockApi';
 import { InMemorySyncStore, syncBullhorn } from './sync';
 import type { BullhornCandidate, BullhornJob, BullhornPlacement } from './types';
@@ -125,7 +125,6 @@ describe('Bullhorn connector', () => {
         fetchJobs: () => client.getJobs(),
         fetchCandidates: () => client.getCandidates(),
         fetchPlacements: () => client.getPlacements(),
-        mapping: defaultMappingConfig,
         store,
       });
 
