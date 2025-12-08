@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { TS_CONFIG } from '@/config/ts';
 import { JobMatchesTable, JobMatchRow } from './JobMatchesTable';
 
 type Props = {
@@ -17,6 +18,7 @@ export function JobMatchesView({ jobId, initialData }: Props) {
   const [isRunningShortlist, setIsRunningShortlist] = useState(false);
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { topN, minMatchScore, minConfidence } = TS_CONFIG.shortlist;
 
   async function callJobAgent(
     path: 'matcher' | 'explain' | 'shortlist',
@@ -71,9 +73,9 @@ export function JobMatchesView({ jobId, initialData }: Props) {
     setIsRunningShortlist(true);
     try {
       await callJobAgent('shortlist', {
-        minMatchScore: 60,
-        minConfidence: 50,
-        maxShortlisted: 5,
+        minMatchScore,
+        minConfidence,
+        maxShortlisted: topN,
       });
       startTransition(() => router.refresh());
     } catch (e) {
@@ -221,7 +223,8 @@ export function JobMatchesView({ jobId, initialData }: Props) {
         Run Matcher to recompute candidate matches. Run Explain to generate
         recruiter-friendly reasons. Run Shortlist to mark the best candidates for
         submit based on match and confidence, then export them as CSV for client
-        sharing or ATS upload.
+        sharing or ATS upload. Shortlist selects up to {topN} candidates with at
+        least {minMatchScore}% match and {minConfidence}% confidence.
       </p>
     </div>
   );

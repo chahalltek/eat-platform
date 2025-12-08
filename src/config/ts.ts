@@ -1,5 +1,6 @@
 export const TS_CONFIG = {
 <<<<<<< ours
+<<<<<<< ours
   matcher: {
     minScore: 65,
     weight: {
@@ -36,4 +37,12 @@ export const TS_CONFIG = {
 } as const;
 
 export type TsConfig = typeof TS_CONFIG;
+>>>>>>> theirs
+=======
+  shortlist: {
+    topN: 5,
+    minMatchScore: 60,
+    minConfidence: 50,
+  },
+};
 >>>>>>> theirs
