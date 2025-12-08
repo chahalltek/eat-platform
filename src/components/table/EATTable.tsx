@@ -5,6 +5,7 @@ import {
   SortingState,
   Table,
   Updater,
+  flexRender,
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -104,3 +105,5 @@ export function EATTable<TData>({ children, ...props }: EATTableProps<TData>) {
   const tableContext = useEATTable(props);
   return <>{children(tableContext)}</>;
 }
+
+export { flexRender };
