@@ -79,12 +79,14 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
   });
 
   const toProcess = matchesNeedingExplain.slice(0, maxMatches);
+  const runInput = { jobId, toProcess: toProcess.length };
 
   const agentRun = await prisma.agentRunLog.create({
     data: {
       agentName: 'EAT-TS.EXPLAIN',
       userId: recruiterId ?? null,
-      inputSummary: `jobId=${jobId}, toProcess=${toProcess.length}`,
+      input: runInput,
+      inputSnapshot: runInput,
       status: 'RUNNING',
     },
   });
@@ -100,7 +102,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
         jobDescription: job.description,
         jobSkills: job.requiredSkills ?? [],
         candidateName: candidate.fullName,
-        candidateTitle: candidate.primaryTitle,
+        candidateTitle: candidate.currentTitle,
         candidateLocation: candidate.location,
         candidateSkills: candidate.normalizedSkills ?? [],
       });
@@ -109,7 +111,6 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
         model: 'gpt-4.1-mini',
         systemPrompt: 'You are an expert recruiter explaining candidate-to-role fit clearly and concisely.',
         userPrompt,
-        temperature: 0.4,
       });
 
       const summary = extractSummary(explanationText);
@@ -132,7 +133,8 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
       where: { id: agentRun.id },
       data: {
         status: 'SUCCESS',
-        outputSummary: `Generated explanations for ${processedCount} matches on job ${jobId}`,
+        output: { summary: `Generated explanations for ${processedCount} matches on job ${jobId}` },
+        outputSnapshot: { summary: `Generated explanations for ${processedCount} matches on job ${jobId}` },
       },
     });
 

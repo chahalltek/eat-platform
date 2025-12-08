@@ -52,6 +52,7 @@ export function JobMatchesTable({ data }: JobMatchesTableProps) {
         cell: (info) => {
           const row = info.row.original;
           const details = row.confidenceDetails;
+          const confidence = info.getValue() as number;
 
           const tooltip = details
             ? [
@@ -66,7 +67,7 @@ export function JobMatchesTable({ data }: JobMatchesTableProps) {
               className="cursor-help underline decoration-dotted underline-offset-2"
               title={tooltip}
             >
-              {info.getValue()}%
+              {confidence}%
             </span>
           );
         },

@@ -3,10 +3,10 @@ import { runExplainForJob } from '@/lib/agents/explain';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    const jobId = params.jobId;
+    const { jobId } = await params;
     const body = await req.json().catch(() => ({}));
 
     const recruiterId =
