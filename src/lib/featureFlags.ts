@@ -46,11 +46,15 @@ function isMissingTableError(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021';
 }
 
+function isPrismaUnavailableError(error: unknown) {
+  return error instanceof Prisma.PrismaClientInitializationError;
+}
+
 async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) {
   try {
     return await prisma.featureFlag.findUnique({ where: { tenantId_name: { tenantId, name } } });
   } catch (error) {
-    if (isMissingTableError(error)) return null;
+    if (isMissingTableError(error) || isPrismaUnavailableError(error)) return null;
     throw error;
   }
 }
@@ -61,7 +65,10 @@ async function fetchFeatureFlagOverrides(tenantId: string) {
 
     return new Map(overrides.map((flag) => [flag.name as FeatureFlagName, flag]));
   } catch (error) {
-    if (isMissingTableError(error)) return new Map<FeatureFlagName, FeatureFlagModel>();
+    if (isMissingTableError(error) || isPrismaUnavailableError(error)) {
+      return new Map<FeatureFlagName, FeatureFlagModel>();
+    }
+
     throw error;
   }
 }
@@ -133,7 +140,10 @@ export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): P
     update: { enabled },
     create: { tenantId, name, enabled, description: DEFAULT_FLAG_DESCRIPTIONS[name] },
   }).catch((error) => {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') {
+    if (
+      (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') ||
+      error instanceof Prisma.PrismaClientInitializationError
+    ) {
       return buildFallbackFlag(name, enabled);
     }
 

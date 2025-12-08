@@ -1,4 +1,5 @@
 import type { SubscriptionPlan, TenantSubscription } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { prisma } from './prisma';
 
@@ -20,15 +21,23 @@ export async function getTenantPlan(tenantId: string): Promise<ActiveTenantPlan 
     return null;
   }
 
-  const subscription = await tenantSubscriptionModel.findFirst({
-    where: {
-      tenantId,
-      startAt: { lte: now },
-      OR: [{ endAt: null }, { endAt: { gt: now } }],
-    },
-    orderBy: { startAt: 'desc' },
-    include: { plan: true },
-  });
+  const subscription = await tenantSubscriptionModel
+    .findFirst({
+      where: {
+        tenantId,
+        startAt: { lte: now },
+        OR: [{ endAt: null }, { endAt: { gt: now } }],
+      },
+      orderBy: { startAt: 'desc' },
+      include: { plan: true },
+    })
+    .catch((error) => {
+      if (error instanceof Prisma.PrismaClientInitializationError) {
+        return null;
+      }
+
+      throw error;
+    });
 
   if (!subscription) {
     return null;
