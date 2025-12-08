@@ -1,6 +1,7 @@
 import type { AgentKillSwitch as AgentKillSwitchModel } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
+import { logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { prisma } from '@/lib/prisma';
 
 export const AGENT_KILL_SWITCHES = {
@@ -122,7 +123,17 @@ export async function setAgentKillSwitch(
     create: { agentName, latched, reason: normalizedReason, latchedAt },
   });
 
-  return toRecord(agentName, record);
+  const parsed = toRecord(agentName, record);
+
+  await logKillSwitchChange({
+    switchName: agentName,
+    latched: parsed.latched,
+    reason: parsed.reason,
+    latchedAt: parsed.latchedAt,
+    scope: 'agent',
+  });
+
+  return parsed;
 }
 
 export async function enforceAgentKillSwitch(agentName: AgentName) {

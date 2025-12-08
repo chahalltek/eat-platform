@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { prisma } from '@/lib/prisma';
 
 import {
@@ -21,6 +22,10 @@ vi.mock('@/lib/prisma', () => ({
       upsert: vi.fn(),
     },
   },
+}));
+
+vi.mock('@/lib/audit/securityEvents', () => ({
+  logKillSwitchChange: vi.fn(),
 }));
 
 afterEach(() => {
@@ -138,6 +143,14 @@ describe('agent kill switch', () => {
     );
     expect(record.agentName).toBe(AGENT_KILL_SWITCHES.RINA);
     expect(record.latched).toBe(true);
+    expect(logKillSwitchChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        switchName: AGENT_KILL_SWITCHES.RINA,
+        latched: true,
+        reason: 'manual disable',
+        scope: 'agent',
+      }),
+    );
   });
 
   test('setAgentKillSwitch falls back to default reason', async () => {
@@ -179,6 +192,14 @@ describe('agent kill switch', () => {
       expect.objectContaining({
         create: expect.objectContaining({ latchedAt: null, reason: null }),
         update: expect.objectContaining({ latchedAt: null, reason: null }),
+      }),
+    );
+    expect(logKillSwitchChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        switchName: AGENT_KILL_SWITCHES.RINA,
+        latched: false,
+        reason: null,
+        latchedAt: null,
       }),
     );
   });
