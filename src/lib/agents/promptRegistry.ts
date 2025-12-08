@@ -13,7 +13,9 @@ export const AGENT_PROMPTS = {
 
 export type AgentPromptName = (typeof AGENT_PROMPTS)[keyof typeof AGENT_PROMPTS];
 
-export type AgentPromptDefinition = Pick<AgentPrompt, 'agentName' | 'version' | 'prompt' | 'active' | 'rollbackVersion'>;
+export type AgentPromptDefinition =
+  & Pick<AgentPrompt, 'version' | 'prompt' | 'active' | 'rollbackVersion'>
+  & { agentName: AgentPromptName };
 
 const DEFAULT_PROMPTS: AgentPromptDefinition[] = [
   {

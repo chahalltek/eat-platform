@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   try {
     const { archive } = await buildTenantExportArchive(tenantId);
 
-    return new NextResponse(archive, {
+    return new NextResponse(new Uint8Array(archive), {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename=tenant-${tenantId}-export.zip`,
