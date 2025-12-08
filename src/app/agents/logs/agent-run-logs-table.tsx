@@ -1,20 +1,26 @@
 "use client";
 
 import { useMemo } from "react";
+<<<<<<< ours
 import clsx from "clsx";
 import { flexRender, type FilterFn } from "@tanstack/react-table";
+=======
+import type { FilterFn } from "@tanstack/react-table";
+>>>>>>> theirs
 
-import { EATTable } from "@/components/table/EATTable";
+import { StandardTable } from "@/components/table/StandardTable";
 import { TableFilterDropdown, type TableFilterOption } from "@/components/table/TableFilterDropdown";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
-import { TableToolbar } from "@/components/table/TableToolbar";
 import {
   EATTableColumn,
   createNumberColumn,
   createStatusBadgeColumn,
   createTextColumn,
 } from "@/components/table/tableTypes";
+<<<<<<< ours
 import { getTableCellClasses, getTableClassNames, getTableRowClasses } from "@/components/table/tableStyles";
+=======
+>>>>>>> theirs
 import type { AgentRunStatusValue, SerializableLog } from "./types";
 
 export type AgentRunLogTableRow = SerializableLog;
@@ -99,7 +105,6 @@ export function AgentRunLogsTable({
           accessorKey: "agentName",
           header: "Agent",
           sortable: true,
-          cell: ({ getValue }) => <span className="font-semibold text-slate-900">{getValue()}</span>,
         }),
         filterFn: multiSelectFilter,
       },
@@ -107,6 +112,7 @@ export function AgentRunLogsTable({
         accessorKey: "userLabel",
         header: "User/Recruiter",
         sortable: true,
+        cell: ({ getValue }) => getValue<string | null>() ?? "—",
       }),
       {
         ...createStatusBadgeColumn<AgentRunLogTableRow, "status">({
@@ -130,7 +136,7 @@ export function AgentRunLogsTable({
 
   return (
     <div className="space-y-3">
-      <EATTable
+      <StandardTable
         data={logs}
         columns={columns}
         sorting={{ initialState: [{ id: "startedAt", desc: true }] }}
@@ -140,87 +146,20 @@ export function AgentRunLogsTable({
           globalFilterFn,
         }}
         variant="compact"
-      >
-        {({ headerGroups, rows, styles, table }) => {
-          const classNames = getTableClassNames(styles);
-          return (
-            <div className="space-y-3">
-              <TableToolbar>
-                <TableSearchInput table={table} placeholder="Search runs" label="Search" className="w-full md:w-72" />
-                <TableFilterDropdown table={table} columnId="agentName" label="Agent" options={agentOptions} />
-                <TableFilterDropdown table={table} columnId="status" label="Status" options={STATUS_FILTER_OPTIONS} />
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{rows.length} results</p>
-              </TableToolbar>
-
-              <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                <table className={classNames.table}>
-                  <thead className={classNames.header}>
-                    {headerGroups.map((headerGroup) => (
-                      <tr key={headerGroup.id} className={classNames.headerRow}>
-                        {headerGroup.headers.map((header) => {
-                          const sortedState = header.column.getIsSorted();
-                          return (
-                            <th key={header.id} colSpan={header.colSpan} className={classNames.headerCell}>
-                              {header.isPlaceholder ? null : (
-                                <button
-                                  type="button"
-                                  onClick={header.column.getToggleSortingHandler()}
-                                  className={clsx("flex items-center gap-2", {
-                                    "text-indigo-700": sortedState,
-                                    "cursor-default": !header.column.getCanSort(),
-                                  })}
-                                  aria-label={
-                                    sortedState === "asc"
-                                      ? `${String(header.column.columnDef.header)} sorted ascending`
-                                      : sortedState === "desc"
-                                        ? `${String(header.column.columnDef.header)} sorted descending`
-                                        : `${String(header.column.columnDef.header)} sortable`
-                                  }
-                                >
-                                  <span>{String(header.column.columnDef.header)}</span>
-                                  {sortedState === "asc" && <span aria-hidden="true">↑</span>}
-                                  {sortedState === "desc" && <span aria-hidden="true">↓</span>}
-                                </button>
-                              )}
-                            </th>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody className={classNames.body}>
-                    {rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className={getTableRowClasses(styles, {
-                          hover: true,
-                          striped: true,
-                          selected: row.original.id === selectedId,
-                        })}
-                        data-state={row.original.id === selectedId ? "selected" : undefined}
-                        onClick={() => onSelect(row.original.id)}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className={getTableCellClasses(styles)}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                    {rows.length === 0 ? (
-                      <tr className={getTableRowClasses(styles)}>
-                        <td className={getTableCellClasses(styles)} colSpan={columns.length}>
-                          <p className="py-4 text-center text-sm text-slate-600">No runs match the selected filters.</p>
-                        </td>
-                      </tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        }}
-      </EATTable>
+        renderToolbar={(table) => (
+          <>
+            <TableSearchInput table={table} placeholder="Search runs" label="Search" className="w-full md:w-72" />
+            <TableFilterDropdown table={table} columnId="agentName" label="Agent" options={agentOptions} />
+            <TableFilterDropdown table={table} columnId="status" label="Status" options={STATUS_FILTER_OPTIONS} />
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{table.getRowModel().rows.length} results</p>
+          </>
+        )}
+        emptyState={<p className="py-4 text-center text-sm text-slate-600">No runs match the selected filters.</p>}
+        getRowOptions={(row) => ({
+          onClick: () => onSelect(row.original.id),
+          selected: row.original.id === selectedId,
+        })}
+      />
     </div>
   );
 }

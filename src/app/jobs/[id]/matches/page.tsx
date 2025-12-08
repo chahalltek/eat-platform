@@ -1,14 +1,7 @@
 import Link from "next/link";
 
-import { JobCandidateStatus } from "@prisma/client";
-import { OutreachGenerator } from "./OutreachGenerator";
+import { JobMatchesTable, type MatchRow } from "./JobMatchesTable";
 import { prisma } from "@/lib/prisma";
-import { JobCandidateStatusControl } from "./JobCandidateStatusControl";
-
-function formatScore(score?: number | null) {
-  if (score == null) return "—";
-  return score.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
 
 export default async function JobMatchesPage({
   params,
@@ -56,6 +49,22 @@ export default async function JobMatchesPage({
     job.jobCandidates.map((jobCandidate) => [jobCandidate.candidateId, jobCandidate]),
   );
 
+  const matchRows: MatchRow[] = job.matchResults.map((match) => {
+    const candidateId = match.candidateId ?? match.candidate.id;
+    const jobCandidate = candidateId ? jobCandidateByCandidateId.get(candidateId) : undefined;
+
+    return {
+      id: match.id,
+      candidateId,
+      jobId: job.id,
+      candidateName: match.candidate.fullName ?? "Unknown",
+      currentTitle: match.candidate.currentTitle ?? match.candidate.role ?? null,
+      score: match.score,
+      jobCandidateId: jobCandidate?.id,
+      jobCandidateStatus: jobCandidate?.status,
+    };
+  });
+
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 space-y-6">
       <div className="flex items-center justify-between">
@@ -80,63 +89,7 @@ export default async function JobMatchesPage({
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        {job.matchResults.length === 0 ? (
-          <div className="px-6 py-8 text-center text-sm text-gray-700">
-            No matches found for this job yet.
-          </div>
-        ) : (
-          <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
-            <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-              <tr>
-                <th scope="col" className="px-4 py-3">
-                  Candidate
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Match Score
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Status
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Outreach
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {job.matchResults.map((match) => {
-                const jobCandidate = jobCandidateByCandidateId.get(match.candidateId);
-
-                return (
-                  <tr key={match.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      <div>{match.candidate.fullName ?? "Unknown"}</div>
-                      <div className="text-xs font-normal text-gray-600">
-                        {match.candidate.currentTitle ?? "—"}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-800">{formatScore(match.score)}</td>
-                    <td className="px-4 py-3 text-gray-800">
-                      {jobCandidate ? (
-                        <JobCandidateStatusControl
-                          jobCandidateId={jobCandidate.id}
-                          initialStatus={jobCandidate.status as JobCandidateStatus}
-                        />
-                      ) : (
-                        <span className="text-xs text-gray-500">No status available</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      <OutreachGenerator
-                        candidateId={match.candidateId ?? match.candidate.id}
-                        jobReqId={job.id}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+        <JobMatchesTable matches={matchRows} />
       </div>
     </div>
   );

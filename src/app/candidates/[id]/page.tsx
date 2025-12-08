@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { JobOpportunitiesTable, type JobOpportunityRow } from "../JobOpportunitiesTable";
 import { prisma } from "@/lib/prisma";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { getCurrentTenantId } from "@/lib/tenant";
@@ -43,11 +44,6 @@ async function findRelatedAgentRun(candidateId: string, tenantId: string) {
   return runs[0];
 }
 
-function formatScore(score?: number | null) {
-  if (score == null) return "—";
-  return score.toLocaleString();
-}
-
 export default async function CandidateDetail({
   params,
 }: {
@@ -86,6 +82,16 @@ export default async function CandidateDetail({
       },
     },
   });
+
+  const jobOpportunities: JobOpportunityRow[] = candidate?.jobCandidates.map((jobCandidate) => ({
+    id: jobCandidate.id,
+    jobReqId: jobCandidate.jobReqId,
+    title: jobCandidate.jobReq.title,
+    location: jobCandidate.jobReq.location,
+    customerName: jobCandidate.jobReq.customer?.name ?? null,
+    status: jobCandidate.status,
+    matchScore: jobCandidate.lastMatch?.score ?? null,
+  })) ?? [];
 
   if (!candidate) {
     return (
@@ -195,70 +201,9 @@ export default async function CandidateDetail({
             View all jobs
           </Link>
         </div>
-        {candidate.jobCandidates.length === 0 ? (
-          <p className="mt-2 text-gray-600">This candidate has not been linked to any jobs yet.</p>
-        ) : (
-          <div className="mt-4 overflow-hidden rounded-md border border-gray-100">
-            <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
-              <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
-                <tr>
-                  <th scope="col" className="px-4 py-3">
-                    Job
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Customer
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Status
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Match score
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Links
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {candidate.jobCandidates.map((jobCandidate) => (
-                  <tr key={jobCandidate.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      <Link
-                        href={`/jobs/${jobCandidate.jobReqId}`}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        {jobCandidate.jobReq.title}
-                      </Link>
-                      <div className="text-xs font-normal text-gray-600">
-                        {jobCandidate.jobReq.location ?? "—"}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-800">
-                      {jobCandidate.jobReq.customer?.name ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-gray-800">{jobCandidate.status}</td>
-                    <td className="px-4 py-3 text-gray-800">
-                      {formatScore(jobCandidate.lastMatch?.score)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-blue-600">
-                      <div className="flex flex-col space-y-1">
-                        <Link href={`/jobs/${jobCandidate.jobReqId}`} className="hover:text-blue-800">
-                          Job details
-                        </Link>
-                        <Link
-                          href={`/jobs/${jobCandidate.jobReqId}/matches`}
-                          className="hover:text-blue-800"
-                        >
-                          Matches
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="mt-4">
+          <JobOpportunitiesTable jobs={jobOpportunities} />
+        </div>
       </div>
 
       {agentRun && (

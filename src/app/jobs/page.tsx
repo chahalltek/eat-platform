@@ -1,11 +1,5 @@
-import Link from "next/link";
-
+import { JobTable, type JobTableRow } from "./JobTable";
 import { prisma } from "@/lib/prisma";
-import { FreshnessIndicator } from "./FreshnessIndicator";
-
-function formatDate(date: Date) {
-  return date.toLocaleString();
-}
 
 function formatSource(job: { sourceType: string | null; sourceTag: string | null }) {
   if (job.sourceType && job.sourceTag) {
@@ -43,6 +37,17 @@ export default async function JobsPage() {
       return [];
     });
 
+  const tableRows: JobTableRow[] = jobs.map((job) => ({
+    id: job.id,
+    title: job.title,
+    customerName: job.customer?.name ?? null,
+    location: job.location ?? null,
+    source: formatSource(job),
+    createdAt: job.createdAt.toISOString(),
+    updatedAt: job.updatedAt?.toISOString() ?? null,
+    latestMatchActivity: job.matchResults[0]?.createdAt?.toISOString() ?? null,
+  }));
+
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       <div className="flex items-center justify-between">
@@ -54,66 +59,8 @@ export default async function JobsPage() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        {jobs.length === 0 ? (
-          <div className="px-6 py-10 text-center text-sm text-gray-700">
-            No job requisitions available.
-          </div>
-        ) : (
-          <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
-            <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-              <tr>
-                <th scope="col" className="px-4 py-3">
-                  Title
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Customer
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Location
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Source
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Created
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Freshness
-                </th>
-                <th scope="col" className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {jobs.map((job) => (
-                <tr key={job.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{job.title}</td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {job.customer?.name ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{job.location ?? "—"}</td>
-                  <td className="px-4 py-3 text-gray-700">{formatSource(job)}</td>
-                  <td className="px-4 py-3 text-gray-700">{formatDate(job.createdAt)}</td>
-                  <td className="px-4 py-3 text-gray-700">
-                    <FreshnessIndicator
-                      createdAt={job.createdAt}
-                      updatedAt={job.updatedAt}
-                      latestMatchActivity={job.matchResults[0]?.createdAt ?? null}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/jobs/${job.id}`}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div className="mt-6">
+        <JobTable jobs={tableRows} />
       </div>
     </div>
   );

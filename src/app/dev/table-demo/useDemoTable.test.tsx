@@ -2,45 +2,31 @@
  * @vitest-environment jsdom
  */
 
-import { act, renderHook } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
-import { demoColumns, useDemoTable } from "./useDemoTable";
+import { demoData, useDemoTable } from "./useDemoTable";
 
 describe("useDemoTable", () => {
   it("exposes typed column definitions", () => {
-    const headers = demoColumns.map((column) => column.id ?? column.accessorKey);
+    const { result } = renderHook(() => useDemoTable());
+    const headers = result.current.columns.map((column) => column.id ?? column.accessorKey);
 
     expect(headers).toContain("name");
     expect(headers).toContain("score");
-    expect(headers?.length).toBeGreaterThanOrEqual(4);
+    expect(result.current.columns).toHaveLength(5);
   });
 
-  it("toggles sorting state for sortable columns", () => {
+  it("returns the demo dataset", () => {
     const { result } = renderHook(() => useDemoTable());
 
-    expect(result.current.sorting).toEqual([]);
-
-    act(() => {
-      result.current.table.getColumn("score")?.toggleSorting();
-    });
-
-    const firstSort = result.current.sorting[0];
-
-    expect(firstSort?.id).toBe("score");
-
-    act(() => {
-      result.current.table.getColumn("score")?.toggleSorting();
-    });
-
-    expect(result.current.sorting[0]?.id).toBe("score");
-    expect(result.current.sorting[0]?.desc).toBe(!firstSort?.desc);
+    expect(result.current.data).toEqual(demoData);
   });
 
-  it("matches the initial dataset snapshot", () => {
+  it("matches the global filter shape", () => {
     const { result } = renderHook(() => useDemoTable());
 
-    const rows = result.current.table.getRowModel().rows.map((row) => row.original.name);
-
-    expect(rows).toMatchSnapshot();
+    expect(typeof result.current.globalFilterFn).toBe("function");
+    expect(result.current.globalFilterFn({ original: demoData[0] } as any, "name", "alex")).toBe(true);
   });
 });

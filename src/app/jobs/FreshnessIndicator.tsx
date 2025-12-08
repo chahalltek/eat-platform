@@ -1,3 +1,5 @@
+"use client";
+
 import { computeJobFreshnessScore, freshnessLabel } from "@/lib/matching/freshness";
 
 function formatTimestamp(date?: Date | null) {

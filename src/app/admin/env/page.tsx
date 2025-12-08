@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 
+import { EnvTable } from './EnvTable';
 import { getCurrentUser } from '@/lib/auth/user';
-import { getEnvironmentSnapshot, type EnvEntry } from '@/lib/admin/env';
+import { getEnvironmentSnapshot } from '@/lib/admin/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,43 +14,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
         {children}
       </div>
     </section>
-  );
-}
-
-function EnvTable({ entries }: { entries: EnvEntry[] }) {
-  if (entries.length === 0) {
-    return <p className="px-4 py-6 text-sm text-gray-500">No entries found.</p>;
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 text-left text-sm text-gray-700">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-              Key
-            </th>
-            <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-              Value
-            </th>
-            <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-              Visibility
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {entries.map((entry) => (
-            <tr key={entry.key} className="hover:bg-gray-50">
-              <td className="px-4 py-3 font-mono text-xs text-gray-700">{entry.key}</td>
-              <td className="px-4 py-3 font-mono text-xs text-gray-900">
-                {entry.value ?? '—'}
-              </td>
-              <td className="px-4 py-3 text-gray-600">{entry.redacted ? 'Redacted' : 'Visible'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   );
 }
 

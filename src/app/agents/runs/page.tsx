@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
+
+import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
 
@@ -7,8 +9,16 @@ export const dynamic = "force-dynamic";
 
 type LooseRecord = Record<string, unknown>;
 
+type AgentRunRecord = AgentRunTableRow & {
+  input: unknown;
+  output: unknown;
+  sourceType: string | null;
+  sourceTag: string | null;
+  startedAt: Date;
+};
+
 function formatDate(date: Date) {
-  return date.toLocaleString();
+  return date.toISOString();
 }
 
 function getNestedValue(obj: unknown, path: string[]): unknown {
@@ -39,17 +49,6 @@ function extractCandidateId(log: { input: unknown; output: unknown }) {
   return undefined;
 }
 
-type AgentRunRow = {
-  id: string;
-  agentName: string;
-  status: string | null;
-  startedAt: Date;
-  input: unknown;
-  output: unknown;
-  sourceType: string | null;
-  sourceTag: string | null;
-};
-
 function formatStatus(status: string | null) {
   if (!status) return "Unknown";
   const normalized = status.toLowerCase();
@@ -74,7 +73,7 @@ function formatSource(run: { sourceType: string | null; sourceTag: string | null
 export default async function AgentRunsPage() {
   const tenantId = await getCurrentTenantId();
 
-  const runs = await prisma.$queryRaw<AgentRunRow[]>(Prisma.sql`
+  const runs = await prisma.$queryRaw<AgentRunRecord[]>(Prisma.sql`
     SELECT
       id,
       "agentName",
@@ -90,66 +89,29 @@ export default async function AgentRunsPage() {
     LIMIT 50
   `);
 
+  const tableRuns: AgentRunTableRow[] = runs.map((run) => ({
+    id: run.id,
+    agentName: run.agentName,
+    status: formatStatus(run.status),
+    startedAt: formatDate(run.startedAt),
+    candidateId: extractCandidateId({ input: run.input, output: run.output }),
+    source: formatSource({ sourceType: run.sourceType, sourceTag: run.sourceTag }),
+  }));
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <h1 className="text-2xl font-semibold text-gray-900">Agent Runs</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Agent Runs</h1>
+          <p className="text-sm text-gray-600">Most recent runs for this tenant.</p>
+        </div>
+        <Link href="/agents/logs" className="text-blue-600 hover:text-blue-800">
+          View detailed logs
+        </Link>
+      </div>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200 text-left text-sm text-gray-700">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-                Created At
-              </th>
-              <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-                Agent Name
-              </th>
-              <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-                Status
-              </th>
-              <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-                Candidate ID
-              </th>
-              <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-                Source
-              </th>
-              <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {runs.map((run) => {
-              const candidateId = extractCandidateId(run);
-
-              return (
-                <tr key={run.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-900">
-                    {formatDate(run.startedAt)}
-                  </td>
-                  <td className="px-4 py-3">{run.agentName}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
-                      {formatStatus(run.status)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-600">
-                    {candidateId ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{formatSource(run)}</td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/agents/runs/${run.id}`}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="mt-6">
+        <AgentRunsTable runs={tableRuns} />
       </div>
     </div>
   );

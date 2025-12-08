@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 
+import { StandardTable } from "@/components/table/StandardTable";
+import { TableSearchInput } from "@/components/table/TableSearchInput";
 import { useDemoTable } from "./useDemoTable";
 
 export default function TableDemoPage() {
-  const { table } = useDemoTable();
+  const { columns, data, globalFilterFn } = useDemoTable();
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
@@ -21,49 +23,15 @@ export default function TableDemoPage() {
           </Link>
         </header>
 
-        <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-zinc-200">
-            <thead className="bg-zinc-50">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    const sortedState = header.column.getIsSorted();
-                    return (
-                      <th
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600"
-                      >
-                        {header.isPlaceholder ? null : (
-                          <button
-                            type="button"
-                            onClick={header.column.getToggleSortingHandler()}
-                            className={`flex items-center gap-2 ${header.column.getCanSort() ? "hover:text-indigo-700" : "cursor-default"}`}
-                          >
-                            <span>{header.column.columnDef.header as string}</span>
-                            {sortedState === "asc" && <span aria-label="sorted ascending">↑</span>}
-                            {sortedState === "desc" && <span aria-label="sorted descending">↓</span>}
-                          </button>
-                        )}
-                      </th>
-                    );
-                  })}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="divide-y divide-zinc-200">
-              {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="hover:bg-indigo-50/40">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="whitespace-nowrap px-4 py-3 text-sm text-zinc-800">
-                      {cell.renderValue() as string}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <StandardTable
+          data={data}
+          columns={columns}
+          sorting={{ initialState: [{ id: "score", desc: true }] }}
+          filtering={{ globalFilter: { initialState: "" }, globalFilterFn }}
+          renderToolbar={(table) => (
+            <TableSearchInput table={table} placeholder="Search mock candidates" label="Search" className="w-full md:w-72" />
+          )}
+        />
       </main>
     </div>
   );

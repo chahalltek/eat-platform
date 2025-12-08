@@ -1,14 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  ColumnDef,
-  SortingState,
-  createColumnHelper,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { useMemo } from "react";
+
+import type { FilterFn } from "@tanstack/react-table";
+import type { EATTableColumn } from "@/components/table/tableTypes";
+import { createNumberColumn, createTextColumn } from "@/components/table/tableTypes";
 
 export type DemoCandidate = {
   id: number;
@@ -18,38 +14,6 @@ export type DemoCandidate = {
   score: number;
   availability: "Immediate" | "2 weeks" | "1 month";
 };
-
-const columnHelper = createColumnHelper<DemoCandidate>();
-
-export const demoColumns = [
-  columnHelper.accessor("name", {
-    id: "name",
-    header: "Name",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("role", {
-    id: "role",
-    header: "Role",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("location", {
-    id: "location",
-    header: "Location",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("score", {
-    id: "score",
-    header: "Fit Score",
-    cell: (info) => `${info.getValue()}%`,
-    enableSorting: true,
-  }),
-  columnHelper.accessor("availability", {
-    id: "availability",
-    header: "Availability",
-    cell: (info) => info.getValue(),
-    enableSorting: false,
-  }),
-] satisfies ColumnDef<DemoCandidate, any>[];
 
 export const demoData: DemoCandidate[] = [
   { id: 1, name: "Alex Rivera", role: "Product Manager", location: "Remote", score: 88, availability: "Immediate" },
@@ -61,18 +25,49 @@ export const demoData: DemoCandidate[] = [
 ];
 
 export function useDemoTable() {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const columns = useMemo<EATTableColumn<DemoCandidate>[]>(
+    () => [
+      createTextColumn<DemoCandidate, "name">({
+        accessorKey: "name",
+        header: "Name",
+      }),
+      createTextColumn<DemoCandidate, "role">({
+        accessorKey: "role",
+        header: "Role",
+        sortable: false,
+      }),
+      createTextColumn<DemoCandidate, "location">({
+        accessorKey: "location",
+        header: "Location",
+        sortable: false,
+      }),
+      {
+        ...createNumberColumn<DemoCandidate, "score">({
+          accessorKey: "score",
+          header: "Fit Score",
+        }),
+        cell: ({ getValue }) => `${getValue<number>()}%`,
+      },
+      createTextColumn<DemoCandidate, "availability">({
+        accessorKey: "availability",
+        header: "Availability",
+        sortable: false,
+      }),
+    ],
+    [],
+  );
 
-  const data = useMemo(() => demoData, []);
+  const globalFilterFn = useMemo<FilterFn<DemoCandidate>>(
+    () =>
+      (row, _columnId, filterValue) => {
+        const query = typeof filterValue === "string" ? filterValue.trim().toLowerCase() : "";
+        if (!query) return true;
 
-  const table = useReactTable({
-    data,
-    columns: demoColumns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
+        const values = [row.original.name, row.original.role, row.original.location, row.original.availability];
+        return values.some((value) => value.toLowerCase().includes(query));
+      },
+    [],
+  );
 
-  return { table, sorting, setSorting };
+  return { columns, data: demoData, globalFilterFn };
 }
