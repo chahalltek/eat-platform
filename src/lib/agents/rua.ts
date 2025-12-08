@@ -1,6 +1,7 @@
 // src/lib/agents/rua.ts
-import { prisma } from '@/lib/prisma';
+import { withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
+import { prisma } from '@/lib/prisma';
 
 export type RuaInput = {
   recruiterId?: string;
@@ -68,91 +69,66 @@ export async function runRua(
 ): Promise<{ jobReqId: string; agentRunId: string }> {
   const { recruiterId, rawJobText, sourceType, sourceTag } = input;
 
-  const runInput = {
-    recruiterId,
-    rawJobText: rawJobText.slice(0, 4000),
-    sourceType,
-    sourceTag,
-  };
-
-  const agentRun = await prisma.agentRunLog.create({
-    data: {
+  const [result, agentRunId] = await withAgentRun<{ jobReqId: string }>(
+    {
       agentName: 'EAT-TS.RUA',
-      // Until we wire real auth, don’t link to a User row
-      userId: null,
-      input: runInput,
-      inputSnapshot: runInput,
-      status: 'RUNNING',
-      startedAt: new Date(),
+      recruiterId,
+      inputSnapshot: {
+        recruiterId: recruiterId ?? null,
+        rawJobText: rawJobText.slice(0, 4000),
+        sourceType,
+        sourceTag,
+      },
     },
-  });
-
-  try {
-    const userPrompt = `
+    async () => {
+      const userPrompt = `
 Job Description:
 """
 ${rawJobText}
 """
 `;
 
-    const llmRaw = await callLLM({
-      systemPrompt: SYSTEM_PROMPT,
-      userPrompt,
-    });
+      const llmRaw = await callLLM({
+        systemPrompt: SYSTEM_PROMPT,
+        userPrompt,
+      });
 
-    let parsed: ParsedJobReq;
-    try {
-      parsed = JSON.parse(llmRaw) as ParsedJobReq;
-    } catch (err) {
-      console.error('Failed to parse LLM JSON for RUA:', err, llmRaw);
-      throw new Error('Failed to parse LLM JSON');
-    }
+      let parsed: ParsedJobReq;
+      try {
+        parsed = JSON.parse(llmRaw) as ParsedJobReq;
+      } catch (err) {
+        console.error('Failed to parse LLM JSON for RUA:', err, llmRaw);
+        throw new Error('Failed to parse LLM JSON');
+      }
 
-    if (!parsed.title || !Array.isArray(parsed.skills)) {
-      throw new Error('Parsed job req missing required fields');
-    }
+      if (!parsed.title || !Array.isArray(parsed.skills)) {
+        throw new Error('Parsed job req missing required fields');
+      }
 
-    const jobReq = await prisma.jobReq.create({
-      data: {
-        title: parsed.title,
-        seniorityLevel: parsed.seniorityLevel ?? null,
-        location: parsed.location ?? null,
-        employmentType: parsed.employmentType ?? null,
-        rawDescription: rawJobText,
-        status: parsed.status ?? null,
-        skills: {
-          create: parsed.skills.map((skill) => ({
-            name: skill.name,
-            normalizedName: skill.normalizedName || skill.name,
-            required: skill.isMustHave ?? false,
-          })),
+      const jobReq = await prisma.jobReq.create({
+        data: {
+          title: parsed.title,
+          seniorityLevel: parsed.seniorityLevel ?? null,
+          location: parsed.location ?? null,
+          employmentType: parsed.employmentType ?? null,
+          rawDescription: rawJobText,
+          status: parsed.status ?? null,
+          skills: {
+            create: parsed.skills.map((skill) => ({
+              name: skill.name,
+              normalizedName: skill.normalizedName || skill.name,
+              required: skill.isMustHave ?? false,
+            })),
+          },
         },
-      },
-    });
+      });
 
-    const updatedRun = await prisma.agentRunLog.update({
-      where: { id: agentRun.id },
-      data: {
-        output: parsed,
-        status: 'SUCCESS',
-        finishedAt: new Date(),
-      },
-    });
+      return {
+        result: { jobReqId: jobReq.id },
+        outputSnapshot: parsed,
+      };
+    },
+  );
 
-    return {
-      jobReqId: jobReq.id,
-      agentRunId: updatedRun.id,
-    };
-    } catch (err) {
-    await prisma.agentRunLog.update({
-      where: { id: agentRun.id },
-      data: {
-        status: 'ERROR',
-        errorMessage: err instanceof Error ? err.message : 'Unknown error',
-        finishedAt: new Date(),
-      },
-    });
-
-    throw err;
-  }
+  return { ...result, agentRunId };
 }

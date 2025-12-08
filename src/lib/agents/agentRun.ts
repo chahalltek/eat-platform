@@ -9,6 +9,16 @@ type AgentRunInput = {
   inputSnapshot: Prisma.InputJsonValue | Prisma.JsonNullValueInput;
 };
 
+async function validateRecruiter(recruiterId: string): Promise<string> {
+  const user = await prisma.user.findUnique({ where: { id: recruiterId }, select: { id: true } });
+
+  if (!user) {
+    throw new Error('User not found for recruiterId');
+  }
+
+  return user.id;
+}
+
 type AgentRunResult<T extends Prisma.InputJsonValue> =
   | { result: T; outputSnapshot?: Prisma.InputJsonValue | Prisma.JsonNullValueInput }
   | T;
@@ -25,10 +35,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 ): Promise<[T, string]> {
   const startedAt = new Date();
 
-  const userId =
-    recruiterId != null
-      ? (await prisma.user.findUnique({ where: { id: recruiterId }, select: { id: true } }))?.id ?? null
-      : null;
+  const userId = recruiterId != null ? await validateRecruiter(recruiterId) : null;
 
   const agentRun = await prisma.agentRunLog.create({
     data: {

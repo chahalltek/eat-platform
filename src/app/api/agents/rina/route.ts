@@ -1,12 +1,22 @@
 // src/app/api/agents/rina/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { runRina } from '@/lib/agents/rina';
+import { validateRecruiterId } from '../recruiterValidation';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
     const { recruiterId, rawResumeText, sourceType, sourceTag } = body ?? {};
+
+    const recruiterValidation = await validateRecruiterId(recruiterId);
+
+    if ('error' in recruiterValidation) {
+      return NextResponse.json(
+        { error: recruiterValidation.error },
+        { status: recruiterValidation.status },
+      );
+    }
 
     if (typeof rawResumeText !== 'string') {
       return NextResponse.json(
@@ -33,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await runRina({
-      recruiterId,
+      recruiterId: recruiterValidation.recruiterId ?? undefined,
       rawResumeText,
       sourceType,
       sourceTag,

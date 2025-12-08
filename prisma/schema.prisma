@@ -23,14 +23,15 @@ enum JobCandidateStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  role      String   // "Recruiter", "Sourcer", "Sales", "Admin"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  email       String   @unique
+  displayName String
+  role        String   // "Recruiter", "Sourcer", "Sales", "Admin"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  agentRuns AgentRunLog[]
+  agentRuns     AgentRunLog[]
+  jobCandidates JobCandidate[]
 }
 
 model Candidate {
@@ -196,6 +197,9 @@ model JobCandidate {
   candidate         Candidate          @relation(fields: [candidateId], references: [id])
   candidateId       String
 
+  user    User?   @relation(fields: [userId], references: [id])
+  userId  String?
+
   status            JobCandidateStatus @default(POTENTIAL)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -208,6 +212,7 @@ model JobCandidate {
 
   @@index([jobReqId])
   @@index([candidateId])
+  @@index([userId])
   @@index([lastMatchResultId])
   @@unique([jobReqId, candidateId])
 }
