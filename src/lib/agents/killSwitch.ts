@@ -5,6 +5,7 @@ import { logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { prisma } from '@/lib/prisma';
 
 export const AGENT_KILL_SWITCHES = {
+  MATCHER: 'EAT-TS.MATCHER',
   RINA: 'EAT-TS.RINA',
   RUA: 'EAT-TS.RUA',
   OUTREACH: 'EAT-TS.OUTREACH',

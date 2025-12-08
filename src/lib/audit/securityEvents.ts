@@ -245,11 +245,7 @@ export async function logComplianceScan(params: {
       alerts: params.alerts,
       windowStartedAt: params.windowStartedAt,
       windowEndedAt: params.windowEndedAt,
-<<<<<<< ours
-         },
-=======
     },
->>>>>>> theirs
   });
 }
 

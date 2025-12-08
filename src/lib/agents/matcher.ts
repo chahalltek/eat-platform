@@ -1,7 +1,12 @@
-<<<<<<< ours
+import { MatchResult } from "@prisma/client";
+
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
+import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
+import { matchJobToAllCandidates } from "@/lib/matching/batch";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { prisma } from "@/lib/prisma";
+
+export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
 
 export type RunMatcherInput = {
   recruiterId?: string;
@@ -28,7 +33,7 @@ export async function runMatcher(
 
   const [result, agentRunId] = await withAgentRun<RunMatcherResult>(
     {
-      agentName: "EAT-TS.MATCHER",
+      agentName: MATCHER_AGENT_NAME,
       recruiterId,
       inputSnapshot: { jobId, topN },
       ...retryMetadata,
@@ -101,14 +106,7 @@ export async function runMatcher(
     ...result,
     agentRunId,
   };
-=======
-import { MatchResult } from "@prisma/client";
-
-import { withAgentRun } from "@/lib/agents/agentRun";
-import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
-import { matchJobToAllCandidates } from "@/lib/matching/batch";
-
-export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
+}
 
 export async function generateMatchExplanation(match: MatchResult): Promise<MatchResult> {
   // Placeholder for LLM-backed enrichment; kept simple for determinism in tests
@@ -148,5 +146,4 @@ export async function runMatcherAgent({
       return { result: { matches: sortedMatches } };
     },
   );
->>>>>>> theirs
 }
