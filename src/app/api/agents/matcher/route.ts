@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runMatcher } from '@/src/lib/agents/matcher';
+import { runMatcher } from '@/lib/agents/matcher';
 
 export async function POST(req: NextRequest) {
   try {
