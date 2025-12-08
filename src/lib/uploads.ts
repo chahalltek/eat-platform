@@ -29,10 +29,6 @@ export function detectFileKind(filename: string, mimeType?: string | null): Supp
   return EXTENSION_KIND_MAP[extension] ?? null;
 }
 
-function normalizeArrayBuffer(buffer: Buffer): ArrayBuffer {
-  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-}
-
 async function extractPdfText(buffer: Buffer): Promise<string> {
   const parser = new PDFParse({ data: buffer, verbosity: 0 });
   const { text } = await parser.getText();
@@ -41,7 +37,7 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
 }
 
 async function extractDocxText(buffer: Buffer): Promise<string> {
-  const { value } = await mammoth.extractRawText({ buffer: normalizeArrayBuffer(buffer) });
+  const { value } = await mammoth.extractRawText({ buffer });
   return value;
 }
 
