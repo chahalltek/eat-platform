@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { JobMatchesView } from "@/components/JobMatchesView";
-import type { ConfidenceDetails, JobMatchRow } from "@/components/JobMatchesTable";
+import type {
+  ConfidenceDetails,
+  ConfidenceReasons,
+  JobMatchRow,
+} from "@/components/JobMatchesTable";
 
 type Props = {
   params: { jobId: string };
@@ -23,7 +27,8 @@ async function getMatches(jobId: string): Promise<JobMatchRow[]> {
 
   return job.matches.map((m) => {
     const explanation: any = m.explanation ?? {};
-    const confidenceReasons: any = (m as any).confidenceReasons ?? null;
+    const confidenceReasons: ConfidenceReasons | null =
+      (m as any).confidenceReasons ?? null;
 
     const confidenceDetails: ConfidenceDetails | null = confidenceReasons
       ? {
@@ -41,7 +46,12 @@ async function getMatches(jobId: string): Promise<JobMatchRow[]> {
       confidence: m.confidence,
       explanationSummary: explanation.summary ?? "(no explanation summary)",
       confidenceDetails,
+<<<<<<< ours
       shortlisted: m.shortlisted,
+=======
+      confidenceReasons,
+      shortlisted: Boolean((m as any).shortlisted),
+>>>>>>> theirs
     };
   });
 }

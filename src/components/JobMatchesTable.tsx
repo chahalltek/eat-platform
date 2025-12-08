@@ -14,6 +14,12 @@ export type ConfidenceDetails = {
   recency: number;
 };
 
+export type ConfidenceReasons = {
+  dataCompleteness?: number;
+  skillCoverage?: number;
+  recency?: number;
+} | null;
+
 export type JobMatchRow = {
   candidateId: string;
   candidateName: string;
@@ -22,7 +28,12 @@ export type JobMatchRow = {
   confidence: number;
   explanationSummary: string;
   confidenceDetails?: ConfidenceDetails | null;
+<<<<<<< ours
   shortlisted: boolean;
+=======
+  confidenceReasons?: ConfidenceReasons;
+  shortlisted?: boolean;
+>>>>>>> theirs
 };
 
 export type JobMatchesTableProps = {
