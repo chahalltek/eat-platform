@@ -11,6 +11,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "ci:config-validate": "tsx scripts/config-validate.ts",
+    "ci:todo-scan": "tsx scripts/check-todos.ts",
     "predeploy": "node scripts/deployment-health.js",
     "seed": "ts-node prisma/seed.ts",
     "prisma:guard": "node scripts/db-safety.js"
@@ -43,6 +45,7 @@
     "jsdom": "^27.3.0",
     "prisma": "^5.19.0",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "ts-node": "^10.9.2",
     "typescript": "^5",
     "vitest": "^4.0.15"

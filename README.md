@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This project is a [Next.js](https://nextjs.org) application with CI guardrails baked in for security- and compliance-sensitive features.
 
-## Getting Started
+## Definition of Done (DoD) enforcement
 
-First, run the development server:
+The CI workflow enforces our enterprise DoD. A build will fail when any of the following protections do not pass:
+
+- **Coverage must stay at 100%.** `vitest` thresholds are pinned to 100% across statements/branches/functions/lines. Run `npm run test:coverage` locally to verify before opening a PR.
+- **No TODO/FIXME markers in protected domains.** Auth, billing, and tenant code (`src/lib/auth/**`, `src/lib/billing/**`, `src/lib/tenant/**`) are scanned via `npm run ci:todo-scan`.
+- **Configuration validation for the target environment.** `npm run ci:config-validate` exercises `src/lib/config/configValidator` with production-like variables to ensure required secrets and flags are present.
+- **Deployment health gates.** `npm run predeploy` remains part of the pipeline to mirror production deploy checks.
+
+### Running the DoD checks locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Enforce coverage and config/DoD gates
+NODE_ENV=production \
+APP_ENV=production \
+DATABASE_URL=postgres://local:local@db.example.com:5432/db \
+SSO_ISSUER_URL=https://sso.example.com \
+SSO_CLIENT_ID=local \
+SSO_CLIENT_SECRET=secret \
+BILLING_PROVIDER_SECRET_KEY=key \
+BILLING_WEBHOOK_SECRET=secret \
+TENANT_MODE=multi \
+npm run ci:config-validate
+
+npm run ci:todo-scan
+npm run test:coverage
+npm run predeploy
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+If any check fails, CI will block the merge until the issue is resolved.
