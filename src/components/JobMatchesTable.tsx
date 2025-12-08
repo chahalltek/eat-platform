@@ -20,6 +20,11 @@ export type JobMatchRow = {
   candidateTitle?: string | null;
   matchScore: number;
   confidence: number;
+  confidenceDetails?: {
+    dataCompleteness: number;
+    skillCoverage: number;
+    recency: number;
+  } | null;
   explanationSummary: string;
   confidenceDetails?: ConfidenceDetails | null;
 };
@@ -49,6 +54,7 @@ export function JobMatchesTable({ data }: JobMatchesTableProps) {
         accessorKey: 'confidence',
         header: 'Confidence',
         cell: (info) => {
+<<<<<<< ours
           const row = info.row.original;
           const details = row.confidenceDetails;
 
@@ -67,6 +73,15 @@ export function JobMatchesTable({ data }: JobMatchesTableProps) {
             >
               {info.getValue()}%
             </span>
+=======
+          const details = info.row.original.confidenceDetails;
+          const breakdown = details
+            ? `Data completeness: ${details.dataCompleteness}%\nSkill coverage: ${details.skillCoverage}%\nRecency: ${details.recency}%`
+            : undefined;
+
+          return (
+            <span title={breakdown}>{`${info.getValue<number>()}%`}</span>
+>>>>>>> theirs
           );
         },
       },
