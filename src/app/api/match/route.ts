@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
@@ -33,14 +34,31 @@ export async function POST(req: Request) {
 
   const jobReq = await prisma.jobReq.findUnique({
     where: { id: jobReqId },
-    include: { skills: true },
+    include: {
+      skills: true,
+      matchResults: {
+        select: { createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
   });
 
   if (!jobReq) {
     return NextResponse.json({ error: "JobReq not found" }, { status: 404 });
   }
 
-  const matchScore = computeMatchScore({ candidate, jobReq });
+  const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
+  const freshnessScore = computeJobFreshnessScore({
+    createdAt: jobReq.createdAt,
+    updatedAt: jobReq.updatedAt,
+    latestMatchActivity,
+  });
+
+  const matchScore = computeMatchScore(
+    { candidate, jobReq },
+    { jobFreshnessScore: freshnessScore.score },
+  );
 
   const data = {
     candidateId,

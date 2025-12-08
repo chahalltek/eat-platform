@@ -1,5 +1,6 @@
 import { MatchResult } from "@prisma/client";
 
+import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +8,14 @@ import { prisma } from "@/lib/prisma";
 export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   const jobReq = await prisma.jobReq.findUnique({
     where: { id: jobReqId },
-    include: { skills: true },
+    include: {
+      skills: true,
+      matchResults: {
+        select: { createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
   });
 
   if (!jobReq) {
@@ -37,8 +45,15 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
   const matchResults: MatchResult[] = [];
 
+  const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
+  const jobFreshness = computeJobFreshnessScore({
+    createdAt: jobReq.createdAt,
+    updatedAt: jobReq.updatedAt,
+    latestMatchActivity,
+  });
+
   for (const candidate of candidates) {
-    const matchScore = computeMatchScore({ candidate, jobReq });
+    const matchScore = computeMatchScore({ candidate, jobReq }, { jobFreshnessScore: jobFreshness.score });
     const data = {
       candidateId: candidate.id,
       jobReqId,

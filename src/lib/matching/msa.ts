@@ -7,6 +7,7 @@ export type MatchContext = {
 
 export type MatchScore = {
   score: number;
+  jobFreshnessScore: number;
   skillScore: number;
   seniorityScore: number;
   locationScore: number;
@@ -23,7 +24,10 @@ const getSkillKey = (skill: CandidateSkill | JobSkill): string => {
   return normalize(skill.name);
 };
 
-export function computeMatchScore(ctx: MatchContext): MatchScore {
+export function computeMatchScore(
+  ctx: MatchContext,
+  options?: { jobFreshnessScore?: number },
+): MatchScore {
   const reasons: string[] = [];
 
   const candidateSkillMap = new Map<string, CandidateSkill>();
@@ -89,10 +93,19 @@ export function computeMatchScore(ctx: MatchContext): MatchScore {
     reasons.push(`Location mismatch: candidate in ${ctx.candidate.location}, job in ${ctx.jobReq.location}`);
   }
 
-  const score = Math.round(skillScore * 0.7 + seniorityScore * 0.2 + locationScore * 0.1);
+  const baseScore = Math.round(skillScore * 0.7 + seniorityScore * 0.2 + locationScore * 0.1);
+
+  const jobFreshnessScore = Math.round(options?.jobFreshnessScore ?? 100);
+
+  if (jobFreshnessScore < 100) {
+    reasons.push(`Job freshness adjustment applied (${jobFreshnessScore}/100).`);
+  }
+
+  const score = Math.round(baseScore * 0.85 + jobFreshnessScore * 0.15);
 
   return {
     score,
+    jobFreshnessScore,
     skillScore,
     seniorityScore,
     locationScore,

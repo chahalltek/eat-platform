@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
 import { MatchRunner } from "./MatchRunner";
+import { FreshnessIndicator } from "../FreshnessIndicator";
 
 function formatDate(date?: Date | null) {
   if (!date) return "—";
@@ -54,6 +55,11 @@ export default async function JobDetail({
           ],
           select: { id: true, name: true, required: true, weight: true },
         },
+        matchResults: {
+          select: { createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
     })
     .catch((error) => {
@@ -86,6 +92,11 @@ export default async function JobDetail({
           <p className="text-gray-600">ID: {job.id}</p>
         </div>
         <div className="flex items-center gap-4 text-sm font-medium">
+          <FreshnessIndicator
+            createdAt={job.createdAt}
+            updatedAt={job.updatedAt}
+            latestMatchActivity={job.matchResults[0]?.createdAt ?? null}
+          />
           <Link
             href={`/jobs/${job.id}/matches`}
             className="text-blue-600 hover:text-blue-800"

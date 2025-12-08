@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
+import { FreshnessIndicator } from "./FreshnessIndicator";
 
 function formatDate(date: Date) {
   return date.toLocaleString();
@@ -26,6 +27,12 @@ export default async function JobsPage() {
         sourceType: true,
         sourceTag: true,
         createdAt: true,
+        updatedAt: true,
+        matchResults: {
+          select: { createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
         customer: { select: { name: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -71,6 +78,9 @@ export default async function JobsPage() {
                 <th scope="col" className="px-4 py-3">
                   Created
                 </th>
+                <th scope="col" className="px-4 py-3">
+                  Freshness
+                </th>
                 <th scope="col" className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -84,6 +94,13 @@ export default async function JobsPage() {
                   <td className="px-4 py-3 text-gray-700">{job.location ?? "—"}</td>
                   <td className="px-4 py-3 text-gray-700">{formatSource(job)}</td>
                   <td className="px-4 py-3 text-gray-700">{formatDate(job.createdAt)}</td>
+                  <td className="px-4 py-3 text-gray-700">
+                    <FreshnessIndicator
+                      createdAt={job.createdAt}
+                      updatedAt={job.updatedAt}
+                      latestMatchActivity={job.matchResults[0]?.createdAt ?? null}
+                    />
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/jobs/${job.id}`}
