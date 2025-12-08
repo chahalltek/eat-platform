@@ -31,11 +31,7 @@ const getSkillKey = (skill: CandidateSkill | JobSkill): string => {
 
 export function computeMatchScore(
   ctx: MatchContext,
-<<<<<<< ours
-  options?: { jobFreshnessScore?: number },
-=======
-  candidateSignals?: CandidateSignalResult,
->>>>>>> theirs
+  options?: { jobFreshnessScore?: number; candidateSignals?: CandidateSignalResult },
 ): MatchScore {
   const reasons: string[] = [];
 
@@ -102,22 +98,12 @@ export function computeMatchScore(
     reasons.push(`Location mismatch: candidate in ${ctx.candidate.location}, job in ${ctx.jobReq.location}`);
   }
 
-<<<<<<< ours
-  const baseScore = Math.round(skillScore * 0.7 + seniorityScore * 0.2 + locationScore * 0.1);
-
-  const jobFreshnessScore = Math.round(options?.jobFreshnessScore ?? 100);
-
-  if (jobFreshnessScore < 100) {
-    reasons.push(`Job freshness adjustment applied (${jobFreshnessScore}/100).`);
-  }
-
-  const score = Math.round(baseScore * 0.85 + jobFreshnessScore * 0.15);
-=======
   const normalizedWeights = normalizeWeights(MATCH_SCORING_WEIGHTS);
 
+  const candidateSignals = options?.candidateSignals;
   const candidateSignalScore = candidateSignals?.score ?? 50;
 
-  const score = Math.round(
+  const baseScore = Math.round(
     skillScore * normalizedWeights.skills +
       seniorityScore * normalizedWeights.seniority +
       locationScore * normalizedWeights.location +
@@ -129,7 +115,16 @@ export function computeMatchScore(
   } else {
     reasons.push('Limited engagement signals available; using neutral weighting.');
   }
->>>>>>> theirs
+
+  const jobFreshnessScore = Math.round(options?.jobFreshnessScore ?? 100);
+
+  let score = baseScore;
+  if (options?.jobFreshnessScore !== undefined) {
+    if (jobFreshnessScore < 100) {
+      reasons.push(`Job freshness adjustment applied (${jobFreshnessScore}/100).`);
+    }
+    score = Math.round(baseScore * 0.85 + jobFreshnessScore * 0.15);
+  }
 
   return {
     score,

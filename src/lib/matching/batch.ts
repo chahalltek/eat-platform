@@ -1,10 +1,7 @@
 import { MatchResult } from "@prisma/client";
 
-<<<<<<< ours
-import { computeJobFreshnessScore } from "@/lib/matching/freshness";
-=======
 import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
->>>>>>> theirs
+import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
@@ -78,17 +75,16 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   });
 
   for (const candidate of candidates) {
-<<<<<<< ours
-    const matchScore = computeMatchScore({ candidate, jobReq }, { jobFreshnessScore: jobFreshness.score });
-=======
     const candidateSignals = computeCandidateSignalScore({
       candidate,
       jobCandidate: jobCandidateById.get(candidate.id),
       outreachInteractions: outreachByCandidateId.get(candidate.id) ?? 0,
     });
 
-    const matchScore = computeMatchScore({ candidate, jobReq }, candidateSignals);
->>>>>>> theirs
+    const matchScore = computeMatchScore(
+      { candidate, jobReq },
+      { candidateSignals, jobFreshnessScore: jobFreshness.score },
+    );
     const data = {
       candidateId: candidate.id,
       jobReqId,
