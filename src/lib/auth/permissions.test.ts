@@ -96,9 +96,9 @@ describe("RBAC permission matrix", () => {
     expect(canViewAgentLogs(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
   });
 
-  it("allows only system admins to manage tenants", () => {
+  it("allows admins and system admins to manage tenants", () => {
     expect(canManageTenants(buildUser(USER_ROLES.SYSTEM_ADMIN, "tenant-a"))).toBe(true);
-    expect(canManageTenants(buildUser(USER_ROLES.ADMIN, "tenant-a"))).toBe(false);
+    expect(canManageTenants(buildUser(USER_ROLES.ADMIN, "tenant-a"))).toBe(true);
   });
 
   it("falls back to the default tenant when none is provided", () => {
