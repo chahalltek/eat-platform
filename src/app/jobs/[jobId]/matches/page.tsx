@@ -27,8 +27,13 @@ async function getMatches(jobId: string): Promise<JobMatchRow[]> {
 
   return job.matches.map((m) => {
     const explanation: any = m.explanation ?? {};
+<<<<<<< ours
     const confidenceReasons: ConfidenceReasons | null =
       (m as any).confidenceReasons ?? null;
+=======
+    const confidenceReasons: any = (m as any).confidenceReasons ?? null;
+    const shortlisted = (m as { shortlisted?: boolean }).shortlisted ?? false;
+>>>>>>> theirs
 
     const confidenceDetails: ConfidenceDetails | null = confidenceReasons
       ? {
@@ -47,10 +52,14 @@ async function getMatches(jobId: string): Promise<JobMatchRow[]> {
       explanationSummary: explanation.summary ?? "(no explanation summary)",
       confidenceDetails,
 <<<<<<< ours
+<<<<<<< ours
       shortlisted: m.shortlisted,
 =======
       confidenceReasons,
       shortlisted: Boolean((m as any).shortlisted),
+>>>>>>> theirs
+=======
+      shortlisted,
 >>>>>>> theirs
     };
   });

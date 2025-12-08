@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { JobMatchesTable, JobMatchRow } from './JobMatchesTable';
 
@@ -14,10 +14,12 @@ export function JobMatchesView({ jobId, initialData }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isRunningMatcher, setIsRunningMatcher] = useState(false);
   const [isRunningExplain, setIsRunningExplain] = useState(false);
+  const [isRunningShortlist, setIsRunningShortlist] = useState(false);
+  const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function callJobAgent(
-    path: 'matcher' | 'explain',
+    path: 'matcher' | 'explain' | 'shortlist',
     body: Record<string, unknown> = {}
   ) {
     const res = await fetch(`/api/jobs/${jobId}/${path}`, {
@@ -64,8 +66,33 @@ export function JobMatchesView({ jobId, initialData }: Props) {
     }
   }
 
+  async function handleRunShortlist() {
+    setError(null);
+    setIsRunningShortlist(true);
+    try {
+      await callJobAgent('shortlist');
+      startTransition(() => router.refresh());
+    } catch (e) {
+      console.error('Run shortlist failed', e);
+      setError(
+        e instanceof Error ? e.message : 'Failed to run shortlist. Please try again.'
+      );
+    } finally {
+      setIsRunningShortlist(false);
+    }
+  }
+
   const busyMatcher = isRunningMatcher || isPending;
   const busyExplain = isRunningExplain || isPending;
+  const busyShortlist = isRunningShortlist || isPending;
+
+  const visibleData = useMemo(
+    () =>
+      showShortlistedOnly
+        ? initialData.filter((row) => row.shortlisted)
+        : initialData,
+    [initialData, showShortlistedOnly]
+  );
 
   return (
     <div className="space-y-4">
@@ -88,7 +115,27 @@ export function JobMatchesView({ jobId, initialData }: Props) {
           >
             {busyExplain ? 'Generating Why…' : 'Run Explain'}
           </button>
+          <button
+            type="button"
+            onClick={handleRunShortlist}
+            disabled={busyShortlist}
+            className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-900 disabled:opacity-60"
+          >
+            {busyShortlist ? 'Running Shortlist…' : 'Run Shortlist'}
+          </button>
         </div>
+      </div>
+
+      <div className="flex items-center justify-end">
+        <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            checked={showShortlistedOnly}
+            onChange={(e) => setShowShortlistedOnly(e.target.checked)}
+          />
+          Shortlisted only
+        </label>
       </div>
 
       {error && (
@@ -97,7 +144,7 @@ export function JobMatchesView({ jobId, initialData }: Props) {
         </div>
       )}
 
-      <JobMatchesTable data={initialData} />
+      <JobMatchesTable data={visibleData} />
 
       <p className="text-xs text-slate-500">
         Run Matcher to recompute candidate matches for this job. Run Explain to
