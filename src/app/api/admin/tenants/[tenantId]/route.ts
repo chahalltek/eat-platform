@@ -13,7 +13,11 @@ function parseTrialEndDate(raw: unknown) {
   return parsed;
 }
 
-export async function GET(request: NextRequest, { params }: { params: { tenantId: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ tenantId: string }> },
+) {
+  const { tenantId } = await params;
   const user = await getCurrentUser(request);
 
   if (!canManageTenants(user)) {
@@ -21,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { tenantId
   }
 
   try {
-    const detail = await getTenantPlanDetail(params.tenantId);
+    const detail = await getTenantPlanDetail(tenantId);
 
     return NextResponse.json({
       tenant: {
@@ -40,7 +44,11 @@ export async function GET(request: NextRequest, { params }: { params: { tenantId
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { tenantId: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ tenantId: string }> },
+) {
+  const { tenantId } = await params;
   const user = await getCurrentUser(request);
 
   if (!canManageTenants(user)) {
@@ -55,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { tenant
       return NextResponse.json({ error: "planId is required" }, { status: 400 });
     }
 
-    const summary = await updateTenantPlan(params.tenantId, planId, {
+    const summary = await updateTenantPlan(tenantId, planId, {
       isTrial: Boolean(body?.isTrial),
       trialEndsAt: parseTrialEndDate(body?.trialEndsAt),
     });
