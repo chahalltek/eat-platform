@@ -37,6 +37,7 @@ model User {
   agentRuns     AgentRunLog[]
   jobCandidates JobCandidate[]
   identities    UserIdentity[]
+  securityEvents SecurityEventLog[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -89,6 +90,22 @@ model TenantSubscription {
 
   @@index([tenantId])
   @@index([tenantId, startAt])
+<<<<<<< ours
+=======
+}
+
+model SecurityEventLog {
+  id        String   @id @default(cuid())
+  tenantId  String   @default("default-tenant")
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  eventType String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, eventType])
+>>>>>>> theirs
 }
 
 model FeatureFlag {

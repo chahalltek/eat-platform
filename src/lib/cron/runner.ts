@@ -1,6 +1,7 @@
 import { AgentRunStatus, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { logRetentionJobRun } from "@/lib/audit/securityEvents";
 
 import { cronJobs } from "./jobs";
 
@@ -81,6 +82,13 @@ export async function runCronJob(jobName: string) {
     input: { jobName },
     run: () => job.run(),
   });
+
+  if (/retention|deletion/i.test(jobName)) {
+    await logRetentionJobRun({
+      jobName,
+      details: result.details,
+    });
+  }
 
   return { jobName, logId, result };
 }
