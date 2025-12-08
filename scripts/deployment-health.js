@@ -2,9 +2,13 @@
 /* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports */
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
+const { execSync } = require("child_process");
 const DEFAULT_PIPELINE_COMMANDS = ["npm run lint", "npm test", "npm run build"];
 const DEFAULT_COVERAGE_THRESHOLD = 100;
 const DEFAULT_MAX_COVERAGE_AGE_HOURS = 24;
+const DEFAULT_TEST_COMMAND = "npm test";
+const DEFAULT_CONFIG_VALIDATE_COMMAND = "npm run ci:config-validate";
 
 function fail(message) {
   throw new Error(message);
@@ -16,6 +20,17 @@ function readFileContent(targetPath, friendlyName) {
   }
 
   return fs.readFileSync(targetPath, "utf8");
+}
+
+function runCommand(command, friendlyName) {
+  try {
+    execSync(command, { stdio: "inherit" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    fail(`${friendlyName} failed. ${message}`);
+  }
+
+  return { command };
 }
 
 function checkPipelineCompleteness(
@@ -110,6 +125,38 @@ function enforceTestCompleteness(
   return { minimumCoverage, checkedMetrics: metrics.length };
 }
 
+function ensurePrismaGeneration(
+  schemaPath = path.join(process.cwd(), "prisma", "schema.prisma"),
+  generatedSchemaPath = path.join(process.cwd(), "node_modules", ".prisma", "client", "schema.prisma"),
+) {
+  const schemaContent = readFileContent(schemaPath, "Prisma schema");
+
+  if (!fs.existsSync(path.dirname(generatedSchemaPath))) {
+    fail(
+      `Prisma client has not been generated. Run \`prisma generate\` so ${generatedSchemaPath} exists before deploying.`,
+    );
+  }
+
+  const generatedContent = readFileContent(generatedSchemaPath, "Generated Prisma client schema");
+
+  const sourceHash = crypto.createHash("sha256").update(schemaContent).digest("hex");
+  const generatedHash = crypto.createHash("sha256").update(generatedContent).digest("hex");
+
+  if (sourceHash !== generatedHash) {
+    fail("Prisma client schema is out of date. Run `prisma generate` to refresh the client before deployment.");
+  }
+
+  return { schemaPath, generatedSchemaPath };
+}
+
+function validateEnvironment(command = DEFAULT_CONFIG_VALIDATE_COMMAND) {
+  return runCommand(command, "Configuration validation");
+}
+
+function runTests(command = DEFAULT_TEST_COMMAND) {
+  return runCommand(command, "Test suite");
+}
+
 function runDeploymentHealth(options = {}) {
   const {
     workflowPath,
@@ -119,12 +166,19 @@ function runDeploymentHealth(options = {}) {
     minimumCoverage,
     maxCoverageAgeHours,
     injectFailure = false,
+    prismaSchemaPath,
+    generatedPrismaSchemaPath,
+    testCommand,
+    validateConfigCommand,
   } = options;
 
   const reports = [];
+  reports.push(validateEnvironment(validateConfigCommand));
+  reports.push(runTests(testCommand));
   reports.push(checkPipelineCompleteness(workflowPath, requiredCommands));
   reports.push(validateMigrations(migrationsDir));
   reports.push(enforceTestCompleteness(coveragePath, minimumCoverage, maxCoverageAgeHours));
+  reports.push(ensurePrismaGeneration(prismaSchemaPath, generatedPrismaSchemaPath));
 
   if (injectFailure || process.env.FAIL_DEPLOYMENT_HEALTH === "true") {
     fail("Failure injection requested. Deployment health gate intentionally failed.");
@@ -153,8 +207,11 @@ module.exports = {
   checkPipelineCompleteness,
   validateMigrations,
   enforceTestCompleteness,
+  ensurePrismaGeneration,
   runDeploymentHealth,
   DEFAULT_PIPELINE_COMMANDS,
   DEFAULT_COVERAGE_THRESHOLD,
   DEFAULT_MAX_COVERAGE_AGE_HOURS,
+  DEFAULT_TEST_COMMAND,
+  DEFAULT_CONFIG_VALIDATE_COMMAND,
 };

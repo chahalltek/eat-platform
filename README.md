@@ -7,7 +7,7 @@ The CI workflow enforces our enterprise DoD. A build will fail when any of the f
 - **Coverage must stay at 100%.** `vitest` thresholds are pinned to 100% across statements/branches/functions/lines. Run `npm test` (or `npm run coverage`) locally to verify before opening a PR.
 - **No TODO/FIXME markers in protected domains.** Auth, billing, and tenant code (`src/lib/auth/**`, `src/lib/billing/**`, `src/lib/tenant/**`) are scanned via `npm run ci:todo-scan`.
 - **Configuration validation for the target environment.** `npm run ci:config-validate` exercises `src/lib/config/configValidator` with production-like variables to ensure required secrets and flags are present.
-- **Deployment health gates.** `npm run predeploy` remains part of the pipeline to mirror production deploy checks.
+- **Deployment health gates.** `npm run predeploy` now re-validates config, reruns tests, and blocks deploys when Prisma client generation drifts from the checked-in schema.
 
 ### Running the DoD checks locally
 

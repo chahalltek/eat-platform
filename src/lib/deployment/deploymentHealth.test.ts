@@ -9,6 +9,7 @@ import {
   DEFAULT_PIPELINE_COMMANDS,
   checkPipelineCompleteness,
   enforceTestCompleteness,
+  ensurePrismaGeneration,
   runDeploymentHealth,
   validateMigrations,
 } from "../../../scripts/deployment-health";
@@ -89,17 +90,44 @@ describe("deployment health gates", () => {
     expect(() => enforceTestCompleteness(coveragePath)).not.toThrow();
   });
 
+  it("requires Prisma client generation to mirror the current schema", () => {
+    const schemaPath = path.join(tempDir, "prisma", "schema.prisma");
+    const generatedSchemaPath = path.join(tempDir, "node_modules", ".prisma", "client", "schema.prisma");
+
+    const schemaContent = "datasource db { provider = \"postgresql\" }";
+    fs.mkdirSync(path.dirname(schemaPath), { recursive: true });
+    fs.mkdirSync(path.dirname(generatedSchemaPath), { recursive: true });
+    fs.writeFileSync(schemaPath, schemaContent, "utf8");
+    fs.writeFileSync(generatedSchemaPath, schemaContent, "utf8");
+
+    expect(() => ensurePrismaGeneration(schemaPath, generatedSchemaPath)).not.toThrow();
+
+    fs.writeFileSync(generatedSchemaPath, "different", "utf8");
+    expect(() => ensurePrismaGeneration(schemaPath, generatedSchemaPath)).toThrow(/out of date/);
+  });
+
   it("injects a synthetic failure when requested", () => {
     const workflowPath = writeWorkflow(DEFAULT_PIPELINE_COMMANDS);
     const migrationsDir = writeMigration("CREATE TABLE demo (id INT);");
     const coveragePath = writeCoverage(100);
+    const schemaPath = path.join(tempDir, "prisma", "schema.prisma");
+    const generatedSchemaPath = path.join(tempDir, "node_modules", ".prisma", "client", "schema.prisma");
+    fs.mkdirSync(path.dirname(schemaPath), { recursive: true });
+    fs.mkdirSync(path.dirname(generatedSchemaPath), { recursive: true });
+    fs.writeFileSync(schemaPath, "datasource db { provider = \"postgresql\" }", "utf8");
+    fs.writeFileSync(generatedSchemaPath, "datasource db { provider = \"postgresql\" }", "utf8");
 
     expect(() =>
       runDeploymentHealth({
+        validateConfigCommand: `${process.execPath} -e "process.exit(0)"`,
+        testCommand: `${process.execPath} -e "process.exit(0)"`,
         workflowPath,
         migrationsDir,
         coveragePath,
         injectFailure: true,
+        requiredCommands: ["npm test"],
+        prismaSchemaPath: schemaPath,
+        generatedPrismaSchemaPath: generatedSchemaPath,
       }),
     ).toThrow(/Failure injection requested/);
   });
