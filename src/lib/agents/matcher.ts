@@ -5,6 +5,7 @@ import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { matchJobToAllCandidates } from "@/lib/matching/batch";
 <<<<<<< ours
 import { computeMatchScore } from "@/lib/matching/msa";
+import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { prisma } from "@/lib/prisma";
 =======
 >>>>>>> theirs
@@ -22,8 +23,14 @@ export type RunMatcherResult = {
   matches: Array<{
     id: string;
     candidateId: string;
+<<<<<<< ours
     jobReqId: string;
     score: number;
+=======
+    matchScore: number;
+    confidence: number;
+    explanationId: string;
+>>>>>>> theirs
   }>;
   agentRunId: string;
 };
@@ -85,9 +92,15 @@ export async function runMatcher(
           },
         });
 
+        const confidence = await persistCandidateConfidenceScore({
+          candidateId: item.candidate.id,
+          candidate: item.candidate,
+        });
+
         matches.push({
           candidateId: item.candidate.id,
           matchScore: item.breakdown.score,
+          confidence: confidence.score,
           explanationId: matchResult.id,
         });
       }

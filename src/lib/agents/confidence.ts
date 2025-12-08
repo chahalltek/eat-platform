@@ -1,13 +1,25 @@
+<<<<<<< ours
 import { prisma } from "../prisma";
 import { computeConfidenceScore } from "../confidence/scoring";
 
 export type RunConfidenceInput = {
   recruiterId: string; // for logging
   jobId: string;
+=======
+import { withAgentRun } from "@/lib/agents/agentRun";
+import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
+import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
+import { prisma } from "@/lib/prisma";
+
+export type RunConfidenceInput = {
+  jobId: string;
+  recruiterId?: string;
+>>>>>>> theirs
 };
 
 export type RunConfidenceResult = {
   jobId: string;
+<<<<<<< ours
   updatedCount: number;
   agentRunId: string;
 };
@@ -88,4 +100,67 @@ export async function runConfidence(
     });
     throw err;
   }
+=======
+  recomputed: Array<{
+    candidateId: string;
+    confidence: number;
+  }>;
+};
+
+export async function runConfidence({
+  jobId,
+  recruiterId,
+}: RunConfidenceInput): Promise<RunConfidenceResult> {
+  const [result] = await withAgentRun<RunConfidenceResult>(
+    {
+      agentName: AGENT_KILL_SWITCHES.MATCHER,
+      recruiterId,
+      inputSnapshot: { jobId },
+      sourceType: "agent",
+      sourceTag: "confidence",
+    },
+    async () => {
+      const jobReq = await prisma.jobReq.findUnique({
+        where: { id: jobId },
+        include: {
+          matchResults: {
+            include: {
+              candidate: {
+                include: {
+                  skills: {
+                    select: {
+                      id: true,
+                      name: true,
+                      proficiency: true,
+                      yearsOfExperience: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!jobReq) {
+        throw new Error(`Job ${jobId} not found`);
+      }
+
+      const recomputed: RunConfidenceResult["recomputed"] = [];
+
+      for (const match of jobReq.matchResults) {
+        const confidence = await persistCandidateConfidenceScore({
+          candidateId: match.candidateId,
+          candidate: match.candidate,
+        });
+
+        recomputed.push({ candidateId: match.candidateId, confidence: confidence.score });
+      }
+
+      return { result: { jobId, recomputed } };
+    },
+  );
+
+  return result;
+>>>>>>> theirs
 }
