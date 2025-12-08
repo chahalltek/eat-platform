@@ -1,6 +1,10 @@
 import { MatchResult } from "@prisma/client";
 
+<<<<<<< ours
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
+=======
+import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
+>>>>>>> theirs
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
@@ -32,6 +36,27 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
     return [];
   }
 
+  const jobCandidates = await prisma.jobCandidate.findMany({
+    where: {
+      jobReqId,
+      candidateId: { in: candidates.map((candidate) => candidate.id) },
+    },
+  });
+
+  const outreachInteractions = await prisma.outreachInteraction.groupBy({
+    by: ["candidateId"],
+    where: { jobReqId, candidateId: { in: candidates.map((candidate) => candidate.id) } },
+    _count: { _all: true },
+  });
+
+  const jobCandidateById = new Map(
+    jobCandidates.map((jobCandidate) => [jobCandidate.candidateId, jobCandidate]),
+  );
+
+  const outreachByCandidateId = new Map(
+    outreachInteractions.map((interaction) => [interaction.candidateId, interaction._count._all]),
+  );
+
   const existingResults = await prisma.matchResult.findMany({
     where: {
       jobReqId,
@@ -53,7 +78,17 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   });
 
   for (const candidate of candidates) {
+<<<<<<< ours
     const matchScore = computeMatchScore({ candidate, jobReq }, { jobFreshnessScore: jobFreshness.score });
+=======
+    const candidateSignals = computeCandidateSignalScore({
+      candidate,
+      jobCandidate: jobCandidateById.get(candidate.id),
+      outreachInteractions: outreachByCandidateId.get(candidate.id) ?? 0,
+    });
+
+    const matchScore = computeMatchScore({ candidate, jobReq }, candidateSignals);
+>>>>>>> theirs
     const data = {
       candidateId: candidate.id,
       jobReqId,
@@ -62,6 +97,8 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       skillScore: matchScore.skillScore,
       seniorityScore: matchScore.seniorityScore,
       locationScore: matchScore.locationScore,
+      candidateSignalScore: matchScore.candidateSignalScore,
+      candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
     };
 
     const existing = existingByCandidateId.get(candidate.id);

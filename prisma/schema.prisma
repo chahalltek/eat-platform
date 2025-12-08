@@ -58,6 +58,7 @@ model Candidate {
   matches  Match[]
   matchResults MatchResult[]
   jobCandidates JobCandidate[]
+  outreachInteractions OutreachInteraction[]
 }
 
 model CandidateSkill {
@@ -106,6 +107,7 @@ model JobReq {
   matches Match[]
   matchResults MatchResult[]
   jobCandidates JobCandidate[]
+  outreachInteractions OutreachInteraction[]
 }
 
 model JobSkill {
@@ -158,6 +160,8 @@ model MatchResult {
   skillScore      Int?
   seniorityScore  Int?
   locationScore   Int?
+  candidateSignalScore Int?
+  candidateSignalBreakdown Json?
 
   agentRun        AgentRunLog?  @relation(fields: [agentRunId], references: [id])
   agentRunId      String?
@@ -195,9 +199,29 @@ model AgentRunLog {
   retries   AgentRunLog[] @relation("AgentRunRetry")
 
   matchResults     MatchResult[]
+  outreachInteractions OutreachInteraction[]
 
   @@index([agentName])
   @@index([retryOfId])
+}
+
+model OutreachInteraction {
+  id           String   @id @default(cuid())
+  candidate    Candidate @relation(fields: [candidateId], references: [id])
+  candidateId  String
+
+  jobReq       JobReq    @relation(fields: [jobReqId], references: [id])
+  jobReqId     String
+
+  agentRun     AgentRunLog? @relation(fields: [agentRunId], references: [id])
+  agentRunId   String?
+
+  interactionType String   @default("OUTREACH_GENERATED")
+  createdAt       DateTime @default(now())
+
+  @@index([candidateId])
+  @@index([jobReqId])
+  @@index([agentRunId])
 }
 
 model JobCandidate {

@@ -1,5 +1,8 @@
 import { Candidate, CandidateSkill, JobReq, JobSkill } from '@prisma/client';
 
+import { CandidateSignalResult } from '@/lib/matching/candidateSignals';
+import { MATCH_SCORING_WEIGHTS, normalizeWeights } from '@/lib/matching/scoringConfig';
+
 export type MatchContext = {
   candidate: Candidate & { skills: CandidateSkill[] };
   jobReq: JobReq & { skills: JobSkill[] };
@@ -11,6 +14,8 @@ export type MatchScore = {
   skillScore: number;
   seniorityScore: number;
   locationScore: number;
+  candidateSignalScore?: number;
+  candidateSignalBreakdown?: CandidateSignalResult['breakdown'];
   reasons: string[];
 };
 
@@ -26,7 +31,11 @@ const getSkillKey = (skill: CandidateSkill | JobSkill): string => {
 
 export function computeMatchScore(
   ctx: MatchContext,
+<<<<<<< ours
   options?: { jobFreshnessScore?: number },
+=======
+  candidateSignals?: CandidateSignalResult,
+>>>>>>> theirs
 ): MatchScore {
   const reasons: string[] = [];
 
@@ -93,6 +102,7 @@ export function computeMatchScore(
     reasons.push(`Location mismatch: candidate in ${ctx.candidate.location}, job in ${ctx.jobReq.location}`);
   }
 
+<<<<<<< ours
   const baseScore = Math.round(skillScore * 0.7 + seniorityScore * 0.2 + locationScore * 0.1);
 
   const jobFreshnessScore = Math.round(options?.jobFreshnessScore ?? 100);
@@ -102,6 +112,24 @@ export function computeMatchScore(
   }
 
   const score = Math.round(baseScore * 0.85 + jobFreshnessScore * 0.15);
+=======
+  const normalizedWeights = normalizeWeights(MATCH_SCORING_WEIGHTS);
+
+  const candidateSignalScore = candidateSignals?.score ?? 50;
+
+  const score = Math.round(
+    skillScore * normalizedWeights.skills +
+      seniorityScore * normalizedWeights.seniority +
+      locationScore * normalizedWeights.location +
+      candidateSignalScore * normalizedWeights.candidateSignals,
+  );
+
+  if (candidateSignals) {
+    reasons.push(...candidateSignals.reasons);
+  } else {
+    reasons.push('Limited engagement signals available; using neutral weighting.');
+  }
+>>>>>>> theirs
 
   return {
     score,
@@ -109,6 +137,8 @@ export function computeMatchScore(
     skillScore,
     seniorityScore,
     locationScore,
+    candidateSignalScore,
+    candidateSignalBreakdown: candidateSignals?.breakdown,
     reasons,
   };
 }

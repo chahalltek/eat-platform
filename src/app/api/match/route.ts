@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
+<<<<<<< ours
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
+=======
+import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
+>>>>>>> theirs
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
@@ -48,6 +52,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "JobReq not found" }, { status: 404 });
   }
 
+<<<<<<< ours
   const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
   const freshnessScore = computeJobFreshnessScore({
     createdAt: jobReq.createdAt,
@@ -59,6 +64,23 @@ export async function POST(req: Request) {
     { candidate, jobReq },
     { jobFreshnessScore: freshnessScore.score },
   );
+=======
+  const jobCandidate = await prisma.jobCandidate.findUnique({
+    where: { jobReqId_candidateId: { jobReqId, candidateId } },
+  });
+
+  const outreachInteractions = await prisma.outreachInteraction.count({
+    where: { jobReqId, candidateId },
+  });
+
+  const candidateSignals = computeCandidateSignalScore({
+    candidate,
+    jobCandidate,
+    outreachInteractions,
+  });
+
+  const matchScore = computeMatchScore({ candidate, jobReq }, candidateSignals);
+>>>>>>> theirs
 
   const data = {
     candidateId,
@@ -68,6 +90,8 @@ export async function POST(req: Request) {
     skillScore: matchScore.skillScore,
     seniorityScore: matchScore.seniorityScore,
     locationScore: matchScore.locationScore,
+    candidateSignalScore: matchScore.candidateSignalScore,
+    candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
   };
 
   const existingMatch = await prisma.matchResult.findFirst({

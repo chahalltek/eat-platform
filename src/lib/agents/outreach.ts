@@ -157,5 +157,18 @@ export async function runOutreach(
     },
   );
 
+  try {
+    await prisma.outreachInteraction.create({
+      data: {
+        candidateId,
+        jobReqId,
+        agentRunId,
+        interactionType: "OUTREACH_GENERATED",
+      },
+    });
+  } catch (err) {
+    console.error("Failed to persist outreach interaction", err);
+  }
+
   return { ...result, agentRunId };
 }

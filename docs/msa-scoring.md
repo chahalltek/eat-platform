@@ -1,13 +1,14 @@
 # MSA candidate ↔ job scoring v1
 
-Goal: produce a 0–100 score reflecting how well a candidate matches a job requisition. Score is a weighted blend of skills, seniority, and location flexibility; weights intentionally simple for the first version.
+Goal: produce a 0–100 score reflecting how well a candidate matches a job requisition. Score is a weighted blend of skills, seniority, location flexibility, and engagement signals that capture recent activity beyond the resume.
 
 ## Weights
-- Skills: 70%
-- Seniority: 20%
+- Skills: 60%
+- Seniority: 15%
 - Location: 10%
+- Candidate engagement signals: 15%
 
-## Skill scoring (70%)
+## Skill scoring (60%)
 - Input: normalized skill names.
 - Separate required vs nice-to-have (preferred) skills on the job.
 - Scoring:
@@ -16,7 +17,7 @@ Goal: produce a 0–100 score reflecting how well a candidate matches a job requ
 - Skill score = 0.6 * required_coverage + 0.4 * preferred_coverage.
 - Edge cases: if a bucket is empty (e.g., no preferred skills), treat its coverage as 0 but still respect the weight. Required skills missing will cap coverage and clearly lower the final score.
 
-## Seniority scoring (20%)
+## Seniority scoring (15%)
 - Compare candidate.seniority vs job.seniority (normalized enums or numeric levels).
 - Exact match: 1.0.
 - Candidate one level above required: 0.9 (slight discount for overqualification risk).
@@ -32,7 +33,15 @@ Goal: produce a 0–100 score reflecting how well a candidate matches a job requ
   - Missing location data on either side: 0.5.
 
 ## Final score
-`final_score = 100 * (0.70 * skill_score + 0.20 * seniority_score + 0.10 * location_score)`
+`final_score = 100 * (0.60 * skill_score + 0.15 * seniority_score + 0.10 * location_score + 0.15 * candidate_signal_score)`
+
+### Candidate engagement signals (15%)
+- Inputs pulled from `src/lib/matching/candidateSignals.ts` with configurable weights in `src/lib/matching/scoringConfig.ts`.
+- Components:
+  - **Recent activity**: recency of updates on the candidate or job-candidate pair, rewarding freshness.
+  - **Outreach interactions**: count of persisted outreach events per job/candidate.
+  - **Status progression**: higher scores for candidates who are shortlisted/interviewing/hired.
+- Each component produces a 0–100 sub-score; the combined candidate signal score is the weighted average of these components.
 
 ## MatchResult model (suggested fields)
 - ids: `id`, `candidateId`, `jobReqId`.
