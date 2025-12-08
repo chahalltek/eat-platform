@@ -50,14 +50,14 @@ export async function getCurrentUser(req?: NextRequest) {
 
     return user;
   } catch (error) {
-    // Gracefully handle databases that have not yet applied the displayName column migration.
+    // Gracefully handle databases that have not yet applied user column migrations.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2022') {
       const fallbackUser = await prisma.user.findUnique({
         where: { id: userId },
         select: { id: true, email: true, role: true },
       });
 
-      return fallbackUser ? { ...fallbackUser, displayName: fallbackUser.email } : null;
+      return fallbackUser ? { ...fallbackUser, displayName: fallbackUser.email, tenantId: null } : null;
     }
 
     throw error;

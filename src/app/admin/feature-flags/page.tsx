@@ -5,6 +5,8 @@ import { listFeatureFlags } from "@/lib/featureFlags";
 
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 
+export const dynamic = "force-dynamic";
+
 function isAdmin(user: { role: string | null } | null) {
   return (user?.role ?? "").toUpperCase() === "ADMIN";
 }
