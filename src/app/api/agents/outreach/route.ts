@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { runOutreach } from '@/lib/agents/outreach';
+import { validateRecruiterId } from '../recruiterValidation';
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -20,16 +21,17 @@ export async function POST(req: NextRequest) {
       jobReqId?: unknown;
     };
 
-    const trimmedRecruiterId = typeof recruiterId === 'string' ? recruiterId.trim() : '';
-    const trimmedCandidateId = typeof candidateId === 'string' ? candidateId.trim() : '';
-    const trimmedJobReqId = typeof jobReqId === 'string' ? jobReqId.trim() : '';
+    const recruiterValidation = await validateRecruiterId(recruiterId, { required: true });
 
-    if (!trimmedRecruiterId) {
+    if ('error' in recruiterValidation) {
       return NextResponse.json(
-        { error: 'recruiterId is required and must be a string' },
-        { status: 400 },
+      { error: recruiterValidation.error },
+        { status: recruiterValidation.status },
       );
     }
+
+    const trimmedCandidateId = typeof candidateId === 'string' ? candidateId.trim() : '';
+    const trimmedJobReqId = typeof jobReqId === 'string' ? jobReqId.trim() : '';
 
     if (!trimmedCandidateId) {
       return NextResponse.json(
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('OUTREACH API request:', {
-      recruiterId: trimmedRecruiterId,
+      recruiterId: recruiterValidation.recruiterId,
       candidateId: trimmedCandidateId,
       jobReqId: trimmedJobReqId,
     });
