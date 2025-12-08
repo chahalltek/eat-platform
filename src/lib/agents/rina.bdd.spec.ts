@@ -1,6 +1,7 @@
 /// <reference types="vitest/globals" />
 
 import { runRina, type RinaInput } from '@/lib/agents/rina';
+import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
 import {
   AgentBehaviorSpec,
   formatBDDTitle,
@@ -12,6 +13,21 @@ import { prisma } from '@/lib/prisma';
 vi.mock('@/lib/prisma', () => {
   return {
     prisma: {
+      agentPrompt: {
+        findUnique: vi.fn(async () => null),
+        findFirst: vi.fn(async () => null),
+        upsert: vi.fn(async () => ({
+          id: 'prompt-rina',
+          agentName: 'EAT-TS.RINA',
+          version: RINA_PROMPT_VERSION,
+          prompt: RINA_SYSTEM_PROMPT,
+          active: true,
+          rollbackVersion: null,
+          createdAt: new Date('2024-01-01T00:00:00Z'),
+          updatedAt: new Date('2024-01-01T00:00:00Z'),
+        })),
+        updateMany: vi.fn(),
+      },
       candidate: {
         create: vi.fn(),
       },

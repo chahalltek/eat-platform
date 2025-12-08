@@ -1,9 +1,10 @@
 // src/lib/agents/rua.ts
 import {
   assertValidRuaResponse,
-  RUA_SYSTEM_PROMPT,
+  RUA_PROMPT_VERSION,
   type RuaLLMResponse,
 } from '@/lib/agents/contracts/ruaContract';
+import { AGENT_PROMPTS, resolveAgentPrompt } from '@/lib/agents/promptRegistry';
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
@@ -23,6 +24,10 @@ export async function runRua(
 ): Promise<{ jobReqId: string; agentRunId: string }> {
   const { recruiterId, rawJobText, sourceType, sourceTag } = input;
 
+  const promptContract = await resolveAgentPrompt(AGENT_PROMPTS.RUA_SYSTEM, {
+    version: RUA_PROMPT_VERSION,
+  });
+
   const [result, agentRunId] = await withAgentRun<{ jobReqId: string }>(
     {
       agentName: 'EAT-TS.RUA',
@@ -32,6 +37,7 @@ export async function runRua(
         rawJobText: rawJobText.slice(0, 4000),
         sourceType,
         sourceTag,
+        promptVersion: promptContract.version,
       },
       sourceType,
       sourceTag,
@@ -46,7 +52,7 @@ ${rawJobText}
 `;
 
       const llmRaw = await callLLM({
-        systemPrompt: RUA_SYSTEM_PROMPT,
+        systemPrompt: promptContract.prompt,
         userPrompt,
         adapter: llmAdapter,
       });

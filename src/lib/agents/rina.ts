@@ -1,9 +1,10 @@
 // src/lib/agents/rina.ts
 import {
   assertValidRinaResponse,
-  RINA_SYSTEM_PROMPT,
+  RINA_PROMPT_VERSION,
   type RinaLLMResponse,
 } from '@/lib/agents/contracts/rinaContract';
+import { AGENT_PROMPTS, resolveAgentPrompt } from '@/lib/agents/promptRegistry';
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
@@ -23,6 +24,10 @@ export async function runRina(
 ): Promise<{ candidateId: string; agentRunId: string }> {
   const { recruiterId, rawResumeText, sourceType, sourceTag } = input;
 
+  const promptContract = await resolveAgentPrompt(AGENT_PROMPTS.RINA_SYSTEM, {
+    version: RINA_PROMPT_VERSION,
+  });
+
   const [result, agentRunId] = await withAgentRun<{ candidateId: string }>(
     {
       agentName: 'EAT-TS.RINA',
@@ -31,6 +36,7 @@ export async function runRina(
         rawResumeText: rawResumeText.slice(0, 4000),
         sourceType,
         sourceTag,
+        promptVersion: promptContract.version,
       },
       sourceType,
       sourceTag,
@@ -40,20 +46,20 @@ export async function runRina(
       const userPrompt = `Resume:\n"""\n${rawResumeText}\n"""`;
 
       const llmRaw = await callLLM({
-        systemPrompt: RINA_SYSTEM_PROMPT,
+        systemPrompt: promptContract.prompt,
         userPrompt,
         adapter: llmAdapter,
       });
 
-       let parsed: RinaLLMResponse;
+      let parsed: RinaLLMResponse;
       try {
-         parsed = JSON.parse(llmRaw) as RinaLLMResponse;
+        parsed = JSON.parse(llmRaw) as RinaLLMResponse;
       } catch (err) {
         console.error('Failed to parse LLM JSON for RINA:', err, llmRaw);
         throw new Error('Failed to parse LLM JSON');
       }
 
-        assertValidRinaResponse(parsed);
+      assertValidRinaResponse(parsed);
 
       const candidate = await prisma.candidate.create({
         data: {

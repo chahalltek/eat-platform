@@ -52,6 +52,20 @@ model FeatureFlag {
   @@index([tenantId])
 }
 
+model AgentPrompt {
+  id              String   @id @default(cuid())
+  agentName       String
+  version         String
+  prompt          String
+  active          Boolean  @default(false)
+  rollbackVersion String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([agentName, version])
+  @@index([agentName, active])
+}
+
 model Candidate {
   id                   String   @id @default(cuid())
   tenantId             String   @default("default-tenant")
