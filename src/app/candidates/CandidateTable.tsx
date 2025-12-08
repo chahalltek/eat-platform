@@ -4,19 +4,31 @@ import { useMemo } from "react";
 import Link from "next/link";
 
 import type { FilterFn } from "@tanstack/react-table";
-import { EATTable, flexRender } from "@/components/table/EATTable";
+
+import { StandardTable } from "@/components/table/StandardTable";
+import { TableFilterDropdown } from "@/components/table/TableFilterDropdown";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
 import { TableToolbar } from "@/components/table/TableToolbar";
-import { getTableCellClasses, getTableClassNames, getTableRowClasses } from "@/components/table/tableStyles";
-import { EATTableColumn, createNumberColumn, createTextColumn } from "@/components/table/tableTypes";
+import { EATTableColumn, createNumberColumn, createStatusBadgeColumn, createTextColumn } from "@/components/table/tableTypes";
 
 export type CandidateRow = {
   id: string;
   fullName: string;
   currentTitle: string | null;
   location: string | null;
+  status: string | null;
   parsingConfidence: number | null;
   updatedAt: string;
+};
+
+const multiSelectFilter: FilterFn<CandidateRow> = (row, columnId, filterValue) => {
+  const selections = Array.isArray(filterValue) ? (filterValue as string[]) : [];
+  if (!selections.length) return true;
+
+  const value = row.getValue<string | null>(columnId);
+  if (!value) return false;
+
+  return selections.includes(value);
 };
 
 function normalizeConfidence(value: number | null) {
@@ -49,16 +61,30 @@ export function useCandidateTable(candidates: CandidateRow[]) {
         sortable: false,
         cell: ({ getValue }) => getValue<string | null>() ?? "—",
       }),
-      createTextColumn({
-        accessorKey: "location",
-        header: "Location",
-        sortable: false,
-        cell: ({ getValue }) => getValue<string | null>() ?? "—",
-      }),
+      {
+        ...createTextColumn({
+          accessorKey: "location",
+          header: "Location",
+          sortable: false,
+          cell: ({ getValue }) => getValue<string | null>() ?? "—",
+        }),
+        filterFn: multiSelectFilter,
+      },
+      {
+        ...createStatusBadgeColumn({
+          accessorKey: "status",
+          header: "Status",
+          sortable: false,
+          formatLabel: (value) => (value ? String(value) : "Unknown"),
+          getVariant: (value) => (value ? "info" : "neutral"),
+        }),
+        enableSorting: false,
+        filterFn: multiSelectFilter,
+      },
       {
         ...createNumberColumn({
           accessorKey: "parsingConfidence",
-          header: "Confidence",
+          header: "Score",
         }),
         cell: ({ getValue }) => {
           const value = getValue<number | null>();
@@ -95,93 +121,63 @@ export function useCandidateTable(candidates: CandidateRow[]) {
     [],
   );
 
-  return { columns, globalFilterFn };
+  const statusOptions = useMemo(() => {
+    const uniqueStatuses = new Set<string>();
+    candidates.forEach((candidate) => {
+      if (candidate.status) uniqueStatuses.add(candidate.status);
+    });
+
+    return Array.from(uniqueStatuses)
+      .sort((a, b) => a.localeCompare(b))
+      .map((status) => ({ label: status, value: status }));
+  }, [candidates]);
+
+  const locationOptions = useMemo(() => {
+    const uniqueLocations = new Set<string>();
+    candidates.forEach((candidate) => {
+      if (candidate.location) uniqueLocations.add(candidate.location);
+    });
+
+    return Array.from(uniqueLocations)
+      .sort((a, b) => a.localeCompare(b))
+      .map((location) => ({ label: location, value: location }));
+  }, [candidates]);
+
+  return { columns, globalFilterFn, statusOptions, locationOptions };
 }
 
 export function CandidateTable({ candidates }: { candidates: CandidateRow[] }) {
-  const { columns, globalFilterFn } = useCandidateTable(candidates);
+  const { columns, globalFilterFn, statusOptions, locationOptions } = useCandidateTable(candidates);
 
   return (
     <div className="mt-6 space-y-4">
-      <EATTable
+      <StandardTable
         data={candidates}
         columns={columns}
         sorting={{ initialState: [{ id: "updatedAt", desc: true }] }}
-        filtering={{ globalFilter: { initialState: "" }, globalFilterFn }}
-        variant="comfortable"
-      >
-        {({ headerGroups, rows, styles, table }) => {
-          const classNames = getTableClassNames(styles);
-
-          return (
-            <div className="space-y-4">
-              <TableToolbar>
-                <TableSearchInput
-                  table={table}
-                  label="Search candidates"
-                  placeholder="Search by name, role, or location"
-                />
-              </TableToolbar>
-
-              <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-                <table className={classNames.table}>
-                  <thead className={classNames.header}>
-                    {headerGroups.map((headerGroup) => (
-                      <tr key={headerGroup.id} className={classNames.headerRow}>
-                        {headerGroup.headers
-                          .filter((header) => !header.isPlaceholder)
-                          .map((header) => (
-                            <th key={header.id} className={classNames.headerCell} scope="col">
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 text-left"
-                                onClick={() => header.column.toggleSorting(undefined, false)}
-                                disabled={!header.column.getCanSort()}
-                              >
-                                <span className="select-none">{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                                {header.column.getCanSort() ? (
-                                  <span aria-live="polite" className="text-xs text-slate-500">
-                                    {header.column.getIsSorted() === "asc"
-                                      ? "▲"
-                                      : header.column.getIsSorted() === "desc"
-                                        ? "▼"
-                                        : "⇅"}
-                                  </span>
-                                ) : null}
-                              </button>
-                            </th>
-                          ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody className={classNames.body}>
-                    {rows.length === 0 ? (
-                      <tr className={getTableRowClasses(styles)}>
-                        <td className={getTableCellClasses(styles)} colSpan={columns.length}>
-                          <div className="py-6 text-center text-sm text-slate-500">No candidates found.</div>
-                        </td>
-                      </tr>
-                    ) : (
-                      rows.map((row) => (
-                        <tr
-                          key={row.id}
-                          className={getTableRowClasses(styles, { hover: true, striped: true })}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <td key={cell.id} className={getTableCellClasses(styles)}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </td>
-                          ))}
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
+        filtering={{
+          globalFilter: { initialState: "" },
+          columnFilters: { initialState: [] },
+          filterFns: { status: multiSelectFilter, location: multiSelectFilter },
+          globalFilterFn,
         }}
-      </EATTable>
+        renderToolbar={(table) => (
+          <TableToolbar>
+            <TableSearchInput
+              table={table}
+              label="Search candidates"
+              placeholder="Search by name, role, or location"
+            />
+            {statusOptions.length ? (
+              <TableFilterDropdown table={table} columnId="status" label="Status" options={statusOptions} />
+            ) : null}
+            {locationOptions.length ? (
+              <TableFilterDropdown table={table} columnId="location" label="Location" options={locationOptions} />
+            ) : null}
+          </TableToolbar>
+        )}
+        emptyState={<div className="py-6 text-center text-sm text-slate-500">No candidates found.</div>}
+      />
     </div>
   );
 }

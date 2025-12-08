@@ -16,6 +16,7 @@ export default async function CandidatesPage() {
         fullName: true,
         currentTitle: true,
         location: true,
+        status: true,
         parsingConfidence: true,
         updatedAt: true,
       },
