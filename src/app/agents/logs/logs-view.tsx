@@ -1,23 +1,11 @@
 "use client";
 
-import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import clsx from "clsx";
 
-export type AgentRunStatusValue = "RUNNING" | "SUCCESS" | "FAILED" | "PARTIAL";
-
-export type SerializableLog = {
-  id: string;
-  agentName: string;
-  startedAt: string;
-  status: AgentRunStatusValue;
-  userLabel: string;
-  inputSnapshot: unknown;
-  outputSnapshot: unknown;
-  errorMessage?: string | null;
-  retryCount: number;
-  retryOfId?: string | null;
-};
+import { AgentRunLogsTable, formatDurationMs, formatTimestamp } from "./agent-run-logs-table";
+import type { AgentRunStatusValue, SerializableLog } from "./types";
 
 const STATUS_LABELS: Record<AgentRunStatusValue, { label: string; tone: "success" | "error" | "info" | "warning" }> = {
   RUNNING: { label: "Running", tone: "info" },
@@ -25,20 +13,6 @@ const STATUS_LABELS: Record<AgentRunStatusValue, { label: string; tone: "success
   FAILED: { label: "Failed", tone: "error" },
   PARTIAL: { label: "Partial", tone: "warning" },
 };
-
-function formatDateTime(value: string) {
-  const date = new Date(value);
-  return date.toLocaleString();
-}
-
-function summarizeInput(input: unknown) {
-  if (input === null || input === undefined) return "—";
-
-  const rawSummary = typeof input === "string" ? input : JSON.stringify(input);
-  if (!rawSummary) return "—";
-
-  return rawSummary.length > 120 ? `${rawSummary.slice(0, 117)}...` : rawSummary;
-}
 
 function LogDetail({
   log,
@@ -64,7 +38,7 @@ function LogDetail({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h2 className="text-xl font-semibold text-gray-900">Run Details</h2>
         <div className="flex items-center gap-3">
-          <p className="text-sm text-gray-500">Started {formatDateTime(log.startedAt)}</p>
+          <p className="text-sm text-gray-500">Started {formatTimestamp(log.startedAt)}</p>
           {onRetry ? (
             <button
               type="button"
@@ -91,6 +65,12 @@ function LogDetail({
           <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Status</div>
           <StatusPill status={log.status} />
         </div>
+        {log.durationMs ? (
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Duration</div>
+            <div className="text-lg font-semibold text-gray-900">{formatDurationMs(log.durationMs)}</div>
+          </div>
+        ) : null}
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Retry count</div>
           <div className="text-lg font-semibold text-gray-900">{log.retryCount ?? 0}</div>
@@ -152,61 +132,6 @@ function StatusPill({ status }: { status: AgentRunStatusValue }) {
   );
 }
 
-function LogsTable({
-  logs,
-  selectedId,
-  onSelect,
-}: {
-  logs: SerializableLog[];
-  selectedId?: string;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200 text-left text-sm text-gray-700">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-              Agent
-            </th>
-            <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-              User
-            </th>
-            <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-              Timestamp
-            </th>
-            <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-              Input summary
-            </th>
-            <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
-              Status
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {logs.map((log) => (
-            <tr
-              key={log.id}
-              className={clsx("cursor-pointer transition-colors hover:bg-gray-50", {
-                "bg-blue-50": log.id === selectedId,
-              })}
-              onClick={() => onSelect(log.id)}
-            >
-              <td className="px-4 py-3 font-medium text-gray-900">{log.agentName}</td>
-              <td className="px-4 py-3">{log.userLabel}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatDateTime(log.startedAt)}</td>
-              <td className="px-4 py-3 text-gray-600">{summarizeInput(log.inputSnapshot)}</td>
-              <td className="px-4 py-3">
-                <StatusPill status={log.status} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export default function AgentRunLogsView({ logs }: { logs: SerializableLog[] }) {
   const [selectedId, setSelectedId] = useState<string | undefined>(logs[0]?.id);
   const [retryingId, setRetryingId] = useState<string | null>(null);
@@ -245,7 +170,7 @@ export default function AgentRunLogsView({ logs }: { logs: SerializableLog[] }) 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <LogsTable logs={logs} selectedId={selectedId} onSelect={setSelectedId} />
+        <AgentRunLogsTable logs={logs} selectedId={selectedId} onSelect={setSelectedId} />
       </div>
       <div className="lg:col-span-1">
         <LogDetail

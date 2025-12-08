@@ -1,4 +1,5 @@
-import AgentRunLogsView, { SerializableLog } from "./logs-view";
+import AgentRunLogsView from "./logs-view";
+import { SerializableLog } from "./types";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,8 @@ export default async function AgentRunLogsPage() {
       agentName: true,
       status: true,
       startedAt: true,
+      finishedAt: true,
+      durationMs: true,
       user: {
         select: {
           displayName: true,
@@ -31,6 +34,9 @@ export default async function AgentRunLogsPage() {
     agentName: log.agentName,
     status: log.status,
     startedAt: log.startedAt.toISOString(),
+    finishedAt: log.finishedAt?.toISOString() ?? null,
+    durationMs:
+      log.durationMs ?? (log.finishedAt ? Math.max(0, log.finishedAt.getTime() - log.startedAt.getTime()) : null),
     userLabel: log.user?.displayName || log.user?.email || "System",
     inputSnapshot: log.inputSnapshot,
     outputSnapshot: log.outputSnapshot,
