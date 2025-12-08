@@ -21,7 +21,7 @@ export type DemoCandidate = {
 
 const columnHelper = createColumnHelper<DemoCandidate>();
 
-export const demoColumns: ColumnDef<DemoCandidate>[] = [
+export const demoColumns = [
   columnHelper.accessor("name", {
     id: "name",
     header: "Name",
@@ -49,7 +49,7 @@ export const demoColumns: ColumnDef<DemoCandidate>[] = [
     cell: (info) => info.getValue(),
     enableSorting: false,
   }),
-];
+] satisfies ColumnDef<DemoCandidate, any>[];
 
 export const demoData: DemoCandidate[] = [
   { id: 1, name: "Alex Rivera", role: "Product Manager", location: "Remote", score: 88, availability: "Immediate" },
