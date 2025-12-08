@@ -10,7 +10,8 @@ generator client {
 enum AgentRunStatus {
   RUNNING
   SUCCESS
-  ERROR
+  FAILED
+  PARTIAL
 }
 
 enum JobCandidateStatus {
@@ -183,10 +184,16 @@ model AgentRunLog {
   tokensCompletion Int?
   startedAt        DateTime @default(now())
   finishedAt       DateTime?
+  retryCount       Int      @default(0)
+
+  retryOf    AgentRunLog? @relation("AgentRunRetry", fields: [retryOfId], references: [id])
+  retryOfId String?
+  retries   AgentRunLog[] @relation("AgentRunRetry")
 
   matchResults     MatchResult[]
 
   @@index([agentName])
+  @@index([retryOfId])
 }
 
 model JobCandidate {

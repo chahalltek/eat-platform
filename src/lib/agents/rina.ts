@@ -1,5 +1,5 @@
 // src/lib/agents/rina.ts
-import { withAgentRun } from '@/lib/agents/agentRun';
+import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { prisma } from '@/lib/prisma';
 
@@ -71,6 +71,7 @@ JSON shape:
 
 export async function runRina(
   input: RinaInput,
+  retryMetadata?: AgentRetryMetadata,
 ): Promise<{ candidateId: string; agentRunId: string }> {
   const { recruiterId, rawResumeText, sourceType, sourceTag } = input;
 
@@ -83,6 +84,7 @@ export async function runRina(
         sourceType,
         sourceTag,
       },
+      ...retryMetadata,
     },
     async () => {
       const userPrompt = `Resume:\n"""\n${rawResumeText}\n"""`;

@@ -1,9 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export type AgentRunStatusValue = "RUNNING" | "SUCCESS" | "ERROR";
+export type AgentRunStatusValue = "RUNNING" | "SUCCESS" | "FAILED" | "PARTIAL";
 
 export type SerializableLog = {
   id: string;
@@ -14,12 +15,15 @@ export type SerializableLog = {
   inputSnapshot: unknown;
   outputSnapshot: unknown;
   errorMessage?: string | null;
+  retryCount: number;
+  retryOfId?: string | null;
 };
 
-const STATUS_LABELS: Record<AgentRunStatusValue, { label: string; tone: "success" | "error" | "info" }> = {
+const STATUS_LABELS: Record<AgentRunStatusValue, { label: string; tone: "success" | "error" | "info" | "warning" }> = {
   RUNNING: { label: "Running", tone: "info" },
   SUCCESS: { label: "Success", tone: "success" },
-  ERROR: { label: "Failed", tone: "error" },
+  FAILED: { label: "Failed", tone: "error" },
+  PARTIAL: { label: "Partial", tone: "warning" },
 };
 
 function formatDateTime(value: string) {
@@ -36,7 +40,17 @@ function summarizeInput(input: unknown) {
   return rawSummary.length > 120 ? `${rawSummary.slice(0, 117)}...` : rawSummary;
 }
 
-function LogDetail({ log }: { log: SerializableLog | undefined }) {
+function LogDetail({
+  log,
+  onRetry,
+  retrying,
+  retryError,
+}: {
+  log: SerializableLog | undefined;
+  onRetry?: (log: SerializableLog) => void;
+  retrying: boolean;
+  retryError: string | null;
+}) {
   if (!log) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600">
@@ -47,9 +61,21 @@ function LogDetail({ log }: { log: SerializableLog | undefined }) {
 
   return (
     <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <h2 className="text-xl font-semibold text-gray-900">Run Details</h2>
-        <p className="text-sm text-gray-500">Started {formatDateTime(log.startedAt)}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-gray-500">Started {formatDateTime(log.startedAt)}</p>
+          {onRetry ? (
+            <button
+              type="button"
+              className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
+              onClick={() => log && onRetry(log)}
+              disabled={retrying || log.status === "RUNNING"}
+            >
+              {retrying ? "Retrying..." : "Retry run"}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -65,6 +91,16 @@ function LogDetail({ log }: { log: SerializableLog | undefined }) {
           <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Status</div>
           <StatusPill status={log.status} />
         </div>
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Retry count</div>
+          <div className="text-lg font-semibold text-gray-900">{log.retryCount ?? 0}</div>
+        </div>
+        {log.retryOfId ? (
+          <div className="sm:col-span-2">
+            <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Retry of</div>
+            <div className="text-sm font-semibold text-gray-900">{log.retryOfId}</div>
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -81,7 +117,7 @@ function LogDetail({ log }: { log: SerializableLog | undefined }) {
         </pre>
       </div>
 
-      {log.status === "ERROR" && (
+      {log.status === "FAILED" && (
         <div className="space-y-2">
           <h3 className="text-lg font-semibold text-gray-900">Error</h3>
           <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
@@ -89,6 +125,10 @@ function LogDetail({ log }: { log: SerializableLog | undefined }) {
           </div>
         </div>
       )}
+
+      {retryError ? (
+        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">{retryError}</div>
+      ) : null}
     </div>
   );
 }
@@ -103,6 +143,7 @@ function StatusPill({ status }: { status: AgentRunStatusValue }) {
           "bg-green-100 text-green-800": tone.tone === "success",
           "bg-red-100 text-red-800": tone.tone === "error",
           "bg-blue-100 text-blue-800": tone.tone === "info",
+          "bg-amber-100 text-amber-800": tone.tone === "warning",
         },
       )}
     >
@@ -168,8 +209,38 @@ function LogsTable({
 
 export default function AgentRunLogsView({ logs }: { logs: SerializableLog[] }) {
   const [selectedId, setSelectedId] = useState<string | undefined>(logs[0]?.id);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<string | null>(null);
+  const router = useRouter();
 
   const selectedLog = useMemo(() => logs.find((log) => log.id === selectedId), [logs, selectedId]);
+
+  useEffect(() => {
+    setRetryError(null);
+  }, [selectedId]);
+
+  const handleRetry = useCallback(
+    async (log: SerializableLog) => {
+      setRetryError(null);
+      setRetryingId(log.id);
+
+      try {
+        const response = await fetch(`/api/agents/runs/${log.id}/retry`, { method: "POST" });
+
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => ({}))) as { error?: string };
+          throw new Error(payload?.error || "Failed to retry run");
+        }
+
+        router.refresh();
+      } catch (err) {
+        setRetryError(err instanceof Error ? err.message : "Failed to retry run");
+      } finally {
+        setRetryingId(null);
+      }
+    },
+    [router],
+  );
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -177,7 +248,12 @@ export default function AgentRunLogsView({ logs }: { logs: SerializableLog[] }) 
         <LogsTable logs={logs} selectedId={selectedId} onSelect={setSelectedId} />
       </div>
       <div className="lg:col-span-1">
-        <LogDetail log={selectedLog} />
+        <LogDetail
+          log={selectedLog}
+          onRetry={handleRetry}
+          retrying={retryingId === selectedLog?.id}
+          retryError={retryError}
+        />
       </div>
     </div>
   );

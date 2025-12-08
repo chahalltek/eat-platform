@@ -7,7 +7,11 @@ type AgentRunInput = {
   agentName: string;
   recruiterId?: string;
   inputSnapshot: Prisma.InputJsonValue | Prisma.JsonNullValueInput;
+  retryCount?: number;
+  retryOfId?: string;
 };
+
+export type AgentRetryMetadata = Pick<AgentRunInput, 'retryCount' | 'retryOfId'>;
 
 async function validateRecruiter(recruiterId: string): Promise<string> {
   const user = await prisma.user.findUnique({ where: { id: recruiterId }, select: { id: true } });
@@ -30,7 +34,7 @@ function isStructuredResult<T extends Prisma.InputJsonValue>(
 }
 
 export async function withAgentRun<T extends Prisma.InputJsonValue>(
-  { agentName, recruiterId, inputSnapshot }: AgentRunInput,
+  { agentName, recruiterId, inputSnapshot, retryCount, retryOfId }: AgentRunInput,
   fn: () => Promise<AgentRunResult<T>>,
 ): Promise<[T, string]> {
   const startedAt = new Date();
@@ -45,6 +49,8 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       inputSnapshot,
       status: 'RUNNING',
       startedAt,
+      retryCount: retryCount ?? 0,
+      retryOfId: retryOfId ?? null,
     },
   });
 
@@ -94,7 +100,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
       data: {
         output: { durationMs },
         durationMs,
-        status: 'ERROR',
+        status: 'FAILED',
         errorMessage: err instanceof Error ? err.message : 'Unknown error',
         finishedAt,
       },

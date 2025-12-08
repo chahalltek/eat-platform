@@ -1,5 +1,5 @@
 // src/lib/agents/rua.ts
-import { withAgentRun } from '@/lib/agents/agentRun';
+import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { prisma } from '@/lib/prisma';
 
@@ -66,6 +66,7 @@ JSON shape:
 
 export async function runRua(
   input: RuaInput,
+  retryMetadata?: AgentRetryMetadata,
 ): Promise<{ jobReqId: string; agentRunId: string }> {
   const { recruiterId, rawJobText, sourceType, sourceTag } = input;
 
@@ -79,6 +80,7 @@ export async function runRua(
         sourceType,
         sourceTag,
       },
+      ...retryMetadata,
     },
     async () => {
       const userPrompt = `

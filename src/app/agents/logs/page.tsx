@@ -19,6 +19,8 @@ export default async function AgentRunLogsPage() {
       inputSnapshot: true,
       outputSnapshot: true,
       errorMessage: true,
+      retryCount: true,
+      retryOfId: true,
     },
     orderBy: { startedAt: "desc" },
     take: 100,
@@ -33,6 +35,8 @@ export default async function AgentRunLogsPage() {
     inputSnapshot: log.inputSnapshot,
     outputSnapshot: log.outputSnapshot,
     errorMessage: log.errorMessage,
+    retryCount: log.retryCount,
+    retryOfId: log.retryOfId,
   }));
 
   return (

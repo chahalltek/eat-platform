@@ -1,5 +1,5 @@
 // src/lib/agents/outreach.ts
-import { withAgentRun } from '@/lib/agents/agentRun';
+import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { prisma } from '@/lib/prisma';
 
@@ -91,6 +91,7 @@ function formatJobSummary({
 
 export async function runOutreach(
   input: OutreachInput,
+  retryMetadata?: AgentRetryMetadata,
 ): Promise<{ message: string; agentRunId: string }> {
   const { recruiterId, candidateId, jobReqId } = input;
 
@@ -99,6 +100,7 @@ export async function runOutreach(
       agentName: 'EAT-TS.OUTREACH',
       recruiterId,
       inputSnapshot: { recruiterId: recruiterId ?? null, candidateId, jobReqId },
+      ...retryMetadata,
     },
     async () => {
       const candidate = await prisma.candidate.findUnique({
