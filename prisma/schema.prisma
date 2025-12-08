@@ -167,12 +167,14 @@ model Candidate {
   parsingConfidence    Float?
   trustScore           Int?
   status               String? // "Active", "Placed", etc.
+  normalizedSkills     String[]
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   deletedAt            DateTime?
 
   skills               CandidateSkill[]
   matches              Match[]
+  candidateMatches     CandidateMatch[]
   matchResults         MatchResult[]
   jobCandidates        JobCandidate[]
   outreachInteractions OutreachInteraction[]
@@ -311,6 +313,36 @@ model MatchResult {
   @@index([tenantId, agentRunId])
   @@index([tenantId, jobCandidateId])
   @@index([tenantId, deletedAt])
+}
+
+model Job {
+  id             String           @id @default(cuid())
+  tenantId       String           @default("default-tenant")
+  title          String
+  description    String
+  location       String?
+  requiredSkills String[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  matches CandidateMatch[]
+}
+
+model CandidateMatch {
+  id          String    @id @default(cuid())
+  tenantId    String    @default("default-tenant")
+  jobId       String
+  candidateId String
+  matchScore  Int
+  confidence  Int
+  explanation Json
+  createdAt   DateTime  @default(now())
+
+  job       Job       @relation(fields: [jobId], references: [id])
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+
+  @@index([tenantId, jobId])
+  @@index([tenantId, candidateId])
 }
 
 model AgentRunLog {
