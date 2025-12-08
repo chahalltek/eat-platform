@@ -77,15 +77,25 @@ export async function POST(req: NextRequest) {
       jobReqId: trimmedJobReqId,
     });
 
+    const validatedRecruiterId = recruiterValidation.recruiterId;
+
     const result = await runOutreach({
+<<<<<<< ours
       recruiterId: recruiterValidation.recruiterId ?? undefined,
+=======
+      recruiterId: validatedRecruiterId,
+>>>>>>> theirs
       candidateId: trimmedCandidateId,
       jobReqId: trimmedJobReqId,
     });
 
     console.log('OUTREACH API success:', {
       agentRunId: result.agentRunId,
+<<<<<<< ours
       recruiterId: recruiterValidation.recruiterId,
+=======
+      recruiterId: validatedRecruiterId,
+>>>>>>> theirs
     });
 
     return NextResponse.json(result, { status: 200 });
