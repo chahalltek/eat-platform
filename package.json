@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "vercel-build": "prisma generate && next build",
+    "build": "node scripts/db-safety.js --ci && next build",
+    "vercel-build": "node scripts/db-safety.js --ci && prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "prisma:guard": "node scripts/db-safety.js"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
