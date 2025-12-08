@@ -1,0 +1,47 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`RINA agent (BDD) > GIVEN a raw resume containing a frontend engineer profile WHEN RINA runs with a mocked LLM response THEN the candidate is persisted and the structured output matches snapshot > candidate write payload 1`] = `
+{
+  "data": {
+    "currentCompany": null,
+    "currentTitle": "Frontend Engineer",
+    "email": "jane@example.com",
+    "fullName": "Jane Doe",
+    "location": null,
+    "parsingConfidence": 0.92,
+    "phone": null,
+    "rawResumeText": "Jane Doe
+Frontend Engineer
+Email: jane@example.com
+Skills: React, TypeScript",
+    "seniorityLevel": "mid",
+    "skills": {
+      "create": [
+        {
+          "name": "React",
+          "normalizedName": "React",
+          "proficiency": "advanced",
+          "yearsOfExperience": 4,
+        },
+        {
+          "name": "TypeScript",
+          "normalizedName": "TypeScript",
+          "proficiency": "advanced",
+          "yearsOfExperience": 3,
+        },
+      ],
+    },
+    "sourceTag": "career-site",
+    "sourceType": "upload",
+    "summary": "Frontend engineer focused on React and TypeScript.",
+    "totalExperienceYears": 5,
+  },
+}
+`;
+
+exports[`RINA agent (BDD) > GIVEN a raw resume containing a frontend engineer profile WHEN RINA runs with a mocked LLM response THEN the candidate is persisted and the structured output matches snapshot > the candidate is persisted and the structured output matches snapshot :: snapshot 1`] = `
+{
+  "agentRunId": "agent-run-001",
+  "candidateId": "candidate-123",
+}
+`;
