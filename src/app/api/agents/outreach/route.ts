@@ -1,13 +1,10 @@
 // src/app/api/agents/outreach/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-import { runOutreach } from '@/lib/agents/outreach';
-<<<<<<< ours
-=======
-import { getCurrentUser } from '@/lib/auth/user';
+import { runOutreach } from "@/lib/agents/outreach";
+import { getCurrentUser } from "@/lib/auth/user";
 
->>>>>>> theirs
-import { validateRecruiterId } from '../recruiterValidation';
+import { validateRecruiterId } from "../recruiterValidation";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -15,14 +12,14 @@ export async function POST(req: NextRequest) {
   const currentUser = await getCurrentUser(req);
 
   if (!currentUser) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     body = await req.json();
   } catch (err) {
-    console.error('OUTREACH API invalid JSON:', err);
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    console.error("OUTREACH API invalid JSON:", err);
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   try {
@@ -32,46 +29,38 @@ export async function POST(req: NextRequest) {
       jobReqId?: unknown;
     };
 
-<<<<<<< ours
-    const recruiterValidation = await validateRecruiterId(recruiterId, { required: true });
-
-    if ('error' in recruiterValidation) {
-      return NextResponse.json(
-      { error: recruiterValidation.error },
-=======
     const recruiterValidation = await validateRecruiterId(
-      typeof recruiterId === 'string' && recruiterId.trim()
+      typeof recruiterId === "string" && recruiterId.trim()
         ? recruiterId.trim()
         : currentUser.id,
       { required: true },
     );
 
-    if ('error' in recruiterValidation) {
+    if ("error" in recruiterValidation) {
       return NextResponse.json(
         { error: recruiterValidation.error },
->>>>>>> theirs
         { status: recruiterValidation.status },
       );
     }
 
-    const trimmedCandidateId = typeof candidateId === 'string' ? candidateId.trim() : '';
-    const trimmedJobReqId = typeof jobReqId === 'string' ? jobReqId.trim() : '';
+    const trimmedCandidateId = typeof candidateId === "string" ? candidateId.trim() : "";
+    const trimmedJobReqId = typeof jobReqId === "string" ? jobReqId.trim() : "";
 
     if (!trimmedCandidateId) {
       return NextResponse.json(
-        { error: 'candidateId is required and must be a string' },
+        { error: "candidateId is required and must be a string" },
         { status: 400 },
       );
     }
 
     if (!trimmedJobReqId) {
       return NextResponse.json(
-        { error: 'jobReqId is required and must be a string' },
+        { error: "jobReqId is required and must be a string" },
         { status: 400 },
       );
     }
 
-    console.log('OUTREACH API request:', {
+    console.log("OUTREACH API request:", {
       recruiterId: recruiterValidation.recruiterId,
       candidateId: trimmedCandidateId,
       jobReqId: trimmedJobReqId,
@@ -80,42 +69,34 @@ export async function POST(req: NextRequest) {
     const validatedRecruiterId = recruiterValidation.recruiterId;
 
     const result = await runOutreach({
-<<<<<<< ours
-      recruiterId: recruiterValidation.recruiterId ?? undefined,
-=======
       recruiterId: validatedRecruiterId,
->>>>>>> theirs
       candidateId: trimmedCandidateId,
       jobReqId: trimmedJobReqId,
     });
 
-    console.log('OUTREACH API success:', {
+    console.log("OUTREACH API success:", {
       agentRunId: result.agentRunId,
-<<<<<<< ours
-      recruiterId: recruiterValidation.recruiterId,
-=======
       recruiterId: validatedRecruiterId,
->>>>>>> theirs
     });
 
     return NextResponse.json(result, { status: 200 });
   } catch (err) {
-    console.error('OUTREACH API error:', err);
+    console.error("OUTREACH API error:", err);
 
-    const message = err instanceof Error ? err.message : 'Unknown error';
+    const message = err instanceof Error ? err.message : "Unknown error";
     const normalizedMessage = message.toLowerCase();
 
-    if (normalizedMessage.includes('llm')) {
+    if (normalizedMessage.includes("llm")) {
       return NextResponse.json(
-        { error: 'Outreach agent temporarily unavailable. Please try again shortly.' },
+        { error: "Outreach agent temporarily unavailable. Please try again shortly." },
         { status: 503 },
       );
     }
 
-    if (normalizedMessage.includes('not found')) {
+    if (normalizedMessage.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
