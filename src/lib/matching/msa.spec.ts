@@ -122,5 +122,7 @@ describe("computeMatchScore explainability", () => {
     expect(validateMatchExplanation(result.explanation)).toBe(true);
     expect(result.explanation.topReasons.length).toBeGreaterThan(0);
     expect(result.explanation.exportableText).toContain("Top reasons:");
+    expect(result.explanation.missingSkills).toContain("GraphQL");
+    expect(result.explanation.riskAreas).toContain("Missing required skill: GraphQL");
   });
 });

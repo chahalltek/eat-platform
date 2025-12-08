@@ -13,6 +13,7 @@ export type MatchExplanation = {
   allReasons: string[];
   skillOverlapMap: SkillOverlap[];
   riskAreas: string[];
+  missingSkills: string[];
   exportableText: string;
 };
 
@@ -52,9 +53,14 @@ export const matchExplanationSchema: JSONSchemaType<MatchExplanation> = {
       items: { type: "string" },
       default: [],
     },
+    missingSkills: {
+      type: "array",
+      items: { type: "string" },
+      default: [],
+    },
     exportableText: { type: "string" },
   },
-  required: ["topReasons", "allReasons", "skillOverlapMap", "riskAreas", "exportableText"],
+  required: ["topReasons", "allReasons", "skillOverlapMap", "riskAreas", "missingSkills", "exportableText"],
   additionalProperties: false,
 };
 
@@ -86,6 +92,7 @@ export function makeDeterministicExplanation(explanation: MatchExplanation): Mat
   const dedupedReasons = Array.from(new Set(explanation.allReasons));
   const topReasons = dedupedReasons.slice(0, 5);
   const riskAreas = Array.from(new Set(explanation.riskAreas)).sort((a, b) => a.localeCompare(b));
+  const missingSkills = Array.from(new Set(explanation.missingSkills)).sort((a, b) => a.localeCompare(b));
   const skillOverlapMap = [...explanation.skillOverlapMap].sort(compareSkillOverlap);
 
   const exportableText = [
@@ -95,6 +102,9 @@ export function makeDeterministicExplanation(explanation: MatchExplanation): Mat
           .map((entry) => `${entry.skill} (${entry.importance}) - ${entry.status}`)
           .join("; ")}.`
       : "Skill overlap: No additional details recorded.",
+    missingSkills.length > 0
+      ? `Missing skills: ${missingSkills.join("; ")}.`
+      : "Missing skills: None recorded.",
     riskAreas.length > 0 ? `Risk areas: ${riskAreas.join("; ")}.` : "Risk areas: None recorded.",
     `Overall score: ${explanation.exportableText.match(/Overall score: ([^.]*)/)?.[1] ?? "See details"}.`,
   ].join(" ");
@@ -104,6 +114,7 @@ export function makeDeterministicExplanation(explanation: MatchExplanation): Mat
     topReasons,
     allReasons: dedupedReasons,
     riskAreas,
+    missingSkills,
     skillOverlapMap,
     exportableText,
   };
@@ -116,6 +127,7 @@ function coerceReasons(reasons: string[]): MatchExplanation {
     allReasons: reasons,
     skillOverlapMap: [],
     riskAreas: [],
+    missingSkills: [],
     exportableText: `Top reasons: ${topReasons.join("; ") || "None"}. No additional skill overlap map available.`,
   };
 }

@@ -53,6 +53,7 @@ export function computeMatchScore(
   let totalSkillWeight = 0;
 
   const skillOverlapMap: SkillOverlap[] = [];
+  const missingSkills: string[] = [];
   let requiredTotal = 0;
   let requiredMatched = 0;
   let preferredTotal = 0;
@@ -103,6 +104,7 @@ export function computeMatchScore(
         if (jobSkill.required) {
           riskAreas.push(reason);
         }
+        missingSkills.push(jobSkill.name);
         skillOverlapMap.push({
           skill: jobSkill.name,
           status: 'missing',
@@ -189,9 +191,13 @@ export function computeMatchScore(
     allReasons: reasons,
     skillOverlapMap,
     riskAreas,
+    missingSkills,
     exportableText: [
       `Top reasons: ${topReasons.join('; ') || 'None'}.`,
       `Skill overlap: ${totalRequiredText}; ${totalPreferredText}.`,
+      missingSkills.length > 0
+        ? `Missing skills: ${missingSkills.join('; ')}.`
+        : 'Missing skills: None recorded.',
       `Risk areas: ${riskSummary}`,
       `Overall score: ${score} / 100.`,
     ].join(' '),

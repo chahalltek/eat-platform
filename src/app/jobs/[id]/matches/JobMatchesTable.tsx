@@ -60,7 +60,10 @@ export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
         }),
         cell: ({ getValue }) => {
           const value = getValue<number | null>();
-          return typeof value === "number" ? `${Math.round(value)}%` : "—";
+          if (typeof value !== "number") return "—";
+
+          const normalized = value <= 1 ? value * 100 : value;
+          return `${Math.round(normalized)}%`;
         },
         sortingFn: (rowA, rowB) => (rowA.original.score ?? 0) - (rowB.original.score ?? 0),
       },
@@ -161,6 +164,19 @@ function ExplainabilityCell({ match }: { match: MatchRow }) {
               <ul className="list-inside list-disc space-y-1 text-gray-700">
                 {explanation.riskAreas.map((risk, index) => (
                   <li key={`${risk}-${index}`}>{risk}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <div className="font-semibold text-gray-900">Missing skills</div>
+            {explanation.missingSkills.length === 0 ? (
+              <p className="text-gray-700">No missing skills identified.</p>
+            ) : (
+              <ul className="list-inside list-disc space-y-1 text-gray-700">
+                {explanation.missingSkills.map((skill) => (
+                  <li key={skill}>{skill}</li>
                 ))}
               </ul>
             )}

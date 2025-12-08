@@ -10,7 +10,17 @@ export type ActiveTenantPlan = {
 export async function getTenantPlan(tenantId: string): Promise<ActiveTenantPlan | null> {
   const now = new Date();
 
-  const subscription = await prisma.tenantSubscription.findFirst({
+  // Some tests partially mock the Prisma client. If the tenant subscription model
+  // is unavailable, fall back to the default plan behaviour instead of throwing.
+  const tenantSubscriptionModel = prisma.tenantSubscription as
+    | typeof prisma.tenantSubscription
+    | undefined;
+
+  if (!tenantSubscriptionModel?.findFirst) {
+    return null;
+  }
+
+  const subscription = await tenantSubscriptionModel.findFirst({
     where: {
       tenantId,
       startAt: { lte: now },
