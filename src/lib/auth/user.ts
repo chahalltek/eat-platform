@@ -1,6 +1,8 @@
 import { headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 
+import { Prisma } from '@prisma/client';
+
 import { prisma } from '@/lib/prisma';
 
 import { DEFAULT_USER_ID, USER_HEADER, USER_QUERY_PARAM } from './config';
@@ -40,12 +42,26 @@ export async function getCurrentUser(req?: NextRequest) {
     return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, displayName: true, role: true },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, displayName: true, role: true },
+    });
 
-  return user;
+    return user;
+  } catch (error) {
+    // Gracefully handle databases that have not yet applied the displayName column migration.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2022') {
+      const fallbackUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, role: true },
+      });
+
+      return fallbackUser ? { ...fallbackUser, displayName: fallbackUser.email } : null;
+    }
+
+    throw error;
+  }
 }
 
 export async function getCurrentUserId(req?: NextRequest) {
