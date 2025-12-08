@@ -34,9 +34,7 @@ async function extractUserIdFromHeaders() {
 }
 
 export async function getCurrentUser(req?: NextRequest) {
-  const userId =
-   (req ? extractUserIdFromRequest(req) : await extractUserIdFromHeaders()) ??
-    DEFAULT_USER_ID;
+  const userId = await getCurrentUserId(req);
 
   if (!userId) {
     return null;
@@ -48,4 +46,17 @@ export async function getCurrentUser(req?: NextRequest) {
   });
 
   return user;
+}
+
+export async function getCurrentUserId(req?: NextRequest) {
+  if (req) {
+    return extractUserIdFromRequest(req) ?? DEFAULT_USER_ID;
+  }
+
+  try {
+    const headerUserId = await extractUserIdFromHeaders();
+    return headerUserId ?? DEFAULT_USER_ID;
+  } catch {
+    return DEFAULT_USER_ID;
+  }
 }

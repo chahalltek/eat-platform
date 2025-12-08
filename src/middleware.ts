@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import { DEFAULT_USER_ID, USER_HEADER, USER_QUERY_PARAM } from './lib/auth/config';
+import { consumeRateLimit, isRateLimitError } from './lib/rateLimiting/rateLimiter';
+import { toRateLimitResponse } from './lib/rateLimiting/http';
 
 export function middleware(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -14,6 +16,18 @@ export function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(USER_HEADER, resolvedUserId);
+
+  try {
+    if (request.nextUrl.pathname.startsWith('/api')) {
+      consumeRateLimit(resolvedUserId, 'api');
+    }
+  } catch (error) {
+    if (isRateLimitError(error)) {
+      return toRateLimitResponse(error);
+    }
+
+    throw error;
+  }
 
   return NextResponse.next({
     request: {

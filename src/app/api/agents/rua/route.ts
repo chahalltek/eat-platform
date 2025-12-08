@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runRua } from '@/lib/agents/rua';
 import { getCurrentUser } from '@/lib/auth/user';
 import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
+import { toRateLimitResponse } from '@/lib/rateLimiting/http';
+import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { validateRecruiterId } from '../recruiterValidation';
 
 export async function POST(req: NextRequest) {
@@ -51,6 +53,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result, { status: 200 });
   } catch (err) {
+    if (isRateLimitError(err)) {
+      return toRateLimitResponse(err);
+    }
+
     console.error('RUA API error:', err);
     return NextResponse.json(
       { error: 'Internal server error' },

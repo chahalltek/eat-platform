@@ -5,6 +5,8 @@ import {
   OpenAIAdapter,
   formatEmptyResponseError,
 } from '@/lib/llm/openaiAdapter';
+import { getCurrentUserId } from '@/lib/auth/user';
+import { consumeRateLimit, isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 
 type CallLLMParams = {
   systemPrompt: string;
@@ -42,6 +44,8 @@ export async function callLLM({
   model = 'gpt-4.1-mini',
   adapter = new OpenAIChatAdapter(),
 }: CallLLMParams): Promise<string> {
+  consumeRateLimit(await getCurrentUserId(), 'llm');
+
   try {
     return await adapter.chatCompletion({
       model,
@@ -52,6 +56,10 @@ export async function callLLM({
       temperature: 0.2,
     });
   } catch (err) {
+    if (isRateLimitError(err)) {
+      throw err;
+    }
+
     console.error('Error calling LLM:', err);
     throw new Error('LLM call failed');
   }

@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { runOutreach } from "@/lib/agents/outreach";
 import { getCurrentUser } from "@/lib/auth/user";
 import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
+import { toRateLimitResponse } from "@/lib/rateLimiting/http";
+import { isRateLimitError } from "@/lib/rateLimiting/rateLimiter";
 import { validateRecruiterId } from "../recruiterValidation";
 
 export async function POST(req: NextRequest) {
@@ -92,6 +94,10 @@ export async function POST(req: NextRequest) {
 
     const message = err instanceof Error ? err.message : "Unknown error";
     const normalizedMessage = message.toLowerCase();
+
+    if (isRateLimitError(err)) {
+      return toRateLimitResponse(err);
+    }
 
     if (normalizedMessage.includes("llm")) {
       return NextResponse.json(
