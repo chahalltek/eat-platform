@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
 import {
   ColumnDef,
+  ColumnFiltersState,
+  FilterFn,
   PaginationState,
   SortingState,
   Table,
   Updater,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -29,6 +32,7 @@ export type EATTableProps<TData> = {
   columns: ColumnDef<TData, any>[];
   sorting?: EATTableSorting;
   pagination?: EATTablePagination;
+  filtering?: EATTableFiltering<TData>;
   variant?: TableStyleVariant;
   children: (context: EATTableRenderProps<TData>) => React.ReactNode;
 };
@@ -39,7 +43,23 @@ export type EATTableRenderProps<TData> = {
   rows: ReturnType<Table<TData>["getRowModel"]>["rows"];
   sorting: SortingState;
   pagination: PaginationState;
+  columnFilters: ColumnFiltersState;
+  globalFilter: string;
   styles: TableStylePreset;
+};
+
+export type EATTableFiltering<TData> = {
+  columnFilters?: {
+    initialState?: ColumnFiltersState;
+    onChange?: (filters: ColumnFiltersState) => void;
+  };
+  globalFilter?: {
+    initialState?: string;
+    onChange?: (value: string) => void;
+    enabled?: boolean;
+  };
+  filterFns?: Record<string, FilterFn<TData>>;
+  globalFilterFn?: FilterFn<TData>;
 };
 
 function resolveUpdaterValue<T>(updater: Updater<T>, previous: T): T {
@@ -51,12 +71,15 @@ export function useEATTable<TData>({
   columns,
   sorting,
   pagination,
+  filtering,
   variant = "comfortable",
 }: Omit<EATTableProps<TData>, "children">): EATTableRenderProps<TData> {
   const [sortingState, setSortingState] = useState<SortingState>(sorting?.initialState ?? []);
   const [paginationState, setPaginationState] = useState<PaginationState>(
     pagination?.initialState ?? { pageIndex: 0, pageSize: pagination?.initialState?.pageSize ?? 10 },
   );
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(filtering?.columnFilters?.initialState ?? []);
+  const [globalFilter, setGlobalFilter] = useState<string>(filtering?.globalFilter?.initialState ?? "");
 
   const memoizedData = useMemo(() => data, [data]);
   const memoizedColumns = useMemo(() => columns, [columns]);
@@ -73,6 +96,18 @@ export function useEATTable<TData>({
     pagination?.onChange?.(nextState);
   };
 
+  const handleColumnFiltersChange = (updater: Updater<ColumnFiltersState>) => {
+    const nextState = resolveUpdaterValue(updater, columnFilters);
+    setColumnFilters(nextState);
+    filtering?.columnFilters?.onChange?.(nextState);
+  };
+
+  const handleGlobalFilterChange = (updater: Updater<string>) => {
+    const nextState = resolveUpdaterValue(updater, globalFilter);
+    setGlobalFilter(nextState);
+    filtering?.globalFilter?.onChange?.(nextState);
+  };
+
   const styles = useMemo(() => getTableStyles(variant), [variant]);
 
   const table = useReactTable({
@@ -81,12 +116,19 @@ export function useEATTable<TData>({
     state: {
       sorting: sortingState,
       pagination: paginationState,
+      columnFilters,
+      globalFilter: filtering?.globalFilter?.enabled === false ? undefined : globalFilter,
     },
     onSortingChange: handleSortingChange,
     onPaginationChange: handlePaginationChange,
+    onColumnFiltersChange: handleColumnFiltersChange,
+    onGlobalFilterChange: handleGlobalFilterChange,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    filterFns: filtering?.filterFns,
+    globalFilterFn: filtering?.globalFilterFn,
     manualPagination: pagination?.pageCount !== undefined,
     pageCount: pagination?.pageCount,
   });
@@ -97,6 +139,8 @@ export function useEATTable<TData>({
     rows: table.getRowModel().rows,
     sorting: sortingState,
     pagination: paginationState,
+    columnFilters,
+    globalFilter,
     styles,
   };
 }

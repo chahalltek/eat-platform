@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 
+import type { FilterFn } from "@tanstack/react-table";
 import { EATTable, flexRender } from "@/components/table/EATTable";
+import { TableSearchInput } from "@/components/table/TableSearchInput";
+import { TableToolbar } from "@/components/table/TableToolbar";
 import { getTableCellClasses, getTableClassNames, getTableRowClasses } from "@/components/table/tableStyles";
 import { EATTableColumn, createNumberColumn, createTextColumn } from "@/components/table/tableTypes";
 
@@ -21,23 +24,6 @@ function normalizeConfidence(value: number | null) {
 }
 
 export function useCandidateTable(candidates: CandidateRow[]) {
-  const [query, setQuery] = useState("");
-
-  const normalizedQuery = useMemo(() => query.trim().toLowerCase(), [query]);
-
-  const filteredData = useMemo(() => {
-    if (!normalizedQuery) return candidates;
-
-    return candidates.filter((candidate) => {
-      const haystack = [candidate.fullName, candidate.currentTitle, candidate.location]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(normalizedQuery);
-    });
-  }, [candidates, normalizedQuery]);
-
   const columns = useMemo<EATTableColumn<CandidateRow>[]>(
     () => [
       createTextColumn({
@@ -95,91 +81,103 @@ export function useCandidateTable(candidates: CandidateRow[]) {
     [],
   );
 
-  return { columns, filteredData, query, setQuery };
+  const globalFilterFn = useMemo<FilterFn<CandidateRow>>(
+    () =>
+      (row, _columnId, filterValue) => {
+        const query = typeof filterValue === "string" ? filterValue.trim().toLowerCase() : "";
+        if (!query) return true;
+
+        const { fullName, currentTitle, location } = row.original;
+        return [fullName, currentTitle, location]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(query));
+      },
+    [],
+  );
+
+  return { columns, globalFilterFn };
 }
 
 export function CandidateTable({ candidates }: { candidates: CandidateRow[] }) {
-  const { columns, filteredData, query, setQuery } = useCandidateTable(candidates);
+  const { columns, globalFilterFn } = useCandidateTable(candidates);
 
   return (
     <div className="mt-6 space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <label className="flex flex-1 flex-col text-sm text-slate-700">
-          <span className="mb-1 font-medium">Search candidates</span>
-          <input
-            type="search"
-            placeholder="Search by name, role, or location"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-          />
-        </label>
-      </div>
-
       <EATTable
-        data={filteredData}
+        data={candidates}
         columns={columns}
         sorting={{ initialState: [{ id: "updatedAt", desc: true }] }}
+        filtering={{ globalFilter: { initialState: "" }, globalFilterFn }}
         variant="comfortable"
       >
-        {({ headerGroups, rows, styles }) => {
+        {({ headerGroups, rows, styles, table }) => {
           const classNames = getTableClassNames(styles);
 
           return (
-            <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-              <table className={classNames.table}>
-                <thead className={classNames.header}>
-                  {headerGroups.map((headerGroup) => (
-                    <tr key={headerGroup.id} className={classNames.headerRow}>
-                      {headerGroup.headers
-                        .filter((header) => !header.isPlaceholder)
-                        .map((header) => (
-                          <th key={header.id} className={classNames.headerCell} scope="col">
-                            <button
-                              type="button"
-                              className="flex w-full items-center gap-2 text-left"
-                              onClick={() => header.column.toggleSorting(undefined, false)}
-                              disabled={!header.column.getCanSort()}
-                            >
-                              <span className="select-none">{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                              {header.column.getCanSort() ? (
-                                <span aria-live="polite" className="text-xs text-slate-500">
-                                  {header.column.getIsSorted() === "asc"
-                                    ? "▲"
-                                    : header.column.getIsSorted() === "desc"
-                                      ? "▼"
-                                      : "⇅"}
-                                </span>
-                              ) : null}
-                            </button>
-                          </th>
-                        ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody className={classNames.body}>
-                  {rows.length === 0 ? (
-                    <tr className={getTableRowClasses(styles)}>
-                      <td className={getTableCellClasses(styles)} colSpan={columns.length}>
-                        <div className="py-6 text-center text-sm text-slate-500">No candidates found.</div>
-                      </td>
-                    </tr>
-                  ) : (
-                    rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className={getTableRowClasses(styles, { hover: true, striped: true })}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className={getTableCellClasses(styles)}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
+            <div className="space-y-4">
+              <TableToolbar>
+                <TableSearchInput
+                  table={table}
+                  label="Search candidates"
+                  placeholder="Search by name, role, or location"
+                />
+              </TableToolbar>
+
+              <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
+                <table className={classNames.table}>
+                  <thead className={classNames.header}>
+                    {headerGroups.map((headerGroup) => (
+                      <tr key={headerGroup.id} className={classNames.headerRow}>
+                        {headerGroup.headers
+                          .filter((header) => !header.isPlaceholder)
+                          .map((header) => (
+                            <th key={header.id} className={classNames.headerCell} scope="col">
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 text-left"
+                                onClick={() => header.column.toggleSorting(undefined, false)}
+                                disabled={!header.column.getCanSort()}
+                              >
+                                <span className="select-none">{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                                {header.column.getCanSort() ? (
+                                  <span aria-live="polite" className="text-xs text-slate-500">
+                                    {header.column.getIsSorted() === "asc"
+                                      ? "▲"
+                                      : header.column.getIsSorted() === "desc"
+                                        ? "▼"
+                                        : "⇅"}
+                                  </span>
+                                ) : null}
+                              </button>
+                            </th>
+                          ))}
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </thead>
+                  <tbody className={classNames.body}>
+                    {rows.length === 0 ? (
+                      <tr className={getTableRowClasses(styles)}>
+                        <td className={getTableCellClasses(styles)} colSpan={columns.length}>
+                          <div className="py-6 text-center text-sm text-slate-500">No candidates found.</div>
+                        </td>
+                      </tr>
+                    ) : (
+                      rows.map((row) => (
+                        <tr
+                          key={row.id}
+                          className={getTableRowClasses(styles, { hover: true, striped: true })}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <td key={cell.id} className={getTableCellClasses(styles)}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </td>
+                          ))}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           );
         }}

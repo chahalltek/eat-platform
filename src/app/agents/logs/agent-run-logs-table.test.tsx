@@ -10,7 +10,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AgentRunLogsTable,
   AgentRunLogTableRow,
-  filterLogsBySelections,
   formatDurationMs,
 } from "./agent-run-logs-table";
 
@@ -69,23 +68,37 @@ describe("AgentRunLogsTable", () => {
   it("filters rows by selected status values", () => {
     render(<AgentRunLogsTable logs={sampleLogs} selectedId="base" onSelect={() => {}} />);
 
-    const statusFilter = within(screen.getByTestId("status-filter")).getByRole("button");
+    const statusFilter = screen.getByRole("button", { name: /Status: All/i });
     fireEvent.click(statusFilter);
 
-    const runningCheckbox = screen.getByLabelText("Running") as HTMLInputElement;
+    const runningCheckbox = screen.getByLabelText("Running");
     fireEvent.click(runningCheckbox);
     expect(screen.getByText("No runs match the selected filters.")).toBeInTheDocument();
 
-    const clearButton = screen.getByText("Clear");
-    fireEvent.click(clearButton);
+    fireEvent.click(screen.getByText("Clear"));
     expect(getBodyRows()).toHaveLength(sampleLogs.length);
 
-    const successCheckbox = screen.getByLabelText("Success") as HTMLInputElement;
+    const successCheckbox = screen.getByLabelText("Success");
     fireEvent.click(successCheckbox);
 
     const rowsAfterFilter = getBodyRows();
     expect(rowsAfterFilter).toHaveLength(1);
     expect(within(rowsAfterFilter[0]).getByText("Agent Alpha")).toBeInTheDocument();
+  });
+
+  it("applies search and filter selections together", () => {
+    render(<AgentRunLogsTable logs={sampleLogs} selectedId="base" onSelect={() => {}} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/search runs/i), { target: { value: "Recruiter" } });
+    expect(getBodyRows()).toHaveLength(sampleLogs.length);
+
+    const agentFilter = screen.getByRole("button", { name: /Agent: All/i });
+    fireEvent.click(agentFilter);
+    fireEvent.click(screen.getByLabelText("Agent Gamma"));
+
+    const rowsAfterFilter = getBodyRows();
+    expect(rowsAfterFilter).toHaveLength(1);
+    expect(within(rowsAfterFilter[0]).getByText("Agent Gamma")).toBeInTheDocument();
   });
 
   it("sorts by timestamp when the header is toggled", () => {
@@ -118,15 +131,5 @@ describe("AgentRunLogsTable helpers", () => {
     expect(formatDurationMs(800)).toBe("800 ms");
     expect(formatDurationMs(1500)).toBe("1.5 s");
     expect(formatDurationMs(65000)).toBe("1m 5s");
-  });
-
-  it("filters logs by agent and status selections", () => {
-    const filteredByStatus = filterLogsBySelections(sampleLogs, [], ["FAILED"]);
-    expect(filteredByStatus).toHaveLength(1);
-    expect(filteredByStatus[0]?.id).toBe("fail-1");
-
-    const filteredByAgent = filterLogsBySelections(sampleLogs, ["Agent Gamma"], []);
-    expect(filteredByAgent).toHaveLength(1);
-    expect(filteredByAgent[0]?.id).toBe("partial-1");
   });
 });
