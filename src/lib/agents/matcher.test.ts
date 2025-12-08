@@ -95,7 +95,7 @@ describe("matcher agent", () => {
 
     expect(runId).toBe("run-123");
     expect(mockPrisma.matchResult.create).toHaveBeenCalledTimes(2);
-    expect(result.matches.map((match) => match.id)).toEqual(["match-b", "match-a"]);
+    expect(result.matches.map((match) => match.id)).toEqual(["match-b"]);
     expect(mockedExplanation).toHaveBeenCalledTimes(2);
     expect(mockPrisma.agentRunLog.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: "SUCCESS" }) }),

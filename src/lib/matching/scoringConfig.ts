@@ -1,3 +1,5 @@
+import { TS_CONFIG } from "@/config/ts";
+
 export type MatchScoringWeights = {
   skills: number;
   seniority: number;
@@ -18,12 +20,7 @@ export type CandidateConfidenceWeights = {
   unknownFields: number;
 };
 
-export const MATCH_SCORING_WEIGHTS: MatchScoringWeights = {
-  skills: 0.6,
-  seniority: 0.15,
-  location: 0.1,
-  candidateSignals: 0.15,
-};
+export const MATCH_SCORING_WEIGHTS: MatchScoringWeights = TS_CONFIG.matcher.weight;
 
 export const CANDIDATE_SIGNAL_WEIGHTS: CandidateSignalWeights = {
   recentActivity: 0.4,
