@@ -1,18 +1,12 @@
-<<<<<<< ours
-import { prisma } from '@/lib/prisma';
-import { JobMatchesView } from '@/components/JobMatchesView';
-import type { JobMatchRow } from '@/components/JobMatchesTable';
-
-type Props = {
-  params: { jobId: string };
-};
-=======
 import { computeCandidateConfidenceScore } from '@/lib/candidates/confidenceScore';
 import { normalizeMatchExplanation } from '@/lib/matching/explanation';
 import { prisma } from '@/lib/prisma';
 import { JobMatchesView } from '@/components/JobMatchesView';
-import type { JobMatchRow } from '@/components/JobMatchesTable';
->>>>>>> theirs
+import type { ConfidenceDetails, JobMatchRow } from '@/components/JobMatchesTable';
+
+type Props = {
+  params: { jobId: string };
+};
 
 async function getMatches(jobId: string): Promise<JobMatchRow[]> {
   const jobReq = await prisma.jobReq.findUnique({
@@ -50,6 +44,9 @@ async function getMatches(jobId: string): Promise<JobMatchRow[]> {
     const explanationSummary =
       explanation.topReasons[0] || explanation.exportableText || '(no explanation summary)';
 
+    const confidenceDetails =
+      (match as { confidenceReasons?: ConfidenceDetails | null }).confidenceReasons ?? null;
+
     return {
       candidateId: match.candidateId,
       candidateName: match.candidate.fullName,
@@ -57,11 +54,12 @@ async function getMatches(jobId: string): Promise<JobMatchRow[]> {
       matchScore: match.score,
       confidence,
       explanationSummary,
+      confidenceDetails,
     };
   });
 }
 
-export default async function JobMatchesPage({ params }: { params: { jobId: string } }) {
+export default async function JobMatchesPage({ params }: Props) {
   const data = await getMatches(params.jobId);
 
   return (

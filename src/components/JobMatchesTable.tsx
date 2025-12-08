@@ -8,6 +8,12 @@ import {
 } from '@tanstack/react-table';
 import { useMemo } from 'react';
 
+export type ConfidenceDetails = {
+  dataCompleteness: number;
+  skillCoverage: number;
+  recency: number;
+};
+
 export type JobMatchRow = {
   candidateId: string;
   candidateName: string;
@@ -15,6 +21,7 @@ export type JobMatchRow = {
   matchScore: number;
   confidence: number;
   explanationSummary: string;
+  confidenceDetails?: ConfidenceDetails | null;
 };
 
 export type JobMatchesTableProps = {
@@ -41,7 +48,27 @@ export function JobMatchesTable({ data }: JobMatchesTableProps) {
       {
         accessorKey: 'confidence',
         header: 'Confidence',
-        cell: (info) => `${info.getValue()}%`,
+        cell: (info) => {
+          const row = info.row.original;
+          const details = row.confidenceDetails;
+
+          const tooltip = details
+            ? [
+                `Data completeness: ${details.dataCompleteness}/40`,
+                `Skill coverage: ${details.skillCoverage}/40`,
+                `Recency: ${details.recency}/20`,
+              ].join(' • ')
+            : 'No confidence breakdown available';
+
+          return (
+            <span
+              className="cursor-help underline decoration-dotted underline-offset-2"
+              title={tooltip}
+            >
+              {info.getValue()}%
+            </span>
+          );
+        },
       },
       {
         accessorKey: 'explanationSummary',
