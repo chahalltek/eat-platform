@@ -1,6 +1,7 @@
 import { ArrowTrendingDownIcon, ArrowTrendingUpIcon, BeakerIcon, BugAntIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
+import { canViewQualityMetrics } from '@/lib/auth/permissions';
 import { getCurrentUser } from '@/lib/auth/user';
 import { getQualityMetrics } from '@/lib/metrics/quality';
 
@@ -179,14 +180,10 @@ function formatTimestamp(timestamp: string | null) {
   return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-function isAdmin(user: { role: string | null } | null) {
-  return (user?.role ?? '').toUpperCase() === 'ADMIN';
-}
-
 export default async function QualityPage() {
   const user = await getCurrentUser();
 
-  if (!isAdmin(user)) {
+  if (!canViewQualityMetrics(user)) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">

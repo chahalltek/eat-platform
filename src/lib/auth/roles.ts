@@ -1,8 +1,10 @@
 export const USER_ROLES = {
   ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER',
   RECRUITER: 'RECRUITER',
   SOURCER: 'SOURCER',
   SALES: 'SALES',
+  SYSTEM_ADMIN: 'SYSTEM_ADMIN',
 } as const;
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
@@ -13,5 +15,6 @@ export function normalizeRole(role: string | null | undefined): UserRole | null 
 }
 
 export function isAdminRole(role: string | null | undefined) {
-  return normalizeRole(role) === USER_ROLES.ADMIN;
+  const normalized = normalizeRole(role);
+  return normalized === USER_ROLES.ADMIN || normalized === USER_ROLES.SYSTEM_ADMIN;
 }

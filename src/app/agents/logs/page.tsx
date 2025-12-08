@@ -1,10 +1,27 @@
 import AgentRunLogsView from "./logs-view";
 import { SerializableLog } from "./types";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
+import { canViewAgentLogs } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AgentRunLogsPage() {
+  const [user, tenantId] = await Promise.all([getCurrentUser(), getUserTenantId()]);
+
+  if (!canViewAgentLogs(user, tenantId)) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-10">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+          <h1 className="text-xl font-semibold">Access denied</h1>
+          <p className="mt-2 text-sm text-amber-800">
+            You need admin-level permissions to review agent run logs.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const logs = await prisma.agentRunLog.findMany({
     select: {
       id: true,

@@ -7,15 +7,12 @@ import {
   parseFeatureFlagName,
   setFeatureFlag,
 } from '@/lib/featureFlags';
-
-function isAdmin(user: { role: string | null } | null) {
-  return (user?.role ?? '').toUpperCase() === 'ADMIN';
-}
+import { canManageFeatureFlags } from '@/lib/auth/permissions';
 
 async function requireAdmin(request: NextRequest) {
   const user = await getCurrentUser(request);
 
-  if (!isAdmin(user)) {
+  if (!canManageFeatureFlags(user)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

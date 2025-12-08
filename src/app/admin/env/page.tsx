@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { EnvTable } from './EnvTable';
 import { getCurrentUser } from '@/lib/auth/user';
 import { getEnvironmentSnapshot } from '@/lib/admin/env';
+import { canViewEnvironment } from '@/lib/auth/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ function VersionList({
 export default async function AdminEnvPage() {
   const user = await getCurrentUser();
 
-  if (!user || user.role !== 'ADMIN') {
+  if (!canViewEnvironment(user)) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-5 text-red-900">

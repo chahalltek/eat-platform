@@ -1,1 +1,1 @@
-export { getCurrentUser, getCurrentUserId } from "./identityProvider";
+export { getCurrentUser, getCurrentUserId, getUserTenantId, getUserRoles } from "./identityProvider";
