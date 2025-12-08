@@ -1,4 +1,7 @@
+<<<<<<< ours
 import { TS_CONFIG } from "@/config/ts";
+=======
+>>>>>>> theirs
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { rankCandidates } from "@/lib/agents/ranker";
@@ -45,7 +48,9 @@ function computeRoleAlignment(jobSkills: string[], candidateSkills: string[]) {
     return 50;
   }
 
-  const overlapCount = normalizedJobSkills.filter((skill) => normalizedCandidateSkills.has(skill)).length;
+  const overlapCount = normalizedJobSkills.filter((skill) =>
+    normalizedCandidateSkills.has(skill),
+  ).length;
   const coverage = overlapCount / normalizedJobSkills.length;
 
   return clampScore(coverage * 100);
@@ -114,7 +119,10 @@ export async function runShortlist(
         matchScore: clampScore(match.matchScore),
         confidenceScore: clampScore(match.confidence),
         recencyDays: computeRecencyDays(now, match.candidate.updatedAt, match.candidate.createdAt),
-        roleAlignment: computeRoleAlignment(job.requiredSkills ?? [], match.candidate.normalizedSkills ?? []),
+        roleAlignment: computeRoleAlignment(
+          job.requiredSkills ?? [],
+          match.candidate.normalizedSkills ?? [],
+        ),
       }));
 
       const ranked = rankCandidates(rankerInputs);
@@ -124,7 +132,11 @@ export async function runShortlist(
       const shortlisted = shortlistResults.map((candidate, index) => {
         const match = matchesById.get(candidate.id)!;
         const rank = index + 1;
-        const shortlistReason = buildShortlistReason(candidate.priorityScore, candidate.recencyScore, rank);
+        const shortlistReason = buildShortlistReason(
+          candidate.priorityScore,
+          candidate.recencyScore,
+          rank,
+        );
 
         return {
           matchId: match.id,

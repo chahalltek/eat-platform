@@ -81,6 +81,7 @@ export function JobMatchesView({ jobId, initialData }: Props) {
     setCopyStatus('idle');
     setIsRunningShortlist(true);
     try {
+<<<<<<< ours
       await callJobAgent('shortlist', {
 <<<<<<< ours
         minMatchScore,
@@ -92,6 +93,9 @@ export function JobMatchesView({ jobId, initialData }: Props) {
         maxShortlisted: 5,
 >>>>>>> theirs
       });
+=======
+      await callJobAgent('shortlist', { shortlistLimit: 5 });
+>>>>>>> theirs
       startTransition(() => router.refresh());
     } catch (e) {
       console.error('Run shortlist failed', e);
@@ -107,6 +111,7 @@ export function JobMatchesView({ jobId, initialData }: Props) {
   const busyExplain = isRunningExplain || isPending;
   const busyShortlist = isRunningShortlist || isPending;
 
+<<<<<<< ours
   const shortlistedRows = useMemo(
     () => initialData.filter((row) => row.shortlisted),
     [initialData]
@@ -227,6 +232,15 @@ export function JobMatchesView({ jobId, initialData }: Props) {
     }
   }
 >>>>>>> theirs
+=======
+  const displayData = useMemo(
+    () =>
+      showShortlistedOnly
+        ? initialData.filter((row) => row.shortlisted)
+        : initialData,
+    [initialData, showShortlistedOnly]
+  );
+>>>>>>> theirs
 
   return (
     <div className="space-y-4">
@@ -279,7 +293,10 @@ export function JobMatchesView({ jobId, initialData }: Props) {
           >
             {busyExplain ? 'Generating Why…' : 'Run Explain'}
           </button>
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
           <button
             type="button"
             onClick={handleRunShortlist}

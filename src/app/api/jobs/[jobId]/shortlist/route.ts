@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runShortlist } from '@/src/lib/agents/shortlist';
+import { runShortlist } from '@/lib/agents/shortlist';
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
+type RouteContext =
+  | { params: { jobId: string } }
+  | { params: Promise<{ jobId: string }> };
+
+export async function POST(req: NextRequest, context: RouteContext) {
   try {
-    const jobId = params.jobId;
+    const { jobId } = await Promise.resolve(context.params);
     const body = await req.json().catch(() => ({}));
 
     const recruiterId =
@@ -15,9 +16,7 @@ export async function POST(
     const result = await runShortlist({
       recruiterId,
       jobId,
-      minMatchScore: body.minMatchScore,
-      minConfidence: body.minConfidence,
-      maxShortlisted: body.maxShortlisted,
+      shortlistLimit: body.shortlistLimit,
     });
 
     return NextResponse.json(result, { status: 200 });

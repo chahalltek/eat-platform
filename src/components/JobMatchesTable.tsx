@@ -28,16 +28,8 @@ export type JobMatchRow = {
   confidence: number;
   explanationSummary: string;
   confidenceDetails?: ConfidenceDetails | null;
-<<<<<<< ours
-<<<<<<< ours
-  shortlisted: boolean;
-=======
   confidenceReasons?: ConfidenceReasons;
-  shortlisted?: boolean;
->>>>>>> theirs
-=======
   shortlisted: boolean;
->>>>>>> theirs
 };
 
 export type JobMatchesTableProps = {
@@ -138,7 +130,6 @@ export function JobMatchesTable({ data }: JobMatchesTableProps) {
           )}
           {table.getRowModel().rows.map((row) => {
             const shortlisted = row.original.shortlisted;
-<<<<<<< ours
 
             return (
               <tr
@@ -148,22 +139,6 @@ export function JobMatchesTable({ data }: JobMatchesTableProps) {
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-3 py-2 align-top">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-=======
-            return (
-              <tr
-                key={row.id}
-                className={
-                  'border-b last:border-0 ' +
-                  (shortlisted ? 'bg-emerald-50' : '')
-                }
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2 align-top">
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext(),
-                    )}
->>>>>>> theirs
                   </td>
                 ))}
               </tr>
