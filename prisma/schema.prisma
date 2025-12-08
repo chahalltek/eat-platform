@@ -165,6 +165,7 @@ model Candidate {
   sourceType           String?
   sourceTag            String?
   parsingConfidence    Float?
+  trustScore           Int?
   status               String? // "Active", "Placed", etc.
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

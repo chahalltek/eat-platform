@@ -1,5 +1,7 @@
 import { Candidate, CandidateSkill } from "@prisma/client";
 
+import { prisma } from "@/lib/prisma";
+
 import {
   CANDIDATE_CONFIDENCE_WEIGHTS,
   CandidateConfidenceWeights,
@@ -172,4 +174,34 @@ export function computeCandidateConfidenceScore({
     score,
     breakdown: { resumeCompleteness, skillCoverage, agentAgreement, unknownFields },
   };
+}
+
+export async function persistCandidateConfidenceScore({
+  candidateId,
+  candidate,
+  weights,
+}: {
+  candidateId: string;
+  candidate?: CandidateProfile;
+  weights?: CandidateConfidenceWeights;
+}): Promise<CandidateConfidenceResult> {
+  const candidateProfile =
+    candidate ??
+    (await prisma.candidate.findUnique({
+      where: { id: candidateId },
+      include: { skills: { select: { id: true, name: true, proficiency: true, yearsOfExperience: true } } },
+    }));
+
+  if (!candidateProfile) {
+    throw new Error(`Candidate ${candidateId} not found for confidence scoring.`);
+  }
+
+  const result = computeCandidateConfidenceScore({ candidate: candidateProfile, weights });
+
+  await prisma.candidate.update({
+    where: { id: candidateProfile.id },
+    data: { trustScore: result.score },
+  });
+
+  return result;
 }

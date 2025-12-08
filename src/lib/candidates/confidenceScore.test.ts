@@ -1,6 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { computeCandidateConfidenceScore } from "./confidenceScore";
+const prismaMock = vi.hoisted(() => ({
+  candidate: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: prismaMock,
+}));
+
+import { computeCandidateConfidenceScore, persistCandidateConfidenceScore } from "./confidenceScore";
 
 type CandidateInput = Parameters<typeof computeCandidateConfidenceScore>[0]["candidate"];
 
@@ -37,6 +48,51 @@ describe("computeCandidateConfidenceScore", () => {
     expect(result.breakdown.unknownFields.score).toBe(100);
   });
 
+  it("keeps scores within bounds for extreme data", () => {
+    const result = computeCandidateConfidenceScore({
+      candidate: {
+        ...baseCandidate,
+        parsingConfidence: 10,
+        rawResumeText: "",
+        summary: "",
+        location: "",
+        currentTitle: "",
+        email: "",
+        phone: "",
+        skills: [],
+      },
+    });
+
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBeLessThanOrEqual(100);
+  });
+
+  it("is deterministic for identical candidates", () => {
+    const first = computeCandidateConfidenceScore({ candidate: baseCandidate });
+    const second = computeCandidateConfidenceScore({ candidate: { ...baseCandidate } });
+
+    expect(second.score).toBe(first.score);
+    expect(second.breakdown).toEqual(first.breakdown);
+  });
+
+  it("handles missing data by reducing completeness but not failing", () => {
+    const result = computeCandidateConfidenceScore({
+      candidate: {
+        ...baseCandidate,
+        rawResumeText: "",
+        summary: "",
+        skills: [],
+        parsingConfidence: undefined,
+      },
+    });
+
+    expect(result.breakdown.resumeCompleteness.completedFields).toBeLessThan(
+      result.breakdown.resumeCompleteness.totalFields,
+    );
+    expect(result.breakdown.skillCoverage.score).toBeLessThan(100);
+    expect(result.score).toBeGreaterThanOrEqual(0);
+  });
+
   it("normalizes weights safely when all weights are zero", () => {
     const result = computeCandidateConfidenceScore({
       candidate: {
@@ -53,5 +109,29 @@ describe("computeCandidateConfidenceScore", () => {
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
     expect(Number.isFinite(result.score)).toBe(true);
+  });
+});
+
+describe("persistCandidateConfidenceScore", () => {
+  it("computes and stores deterministic trust score", async () => {
+    vi.mocked(prismaMock.candidate.findUnique).mockResolvedValue({ ...baseCandidate } as any);
+    vi.mocked(prismaMock.candidate.update).mockResolvedValue({ ...baseCandidate } as any);
+
+    const first = await persistCandidateConfidenceScore({ candidateId: baseCandidate.id });
+    const second = await persistCandidateConfidenceScore({ candidateId: baseCandidate.id });
+
+    expect(first.score).toBe(second.score);
+    expect(prismaMock.candidate.update).toHaveBeenCalledWith({
+      where: { id: baseCandidate.id },
+      data: { trustScore: first.score },
+    });
+  });
+
+  it("throws when candidate data is missing", async () => {
+    vi.mocked(prismaMock.candidate.findUnique).mockResolvedValueOnce(null as any);
+
+    await expect(
+      persistCandidateConfidenceScore({ candidateId: "missing-candidate" }),
+    ).rejects.toThrow(/not found/);
   });
 });
