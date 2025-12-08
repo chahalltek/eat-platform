@@ -1,0 +1,288 @@
+import {
+  BoltIcon,
+  ExclamationTriangleIcon,
+  PlayCircleIcon,
+  ServerStackIcon,
+  ShieldCheckIcon,
+  SignalIcon,
+  UserGroupIcon,
+  WrenchScrewdriverIcon,
+} from "@heroicons/react/24/outline";
+import Link from "next/link";
+
+import { getCurrentUser } from "@/lib/auth/user";
+import { isAdminRole } from "@/lib/auth/roles";
+import { getPlatformHealthSnapshot } from "@/lib/metrics/platformHealth";
+
+export const dynamic = "force-dynamic";
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  tone = "indigo",
+  helper,
+}: {
+  label: string;
+  value: string | number;
+  icon: typeof BoltIcon;
+  tone?: "indigo" | "emerald" | "amber" | "sky" | "rose";
+  helper?: string;
+}) {
+  const toneMap: Record<"indigo" | "emerald" | "amber" | "sky" | "rose", string> = {
+    indigo: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200",
+    emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200",
+    amber: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200",
+    sky: "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-200",
+    rose: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-200",
+  };
+
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${toneMap[tone]}`}>
+        <Icon className="h-6 w-6" aria-hidden />
+      </div>
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
+        <p className="text-3xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</p>
+        {helper ? <p className="text-xs text-zinc-500 dark:text-zinc-400">{helper}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function DataTable({
+  title,
+  rows,
+  empty,
+  columns,
+}: {
+  title: string;
+  rows: { label: string; value: string | number }[];
+  empty: string;
+  columns?: { label: string; value: string };
+}) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
+        {columns ? (
+          <div className="flex items-center gap-6 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            <span>{columns.label}</span>
+            <span>{columns.value}</span>
+          </div>
+        ) : null}
+      </div>
+      <div className="mt-4 divide-y divide-zinc-100 text-sm text-zinc-700 dark:divide-zinc-800 dark:text-zinc-200">
+        {rows.length === 0 ? (
+          <p className="py-3 text-zinc-500 dark:text-zinc-400">{empty}</p>
+        ) : (
+          rows.map((row) => (
+            <div key={row.label} className="flex items-center justify-between py-3">
+              <span className="font-medium">{row.label}</span>
+              <span className="text-base">{row.value}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function formatDate(value: Date | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
+export default async function AdminHealthPage() {
+  const user = await getCurrentUser();
+
+  if (!isAdminRole(user?.role)) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-12">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-amber-900 shadow-sm">
+          <div className="flex items-center gap-3">
+            <ShieldCheckIcon className="h-6 w-6" aria-hidden />
+            <div>
+              <h1 className="text-xl font-semibold">Admin access required</h1>
+              <p className="mt-1 text-sm text-amber-800">Switch to an admin account to view platform health.</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <Link href="/" className="text-sm font-medium text-amber-900 underline">
+              Return home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const snapshot = await getPlatformHealthSnapshot();
+
+  return (
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-12 sm:px-10">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">Admin</p>
+            <h1 className="text-3xl font-semibold sm:text-4xl">Platform health</h1>
+            <p className="max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+              Operational visibility across agents, errors, user activity, and infrastructure at a glance.
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+          >
+            <SignalIcon className="h-5 w-5" aria-hidden /> View observability
+          </Link>
+        </header>
+
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="Agents" value={snapshot.agents.totalAgents} icon={WrenchScrewdriverIcon} helper="Unique agent names" />
+          <StatCard label="Runs (24h)" value={snapshot.runs.last24h} icon={PlayCircleIcon} tone="emerald" helper="Execution volume" />
+          <StatCard
+            label="Error rate (24h)"
+            value={`${snapshot.errors.last24h} failures`}
+            icon={ExclamationTriangleIcon}
+            tone="amber"
+            helper={`${snapshot.runs.successRate}% success`}
+          />
+          <StatCard label="Total users" value={snapshot.users.total} icon={UserGroupIcon} tone="sky" helper={`${snapshot.users.admins} admins`} />
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Agents</h2>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Active prompts, busiest agents, and latest deployment activity.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3 text-sm text-zinc-600 dark:text-zinc-300">
+                  <span className="rounded-full bg-indigo-50 px-3 py-1 font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200">
+                    {snapshot.agents.activePrompts} active prompts
+                  </span>
+                  <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-100">
+                    Last update: {formatDate(snapshot.agents.latestPromptUpdate)}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <DataTable
+                  title="Busiest agents (7d)"
+                  empty="No recent agent activity."
+                  rows={snapshot.agents.busiestAgents.map((row) => ({ label: row.agentName, value: `${row.runs} runs` }))}
+                />
+                <DataTable
+                  title="Error leaders (7d)"
+                  empty="No failed runs recorded."
+                  rows={snapshot.errors.topByAgent.map((row) => ({ label: row.agentName, value: `${row.count} failures` }))}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Runs</h2>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">Execution health over the last 24 hours.</p>
+                </div>
+                <PlayCircleIcon className="h-6 w-6 text-emerald-500" aria-hidden />
+              </div>
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+                  <p className="text-zinc-500 dark:text-zinc-400">Runs started</p>
+                  <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{snapshot.runs.last24h}</p>
+                </div>
+                <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+                  <p className="text-zinc-500 dark:text-zinc-400">Currently running</p>
+                  <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{snapshot.runs.runningNow}</p>
+                </div>
+                <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+                  <p className="text-zinc-500 dark:text-zinc-400">Avg duration</p>
+                  <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+                    {snapshot.runs.averageDurationMs ? `${snapshot.runs.averageDurationMs} ms` : "—"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <DataTable
+              title="User activity"
+              empty="No user activity in the last week."
+              rows={[
+                { label: "Admins", value: snapshot.users.admins },
+                { label: "Active last week", value: snapshot.users.activeLastWeek },
+                { label: "New this month", value: snapshot.users.newThisMonth },
+              ]}
+            />
+
+            <DataTable
+              title="Database health"
+              empty="No records present."
+              rows={snapshot.database.tables.map((table) => ({ label: table.label, value: table.count }))}
+              columns={{ label: "Table", value: "Count" }}
+            />
+
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Kill switches</h3>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">Visibility into service-level kill switches.</p>
+                </div>
+                <ServerStackIcon className="h-6 w-6 text-sky-500" aria-hidden />
+              </div>
+              <div className="mt-4 space-y-3 text-sm text-zinc-700 dark:text-zinc-200">
+                {snapshot.killSwitches.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-start justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/60"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{item.label}</span>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {item.state.latched ? `Latched: ${item.state.reason}` : "Active"}
+                      </span>
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                        item.state.latched
+                          ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200"
+                          : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                      }`}
+                    >
+                      <span className="inline-block h-2 w-2 rounded-full bg-current" aria-hidden />
+                      {item.state.latched ? "Latched" : "Clear"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-center gap-3">
+                <BoltIcon className="h-6 w-6 text-indigo-500" aria-hidden />
+                <div>
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">DB health & retention</h3>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Tenants: {snapshot.database.tables.find((t) => t.label === "Tenants")?.count ?? 0} · Records updated monthly.
+                  </p>
+                </div>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Use this panel to spot imbalances (e.g., runaway outreach or match generation) before they stress the database.
+                The counts above refresh live from Prisma so you can validate retention policies and clean-up jobs.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
