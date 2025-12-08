@@ -9,6 +9,7 @@ type AgentRunRow = {
   id: string;
   agentName: string;
   startedAt: Date;
+  output: unknown;
 };
 
 function formatDate(date?: Date | null) {
@@ -34,7 +35,7 @@ function formatSource(candidate: { sourceType: string | null; sourceTag: string 
 
 async function findRelatedAgentRun(candidateId: string, tenantId: string) {
   const runs = await prisma.$queryRaw<AgentRunRow[]>`
-    SELECT id, "agentName", "startedAt"
+    SELECT id, "agentName", "startedAt", output
     FROM "AgentRunLog"
     WHERE "tenantId" = ${tenantId} AND (input::text ILIKE ${`%${candidateId}%`} OR output::text ILIKE ${`%${candidateId}%`})
     ORDER BY "startedAt" DESC
@@ -173,8 +174,72 @@ export default async function CandidateDetail({
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:grid-cols-2">
+        <div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Email</div>
+          <div className="text-lg font-medium text-gray-900">{candidate.email ?? "—"}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Phone</div>
+          <div className="text-lg font-medium text-gray-900">{candidate.phone ?? "—"}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Current company</div>
+          <div className="text-lg font-medium text-gray-900">{candidate.currentCompany ?? "—"}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Seniority</div>
+          <div className="text-lg font-medium text-gray-900">{candidate.seniorityLevel ?? "—"}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Total experience</div>
+          <div className="text-lg font-medium text-gray-900">{formatYears(candidate.totalExperienceYears)}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Status</div>
+          <div className="text-lg font-medium text-gray-900">{candidate.status ?? "—"}</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900">Scores & confidence</h2>
+          <div className="mt-3 space-y-4">
+            <div>
+              <div className="text-sm text-gray-600">Overall confidence</div>
+              <div className="mt-1 flex items-center space-x-3">
+                <div className="text-3xl font-semibold text-gray-900">{confidence.score}</div>
+                <div className="h-2 w-full max-w-[200px] overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full bg-green-500"
+                    style={{ width: `${confidence.score}%` }}
+                    aria-hidden
+                  />
+                </div>
+              </div>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+                <li>{confidence.breakdown.sourceQuality.reason}</li>
+                <li>{confidence.breakdown.agentConsistency.reason}</li>
+                <li>{confidence.breakdown.resumeCompleteness.reason}</li>
+              </ul>
+            </div>
+            <div>
+              <div className="text-sm text-gray-600">Parsing confidence</div>
+              <div className="text-lg font-medium text-gray-900">{candidate.parsingConfidence ?? "—"}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900">Resume content</h2>
+          <div className="mt-2 rounded-md bg-gray-50 p-3 text-sm text-gray-800">
+            <pre className="whitespace-pre-wrap break-words">{candidate.rawResumeText ?? "No resume available."}</pre>
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-900">Skills</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Parsed skills</h2>
         {candidate.skills.length === 0 ? (
           <p className="mt-2 text-gray-600">No skills recorded.</p>
         ) : (
@@ -206,20 +271,37 @@ export default async function CandidateDetail({
         </div>
       </div>
 
-      {agentRun && (
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-semibold text-gray-900">Related Agent Run</h2>
-          <p className="mt-2 text-gray-700">
-            <span className="font-medium">{agentRun.agentName}</span> on {formatDate(agentRun.startedAt)}
-          </p>
-          <Link
-            href={`/agents/runs/${agentRun.id}`}
-            className="mt-3 inline-block text-blue-600 hover:text-blue-800"
-          >
-            View Agent Run
-          </Link>
+      <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Agent output</h2>
+            <p className="text-sm text-gray-700">
+              {agentRun ? (
+                <>
+                  <span className="font-medium">{agentRun.agentName}</span> on {formatDate(agentRun.startedAt)}
+                </>
+              ) : (
+                "No related agent run found."
+              )}
+            </p>
+          </div>
+          {agentRun && (
+            <Link
+              href={`/agents/runs/${agentRun.id}`}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              View Agent Run
+            </Link>
+          )}
         </div>
-      )}
+        <div className="mt-3 rounded-md bg-gray-50 p-3 text-sm text-gray-800">
+          {agentRun ? (
+            <pre className="whitespace-pre-wrap break-words">{JSON.stringify(agentRun.output, null, 2)}</pre>
+          ) : (
+            <div className="text-gray-700">Agent output will appear here after a related run completes.</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
