@@ -1,3 +1,4 @@
+-- db-safety-ignore-destructive: dropping and recreating constraints is expected
 -- Add missing tenantId and displayName fields to align with Prisma schema
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "tenantId" TEXT NOT NULL DEFAULT 'default-tenant';
 
