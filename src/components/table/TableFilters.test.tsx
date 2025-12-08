@@ -11,59 +11,41 @@ import { EATTable } from "./EATTable";
 import { TableFilterDropdown } from "./TableFilterDropdown";
 import { TableSearchInput } from "./TableSearchInput";
 import { TableToolbar } from "./TableToolbar";
-import type { EATTableColumn } from "./tableTypes";
-import { createTextColumn } from "./tableTypes";
+import { createMockColumns, createMockTableData, globalTextFilter } from "./testing/tableHarness";
 
-type ItemRow = { id: number; name: string; status: string; category: string };
-
-const sampleRows: ItemRow[] = [
-  { id: 1, name: "Alpha", status: "active", category: "engineering" },
-  { id: 2, name: "Beta", status: "inactive", category: "engineering" },
-  { id: 3, name: "Gamma", status: "active", category: "design" },
-];
-
-const statusOptions = [
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-];
-
-const categoryOptions = [
-  { label: "Engineering", value: "engineering" },
-  { label: "Design", value: "design" },
-];
-
-const multiSelectFilter = (row: any, columnId: string, filterValue: unknown) => {
-  const selections = Array.isArray(filterValue) ? (filterValue as string[]) : [];
-  if (!selections.length) return true;
-  const value = row.getValue<string>(columnId);
-  return selections.includes(value);
-};
-
-const globalFilter = (row: any, _columnId: string, filterValue: unknown) => {
-  const query = typeof filterValue === "string" ? filterValue.trim().toLowerCase() : "";
-  if (!query) return true;
-  return row.original.name.toLowerCase().includes(query);
-};
+const sampleRows = createMockTableData();
 
 function TestTable() {
-  const columns: EATTableColumn<ItemRow>[] = [
-    createTextColumn({ accessorKey: "name", header: "Name", sortable: false }),
-    { ...createTextColumn({ accessorKey: "status", header: "Status", sortable: false }), filterFn: multiSelectFilter },
-    { ...createTextColumn({ accessorKey: "category", header: "Category", sortable: false }), filterFn: multiSelectFilter },
-  ];
+  const columns = createMockColumns({ enableSorting: false, includeFilters: true });
 
   return (
     <EATTable
-      data={sampleRows}
+      data={createMockTableData()}
       columns={columns}
-      filtering={{ columnFilters: { initialState: [] }, globalFilter: { initialState: "" }, globalFilterFn: globalFilter }}
+      filtering={{ columnFilters: { initialState: [] }, globalFilter: { initialState: "" }, globalFilterFn: globalTextFilter }}
     >
       {({ table, rows }) => (
         <div>
           <TableToolbar>
             <TableSearchInput table={table} placeholder="Search items" />
-            <TableFilterDropdown table={table} columnId="status" label="Status" options={statusOptions} />
-            <TableFilterDropdown table={table} columnId="category" label="Category" options={categoryOptions} />
+            <TableFilterDropdown
+              table={table}
+              columnId="status"
+              label="Status"
+              options={[
+                { label: "Active", value: "active" },
+                { label: "Inactive", value: "inactive" },
+              ]}
+            />
+            <TableFilterDropdown
+              table={table}
+              columnId="category"
+              label="Category"
+              options={[
+                { label: "Engineering", value: "engineering" },
+                { label: "Design", value: "design" },
+              ]}
+            />
           </TableToolbar>
           <ul>
             {rows.map((row) => (

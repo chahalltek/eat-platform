@@ -1,5 +1,9 @@
 /// <reference types="vitest/globals" />
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
 import { AgentRunStatus } from '@prisma/client';
 
 import { getQualityMetrics } from './quality';
@@ -28,6 +32,17 @@ describe('getQualityMetrics', () => {
   });
 
   it('summarizes coverage, run volume, and failure rates', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'quality-'));
+    const coverageSummaryPath = path.join(tempDir, 'coverage-summary.json');
+    fs.writeFileSync(
+      coverageSummaryPath,
+      JSON.stringify({
+        total: { lines: { total: 10, covered: 8 } },
+        'src/components/table/EATTable.tsx': { lines: { total: 4, covered: 3 } },
+      }),
+      'utf8',
+    );
+
     const mockAgentRuns = [
       { startedAt: new Date('2025-02-15T02:00:00.000Z'), status: AgentRunStatus.SUCCESS, agentName: 'EAT-TS.RINA' },
       { startedAt: new Date('2025-02-14T08:00:00.000Z'), status: AgentRunStatus.FAILED, agentName: 'EAT-TS.RINA' },
@@ -53,7 +68,7 @@ describe('getQualityMetrics', () => {
     vi.mocked(prisma.prisma.coverageReport.findFirst).mockResolvedValue(mockLatestCoverage as never);
     vi.mocked(prisma.prisma.coverageReport.findMany).mockResolvedValue(mockCoverageHistory as never);
 
-    const metrics = await getQualityMetrics(4);
+    const metrics = await getQualityMetrics(4, { coverageSummaryPath });
 
     expect(metrics.coverage.latestPercent).toBe(82.4);
     expect(metrics.coverage.lastUpdated).toBe('2025-02-14T23:00:00.000Z');
@@ -75,5 +90,11 @@ describe('getQualityMetrics', () => {
       { agentName: 'EAT-TS.RINA', failureRate: 50, failedRuns: 1, totalRuns: 2 },
       { agentName: 'EAT-TS.RUA', failureRate: 50, failedRuns: 1, totalRuns: 2 },
     ]);
+
+    expect(metrics.coverage.sections).toEqual([
+      { label: 'Tables', path: 'src/components/table', percent: 75 },
+    ]);
+
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 });

@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { AgentRunStatus } from '@prisma/client';
 import { prisma } from '../prisma';
 
@@ -13,6 +16,12 @@ type CoverageBucket = {
   percent: number | null;
 };
 
+type CoverageSection = {
+  label: string;
+  path: string;
+  percent: number | null;
+};
+
 type AgentFailureRate = {
   agentName: string;
   failureRate: number;
@@ -25,6 +34,7 @@ type QualityMetrics = {
     latestPercent: number | null;
     lastUpdated: string | null;
     history: CoverageBucket[];
+    sections: CoverageSection[];
   };
   runs: {
     total: number;
@@ -134,7 +144,46 @@ function calculateFailureRates(agentRuns: { agentName: string | null; status: Ag
     .sort((a, b) => b.failureRate - a.failureRate || b.failedRuns - a.failedRuns);
 }
 
-export async function getQualityMetrics(windowDays = QUALITY_HISTORY_DAYS): Promise<QualityMetrics> {
+type CoverageSummaryFile = {
+  total: { lines: { total: number; covered: number } };
+  [filePath: string]: { lines: { total: number; covered: number } };
+};
+
+function extractCoverageSection(summaryPath: string, matcher: (filePath: string) => boolean, label: string, targetPath: string) {
+  if (!fs.existsSync(summaryPath)) {
+    return { label, path: targetPath, percent: null } satisfies CoverageSection;
+  }
+
+  try {
+    const raw = fs.readFileSync(summaryPath, 'utf8');
+    const summary = JSON.parse(raw) as CoverageSummaryFile;
+    const matchingEntries = Object.entries(summary).filter(([filePath]) => filePath !== 'total' && matcher(filePath));
+
+    if (matchingEntries.length === 0) {
+      return { label, path: targetPath, percent: null } satisfies CoverageSection;
+    }
+
+    const coverage = matchingEntries.reduce(
+      (acc, [, stats]) => ({
+        covered: acc.covered + (stats.lines?.covered ?? 0),
+        total: acc.total + (stats.lines?.total ?? 0),
+      }),
+      { covered: 0, total: 0 },
+    );
+
+    const percent = coverage.total === 0 ? null : Math.round((coverage.covered / coverage.total) * 1000) / 10;
+
+    return { label, path: targetPath, percent } satisfies CoverageSection;
+  } catch (error) {
+    console.error('[quality] Failed to read coverage summary', error);
+    return { label, path: targetPath, percent: null } satisfies CoverageSection;
+  }
+}
+
+export async function getQualityMetrics(
+  windowDays = QUALITY_HISTORY_DAYS,
+  options?: { coverageSummaryPath?: string },
+): Promise<QualityMetrics> {
   const sinceDate = new Date();
   sinceDate.setHours(0, 0, 0, 0);
   sinceDate.setDate(sinceDate.getDate() - (windowDays - 1));
@@ -159,12 +208,20 @@ export async function getQualityMetrics(windowDays = QUALITY_HISTORY_DAYS): Prom
   const failureRate = totalRuns === 0 ? 0 : Math.round((failures / totalRuns) * 1000) / 10;
 
   const coverageBuckets = bucketCoverageByDay(coverageHistory, windowDays);
+  const coverageSummaryPath = options?.coverageSummaryPath ?? path.join(process.cwd(), 'coverage', 'coverage-summary.json');
+  const tableCoverage = extractCoverageSection(
+    coverageSummaryPath,
+    (filePath) => filePath.replace(/\\/g, '/').includes('src/components/table'),
+    'Tables',
+    'src/components/table',
+  );
 
   return {
     coverage: {
       latestPercent: latestCoverage ? Math.round(latestCoverage.coveragePercent * 10) / 10 : null,
       lastUpdated: latestCoverage ? latestCoverage.createdAt.toISOString() : null,
       history: coverageBuckets,
+      sections: [tableCoverage],
     },
     runs: {
       total: totalRuns,

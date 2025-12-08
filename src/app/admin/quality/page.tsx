@@ -145,6 +145,34 @@ function AgentFailureTable({
   );
 }
 
+function CoverageBreakdown({ sections }: { sections: { label: string; path: string; percent: number | null }[] }) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Coverage by area</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Source folders tracked in coverage-summary.json.</p>
+        </div>
+      </div>
+      <div className="mt-4 divide-y divide-zinc-100 text-sm text-zinc-700 dark:divide-zinc-800 dark:text-zinc-200">
+        {sections.length === 0 ? (
+          <p className="py-2 text-zinc-500 dark:text-zinc-400">No coverage breakdown available.</p>
+        ) : (
+          sections.map((section) => (
+            <div key={section.path} className="flex items-center justify-between py-3">
+              <div className="flex flex-col">
+                <span className="font-semibold">{section.label}</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">{section.path}</span>
+              </div>
+              <span className="text-base font-semibold">{section.percent !== null ? `${section.percent}%` : '—'}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function formatTimestamp(timestamp: string | null) {
   if (!timestamp) return 'No coverage reports yet';
   const date = new Date(timestamp);
@@ -233,6 +261,7 @@ export default async function QualityPage() {
             <RunVolume data={metrics.runs.perDay} />
           </div>
           <div className="flex flex-col gap-6">
+            <CoverageBreakdown sections={metrics.coverage.sections} />
             <AgentFailureTable data={metrics.errors.byAgent} />
             <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-200">

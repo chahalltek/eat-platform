@@ -4,32 +4,14 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { render, renderHook, screen, act } from "@testing-library/react";
-import { ColumnDef, flexRender } from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
 import { EATTable, useEATTable } from "./EATTable";
-
-type Person = { id: number; name: string; age: number };
-
-const people: Person[] = [
-  { id: 1, name: "Alice", age: 30 },
-  { id: 2, name: "Bob", age: 25 },
-  { id: 3, name: "Charlie", age: 35 },
-];
-
-const columns: ColumnDef<Person>[] = [
-  {
-    accessorKey: "name",
-    header: "Name",
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "age",
-    header: "Age",
-    cell: (info) => info.getValue(),
-    enableSorting: true,
-  },
-];
+import { MockTableRow, createMockColumns, createMockTableData } from "./testing/tableHarness";
 
 describe("EATTable", () => {
+  const people = createMockTableData({ count: 3 });
+  const columns = createMockColumns({ enableSorting: true });
+
   it("creates a table instance with provided columns and data", () => {
     render(
       <EATTable data={people} columns={columns}>
@@ -73,7 +55,7 @@ describe("EATTable", () => {
   it("updates sorting state and invokes callbacks when sorting changes", () => {
     const onSortingChange = vi.fn();
     const { result } = renderHook(() =>
-      useEATTable<Person>({
+      useEATTable<MockTableRow>({
         data: people,
         columns,
         sorting: { initialState: [], onChange: onSortingChange },
@@ -98,7 +80,7 @@ describe("EATTable", () => {
   it("updates pagination state and invokes callbacks when pagination changes", () => {
     const onPaginationChange = vi.fn();
     const { result } = renderHook(() =>
-      useEATTable<Person>({
+      useEATTable<MockTableRow>({
         data: people,
         columns,
         pagination: { initialState: { pageIndex: 0, pageSize: 1 }, onChange: onPaginationChange, pageCount: 10 },
@@ -123,7 +105,7 @@ describe("EATTable", () => {
 
   it("exposes style presets based on the provided variant", () => {
     const { result, rerender } = renderHook(
-      (props: Parameters<typeof useEATTable<Person>>[0]) => useEATTable<Person>(props),
+      (props: Parameters<typeof useEATTable<MockTableRow>>[0]) => useEATTable<MockTableRow>(props),
       {
         initialProps: { data: people, columns, variant: "comfortable" },
       },
