@@ -1,22 +1,9 @@
 // src/app/api/agents/outreach/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-<<<<<<< ours
-<<<<<<< ours
 import { runOutreach } from "@/lib/agents/outreach";
 import { getCurrentUser } from "@/lib/auth/user";
-
 import { validateRecruiterId } from "../recruiterValidation";
-=======
-import { runOutreach } from '@/lib/agents/outreach';
-import { getCurrentUser } from '@/lib/auth/user';
-
-=======
-import { getCurrentUser } from '@/lib/auth/user';
-import { runOutreach } from '@/lib/agents/outreach';
->>>>>>> theirs
-import { validateRecruiterId } from '../recruiterValidation';
->>>>>>> theirs
 
 export async function POST(req: NextRequest) {
   let body: unknown;

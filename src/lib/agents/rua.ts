@@ -80,12 +80,9 @@ export async function runRua(
         sourceType,
         sourceTag,
       },
-<<<<<<< ours
-      ...retryMetadata,
-=======
       sourceType,
       sourceTag,
->>>>>>> theirs
+      ...retryMetadata,
     },
     async () => {
       const userPrompt = `
