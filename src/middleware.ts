@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 import {
   DEFAULT_TENANT_ID,
   DEFAULT_USER_ID,
+  DEFAULT_USER_ROLE,
   ROLE_HEADER,
   TENANT_HEADER,
   TENANT_QUERY_PARAM,
@@ -12,7 +13,6 @@ import {
 } from './lib/auth/config';
 import { isAdminRole, normalizeRole, USER_ROLES, type UserRole } from './lib/auth/roles';
 import { getSessionClaims } from './lib/auth/session';
-import { prisma } from './lib/prisma';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from './lib/rateLimiting/http';
 
@@ -40,19 +40,10 @@ export async function middleware(request: NextRequest) {
   const queryUserId = searchParams.get(USER_QUERY_PARAM)?.trim();
   const resolvedUserId = queryUserId || session?.userId || DEFAULT_USER_ID;
 
-  const user = await prisma.user.findUnique({
-    where: { id: resolvedUserId },
-    select: { id: true, role: true, tenantId: true },
-  });
-
-  if (!resolvedUserId || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const queryTenantId = searchParams.get(TENANT_QUERY_PARAM)?.trim();
-  const resolvedTenantId = queryTenantId || user.tenantId || session?.tenantId || DEFAULT_TENANT_ID;
+  const resolvedTenantId = queryTenantId || session?.tenantId || DEFAULT_TENANT_ID;
 
-  const normalizedRole = normalizeRole(user.role ?? session?.role);
+  const normalizedRole = normalizeRole(session?.role ?? DEFAULT_USER_ROLE);
 
   if (!normalizedRole) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -74,7 +65,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  requestHeaders.set(USER_HEADER, user.id);
+  requestHeaders.set(USER_HEADER, resolvedUserId);
   requestHeaders.set(TENANT_HEADER, resolvedTenantId);
   requestHeaders.set(ROLE_HEADER, normalizedRole);
 
@@ -100,7 +91,7 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  response.headers.set(USER_HEADER, user.id);
+  response.headers.set(USER_HEADER, resolvedUserId);
   response.headers.set(TENANT_HEADER, resolvedTenantId);
   response.headers.set(ROLE_HEADER, normalizedRole);
 
