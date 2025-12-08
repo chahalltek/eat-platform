@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 export const AGENT_KILL_SWITCHES = {
   MATCHER: 'EAT-TS.MATCHER',
+  RANKER: 'EAT-TS.RANKER',
   RINA: 'EAT-TS.RINA',
   RUA: 'EAT-TS.RUA',
   OUTREACH: 'EAT-TS.OUTREACH',
@@ -77,6 +78,8 @@ export function describeAgentKillSwitch(name: AgentName) {
       return 'Outreach writer';
     case AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION:
       return 'Outreach automation';
+    case AGENT_KILL_SWITCHES.RANKER:
+      return 'Shortlist ranker';
     default:
       return name;
   }

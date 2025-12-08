@@ -337,6 +337,8 @@ model CandidateMatch {
   confidence  Int
   explanation Json
   confidenceReasons Json?
+  shortlisted Boolean   @default(false)
+  shortlistReason String?
   createdAt   DateTime  @default(now())
 
   job       Job       @relation(fields: [jobId], references: [id])

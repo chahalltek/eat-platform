@@ -232,6 +232,7 @@ describe('agent kill switch', () => {
     expect(describeAgentKillSwitch(AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION)).toBe(
       'Outreach automation',
     );
+    expect(describeAgentKillSwitch(AGENT_KILL_SWITCHES.RANKER)).toBe('Shortlist ranker');
     expect(describeAgentKillSwitch('unknown' as any)).toBe('unknown');
   });
 
