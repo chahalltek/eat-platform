@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,8 @@ function formatSource(run: { sourceType: string | null; sourceTag: string | null
 }
 
 export default async function AgentRunsPage() {
+  const tenantId = await getCurrentTenantId();
+
   const runs = await prisma.$queryRaw<AgentRunRow[]>(Prisma.sql`
     SELECT
       id,
@@ -82,6 +85,7 @@ export default async function AgentRunsPage() {
       "sourceType",
       "sourceTag"
     FROM "AgentRunLog"
+    WHERE "tenantId" = ${tenantId}
     ORDER BY "startedAt" DESC
     LIMIT 50
   `);

@@ -15,9 +15,9 @@ enum AgentRunStatus {
 }
 
 enum JobCandidateStatus {
-  POTENTIAL   // AI suggests
+  POTENTIAL // AI suggests
   SHORTLISTED // recruiter likes
-  SUBMITTED   // sent to client
+  SUBMITTED // sent to client
   INTERVIEWING
   HIRED
   REJECTED
@@ -25,27 +25,36 @@ enum JobCandidateStatus {
 
 model User {
   id          String   @id @default(cuid())
-  email       String   @unique
+  tenantId    String   @default("default-tenant")
+  email       String
   displayName String
-  role        String   // "Recruiter", "Sourcer", "Sales", "Admin"
+  role        String // "Recruiter", "Sourcer", "Sales", "Admin"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   agentRuns     AgentRunLog[]
   jobCandidates JobCandidate[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
 }
 
 model FeatureFlag {
   id          String   @id @default(cuid())
-  name        String   @unique
+  tenantId    String   @default("default-tenant")
+  name        String
   description String?
   enabled     Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
 }
 
 model Candidate {
-  id                   String             @id @default(cuid())
+  id                   String   @id @default(cuid())
+  tenantId             String   @default("default-tenant")
   fullName             String
   email                String?
   phone                String?
@@ -59,68 +68,80 @@ model Candidate {
   sourceType           String?
   sourceTag            String?
   parsingConfidence    Float?
-  status               String?            // "Active", "Placed", etc.
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  status               String? // "Active", "Placed", etc.
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  skills   CandidateSkill[]
-  matches  Match[]
-  matchResults MatchResult[]
-  jobCandidates JobCandidate[]
+  skills               CandidateSkill[]
+  matches              Match[]
+  matchResults         MatchResult[]
+  jobCandidates        JobCandidate[]
   outreachInteractions OutreachInteraction[]
+
+  @@index([tenantId])
 }
 
 model CandidateSkill {
   id                String    @id @default(cuid())
+  tenantId          String    @default("default-tenant")
   candidate         Candidate @relation(fields: [candidateId], references: [id])
   candidateId       String
   name              String
   normalizedName    String
-  proficiency       String?   // "Low", "Medium", "High"
+  proficiency       String? // "Low", "Medium", "High"
   yearsOfExperience Int?
 
-  @@index([candidateId])
-  @@index([normalizedName])
+  @@index([tenantId])
+  @@index([tenantId, candidateId])
+  @@index([tenantId, normalizedName])
 }
 
 model Customer {
   id        String   @id @default(cuid())
+  tenantId  String   @default("default-tenant")
   name      String
   contact   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   jobReqs JobReq[]
+
+  @@index([tenantId])
 }
 
 model JobReq {
-  id               String    @id @default(cuid())
-  customer         Customer? @relation(fields: [customerId], references: [id])
-  customerId       String?
-  title            String
-  location         String?
-  employmentType   String?
-  salaryMin        Int?
-  salaryMax        Int?
-  salaryCurrency   String?
-  salaryInterval   String?   // "year", "month", etc.
-  seniorityLevel   String?
-  rawDescription   String
-  status           String?   // "Open", "On Hold", "Closed"
-  sourceType       String?
-  sourceTag        String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id             String    @id @default(cuid())
+  tenantId       String    @default("default-tenant")
+  customer       Customer? @relation(fields: [customerId], references: [id])
+  customerId     String?
+  title          String
+  location       String?
+  employmentType String?
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String?
+  salaryInterval String? // "year", "month", etc.
+  seniorityLevel String?
+  rawDescription String
+  status         String? // "Open", "On Hold", "Closed"
+  sourceType     String?
+  sourceTag      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  skills  JobSkill[]
-  matches Match[]
-  matchResults MatchResult[]
-  jobCandidates JobCandidate[]
+  skills               JobSkill[]
+  matches              Match[]
+  matchResults         MatchResult[]
+  jobCandidates        JobCandidate[]
   outreachInteractions OutreachInteraction[]
+
+  @@index([tenantId])
+  @@index([tenantId, customerId])
 }
 
 model JobSkill {
   id             String  @id @default(cuid())
+  tenantId       String  @default("default-tenant")
   jobReq         JobReq  @relation(fields: [jobReqId], references: [id])
   jobReqId       String
   name           String
@@ -128,65 +149,71 @@ model JobSkill {
   required       Boolean @default(false)
   weight         Float?
 
-  @@index([jobReqId])
-  @@index([normalizedName])
+  @@index([tenantId])
+  @@index([tenantId, jobReqId])
+  @@index([tenantId, normalizedName])
 }
 
 model Match {
-  id             String     @id @default(cuid())
-  jobReq         JobReq     @relation(fields: [jobReqId], references: [id])
+  id             String    @id @default(cuid())
+  tenantId       String    @default("default-tenant")
+  jobReq         JobReq    @relation(fields: [jobReqId], references: [id])
   jobReqId       String
-  candidate      Candidate  @relation(fields: [candidateId], references: [id])
+  candidate      Candidate @relation(fields: [candidateId], references: [id])
   candidateId    String
   overallScore   Float
   category       String
   scoreBreakdown Json
   explanation    String
   redFlags       Json?
-  status         String?    // "Suggested", "Shortlisted", "Submitted", "Rejected"
-  createdAt      DateTime   @default(now())
+  status         String? // "Suggested", "Shortlisted", "Submitted", "Rejected"
+  createdAt      DateTime  @default(now())
   createdByAgent String?
 
-  @@index([jobReqId])
-  @@index([candidateId])
+  @@index([tenantId])
+  @@index([tenantId, jobReqId])
+  @@index([tenantId, candidateId])
 }
 
 model MatchResult {
-  id              String        @id @default(cuid())
-  candidate       Candidate     @relation(fields: [candidateId], references: [id])
-  candidateId     String
+  id          String    @id @default(cuid())
+  tenantId    String    @default("default-tenant")
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  candidateId String
 
-  jobReq          JobReq        @relation(fields: [jobReqId], references: [id])
-  jobReqId        String
+  jobReq   JobReq @relation(fields: [jobReqId], references: [id])
+  jobReqId String
 
-  jobCandidate    JobCandidate? @relation("JobCandidateMatchResults", fields: [jobCandidateId], references: [id])
-  jobCandidateId  String?
+  jobCandidate   JobCandidate? @relation("JobCandidateMatchResults", fields: [jobCandidateId], references: [id])
+  jobCandidateId String?
 
-  score           Int
-  reasons         Json?
-  createdAt       DateTime      @default(now())
+  score     Int
+  reasons   Json?
+  createdAt DateTime @default(now())
 
-  skillScore      Int?
-  seniorityScore  Int?
-  locationScore   Int?
-  candidateSignalScore Int?
+  skillScore               Int?
+  seniorityScore           Int?
+  locationScore            Int?
+  candidateSignalScore     Int?
   candidateSignalBreakdown Json?
 
-  agentRun        AgentRunLog?  @relation(fields: [agentRunId], references: [id])
-  agentRunId      String?
+  agentRun   AgentRunLog? @relation(fields: [agentRunId], references: [id])
+  agentRunId String?
 
-  lastMatchFor    JobCandidate? @relation("JobCandidateLastMatch")
+  lastMatchFor JobCandidate? @relation("JobCandidateLastMatch")
 
-  @@index([candidateId])
-  @@index([jobReqId])
-  @@index([agentRunId])
-  @@index([jobCandidateId])
+  @@index([tenantId])
+  @@index([tenantId, candidateId])
+  @@index([tenantId, jobReqId])
+  @@index([tenantId, agentRunId])
+  @@index([tenantId, jobCandidateId])
 }
 
 model AgentRunLog {
-  id               String   @id @default(cuid())
-  agentName        String   // "EAT-TS.RINA", etc.
-  user             User?    @relation(fields: [userId], references: [id])
+  id               String         @id @default(cuid())
+  tenantId         String         @default("default-tenant")
+  agentName        String // "EAT-TS.RINA", etc.
+  user             User?          @relation(fields: [userId], references: [id])
   userId           String?
   sourceType       String?
   sourceTag        String?
@@ -199,64 +226,69 @@ model AgentRunLog {
   outputSnapshot   Json?
   tokensPrompt     Int?
   tokensCompletion Int?
-  startedAt        DateTime @default(now())
+  startedAt        DateTime       @default(now())
   finishedAt       DateTime?
-  retryCount       Int      @default(0)
+  retryCount       Int            @default(0)
 
-  retryOf    AgentRunLog? @relation("AgentRunRetry", fields: [retryOfId], references: [id])
+  retryOf   AgentRunLog?  @relation("AgentRunRetry", fields: [retryOfId], references: [id])
   retryOfId String?
   retries   AgentRunLog[] @relation("AgentRunRetry")
 
-  matchResults     MatchResult[]
+  matchResults         MatchResult[]
   outreachInteractions OutreachInteraction[]
 
-  @@index([agentName])
-  @@index([retryOfId])
+  @@index([tenantId])
+  @@index([tenantId, agentName])
+  @@index([tenantId, retryOfId])
 }
 
 model OutreachInteraction {
-  id           String   @id @default(cuid())
-  candidate    Candidate @relation(fields: [candidateId], references: [id])
-  candidateId  String
+  id          String    @id @default(cuid())
+  tenantId    String    @default("default-tenant")
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  candidateId String
 
-  jobReq       JobReq    @relation(fields: [jobReqId], references: [id])
-  jobReqId     String
+  jobReq   JobReq @relation(fields: [jobReqId], references: [id])
+  jobReqId String
 
-  agentRun     AgentRunLog? @relation(fields: [agentRunId], references: [id])
-  agentRunId   String?
+  agentRun   AgentRunLog? @relation(fields: [agentRunId], references: [id])
+  agentRunId String?
 
   interactionType String   @default("OUTREACH_GENERATED")
   createdAt       DateTime @default(now())
 
-  @@index([candidateId])
-  @@index([jobReqId])
-  @@index([agentRunId])
+  @@index([tenantId])
+  @@index([tenantId, candidateId])
+  @@index([tenantId, jobReqId])
+  @@index([tenantId, agentRunId])
 }
 
 model JobCandidate {
-  id                String             @id @default(cuid())
-  jobReq            JobReq             @relation(fields: [jobReqId], references: [id])
-  jobReqId          String
+  id       String @id @default(cuid())
+  tenantId String @default("default-tenant")
+  jobReq   JobReq @relation(fields: [jobReqId], references: [id])
+  jobReqId String
 
-  candidate         Candidate          @relation(fields: [candidateId], references: [id])
-  candidateId       String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  candidateId String
 
-  user    User?   @relation(fields: [userId], references: [id])
-  userId  String?
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
 
-  status            JobCandidateStatus @default(POTENTIAL)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  status    JobCandidateStatus @default(POTENTIAL)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 
-  lastMatch         MatchResult?       @relation("JobCandidateLastMatch", fields: [lastMatchResultId], references: [id])
-  lastMatchResultId String?            @unique
-  matchResults      MatchResult[]      @relation("JobCandidateMatchResults")
+  lastMatch         MatchResult?  @relation("JobCandidateLastMatch", fields: [lastMatchResultId], references: [id])
+  lastMatchResultId String?       @unique
+  matchResults      MatchResult[] @relation("JobCandidateMatchResults")
 
-  notes             String?
+  notes String?
 
-  @@index([jobReqId])
-  @@index([candidateId])
-  @@index([userId])
-  @@index([lastMatchResultId])
-  @@unique([jobReqId, candidateId])
+  @@unique([tenantId, jobReqId, candidateId])
+  @@index([tenantId])
+  @@index([tenantId, jobReqId])
+  @@index([tenantId, candidateId])
+  @@index([tenantId, userId])
+  @@index([tenantId, lastMatchResultId])
 }

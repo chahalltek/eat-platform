@@ -9,6 +9,7 @@ import { enforceKillSwitch } from "@/lib/killSwitch/middleware";
 import { prisma } from "@/lib/prisma";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 export async function POST(req: Request) {
   const killSwitchResponse = enforceKillSwitch(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
@@ -29,6 +30,8 @@ export async function POST(req: Request) {
     jobReqId?: string;
     candidateId?: string;
   };
+
+  const tenantId = await getCurrentTenantId();
 
   if (!jobReqId || !candidateId) {
     return NextResponse.json({ error: "jobReqId and candidateId are required" }, { status: 400 });
@@ -68,7 +71,7 @@ export async function POST(req: Request) {
   }
 
   const jobCandidate = await prisma.jobCandidate.findUnique({
-    where: { jobReqId_candidateId: { jobReqId, candidateId } },
+    where: { tenantId_jobReqId_candidateId: { tenantId, jobReqId, candidateId } },
   });
 
   const outreachInteractions = await prisma.outreachInteraction.count({

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 type AgentRunRow = {
   id: string;
@@ -30,11 +31,11 @@ function formatSource(candidate: { sourceType: string | null; sourceTag: string 
   return "—";
 }
 
-async function findRelatedAgentRun(candidateId: string) {
+async function findRelatedAgentRun(candidateId: string, tenantId: string) {
   const runs = await prisma.$queryRaw<AgentRunRow[]>`
     SELECT id, "agentName", "startedAt"
     FROM "AgentRunLog"
-    WHERE input::text ILIKE ${`%${candidateId}%`} OR output::text ILIKE ${`%${candidateId}%`}
+    WHERE "tenantId" = ${tenantId} AND (input::text ILIKE ${`%${candidateId}%`} OR output::text ILIKE ${`%${candidateId}%`})
     ORDER BY "startedAt" DESC
     LIMIT 1
   `;
@@ -52,6 +53,8 @@ export default async function CandidateDetail({
 }: {
   params: { id: string };
 }) {
+  const tenantId = await getCurrentTenantId();
+
   const candidate = await prisma.candidate.findUnique({
     where: { id: params.id },
     include: {
@@ -98,7 +101,7 @@ export default async function CandidateDetail({
     );
   }
 
-  const agentRun = await findRelatedAgentRun(candidate.id);
+  const agentRun = await findRelatedAgentRun(candidate.id, tenantId);
   const confidence = computeCandidateConfidenceScore({ candidate });
 
   return (

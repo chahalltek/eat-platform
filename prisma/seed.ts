@@ -1,3 +1,4 @@
+import { DEFAULT_TENANT_ID } from '../src/lib/auth/config';
 import { prisma } from '../src/lib/prisma';
 import { FEATURE_FLAGS, setFeatureFlag } from '../src/lib/featureFlags';
 
@@ -8,9 +9,11 @@ async function main() {
       email: 'charlie@strategicsystems.io',
       displayName: 'Charlie Hall',
       role: 'RECRUITER',
+      tenantId: DEFAULT_TENANT_ID,
     },
     create: {
       id: 'charlie',
+      tenantId: DEFAULT_TENANT_ID,
       email: 'charlie@strategicsystems.io',
       displayName: 'Charlie Hall',
       role: 'RECRUITER',
@@ -23,9 +26,11 @@ async function main() {
       email: 'admin@strategicsystems.io',
       displayName: 'Platform Admin',
       role: 'ADMIN',
+      tenantId: DEFAULT_TENANT_ID,
     },
     create: {
       id: 'admin',
+      tenantId: DEFAULT_TENANT_ID,
       email: 'admin@strategicsystems.io',
       displayName: 'Platform Admin',
       role: 'ADMIN',
