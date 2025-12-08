@@ -6,7 +6,8 @@ import {
   formatEmptyResponseError,
 } from '@/lib/llm/openaiAdapter';
 import { getCurrentUserId } from '@/lib/auth/user';
-import { consumeRateLimit, isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
+import { getCurrentTenantId } from '@/lib/tenant';
+import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
 
 type CallLLMParams = {
   systemPrompt: string;
@@ -44,7 +45,12 @@ export async function callLLM({
   model = 'gpt-4.1-mini',
   adapter = new OpenAIChatAdapter(),
 }: CallLLMParams): Promise<string> {
-  consumeRateLimit(await getCurrentUserId(), 'llm');
+  const [tenantId, userId] = await Promise.all([getCurrentTenantId(), getCurrentUserId()]);
+  await consumeRateLimit({
+    tenantId,
+    userId,
+    action: RATE_LIMIT_ACTIONS.AGENT_RUN,
+  });
 
   try {
     return await adapter.chatCompletion({

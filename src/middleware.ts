@@ -9,10 +9,10 @@ import {
   USER_HEADER,
   USER_QUERY_PARAM,
 } from './lib/auth/config';
-import { consumeRateLimit, isRateLimitError } from './lib/rateLimiting/rateLimiter';
+import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from './lib/rateLimiting/http';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const queryUserId = searchParams.get(USER_QUERY_PARAM)?.trim();
   const resolvedUserId = queryUserId || DEFAULT_USER_ID;
@@ -30,7 +30,11 @@ export function middleware(request: NextRequest) {
 
   try {
     if (request.nextUrl.pathname.startsWith('/api')) {
-      consumeRateLimit(resolvedUserId, 'api');
+      await consumeRateLimit({
+        tenantId: resolvedTenantId,
+        userId: resolvedUserId,
+        action: RATE_LIMIT_ACTIONS.API,
+      });
     }
   } catch (error) {
     if (isRateLimitError(error)) {

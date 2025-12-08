@@ -11,6 +11,7 @@ export const SECURITY_EVENT_TYPES = {
   PLAN_CHANGED: 'PLAN_CHANGED',
   DATA_EXPORT_REQUESTED: 'DATA_EXPORT_REQUESTED',
   RETENTION_JOB_RUN: 'RETENTION_JOB_RUN',
+  RATE_LIMIT_THRESHOLD: 'RATE_LIMIT_THRESHOLD',
 } as const;
 
 export type SecurityEventType = (typeof SECURITY_EVENT_TYPES)[keyof typeof SECURITY_EVENT_TYPES];
@@ -181,6 +182,26 @@ export async function logRetentionJobRun(params: {
       deletedRecords: params.deletedRecords,
       retainedRecords: params.retainedRecords,
       details: params.details,
+    },
+  });
+}
+
+export async function logRateLimitThreshold(params: {
+  tenantId?: string;
+  userId?: string | null;
+  action: string;
+  reason: string;
+  limit?: number | null;
+  retryAfterMs: number;
+}) {
+  return recordSecurityEvent({
+    ...params,
+    eventType: SECURITY_EVENT_TYPES.RATE_LIMIT_THRESHOLD,
+    metadata: {
+      action: params.action,
+      reason: params.reason,
+      limit: params.limit ?? null,
+      retryAfterMs: params.retryAfterMs,
     },
   });
 }
