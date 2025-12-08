@@ -34,9 +34,23 @@ model User {
 
   agentRuns     AgentRunLog[]
   jobCandidates JobCandidate[]
+  identities    UserIdentity[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
+}
+
+model UserIdentity {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  provider  String
+  subject   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, subject])
+  @@index([userId])
 }
 
 model FeatureFlag {
