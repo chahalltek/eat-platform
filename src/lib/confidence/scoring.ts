@@ -1,18 +1,27 @@
 <<<<<<< ours
+<<<<<<< ours
 export type ComputeConfidenceScoreInput = {
 =======
 export type ConfidenceContext = {
+>>>>>>> theirs
+=======
+export type ConfidenceScoreInput = {
 >>>>>>> theirs
   jobSkills: string[];
   candidateSkills: string[];
   hasTitle: boolean;
   hasLocation: boolean;
 <<<<<<< ours
+<<<<<<< ours
   createdAt: Date;
+=======
+  createdAt?: Date | null;
+>>>>>>> theirs
 };
 
 export type ConfidenceBreakdown = {
   total: number;
+<<<<<<< ours
   skillOverlap: number;
   metadataScore: number;
   recencyScore: number;
@@ -127,6 +136,55 @@ export function computeConfidenceScore(
     skillCoverage,
     recency,
     total,
+  };
+>>>>>>> theirs
+=======
+  dataCompleteness: number;
+  skillCoverage: number;
+  recency: number;
+};
+
+function computeSkillCoverage(jobSkills: string[], candidateSkills: string[]): number {
+  if (jobSkills.length === 0) return 50;
+
+  const jobSkillSet = new Set(jobSkills.map((s) => s.toLowerCase()));
+  const candidateSkillSet = new Set(candidateSkills.map((s) => s.toLowerCase()));
+
+  let matched = 0;
+  jobSkillSet.forEach((skill) => {
+    if (candidateSkillSet.has(skill)) {
+      matched += 1;
+    }
+  });
+
+  return Math.round((matched / jobSkillSet.size) * 100);
+}
+
+function computeRecencyScore(createdAt?: Date | null): number {
+  if (!createdAt) return 50;
+
+  const now = Date.now();
+  const ageMs = now - createdAt.getTime();
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
+
+  const cappedDays = Math.min(Math.max(ageDays, 0), 365);
+  const score = 100 - (cappedDays / 365) * 80; // decay from 100 to 20 over a year
+
+  return Math.round(Math.max(20, score));
+}
+
+export function computeConfidenceScore(input: ConfidenceScoreInput): ConfidenceBreakdown {
+  const dataCompleteness = ((Number(input.hasTitle) + Number(input.hasLocation)) / 2) * 100;
+  const skillCoverage = computeSkillCoverage(input.jobSkills, input.candidateSkills);
+  const recency = computeRecencyScore(input.createdAt ?? undefined);
+
+  const total = Math.round(skillCoverage * 0.5 + dataCompleteness * 0.3 + recency * 0.2);
+
+  return {
+    total,
+    dataCompleteness,
+    skillCoverage,
+    recency,
   };
 >>>>>>> theirs
 }

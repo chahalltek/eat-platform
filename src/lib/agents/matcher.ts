@@ -4,10 +4,16 @@ import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { matchJobToAllCandidates } from "@/lib/matching/batch";
 <<<<<<< ours
+<<<<<<< ours
 import { computeMatchScore } from "@/lib/matching/msa";
 import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { prisma } from "@/lib/prisma";
 =======
+>>>>>>> theirs
+=======
+import { computeMatchScore as computeBasicMatchScore } from "@/lib/matching/scoring";
+import { prisma } from "@/lib/prisma";
+import { computeConfidenceScore } from "../confidence/scoring";
 >>>>>>> theirs
 
 export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
@@ -51,44 +57,56 @@ export async function runMatcher(
       ...retryMetadata,
     },
     async () => {
-      const jobReq = await prisma.jobReq.findUnique({
-        where: { id: jobId },
-        include: { skills: true },
-      });
+      const job = await prisma.job.findUnique({ where: { id: jobId } });
 
-      if (!jobReq) {
+      if (!job) {
         throw new Error(`Job ${jobId} not found`);
       }
 
       const candidates = await prisma.candidate.findMany({
-        where: { tenantId: jobReq.tenantId, deletedAt: null },
-        include: { skills: true },
+        where: { tenantId: job.tenantId, deletedAt: null },
       });
 
-      const scored = candidates.map((candidate) => ({
-        candidate,
-        breakdown: computeMatchScore({ candidate, jobReq }),
-      }));
+      const scored = candidates.map((candidate) => {
+        const breakdown = computeBasicMatchScore({
+          jobTitle: job.title,
+          jobSkills: job.requiredSkills ?? [],
+          candidateTitle: (candidate as any).primaryTitle ?? candidate.currentTitle,
+          candidateSkills: candidate.normalizedSkills ?? [],
+        });
+
+        const confidence = computeConfidenceScore({
+          jobSkills: job.requiredSkills ?? [],
+          candidateSkills: candidate.normalizedSkills ?? [],
+          hasTitle: Boolean((candidate as any).primaryTitle ?? candidate.currentTitle),
+          hasLocation: Boolean(candidate.location),
+          createdAt: candidate.createdAt,
+        });
+
+        return { candidate, breakdown, confidence };
+      });
 
       const topMatches = scored
-        .sort((a, b) => b.breakdown.score - a.breakdown.score)
+        .sort((a, b) => b.breakdown.compositeScore - a.breakdown.compositeScore)
         .slice(0, topN);
 
       const matches: RunMatcherResult["matches"] = [];
 
       for (const item of topMatches) {
-        const matchResult = await prisma.matchResult.create({
+        const explanation = {
+          skillOverlapScore: item.breakdown.skillOverlapScore,
+          titleSimilarityScore: item.breakdown.titleSimilarityScore,
+        } as const;
+
+        const matchRecord = await prisma.candidateMatch.create({
           data: {
+            tenantId: job.tenantId,
+            jobId: job.id,
             candidateId: item.candidate.id,
-            jobReqId: jobReq.id,
-            score: item.breakdown.score,
-            reasons: item.breakdown.explanation,
-            skillScore: item.breakdown.skillScore,
-            seniorityScore: item.breakdown.seniorityScore,
-            locationScore: item.breakdown.locationScore,
-            candidateSignalScore: item.breakdown.candidateSignalScore,
-            candidateSignalBreakdown: item.breakdown.candidateSignalBreakdown,
-            agentRunId,
+            matchScore: item.breakdown.compositeScore,
+            confidence: item.confidence.total,
+            explanation,
+            confidenceReasons: item.confidence,
           },
         });
 
@@ -99,20 +117,25 @@ export async function runMatcher(
 
         matches.push({
           candidateId: item.candidate.id,
+<<<<<<< ours
           matchScore: item.breakdown.score,
           confidence: confidence.score,
           explanationId: matchResult.id,
+=======
+          matchScore: item.breakdown.compositeScore,
+          explanationId: matchRecord.id,
+>>>>>>> theirs
         });
       }
 
       return {
         result: {
-          jobId: jobReq.id,
+          jobId: job.id,
           matches,
           agentRunId,
         },
         outputSnapshot: {
-          jobId: jobReq.id,
+          jobId: job.id,
           matchesCreated: matches.length,
           topN,
         },
