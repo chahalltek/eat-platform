@@ -1,6 +1,6 @@
 import type { SecurityEventRecord } from '@/lib/audit/securityEvents';
 
-type SecurityEventRow = SecurityEventRecord & { createdAt: string };
+type SecurityEventRow = Omit<SecurityEventRecord, 'createdAt'> & { createdAt: string };
 
 type Props = {
   events: SecurityEventRow[];
