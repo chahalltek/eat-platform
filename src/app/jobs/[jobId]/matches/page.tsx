@@ -1,11 +1,6 @@
-<<<<<<< ours
-import { prisma } from '@/src/lib/prisma';
-import { JobMatchesView } from '@/src/components/JobMatchesView';
-import type { JobMatchRow } from '@/src/components/JobMatchesTable';
-=======
 import { prisma } from '@/lib/prisma';
-import { JobMatchesTable, JobMatchRow } from '@/components/JobMatchesTable';
->>>>>>> theirs
+import { JobMatchesView } from '@/components/JobMatchesView';
+import type { JobMatchRow } from '@/components/JobMatchesTable';
 
 type Props = {
   params: { jobId: string };
