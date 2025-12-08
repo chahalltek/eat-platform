@@ -10,7 +10,7 @@ import { JobCandidateStatus } from "@prisma/client";
 
 import { AgentRunsTable } from "../agents/runs/AgentRunsTable";
 import { EnvTable } from "../admin/env/EnvTable";
-import { JobMatchesTable } from "../jobs/[id]/matches/JobMatchesTable";
+import { JobMatchesTable } from "../jobs/[jobId]/matches/JobMatchesTable";
 import { JobTable } from "../jobs/JobTable";
 import { JobOpportunitiesTable } from "../candidates/JobOpportunitiesTable";
 

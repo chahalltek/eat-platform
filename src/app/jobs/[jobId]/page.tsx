@@ -42,7 +42,7 @@ function formatSource(job: { sourceType: string | null; sourceTag: string | null
 export default async function JobDetail({
   params,
 }: {
-  params: { id: string };
+  params: { jobId: string };
 }) {
   const [uiBlocksEnabled, scoringEnabled] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
@@ -51,7 +51,7 @@ export default async function JobDetail({
 
   const job = await prisma.jobReq
     .findUnique({
-      where: { id: params.id },
+      where: { id: params.jobId },
       include: {
         customer: { select: { name: true } },
         skills: {

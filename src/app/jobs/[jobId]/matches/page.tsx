@@ -7,11 +7,11 @@ import { prisma } from "@/lib/prisma";
 export default async function JobMatchesPage({
   params,
 }: {
-  params: { id: string };
+  params: { jobId: string };
 }) {
   const job = await prisma.jobReq
     .findUnique({
-      where: { id: params.id },
+      where: { id: params.jobId },
       include: {
         customer: { select: { name: true } },
         matchResults: {
