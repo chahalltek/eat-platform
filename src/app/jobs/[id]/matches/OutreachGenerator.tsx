@@ -92,9 +92,12 @@ export function OutreachGenerator({
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Draft outreach
               </p>
-              <p className="whitespace-pre-wrap font-sans leading-relaxed text-gray-900">
-                {message}
-              </p>
+              <textarea
+                readOnly
+                value={message}
+                className="w-full rounded-md border border-gray-200 bg-white p-3 font-sans text-sm leading-relaxed text-gray-900 shadow-inner focus:border-blue-400 focus:outline-none"
+                rows={Math.min(12, Math.max(4, message.split("\n").length + 1))}
+              />
             </div>
           )}
         </div>
