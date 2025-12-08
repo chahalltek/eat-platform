@@ -336,6 +336,7 @@ model CandidateMatch {
   matchScore  Int
   confidence  Int
   explanation Json
+  confidenceReasons Json?
   createdAt   DateTime  @default(now())
 
   job       Job       @relation(fields: [jobId], references: [id])
