@@ -1,6 +1,12 @@
 // src/lib/agents/rua.ts
+import {
+  assertValidRuaResponse,
+  RUA_SYSTEM_PROMPT,
+  type RuaLLMResponse,
+} from '@/lib/agents/contracts/ruaContract';
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
+import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { prisma } from '@/lib/prisma';
 
 export type RuaInput = {
@@ -10,63 +16,10 @@ export type RuaInput = {
   sourceTag?: string;
 };
 
-type ParsedJobSkill = {
-  name: string;
-  normalizedName?: string;
-  isMustHave?: boolean;
-};
-
-type ParsedJobReq = {
-  clientName?: string;
-  title: string;
-  seniorityLevel?: string;
-  location?: string;
-  remoteType?: string;
-  employmentType?: string;
-  responsibilitiesSummary?: string;
-  teamContext?: string;
-  priority?: string;
-  status?: string;
-  ambiguityScore?: number;
-  skills: ParsedJobSkill[];
-};
-
-const SYSTEM_PROMPT = `
-You are RUA (Role Understanding Agent) for a recruiting platform.
-
-Your job is to read a raw job description and produce a STRICT JSON object describing the job requirements.
-
-Rules:
-- Output ONLY valid JSON. No prose, no markdown.
-- Be conservative with seniority and requirements.
-- Normalize skills where possible (React.js and ReactJS -> React).
-- ambiguityScore should be between 0 and 1 reflecting how unclear the description is.
-
-JSON shape:
-{
-  "clientName": string | null,
-  "title": string,
-  "seniorityLevel": string | null,
-  "location": string | null,
-  "remoteType": string | null,
-  "employmentType": string | null,
-  "responsibilitiesSummary": string | null,
-  "teamContext": string | null,
-  "priority": string | null,
-  "status": string | null,
-  "ambiguityScore": number | null,
-  "skills": [
-    {
-      "name": string,
-      "normalizedName": string,
-      "isMustHave": boolean
-    }
-  ]
-}`;
-
 export async function runRua(
   input: RuaInput,
   retryMetadata?: AgentRetryMetadata,
+  llmAdapter?: OpenAIAdapter,
 ): Promise<{ jobReqId: string; agentRunId: string }> {
   const { recruiterId, rawJobText, sourceType, sourceTag } = input;
 
@@ -93,21 +46,20 @@ ${rawJobText}
 `;
 
       const llmRaw = await callLLM({
-        systemPrompt: SYSTEM_PROMPT,
+        systemPrompt: RUA_SYSTEM_PROMPT,
         userPrompt,
+        adapter: llmAdapter,
       });
 
-      let parsed: ParsedJobReq;
+      let parsed: RuaLLMResponse;
       try {
-        parsed = JSON.parse(llmRaw) as ParsedJobReq;
+        parsed = JSON.parse(llmRaw) as RuaLLMResponse;
       } catch (err) {
         console.error('Failed to parse LLM JSON for RUA:', err, llmRaw);
         throw new Error('Failed to parse LLM JSON');
       }
 
-      if (!parsed.title || !Array.isArray(parsed.skills)) {
-        throw new Error('Parsed job req missing required fields');
-      }
+      assertValidRuaResponse(parsed);
 
       const jobReq = await prisma.jobReq.create({
         data: {
