@@ -96,7 +96,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       candidateId: candidate.id,
       jobReqId,
       score: matchScore.score,
-      reasons: matchScore.reasons,
+      reasons: matchScore.explanation,
       skillScore: matchScore.skillScore,
       seniorityScore: matchScore.seniorityScore,
       locationScore: matchScore.locationScore,

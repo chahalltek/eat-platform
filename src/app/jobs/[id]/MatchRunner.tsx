@@ -3,9 +3,11 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 
+import { normalizeMatchExplanation } from "@/lib/matching/explanation";
+
 type MatchResponse = {
   score: number;
-  reasons: string[];
+  reasons?: unknown;
 };
 
 type MatchRunnerProps = {
@@ -76,24 +78,83 @@ export function MatchRunner({ jobReqId }: MatchRunnerProps) {
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
       {result && (
-        <div className="mt-6 space-y-3">
-          <div className="text-sm text-gray-700">
-            <span className="font-semibold text-gray-900">Score:</span> {result.score}
-          </div>
-          <div>
-            <div className="text-sm font-semibold text-gray-900">Reasons</div>
-            {result.reasons.length === 0 ? (
-              <p className="text-sm text-gray-700">No reasons provided.</p>
-            ) : (
-              <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-gray-700">
-                {result.reasons.map((reason, index) => (
-                  <li key={`${reason}-${index}`}>{reason}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+        <MatchResultDetails result={result} />
       )}
+    </div>
+  );
+}
+
+function MatchResultDetails({ result }: { result: MatchResponse }) {
+  const explanation = normalizeMatchExplanation(result.reasons);
+
+  return (
+    <div className="mt-6 space-y-4">
+      <div className="text-sm text-gray-700">
+        <span className="font-semibold text-gray-900">Score:</span> {result.score}
+      </div>
+
+      <div>
+        <div className="text-sm font-semibold text-gray-900">Top reasons</div>
+        {explanation.topReasons.length === 0 ? (
+          <p className="text-sm text-gray-700">No reasons provided.</p>
+        ) : (
+          <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-gray-700">
+            {explanation.topReasons.map((reason, index) => (
+              <li key={`${reason}-${index}`}>{reason}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <div className="text-sm font-semibold text-gray-900">Risk areas</div>
+        {explanation.riskAreas.length === 0 ? (
+          <p className="text-sm text-gray-700">No significant risks detected.</p>
+        ) : (
+          <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-gray-700">
+            {explanation.riskAreas.map((risk, index) => (
+              <li key={`${risk}-${index}`}>{risk}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <div className="text-sm font-semibold text-gray-900">Skill overlap map</div>
+        {explanation.skillOverlapMap.length === 0 ? (
+          <p className="text-sm text-gray-700">No skill overlap information available.</p>
+        ) : (
+          <ul className="mt-2 space-y-1 text-sm text-gray-700">
+            {explanation.skillOverlapMap.map((entry) => (
+              <li
+                key={`${entry.skill}-${entry.importance}-${entry.status}`}
+                className="flex items-start justify-between rounded border border-gray-200 bg-gray-50 px-3 py-2"
+              >
+                <div>
+                  <span className="font-medium text-gray-900">{entry.skill}</span>{" "}
+                  <span className="text-xs text-gray-600">({entry.importance})</span>
+                  <div className="text-xs text-gray-600">{entry.note}</div>
+                </div>
+                <span
+                  className={`text-xs font-semibold ${entry.status === "matched" ? "text-green-700" : "text-red-700"}`}
+                >
+                  {entry.status === "matched" ? "Matched" : "Missing"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <div className="text-sm font-semibold text-gray-900">Exportable explanation</div>
+        <textarea
+          readOnly
+          className="mt-2 w-full rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800"
+          rows={4}
+          value={explanation.exportableText}
+        />
+      </div>
     </div>
   );
 }

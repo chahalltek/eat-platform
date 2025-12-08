@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     candidateId,
     jobReqId,
     score: matchScore.score,
-    reasons: matchScore.reasons,
+    reasons: matchScore.explanation,
     skillScore: matchScore.skillScore,
     seniorityScore: matchScore.seniorityScore,
     locationScore: matchScore.locationScore,
