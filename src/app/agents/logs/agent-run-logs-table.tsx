@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import clsx from "clsx";
+<<<<<<< ours
 import { flexRender, type FilterFn } from "@tanstack/react-table";
 
 import { EATTable } from "@/components/table/EATTable";
@@ -14,6 +15,12 @@ import {
   createStatusBadgeColumn,
   createTextColumn,
 } from "@/components/table/tableTypes";
+=======
+import { flexRender, type ColumnDef } from "@tanstack/react-table";
+
+import { EATTable } from "@/components/table/EATTable";
+import { createNumberColumn, createStatusBadgeColumn, createTextColumn } from "@/components/table/tableTypes";
+>>>>>>> theirs
 import { getTableCellClasses, getTableClassNames, getTableRowClasses } from "@/components/table/tableStyles";
 import type { AgentRunStatusValue, SerializableLog } from "./types";
 
@@ -86,6 +93,7 @@ export function AgentRunLogsTable({
     return agentNames.map((name) => ({ value: name, label: name }));
   }, [logs]);
 
+<<<<<<< ours
   const columns = useMemo<EATTableColumn<AgentRunLogTableRow>[]>(
     () => [
       createTextColumn<AgentRunLogTableRow, "startedAt">({
@@ -96,11 +104,29 @@ export function AgentRunLogsTable({
       }),
       {
         ...createTextColumn<AgentRunLogTableRow, "agentName">({
+=======
+  const filteredLogs = useMemo(
+    () => filterLogsBySelections(logs, agentFilter, statusFilter),
+    [agentFilter, logs, statusFilter],
+  );
+
+  const columns = useMemo<ColumnDef<AgentRunLogTableRow, any>[]>(
+    () =>
+      [
+        createTextColumn<AgentRunLogTableRow, "startedAt">({
+          accessorKey: "startedAt",
+          header: "Timestamp",
+          sortable: true,
+          cell: ({ getValue }) => <span className="whitespace-nowrap">{formatTimestamp(getValue())}</span>,
+        }),
+        createTextColumn<AgentRunLogTableRow, "agentName">({
+>>>>>>> theirs
           accessorKey: "agentName",
           header: "Agent",
           sortable: true,
           cell: ({ getValue }) => <span className="font-semibold text-slate-900">{getValue()}</span>,
         }),
+<<<<<<< ours
         filterFn: multiSelectFilter,
       },
       createTextColumn<AgentRunLogTableRow, "userLabel">({
@@ -110,12 +136,21 @@ export function AgentRunLogsTable({
       }),
       {
         ...createStatusBadgeColumn<AgentRunLogTableRow, "status">({
+=======
+        createTextColumn<AgentRunLogTableRow, "userLabel">({
+          accessorKey: "userLabel",
+          header: "User/Recruiter",
+          sortable: true,
+        }),
+        createStatusBadgeColumn<AgentRunLogTableRow, "status">({
+>>>>>>> theirs
           accessorKey: "status",
           header: "Status",
           sortable: true,
           formatLabel: (value) => STATUS_LABELS[value],
           getVariant: (value) => STATUS_VARIANTS[value],
         }),
+<<<<<<< ours
         filterFn: multiSelectFilter,
       },
       createNumberColumn<AgentRunLogTableRow, "durationMs">({
@@ -125,6 +160,15 @@ export function AgentRunLogsTable({
         formatValue: (value) => <span className="whitespace-nowrap">{formatDurationMs(value)}</span>,
       }),
     ],
+=======
+        createNumberColumn<AgentRunLogTableRow, "durationMs">({
+          accessorKey: "durationMs",
+          header: "Duration",
+          sortable: true,
+          formatValue: (value) => <span className="whitespace-nowrap">{formatDurationMs(value)}</span>,
+        }),
+      ],
+>>>>>>> theirs
     [],
   );
 

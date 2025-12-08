@@ -2,7 +2,7 @@ import React from "react";
 import clsx from "clsx";
 import type { CellContext, ColumnDef } from "@tanstack/react-table";
 
-export type EATTableColumn<TData, TValue = unknown> = ColumnDef<TData, TValue>;
+export type EATTableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
 
 export type TableAccessorKey<TData> = Extract<keyof TData, string>;
 
