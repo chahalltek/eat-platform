@@ -1,0 +1,39 @@
+import { BullhornClient } from '@/lib/integrations/bullhorn/client';
+import { defaultMappingConfig } from '@/lib/integrations/bullhorn/mappings';
+import { InMemorySyncStore, syncBullhorn } from '@/lib/integrations/bullhorn/sync';
+
+async function main() {
+  const client = new BullhornClient({
+    clientId: process.env.BULLHORN_CLIENT_ID ?? 'demo-client',
+    clientSecret: process.env.BULLHORN_CLIENT_SECRET ?? 'demo-secret',
+    redirectUri: process.env.BULLHORN_REDIRECT_URI ?? 'https://example.com/oauth/callback',
+    testMode: process.env.NODE_ENV !== 'production',
+  });
+
+  // In production, tokens would be persisted. For the script we exchange a mocked code.
+  await client.exchangeCodeForToken(process.env.BULLHORN_AUTH_CODE ?? 'mock-code');
+
+  const store = new InMemorySyncStore();
+  const summary = await syncBullhorn({
+    fetchJobs: () => client.getJobs(),
+    fetchCandidates: () => client.getCandidates(),
+    fetchPlacements: () => client.getPlacements(),
+    mapping: defaultMappingConfig,
+    store,
+  });
+
+  // eslint-disable-next-line no-console
+  console.log('Bullhorn sync complete', summary);
+  // eslint-disable-next-line no-console
+  console.log('Synced entities (in-memory)', {
+    jobs: Array.from(store.jobs.values()),
+    candidates: Array.from(store.candidates.values()),
+    placements: Array.from(store.placements.values()),
+  });
+}
+
+main().catch((error) => {
+  // eslint-disable-next-line no-console
+  console.error('Bullhorn sync failed', error);
+  process.exit(1);
+});
