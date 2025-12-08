@@ -5,8 +5,15 @@ import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
 export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
+  const scoringEnabled = await isFeatureEnabled(FEATURE_FLAGS.SCORING);
+
+  if (!scoringEnabled) {
+    throw new Error("Scoring is disabled");
+  }
+
   const jobReq = await prisma.jobReq.findUnique({
     where: { id: jobReqId },
     include: {

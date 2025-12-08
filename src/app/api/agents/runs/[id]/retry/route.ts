@@ -5,6 +5,11 @@ import { prisma } from '@/lib/prisma';
 import { runOutreach } from '@/lib/agents/outreach';
 import { runRina } from '@/lib/agents/rina';
 import { runRua } from '@/lib/agents/rua';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
+import {
+  enforceFeatureFlag,
+  getAgentFeatureName,
+} from '@/lib/featureFlags/middleware';
 
 function asString(value: unknown) {
   return typeof value === 'string' ? value : undefined;
@@ -38,6 +43,14 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
   if (!run) {
     return NextResponse.json({ error: 'Run not found' }, { status: 404 });
+  }
+
+  const flagCheck = await enforceFeatureFlag(FEATURE_FLAGS.AGENTS, {
+    featureName: getAgentFeatureName(run.agentName),
+  });
+
+  if (flagCheck) {
+    return flagCheck;
   }
 
   const retryMetadata = await buildRetryMetadata(run.id, run.retryOfId ?? undefined);

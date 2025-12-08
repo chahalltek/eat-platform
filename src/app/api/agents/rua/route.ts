@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runRua } from '@/lib/agents/rua';
 import { getCurrentUser } from '@/lib/auth/user';
+import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
 import { validateRecruiterId } from '../recruiterValidation';
 
 export async function POST(req: NextRequest) {
@@ -10,6 +11,12 @@ export async function POST(req: NextRequest) {
 
     if (!currentUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const flagCheck = await agentFeatureGuard();
+
+    if (flagCheck) {
+      return flagCheck;
     }
 
     const body = await req.json();

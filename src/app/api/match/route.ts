@@ -5,6 +5,8 @@ import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { prisma } from "@/lib/prisma";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -22,6 +24,14 @@ export async function POST(req: Request) {
 
   if (!jobReqId || !candidateId) {
     return NextResponse.json({ error: "jobReqId and candidateId are required" }, { status: 400 });
+  }
+
+  const flagCheck = await enforceFeatureFlag(FEATURE_FLAGS.SCORING, {
+    featureName: "Scoring",
+  });
+
+  if (flagCheck) {
+    return flagCheck;
   }
 
   const candidate = await prisma.candidate.findUnique({

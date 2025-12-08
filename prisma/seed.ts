@@ -1,4 +1,5 @@
 import { prisma } from '../src/lib/prisma';
+import { FEATURE_FLAGS, setFeatureFlag } from '../src/lib/featureFlags';
 
 async function main() {
   await prisma.user.upsert({
@@ -30,6 +31,10 @@ async function main() {
       role: 'ADMIN',
     },
   });
+
+  await Promise.all(
+    Object.values(FEATURE_FLAGS).map((flagName) => setFeatureFlag(flagName, false)),
+  );
 }
 
 main()

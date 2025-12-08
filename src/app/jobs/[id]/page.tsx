@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
 import { MatchRunner } from "./MatchRunner";
 import { FreshnessIndicator } from "../FreshnessIndicator";
@@ -43,6 +44,11 @@ export default async function JobDetail({
 }: {
   params: { id: string };
 }) {
+  const [uiBlocksEnabled, scoringEnabled] = await Promise.all([
+    isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
+    isFeatureEnabled(FEATURE_FLAGS.SCORING),
+  ]);
+
   const job = await prisma.jobReq
     .findUnique({
       where: { id: params.id },
@@ -164,7 +170,19 @@ export default async function JobDetail({
         </div>
       </div>
 
-      <MatchRunner jobReqId={job.id} />
+      {uiBlocksEnabled ? (
+        scoringEnabled ? (
+          <MatchRunner jobReqId={job.id} />
+        ) : (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            Scoring is turned off. Enable the Scoring flag to run matching against this role.
+          </div>
+        )
+      ) : (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          UI blocks are disabled. Enable the UI Blocks flag to access scoring tools.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">

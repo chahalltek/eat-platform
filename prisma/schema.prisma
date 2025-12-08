@@ -35,6 +35,15 @@ model User {
   jobCandidates JobCandidate[]
 }
 
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Candidate {
   id                   String             @id @default(cuid())
   fullName             String
