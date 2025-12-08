@@ -10,6 +10,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { TableStylePreset, TableStyleVariant, getTableStyles } from "./tableStyles";
 
 export type EATTableSorting = {
   initialState?: SortingState;
@@ -27,6 +28,7 @@ export type EATTableProps<TData> = {
   columns: ColumnDef<TData, any>[];
   sorting?: EATTableSorting;
   pagination?: EATTablePagination;
+  variant?: TableStyleVariant;
   children: (context: EATTableRenderProps<TData>) => React.ReactNode;
 };
 
@@ -36,6 +38,7 @@ export type EATTableRenderProps<TData> = {
   rows: ReturnType<Table<TData>["getRowModel"]>["rows"];
   sorting: SortingState;
   pagination: PaginationState;
+  styles: TableStylePreset;
 };
 
 function resolveUpdaterValue<T>(updater: Updater<T>, previous: T): T {
@@ -47,6 +50,7 @@ export function useEATTable<TData>({
   columns,
   sorting,
   pagination,
+  variant = "comfortable",
 }: Omit<EATTableProps<TData>, "children">): EATTableRenderProps<TData> {
   const [sortingState, setSortingState] = useState<SortingState>(sorting?.initialState ?? []);
   const [paginationState, setPaginationState] = useState<PaginationState>(
@@ -67,6 +71,8 @@ export function useEATTable<TData>({
     setPaginationState(nextState);
     pagination?.onChange?.(nextState);
   };
+
+  const styles = useMemo(() => getTableStyles(variant), [variant]);
 
   const table = useReactTable({
     data: memoizedData,
@@ -90,6 +96,7 @@ export function useEATTable<TData>({
     rows: table.getRowModel().rows,
     sorting: sortingState,
     pagination: paginationState,
+    styles,
   };
 }
 

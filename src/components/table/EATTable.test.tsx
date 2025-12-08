@@ -120,4 +120,21 @@ describe("EATTable", () => {
     expect(result.current.pagination).toEqual({ pageIndex: 2, pageSize: 3 });
     expect(result.current.table.options.pageCount).toBe(10);
   });
+
+  it("exposes style presets based on the provided variant", () => {
+    const { result, rerender } = renderHook(
+      (props: Parameters<typeof useEATTable<Person>>[0]) => useEATTable<Person>(props),
+      {
+        initialProps: { data: people, columns, variant: "comfortable" },
+      },
+    );
+
+    expect(result.current.styles.variant).toBe("comfortable");
+    expect(result.current.styles.classes.cell).toContain("py-3");
+
+    rerender({ data: people, columns, variant: "compact" });
+
+    expect(result.current.styles.variant).toBe("compact");
+    expect(result.current.styles.classes.cell).toContain("py-2");
+  });
 });
