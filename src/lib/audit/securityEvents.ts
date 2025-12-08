@@ -12,6 +12,8 @@ export const SECURITY_EVENT_TYPES = {
   DATA_EXPORT_REQUESTED: 'DATA_EXPORT_REQUESTED',
   RETENTION_JOB_RUN: 'RETENTION_JOB_RUN',
   RATE_LIMIT_THRESHOLD: 'RATE_LIMIT_THRESHOLD',
+  COMPLIANCE_ALERT: 'COMPLIANCE_ALERT',
+  COMPLIANCE_SCAN: 'COMPLIANCE_SCAN',
 } as const;
 
 export type SecurityEventType = (typeof SECURITY_EVENT_TYPES)[keyof typeof SECURITY_EVENT_TYPES];
@@ -202,6 +204,44 @@ export async function logRateLimitThreshold(params: {
       reason: params.reason,
       limit: params.limit ?? null,
       retryAfterMs: params.retryAfterMs,
+    },
+  });
+}
+
+export async function logComplianceAlert(params: {
+  tenantId?: string;
+  userId?: string | null;
+  scope: string;
+  violations: Array<{ type: string; detail?: Record<string, unknown> }>;
+  severity?: 'low' | 'medium' | 'high';
+}) {
+  return recordSecurityEvent({
+    ...params,
+    eventType: SECURITY_EVENT_TYPES.COMPLIANCE_ALERT,
+    metadata: {
+      scope: params.scope,
+      violations: params.violations,
+      severity: params.severity ?? 'medium',
+    },
+  });
+}
+
+export async function logComplianceScan(params: {
+  tenantId?: string;
+  userId?: string | null;
+  checks: string[];
+  alerts: number;
+  windowStartedAt: string;
+  windowEndedAt: string;
+}) {
+  return recordSecurityEvent({
+    ...params,
+    eventType: SECURITY_EVENT_TYPES.COMPLIANCE_SCAN,
+    metadata: {
+      checks: params.checks,
+      alerts: params.alerts,
+      windowStartedAt: params.windowStartedAt,
+      windowEndedAt: params.windowEndedAt,
     },
   });
 }

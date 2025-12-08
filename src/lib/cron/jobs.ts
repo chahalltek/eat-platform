@@ -1,3 +1,4 @@
+import { runScheduledComplianceScan } from "@/lib/agents/comply";
 import { prisma } from "@/lib/prisma";
 import { prismaAdmin } from "@/lib/prismaAdmin";
 import { runTenantRetentionJob } from "@/lib/retention";
@@ -41,5 +42,10 @@ export const cronJobs: Record<string, CronJob> = {
     name: "tenant-data-retention",
     description: "Applies tenant-level data retention and deletion rules.",
     run: () => runTenantRetentionJob(prismaAdmin),
+  },
+  "compliance-scan": {
+    name: "compliance-scan",
+    description: "Runs TS-A6 COMPLY to classify data, enforce retention, and log access events.",
+    run: () => runScheduledComplianceScan(prismaAdmin),
   },
 };
