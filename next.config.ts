@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+import { getAppConfig } from "./src/lib/config/configValidator";
 import { describeKillSwitch, getKillSwitchState, KILL_SWITCHES } from "./src/lib/killSwitch";
 
 const nextConfig: NextConfig = {
@@ -8,6 +9,8 @@ const nextConfig: NextConfig = {
     turbopackUseSystemTlsCerts: true,
   },
 };
+
+getAppConfig();
 
 const builderKillSwitch = getKillSwitchState(KILL_SWITCHES.BUILDERS);
 
