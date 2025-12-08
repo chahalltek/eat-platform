@@ -12,12 +12,9 @@ export const SECURITY_EVENT_TYPES = {
   DATA_EXPORT_REQUESTED: 'DATA_EXPORT_REQUESTED',
   RETENTION_JOB_RUN: 'RETENTION_JOB_RUN',
   RATE_LIMIT_THRESHOLD: 'RATE_LIMIT_THRESHOLD',
-<<<<<<< ours
   COMPLIANCE_ALERT: 'COMPLIANCE_ALERT',
   COMPLIANCE_SCAN: 'COMPLIANCE_SCAN',
-=======
   KILL_SWITCH_UPDATED: 'KILL_SWITCH_UPDATED',
->>>>>>> theirs
 } as const;
 
 export type SecurityEventType = (typeof SECURITY_EVENT_TYPES)[keyof typeof SECURITY_EVENT_TYPES];
@@ -214,7 +211,6 @@ export async function logRateLimitThreshold(params: {
   });
 }
 
-<<<<<<< ours
 export async function logComplianceAlert(params: {
   tenantId?: string;
   userId?: string | null;
@@ -249,7 +245,10 @@ export async function logComplianceScan(params: {
       alerts: params.alerts,
       windowStartedAt: params.windowStartedAt,
       windowEndedAt: params.windowEndedAt,
-=======
+         },
+  });
+}
+
 export async function logKillSwitchChange(params: {
   tenantId?: string;
   userId?: string | null;
@@ -268,7 +267,6 @@ export async function logKillSwitchChange(params: {
       reason: params.reason ?? null,
       latchedAt: params.latchedAt?.toISOString() ?? null,
       scope: params.scope ?? 'system',
->>>>>>> theirs
     },
   });
 }
