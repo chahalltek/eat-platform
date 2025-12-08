@@ -1,7 +1,6 @@
 import type { SubscriptionPlan } from '@prisma/client';
 
 import { DEFAULT_TENANT_ID, DEFAULT_USER_ID } from '@/lib/auth/config';
-import { getTenantPlan } from '@/lib/subscriptionPlans';
 const loadSecurityLogger = async () =>
   (await import('@/lib/audit/securityEvents')).logRateLimitThreshold;
 
@@ -243,7 +242,13 @@ export class RateLimiter {
   }
 }
 
-const defaultPlanResolver: PlanResolver = async (tenantId) => (await getTenantPlan(tenantId))?.plan ?? null;
+async function loadTenantPlan(tenantId: string) {
+  // Lazy-load to avoid pulling Prisma into Edge bundles.
+  const { getTenantPlan } = await import('@/lib/subscriptionPlans');
+  return getTenantPlan(tenantId);
+}
+
+const defaultPlanResolver: PlanResolver = async (tenantId) => (await loadTenantPlan(tenantId))?.plan ?? null;
 
 const defaultSecurityLogger: SecurityLogger = async (entry) => {
   const logRateLimitThreshold = await loadSecurityLogger();
