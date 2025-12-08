@@ -3,9 +3,9 @@ export const TS_CONFIG = {
     minScore: 65,
     weight: {
       skills: 0.5,
-      experience: 0.3,
+      seniority: 0.3,
       location: 0.1,
-      tenure: 0.1,
+      candidateSignals: 0.1,
     },
   },
 
