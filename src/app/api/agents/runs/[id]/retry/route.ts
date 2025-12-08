@@ -17,15 +17,17 @@ async function buildRetryMetadata(runId: string, retryOfId?: string) {
   return { retryOfId: rootRunId, retryCount: previousRetries + 1 } as const;
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const currentUser = await getCurrentUser(req);
 
   if (!currentUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { id } = await context.params;
+
   const run = await prisma.agentRunLog.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       id: true,
       agentName: true,
