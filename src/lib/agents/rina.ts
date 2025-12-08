@@ -84,7 +84,12 @@ export async function runRina(
         sourceType,
         sourceTag,
       },
+<<<<<<< ours
       ...retryMetadata,
+=======
+      sourceType,
+      sourceTag,
+>>>>>>> theirs
     },
     async () => {
       const userPrompt = `Resume:\n"""\n${rawResumeText}\n"""`;

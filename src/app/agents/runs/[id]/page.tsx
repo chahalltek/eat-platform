@@ -11,6 +11,16 @@ function formatDurationMs(startedAt: Date, finishedAt?: Date | null) {
   return `${duration} ms`;
 }
 
+function formatSource(run: { sourceType: string | null; sourceTag: string | null }) {
+  if (run.sourceType && run.sourceTag) {
+    return `${run.sourceType} • ${run.sourceTag}`;
+  }
+
+  if (run.sourceType) return run.sourceType;
+  if (run.sourceTag) return run.sourceTag;
+  return '—';
+}
+
 export default async function AgentRunDetail({
   params,
 }: {
@@ -23,6 +33,8 @@ export default async function AgentRunDetail({
       status: true,
       startedAt: true,
       finishedAt: true,
+      sourceType: true,
+      sourceTag: true,
       input: true,
       output: true,
     },
@@ -67,6 +79,10 @@ export default async function AgentRunDetail({
           <div className="text-lg font-medium">
             {formatDurationMs(run.startedAt, run.finishedAt)}
           </div>
+        </div>
+        <div>
+          <div className="text-sm text-gray-500">Source</div>
+          <div className="text-lg font-medium">{formatSource(run)}</div>
         </div>
       </div>
 

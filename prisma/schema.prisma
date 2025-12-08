@@ -97,6 +97,8 @@ model JobReq {
   seniorityLevel   String?
   rawDescription   String
   status           String?   // "Open", "On Hold", "Closed"
+  sourceType       String?
+  sourceTag        String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -173,6 +175,8 @@ model AgentRunLog {
   agentName        String   // "EAT-TS.RINA", etc.
   user             User?    @relation(fields: [userId], references: [id])
   userId           String?
+  sourceType       String?
+  sourceTag        String?
   input            Json
   output           Json?
   status           AgentRunStatus @default(RUNNING)

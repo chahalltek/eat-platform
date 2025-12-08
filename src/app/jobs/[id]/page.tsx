@@ -27,6 +27,16 @@ function formatSalary(
   return `${currency}${salaryMax?.toLocaleString() ?? ""}${interval}`;
 }
 
+function formatSource(job: { sourceType: string | null; sourceTag: string | null }) {
+  if (job.sourceType && job.sourceTag) {
+    return `${job.sourceType} • ${job.sourceTag}`;
+  }
+
+  if (job.sourceType) return job.sourceType;
+  if (job.sourceTag) return job.sourceTag;
+  return "—";
+}
+
 export default async function JobDetail({
   params,
 }: {
@@ -124,6 +134,10 @@ export default async function JobDetail({
           <div className="text-lg font-medium text-gray-900">
             {job.status ?? "—"}
           </div>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Source</div>
+          <div className="text-lg font-medium text-gray-900">{formatSource(job)}</div>
         </div>
         <div>
           <div className="text-xs uppercase tracking-wide text-gray-500">Created</div>

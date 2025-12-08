@@ -45,6 +45,8 @@ type AgentRunRow = {
   startedAt: Date;
   input: unknown;
   output: unknown;
+  sourceType: string | null;
+  sourceTag: string | null;
 };
 
 function formatStatus(status: string | null) {
@@ -58,6 +60,16 @@ function formatStatus(status: string | null) {
   return status;
 }
 
+function formatSource(run: { sourceType: string | null; sourceTag: string | null }) {
+  if (run.sourceType && run.sourceTag) {
+    return `${run.sourceType} • ${run.sourceTag}`;
+  }
+
+  if (run.sourceType) return run.sourceType;
+  if (run.sourceTag) return run.sourceTag;
+  return "—";
+}
+
 export default async function AgentRunsPage() {
   const runs = await prisma.$queryRaw<AgentRunRow[]>(Prisma.sql`
     SELECT
@@ -66,7 +78,9 @@ export default async function AgentRunsPage() {
       status::text AS status,
       "startedAt",
       input,
-      output
+      output,
+      "sourceType",
+      "sourceTag"
     FROM "AgentRunLog"
     ORDER BY "startedAt" DESC
     LIMIT 50
@@ -93,6 +107,9 @@ export default async function AgentRunsPage() {
                 Candidate ID
               </th>
               <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
+                Source
+              </th>
+              <th scope="col" className="px-4 py-3 font-semibold text-gray-900">
                 Actions
               </th>
             </tr>
@@ -115,6 +132,7 @@ export default async function AgentRunsPage() {
                   <td className="px-4 py-3 font-mono text-xs text-gray-600">
                     {candidateId ?? "—"}
                   </td>
+                  <td className="px-4 py-3 text-gray-700">{formatSource(run)}</td>
                   <td className="px-4 py-3">
                     <Link
                       href={`/agents/runs/${run.id}`}

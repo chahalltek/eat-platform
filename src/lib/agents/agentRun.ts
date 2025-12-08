@@ -7,8 +7,13 @@ type AgentRunInput = {
   agentName: string;
   recruiterId?: string;
   inputSnapshot: Prisma.InputJsonValue | Prisma.JsonNullValueInput;
+<<<<<<< ours
   retryCount?: number;
   retryOfId?: string;
+=======
+  sourceType?: string | null;
+  sourceTag?: string | null;
+>>>>>>> theirs
 };
 
 export type AgentRetryMetadata = Pick<AgentRunInput, 'retryCount' | 'retryOfId'>;
@@ -34,7 +39,11 @@ function isStructuredResult<T extends Prisma.InputJsonValue>(
 }
 
 export async function withAgentRun<T extends Prisma.InputJsonValue>(
+<<<<<<< ours
   { agentName, recruiterId, inputSnapshot, retryCount, retryOfId }: AgentRunInput,
+=======
+  { agentName, recruiterId, inputSnapshot, sourceType, sourceTag }: AgentRunInput,
+>>>>>>> theirs
   fn: () => Promise<AgentRunResult<T>>,
 ): Promise<[T, string]> {
   const startedAt = new Date();
@@ -45,6 +54,8 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
     data: {
       agentName,
       userId,
+      sourceType: sourceType ?? null,
+      sourceTag: sourceTag ?? null,
       input: inputSnapshot,
       inputSnapshot,
       status: 'RUNNING',

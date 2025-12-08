@@ -19,6 +19,16 @@ function formatYears(years?: number | null) {
   return `${years} years`;
 }
 
+function formatSource(candidate: { sourceType: string | null; sourceTag: string | null }) {
+  if (candidate.sourceType && candidate.sourceTag) {
+    return `${candidate.sourceType} • ${candidate.sourceTag}`;
+  }
+
+  if (candidate.sourceType) return candidate.sourceType;
+  if (candidate.sourceTag) return candidate.sourceTag;
+  return "—";
+}
+
 async function findRelatedAgentRun(candidateId: string) {
   const runs = await prisma.$queryRaw<AgentRunRow[]>`
     SELECT id, "agentName", "startedAt"
@@ -117,7 +127,7 @@ export default async function CandidateDetail({
         <div>
           <div className="text-xs uppercase tracking-wide text-gray-500">Source</div>
           <div className="text-lg font-medium text-gray-900">
-            {candidate.sourceType ?? candidate.sourceTag ?? "—"}
+            {formatSource(candidate)}
           </div>
         </div>
         <div>

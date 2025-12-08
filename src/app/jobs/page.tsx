@@ -6,6 +6,16 @@ function formatDate(date: Date) {
   return date.toLocaleString();
 }
 
+function formatSource(job: { sourceType: string | null; sourceTag: string | null }) {
+  if (job.sourceType && job.sourceTag) {
+    return `${job.sourceType} • ${job.sourceTag}`;
+  }
+
+  if (job.sourceType) return job.sourceType;
+  if (job.sourceTag) return job.sourceTag;
+  return "—";
+}
+
 export default async function JobsPage() {
   const jobs = await prisma.jobReq
     .findMany({
@@ -13,6 +23,8 @@ export default async function JobsPage() {
         id: true,
         title: true,
         location: true,
+        sourceType: true,
+        sourceTag: true,
         createdAt: true,
         customer: { select: { name: true } },
       },
@@ -54,6 +66,9 @@ export default async function JobsPage() {
                   Location
                 </th>
                 <th scope="col" className="px-4 py-3">
+                  Source
+                </th>
+                <th scope="col" className="px-4 py-3">
                   Created
                 </th>
                 <th scope="col" className="px-4 py-3"></th>
@@ -67,6 +82,7 @@ export default async function JobsPage() {
                     {job.customer?.name ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-gray-700">{job.location ?? "—"}</td>
+                  <td className="px-4 py-3 text-gray-700">{formatSource(job)}</td>
                   <td className="px-4 py-3 text-gray-700">{formatDate(job.createdAt)}</td>
                   <td className="px-4 py-3 text-right">
                     <Link

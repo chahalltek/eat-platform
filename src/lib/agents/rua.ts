@@ -80,7 +80,12 @@ export async function runRua(
         sourceType,
         sourceTag,
       },
+<<<<<<< ours
       ...retryMetadata,
+=======
+      sourceType,
+      sourceTag,
+>>>>>>> theirs
     },
     async () => {
       const userPrompt = `
@@ -115,6 +120,8 @@ ${rawJobText}
           employmentType: parsed.employmentType ?? null,
           rawDescription: rawJobText,
           status: parsed.status ?? null,
+          sourceType: sourceType ?? null,
+          sourceTag: sourceTag ?? null,
           skills: {
             create: parsed.skills.map((skill) => ({
               name: skill.name,

@@ -14,6 +14,8 @@ export default function RuaTestPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RuaResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sourceType, setSourceType] = useState<string>("manual");
+  const [sourceTag, setSourceTag] = useState<string>("rua-test-page");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,15 +24,17 @@ export default function RuaTestPage() {
     setResult(null);
 
     try {
+      const payload = {
+        recruiterId: "charlie",
+        rawJobText: jobText,
+        sourceType: sourceType || undefined,
+        sourceTag: sourceTag || undefined,
+      };
+
       const response = await fetch("/api/agents/rua", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recruiterId: "charlie",
-          rawJobText: jobText,
-          sourceType: "manual",
-          sourceTag: "rua-test-page",
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -77,6 +81,36 @@ export default function RuaTestPage() {
             onChange={(event) => setJobText(event.target.value)}
             placeholder="Paste job description text..."
           />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-zinc-800" htmlFor="source-type">
+                Source type (optional)
+              </label>
+              <input
+                id="source-type"
+                type="text"
+                value={sourceType}
+                onChange={(event) => setSourceType(event.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="e.g. manual"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-zinc-800" htmlFor="source-tag">
+                Source tag (optional)
+              </label>
+              <input
+                id="source-tag"
+                type="text"
+                value={sourceTag}
+                onChange={(event) => setSourceTag(event.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="e.g. jira-ticket-123"
+              />
+            </div>
+          </div>
 
           <div className="flex items-center gap-3">
             <button
