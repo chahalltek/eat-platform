@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/db-safety.js --ci && next build",
-    "vercel-build": "node scripts/db-safety.js --ci && prisma migrate resolve --rolled-back 20270502120000_user_columns_feature_flags && prisma migrate deploy && prisma generate && next build",
+    "vercel-build": "node scripts/db-safety.js --ci && prisma migrate resolve --rolled-back 20270523100000_user_tenant_column_patch && prisma migrate deploy && prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
