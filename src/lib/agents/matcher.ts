@@ -2,10 +2,10 @@ import { MatchResult } from "@prisma/client";
 
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
-import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { matchJobToAllCandidates } from "@/lib/matching/batch";
 import { getCurrentUser } from "@/lib/auth";
 import { TS_CONFIG } from "@/config/ts";
+import { MatchConfidence } from "@/lib/matching/confidence";
 
 export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
 
@@ -22,6 +22,8 @@ export type RunMatcherResult = {
     jobReqId: string;
     matchScore: number;
     confidence: number;
+    confidenceCategory: string;
+    confidenceReasons: string[];
     explanationId: string;
   }>;
   agentRunId: string;
@@ -30,6 +32,27 @@ export type RunMatcherResult = {
 type MatcherAgentInput = { jobReqId: string; recruiterId?: string; limit?: number };
 type MatcherAgentResult = { matches: MatchResult[] };
 type MatcherAgentDependencies = { explainMatch?: typeof generateMatchExplanation };
+
+function extractConfidenceFromBreakdown(breakdown: unknown): MatchConfidence | null {
+  if (typeof breakdown !== "object" || breakdown === null) {
+    return null;
+  }
+
+  const confidence = (breakdown as Record<string, unknown>).confidence as
+    | MatchConfidence
+    | undefined;
+
+  if (
+    !confidence ||
+    typeof confidence.score !== "number" ||
+    typeof confidence.category !== "string" ||
+    !Array.isArray(confidence.reasons)
+  ) {
+    return null;
+  }
+
+  return confidence;
+}
 
 export async function generateMatchExplanation(match: MatchResult): Promise<MatchResult> {
   // Placeholder for LLM-backed enrichment; kept simple for determinism in tests
@@ -85,19 +108,24 @@ export async function runMatcher(
     retryMetadata,
   );
 
-  const matchesWithConfidence = await Promise.all(
-    result.matches.map(async (match) => {
-      const confidence = await persistCandidateConfidenceScore({ candidateId: match.candidateId });
+  const matchesWithConfidence = result.matches.map((match) => {
+    const confidence = extractConfidenceFromBreakdown(match.candidateSignalBreakdown) ?? {
+      score: 0,
+      category: "LOW",
+      reasons: [],
+      breakdown: { dataCompleteness: 0, skillCoverage: 0, recency: 0, total: 0 },
+    };
 
-      return {
-        candidateId: match.candidateId,
-        jobReqId: match.jobReqId,
-        matchScore: match.score,
-        confidence: confidence.score,
-        explanationId: match.id,
-      };
-    }),
-  );
+    return {
+      candidateId: match.candidateId,
+      jobReqId: match.jobReqId,
+      matchScore: match.score,
+      confidence: confidence.score,
+      confidenceCategory: confidence.category,
+      confidenceReasons: confidence.reasons,
+      explanationId: match.id,
+    };
+  });
 
   return {
     jobId,

@@ -4,6 +4,7 @@ import { computeMatchScore } from "@/lib/matching/msa";
 import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { prisma } from "@/lib/prisma";
 import { normalizeWeights } from "@/lib/matching/scoringConfig";
+import { computeMatchConfidence } from "@/lib/matching/confidence";
 
 type PrismaJobClient = Pick<typeof prisma, "jobReq">;
 type PrismaMatchClient = Pick<typeof prisma, "matchResult">;
@@ -104,6 +105,13 @@ export async function matchCandidateToJob({
     { candidateSignals },
   );
 
+  const confidence = computeMatchConfidence({ candidate, jobReq });
+
+  const candidateSignalBreakdown = {
+    ...(matchScore.candidateSignalBreakdown ?? {}),
+    confidence,
+  } as const;
+
   const savedMatch = await prismaClient.matchResult.create({
     data: {
       candidateId: candidate.id,
@@ -114,11 +122,11 @@ export async function matchCandidateToJob({
       seniorityScore: matchScore.seniorityScore,
       locationScore: matchScore.locationScore,
       candidateSignalScore: matchScore.candidateSignalScore,
-      candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
+      candidateSignalBreakdown,
     },
   });
 
-  return { matchScore, matchResult: savedMatch };
+  return { matchScore, matchResult: savedMatch, confidence };
 }
 
 export function normalizeWeightConfig(weights: Record<string, number>) {

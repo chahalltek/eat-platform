@@ -14,6 +14,7 @@ import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES, type UserRole } from "@/lib/auth/roles";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { computeMatchConfidence } from "@/lib/matching/confidence";
 
 const matchRequestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId must be a non-empty string"),
@@ -127,6 +128,12 @@ export async function POST(req: Request) {
     { candidateSignals, jobFreshnessScore: freshnessScore.score },
   );
 
+  const confidence = computeMatchConfidence({ candidate, jobReq });
+  const candidateSignalBreakdown = {
+    ...(matchScore.candidateSignalBreakdown ?? {}),
+    confidence,
+  } as const;
+
   const data = {
     candidateId,
     jobReqId,
@@ -136,7 +143,7 @@ export async function POST(req: Request) {
     seniorityScore: matchScore.seniorityScore,
     locationScore: matchScore.locationScore,
     candidateSignalScore: matchScore.candidateSignalScore,
-    candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
+    candidateSignalBreakdown,
   };
 
   const existingMatch = await prisma.matchResult.findFirst({
@@ -152,5 +159,10 @@ export async function POST(req: Request) {
 
   await upsertJobCandidateForMatch(jobReqId, candidateId, matchResult.id, tenantId);
 
-  return NextResponse.json(matchResult);
+  return NextResponse.json({
+    ...matchResult,
+    confidence: confidence.score,
+    confidenceCategory: confidence.category,
+    confidenceReasons: confidence.reasons,
+  });
 }

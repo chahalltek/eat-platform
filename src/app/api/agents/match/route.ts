@@ -14,6 +14,7 @@ import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
 import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { computeMatchConfidence } from "@/lib/matching/confidence";
 
 const requestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId is required"),
@@ -164,6 +165,9 @@ export async function POST(req: NextRequest) {
       candidateId: string;
       jobReqId: string;
       score: number;
+      confidence: number;
+      confidenceCategory: string;
+      confidenceReasons: string[];
       breakdown: Record<string, unknown>;
       explanation: string;
     }>;
@@ -180,14 +184,20 @@ export async function POST(req: NextRequest) {
         { candidateSignals, jobFreshnessScore: jobFreshness.score },
       );
 
+      const confidence = computeMatchConfidence({ candidate, jobReq });
+
       const breakdown = {
         score: matchScore.score,
         skillScore: matchScore.skillScore,
         seniorityScore: matchScore.seniorityScore,
         locationScore: matchScore.locationScore,
         candidateSignalScore: matchScore.candidateSignalScore,
-        candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
+        candidateSignalBreakdown: {
+          ...(matchScore.candidateSignalBreakdown ?? {}),
+          confidence,
+        },
         jobFreshnessScore: jobFreshness.score,
+        confidence,
       } as const;
 
       const jobDescription = jobReq.rawDescription?.trim() || null;
@@ -213,7 +223,10 @@ export async function POST(req: NextRequest) {
           seniorityScore: matchScore.seniorityScore,
           locationScore: matchScore.locationScore,
           candidateSignalScore: matchScore.candidateSignalScore,
-          candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
+          candidateSignalBreakdown: {
+            ...(matchScore.candidateSignalBreakdown ?? {}),
+            confidence,
+          },
           tenantId,
           agentRunId: agentRun.id,
         } as const;
@@ -258,6 +271,9 @@ export async function POST(req: NextRequest) {
         candidateId: candidate.id,
         jobReqId,
         score: matchScore.score,
+        confidence: confidence.score,
+        confidenceCategory: confidence.category,
+        confidenceReasons: confidence.reasons,
         breakdown,
         explanation,
       });

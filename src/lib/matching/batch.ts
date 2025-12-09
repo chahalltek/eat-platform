@@ -7,6 +7,7 @@ import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from "@/lib/killSwitch";
 import { prisma } from "@/lib/prisma";
+import { computeMatchConfidence } from "@/lib/matching/confidence";
 
 export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   assertKillSwitchDisarmed(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
@@ -102,6 +103,12 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       { candidate, jobReq },
       { candidateSignals, jobFreshnessScore: jobFreshness.score },
     );
+
+    const confidence = computeMatchConfidence({ candidate, jobReq });
+    const candidateSignalBreakdown = {
+      ...(matchScore.candidateSignalBreakdown ?? {}),
+      confidence,
+    } as const;
     const data = {
       candidateId: candidate.id,
       jobReqId,
@@ -111,7 +118,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       seniorityScore: matchScore.seniorityScore,
       locationScore: matchScore.locationScore,
       candidateSignalScore: matchScore.candidateSignalScore,
-      candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
+      candidateSignalBreakdown,
     };
 
     const existing = existingByCandidateId.get(candidate.id);

@@ -31,6 +31,7 @@ const { mockAgentRunLogCreate, mockAgentRunLogUpdate, mockMatchResultCreate, moc
   const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-123", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockMatchResultCreate = vi.fn(async ({ data }) => ({ id: `match-${Math.random()}`, ...data }));
+  const mockUserFindUnique = vi.fn(async () => ({ id: "test-user", tenantId: "tenant" }));
 
   const mockPrisma = {
     agentRunLog: {
@@ -39,6 +40,9 @@ const { mockAgentRunLogCreate, mockAgentRunLogUpdate, mockMatchResultCreate, moc
     },
     matchResult: {
       create: mockMatchResultCreate,
+    },
+    user: {
+      findUnique: mockUserFindUnique,
     },
   };
 
