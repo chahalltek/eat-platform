@@ -312,13 +312,13 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
       createTextColumn<MatchRow, "jobTitle">({
         accessorKey: "jobTitle",
         header: "Job title",
-        enableSorting: false,
+        sortable: false,
         cell: ({ getValue }) => <span className="text-sm text-gray-800">{getValue() ?? "Unknown"}</span>,
       }),
       createNumberColumn<MatchRow, "score">({
         accessorKey: "score",
         header: "Score",
-        enableSorting: true,
+        sortable: true,
         cell: ({ getValue }) => {
           const value = getValue();
           return <span className="text-sm font-semibold text-gray-900">{value ?? "—"}</span>;
