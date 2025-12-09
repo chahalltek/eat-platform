@@ -19,8 +19,10 @@ export function RunMatcherButton({ jobId }: RunMatcherButtonProps) {
     setIsRunning(true);
 
     try {
-      const response = await fetch(`/api/jobs/${jobId}/matcher`, {
+      const response = await fetch(`/api/agents/match`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobReqId: jobId }),
       });
 
       if (!response.ok) {

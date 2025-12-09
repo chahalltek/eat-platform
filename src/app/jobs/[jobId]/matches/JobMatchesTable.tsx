@@ -21,6 +21,7 @@ export type MatchRow = {
   candidateName: string;
   currentTitle?: string | null;
   score?: number | null;
+  category?: string | null;
   jobCandidateId?: string;
   jobCandidateStatus?: JobCandidateStatus;
   explanation?: unknown;
@@ -29,6 +30,7 @@ export type MatchRow = {
   locationScore?: number | null;
   candidateSignalScore?: number | null;
   candidateSignalBreakdown?: CandidateSignalBreakdown | null;
+  keySkills?: string[];
 };
 
 const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
@@ -39,8 +41,33 @@ const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
 };
 
 export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
+  const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
   const columns = useMemo<EATTableColumn<MatchRow>[]>(
     () => [
+      {
+        id: "shortlist",
+        header: "Shortlist",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            aria-label={`Shortlist ${row.original.candidateName}`}
+            checked={shortlisted.has(row.original.candidateId)}
+            onChange={(event) => {
+              setShortlisted((current) => {
+                const next = new Set(current);
+                if (event.target.checked) {
+                  next.add(row.original.candidateId);
+                } else {
+                  next.delete(row.original.candidateId);
+                }
+                return next;
+              });
+            }}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+        ),
+      },
       {
         ...createTextColumn<MatchRow, "candidateName">({
           accessorKey: "candidateName",
@@ -66,6 +93,38 @@ export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
           return `${Math.round(normalized)}%`;
         },
         sortingFn: (rowA, rowB) => (rowA.original.score ?? 0) - (rowB.original.score ?? 0),
+      },
+      {
+        id: "category",
+        header: "Category",
+        cell: ({ row }) => {
+          const label = row.original.category ?? "Suggested";
+          return label
+            .toString()
+            .toLowerCase()
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (char) => char.toUpperCase());
+        },
+      },
+      {
+        id: "skills",
+        header: "Key skills",
+        cell: ({ row }) => (
+          <div className="flex flex-wrap gap-2">
+            {(row.original.keySkills ?? []).length === 0 ? (
+              <span className="text-xs text-gray-500">No skills listed</span>
+            ) : (
+              row.original.keySkills?.map((skill) => (
+                <span
+                  key={`${row.original.id}-${skill}`}
+                  className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-800"
+                >
+                  {skill}
+                </span>
+              ))
+            )}
+          </div>
+        ),
       },
       {
         id: "status",
@@ -94,7 +153,7 @@ export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
         cell: ({ row }) => <ExplainabilityCell match={row.original} />,
       },
     ],
-    [],
+    [shortlisted],
   );
 
   return (

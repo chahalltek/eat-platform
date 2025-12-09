@@ -27,6 +27,7 @@ export default async function JobMatchesPage({
             status: true,
           },
         },
+        skills: true,
       },
     })
     .catch((error) => {
@@ -71,12 +72,14 @@ export default async function JobMatchesPage({
       candidateSignalBreakdown: match.candidateSignalBreakdown as
         | MatchRow["candidateSignalBreakdown"]
         | undefined,
+      category: jobCandidate?.status ?? "POTENTIAL",
+      keySkills: (match.candidate.normalizedSkills ?? []).slice(0, 4),
     };
   });
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-6xl px-6 py-10 space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-gray-900">Matches</h1>
           <p className="text-gray-700">
@@ -87,7 +90,7 @@ export default async function JobMatchesPage({
             {job.location ?? "Unknown location"}
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:gap-3">
           <RunMatcherButton jobId={job.id} />
           <Link href={`/jobs/${job.id}`} className="text-blue-600 hover:text-blue-800">
             Back to job
@@ -95,6 +98,75 @@ export default async function JobMatchesPage({
           <Link href="/jobs" className="text-blue-600 hover:text-blue-800">
             Jobs list
           </Link>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-gray-900">Job summary</h2>
+          <p className="text-sm text-gray-700">Insights from the intake form.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 px-6 py-4 md:grid-cols-2">
+          <div className="space-y-3">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">Customer</div>
+              <div className="text-sm font-medium text-gray-900">{job.customer?.name ?? "Unknown customer"}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">Employment Type</div>
+              <div className="text-sm font-medium text-gray-900">{job.employmentType ?? "Not specified"}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">Seniority</div>
+              <div className="text-sm font-medium text-gray-900">{job.seniorityLevel ?? "Not specified"}</div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">Must-have skills</div>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {job.skills.filter((skill) => skill.required).length === 0 ? (
+                  <span className="text-sm text-gray-600">No must-haves recorded.</span>
+                ) : (
+                  job.skills
+                    .filter((skill) => skill.required)
+                    .map((skill) => (
+                      <span
+                        key={skill.id}
+                        className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
+                      >
+                        {skill.name}
+                      </span>
+                    ))
+                )}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">Nice-to-haves</div>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {job.skills.filter((skill) => !skill.required).length === 0 ? (
+                  <span className="text-sm text-gray-600">No additional skills recorded.</span>
+                ) : (
+                  job.skills
+                    .filter((skill) => !skill.required)
+                    .map((skill) => (
+                      <span
+                        key={skill.id}
+                        className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800"
+                      >
+                        {skill.name}
+                      </span>
+                    ))
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="md:col-span-2">
+            <div className="text-xs uppercase tracking-wide text-gray-500">Role overview</div>
+            <p className="mt-1 whitespace-pre-line text-sm text-gray-800">
+              {job.rawDescription || "No intake summary available."}
+            </p>
+          </div>
         </div>
       </div>
 
