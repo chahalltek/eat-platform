@@ -126,29 +126,34 @@ export function clearSessionCookie() {
 export async function parseSessionToken(token: string | undefined): Promise<SessionPayload | null> {
   if (!token) return null;
 
-  const [encodedPayload, signature] = token.split(".");
-  if (!encodedPayload || !signature) return null;
+  try {
+    const [encodedPayload, signature] = token.split(".");
+    if (!encodedPayload || !signature) return null;
 
-  const key = await getSigningKey();
-  const isValid = await crypto.subtle.verify(
-    "HMAC",
-    key,
-    base64UrlDecode(signature),
-    encoder.encode(encodedPayload),
-  );
+    const key = await getSigningKey();
+    const isValid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      base64UrlDecode(signature),
+      encoder.encode(encodedPayload),
+    );
 
-  if (!isValid) {
+    if (!isValid) {
+      return null;
+    }
+
+    const payload = decodePayload(encodedPayload);
+    if (!payload) return null;
+
+    if (payload.exp <= Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    console.warn("Failed to parse session token", error);
     return null;
   }
-
-  const payload = decodePayload(encodedPayload);
-  if (!payload) return null;
-
-  if (payload.exp <= Math.floor(Date.now() / 1000)) {
-    return null;
-  }
-
-  return payload;
 }
 
 async function getTokenFromRequest(req?: NextRequest) {
