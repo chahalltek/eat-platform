@@ -2,6 +2,7 @@ import AgentRunLogsView from "./logs-view";
 import { SerializableLog } from "./types";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
 import { canViewAgentLogs } from "@/lib/auth/permissions";
 
@@ -9,8 +10,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AgentRunLogsPage() {
   const [user, tenantId] = await Promise.all([getCurrentUser(), getUserTenantId()]);
+  const resolvedTenantId = tenantId ?? DEFAULT_TENANT_ID;
 
-  if (!canViewAgentLogs(user, tenantId)) {
+  if (!canViewAgentLogs(user, resolvedTenantId)) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-10">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -23,7 +25,7 @@ export default async function AgentRunLogsPage() {
     );
   }
 
-  const agentUiEnabled = await isEnabled(tenantId, FEATURE_FLAGS.AGENTS_MATCHED_UI_V1);
+  const agentUiEnabled = await isEnabled(resolvedTenantId, FEATURE_FLAGS.AGENTS_MATCHED_UI_V1);
 
   if (!agentUiEnabled) {
     return (
