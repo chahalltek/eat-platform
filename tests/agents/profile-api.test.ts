@@ -52,8 +52,16 @@ vi.mock("@/lib/agents/killSwitch", () => ({
 vi.mock("@/lib/featureFlags/middleware", () => ({ agentFeatureGuard: vi.fn().mockResolvedValue(null) }));
 vi.mock("@/lib/subscription/usageLimits", () => ({ assertTenantWithinLimits: vi.fn() }));
 vi.mock("@/lib/llm", () => ({ callLLM: mockCallLLM }));
-vi.mock("@/lib/auth", () => ({ getCurrentUser: vi.fn().mockResolvedValue({ id: "user-42", tenantId: "tenant-1" }) }));
-vi.mock("@/lib/auth/user", () => ({ getCurrentUser: vi.fn().mockResolvedValue({ id: "user-42", tenantId: "tenant-1" }) }));
+const { mockGetCurrentUser } = vi.hoisted(() => ({
+  mockGetCurrentUser: vi.fn().mockResolvedValue({
+    id: "user-42",
+    tenantId: "tenant-1",
+    role: "RECRUITER",
+  }),
+}));
+
+vi.mock("@/lib/auth", () => ({ getCurrentUser: mockGetCurrentUser }));
+vi.mock("@/lib/auth/user", () => ({ getCurrentUser: mockGetCurrentUser }));
 vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1") }));
 vi.mock("@/lib/killSwitch", () => ({
   assertKillSwitchDisarmed: vi.fn(),
@@ -115,5 +123,25 @@ describe("PROFILE agent API", () => {
       { name: "TypeScript", candidateId: "candidate-123" },
       { name: "React", candidateId: "candidate-123" },
     ]);
+  });
+
+  it("returns 403 for unauthorized roles", async () => {
+    mockGetCurrentUser.mockResolvedValueOnce({
+      id: "user-42",
+      tenantId: "tenant-1",
+      role: "SALES",
+    });
+
+    const request = new NextRequest(
+      new Request("http://localhost/api/agents/profile", {
+        method: "POST",
+        body: JSON.stringify({ rawResumeText: "text", sourceType: "upload" }),
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const response = await profilePost(request);
+
+    expect(response.status).toBe(403);
   });
 });

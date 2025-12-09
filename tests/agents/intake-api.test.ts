@@ -9,17 +9,29 @@ const {
   mockJobReqCreate,
   mockUserFindUnique,
   mockPrisma,
+<<<<<<< ours
   mockGetTenantScopedPrismaClient,
+=======
+  mockGetCurrentUser,
+>>>>>>> theirs
 } = vi.hoisted(() => {
   const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-1", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockJobReqCreate = vi.fn(async ({ data }) => ({ id: "job-1", ...data }));
   const mockUserFindUnique = vi.fn(async () => ({ id: "recruiter-1", tenantId: "tenant-1" }));
+<<<<<<< ours
   const mockGetTenantScopedPrismaClient = vi.fn(async () => ({
     prisma: mockPrisma as any,
     tenantId: "tenant-1",
     runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
   }));
+=======
+  const mockGetCurrentUser = vi.fn().mockResolvedValue({
+    id: "user-1",
+    tenantId: "tenant-1",
+    role: "RECRUITER",
+  });
+>>>>>>> theirs
 
   const mockPrisma = {
     agentRunLog: {
@@ -40,7 +52,11 @@ const {
     mockJobReqCreate,
     mockUserFindUnique,
     mockPrisma,
+<<<<<<< ours
     mockGetTenantScopedPrismaClient,
+=======
+    mockGetCurrentUser,
+>>>>>>> theirs
   };
 });
 
@@ -78,7 +94,7 @@ vi.mock("@/lib/agents/promptRegistry", () => ({
 }));
 vi.mock("@/lib/llm", () => ({ callLLM: mockCallLLM }));
 vi.mock("@/lib/auth/user", () => ({
-  getCurrentUser: vi.fn().mockResolvedValue({ id: "user-1", tenantId: "tenant-1" }),
+  getCurrentUser: mockGetCurrentUser,
 }));
 vi.mock("@/app/api/agents/recruiterValidation", () => ({
   validateRecruiterId: vi.fn().mockResolvedValue({ recruiterId: "recruiter-1" }),
@@ -151,23 +167,41 @@ describe("INTAKE agent API", () => {
     );
   });
 
+<<<<<<< ours
   it("blocks requests without a tenant", async () => {
     const { TenantScopeError } = await import("@/lib/agents/tenantScope");
 
     mockGetTenantScopedPrismaClient.mockRejectedValue(
       new TenantScopeError("Tenant is required", 400),
     );
+=======
+  it("denies access for unauthorized roles", async () => {
+    mockGetCurrentUser.mockResolvedValueOnce({
+      id: "user-1",
+      tenantId: "tenant-1",
+      role: "SALES",
+    });
+>>>>>>> theirs
 
     const request = new NextRequest(
       new Request("http://localhost/api/agents/intake", {
         method: "POST",
+<<<<<<< ours
         body: JSON.stringify({ rawJobText: "bad" }),
+=======
+        body: JSON.stringify({ rawJobText: "A role" }),
+>>>>>>> theirs
         headers: { "content-type": "application/json" },
       }),
     );
 
     const response = await intakePost(request);
 
+<<<<<<< ours
     expect(response.status).toBe(400);
+=======
+    expect(response.status).toBe(403);
+    expect(mockAgentRunLogCreate).not.toHaveBeenCalled();
+>>>>>>> theirs
   });
 });

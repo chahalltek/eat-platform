@@ -2,9 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { callLLM } from '@/lib/llm';
+<<<<<<< ours
 import { getCurrentUser } from '@/lib/auth/user';
 import { normalizeError } from '@/lib/errors';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
+=======
+import { prisma } from '@/lib/prisma';
+import { getCurrentTenantId } from '@/lib/tenant';
+import { normalizeError } from '@/lib/errors';
+import { requireRole } from '@/lib/auth/requireRole';
+import { USER_ROLES } from '@/lib/auth/roles';
+>>>>>>> theirs
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -45,12 +53,13 @@ function trimString(value: unknown) {
 }
 
 export async function POST(req: NextRequest) {
-  const currentUser = await getCurrentUser(req);
+  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
 
-  if (!currentUser) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!roleCheck.ok) {
+    return roleCheck.response;
   }
 
+<<<<<<< ours
   let scopedTenant;
   try {
     scopedTenant = await getTenantScopedPrismaClient(req);
@@ -63,6 +72,9 @@ export async function POST(req: NextRequest) {
 
     throw error;
   }
+=======
+  const currentUser = roleCheck.user;
+>>>>>>> theirs
 
   let body: unknown;
 

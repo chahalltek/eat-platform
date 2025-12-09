@@ -9,14 +9,23 @@ import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
+<<<<<<< ours
 import { getCurrentUser } from "@/lib/auth/user";
+=======
+import { getUserTenantId } from "@/lib/auth/user";
+>>>>>>> theirs
 import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
 <<<<<<< ours
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+<<<<<<< ours
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 =======
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
+>>>>>>> theirs
+=======
+import { requireRole } from "@/lib/auth/requireRole";
+import { USER_ROLES } from "@/lib/auth/roles";
 >>>>>>> theirs
 
 const requestSchema = z.object({
@@ -63,11 +72,13 @@ export async function POST(req: NextRequest) {
 
   const { jobReqId, candidateIds, limit = 50 } = parsed.data;
 
-  const currentUser = await getCurrentUser(req);
+  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
 
-  if (!currentUser) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!roleCheck.ok) {
+    return roleCheck.response;
   }
+
+  const currentUser = roleCheck.user;
 
   const flagCheck = await agentFeatureGuard();
 

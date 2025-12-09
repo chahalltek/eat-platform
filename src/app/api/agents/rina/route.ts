@@ -2,21 +2,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runRina } from '@/lib/agents/rina';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
-import { getCurrentUser } from '@/lib/auth/user';
 import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
 import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
 import { validateRecruiterId } from '../recruiterValidation';
+<<<<<<< ours
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
+=======
+import { requireRole } from '@/lib/auth/requireRole';
+import { USER_ROLES } from '@/lib/auth/roles';
+>>>>>>> theirs
 
 export async function POST(req: NextRequest) {
   try {
-    const currentUser = await getCurrentUser(req);
+    const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
 
-    if (!currentUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!roleCheck.ok) {
+      return roleCheck.response;
     }
 
+<<<<<<< ours
     let scopedTenant;
     try {
       scopedTenant = await getTenantScopedPrismaClient(req);
@@ -29,6 +34,9 @@ export async function POST(req: NextRequest) {
 
       throw error;
     }
+=======
+    const currentUser = roleCheck.user;
+>>>>>>> theirs
 
     const flagCheck = await agentFeatureGuard();
 
