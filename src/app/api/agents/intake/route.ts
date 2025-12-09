@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -198,4 +199,138 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: userMessage }, { status });
   }
+=======
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import type { IntakeSkill, JobIntakeProfile, JobIntakeRequest, JobIntakeResponse } from "@/types/intake";
+
+const requestSchema = z.object({
+  description: z.string().min(1, "description is required"),
+  title: z.string().optional().nullable(),
+  customer: z.string().optional().nullable(),
+});
+
+function normalizeTextList(items: string[]) {
+  const seen = new Set<string>();
+  const results: string[] = [];
+
+  for (const item of items) {
+    const trimmed = item.trim();
+    if (!trimmed) continue;
+
+    const normalized = trimmed.toLowerCase();
+    if (seen.has(normalized)) continue;
+
+    seen.add(normalized);
+    results.push(trimmed);
+  }
+
+  return results;
+}
+
+function extractSkills(description: string): IntakeSkill[] {
+  const bulletPattern = /^[-*•]\s*(.+)$/;
+  const lines = description.split(/\r?\n/).map((line) => line.trim());
+  const skills: IntakeSkill[] = [];
+
+  for (const line of lines) {
+    if (!line) continue;
+
+    const bulletMatch = line.match(bulletPattern);
+    if (bulletMatch) {
+      const skill = bulletMatch[1];
+      skills.push({ name: skill });
+      continue;
+    }
+
+    if (/experience|knowledge|familiar|background|expertise/i.test(line)) {
+      skills.push({ name: line });
+    }
+  }
+
+  return skills;
+}
+
+function extractMustHaves(description: string): string[] {
+  const lines = description.split(/\r?\n/).map((line) => line.trim());
+  const mustHaveTriggers = /(must[-\s]?have|required|required:|requirements:)/i;
+  const collected: string[] = [];
+
+  for (const line of lines) {
+    if (!line) continue;
+
+    if (mustHaveTriggers.test(line)) {
+      collected.push(line.replace(mustHaveTriggers, "").trim() || line);
+      continue;
+    }
+
+    if (/\b(years? of experience|proficiency|certification)\b/i.test(line)) {
+      collected.push(line);
+    }
+  }
+
+  return normalizeTextList(collected);
+}
+
+function extractAmbiguities(description: string): string[] {
+  const lines = description.split(/\r?\n/).map((line) => line.trim());
+  const ambiguities: string[] = [];
+
+  for (const line of lines) {
+    if (!line) continue;
+
+    if (/[?]/.test(line)) {
+      ambiguities.push(line);
+      continue;
+    }
+
+    if (/\bor\b/i.test(line) && /\/|\(|\)/.test(line)) {
+      ambiguities.push(line);
+    }
+  }
+
+  return normalizeTextList(ambiguities);
+}
+
+function buildProfile(body: JobIntakeRequest): JobIntakeProfile {
+  const description = body.description.trim();
+  const skills = extractSkills(description);
+  const mustHaves = extractMustHaves(description);
+  const ambiguities = extractAmbiguities(description);
+
+  const uniqueSkills = normalizeTextList(skills.map((skill) => skill.name)).map((name) => ({ name }));
+
+  return {
+    title: body.title?.trim() || null,
+    customer: body.customer?.trim() || null,
+    skills: uniqueSkills,
+    mustHaves,
+    ambiguities,
+    rawDescription: description,
+  } satisfies JobIntakeProfile;
+}
+
+export async function POST(request: Request) {
+  let payload: unknown;
+
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const parsed = requestSchema.safeParse(payload);
+
+  if (!parsed.success) {
+    const message = parsed.error.issues.map((issue) => issue.message).join("; ");
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  const profile = buildProfile(parsed.data);
+
+  const response: JobIntakeResponse = { profile };
+
+  return NextResponse.json(response, { status: 200 });
+>>>>>>> theirs
 }
