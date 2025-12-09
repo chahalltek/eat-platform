@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 import { getCurrentUser } from "@/lib/auth/user";
-import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
+import { normalizeRole, USER_ROLES, type UserRole } from "@/lib/auth/roles";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 
 const matchRequestSchema = z.object({
