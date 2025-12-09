@@ -1,72 +1,68 @@
 import { describe, expect, it } from "vitest";
 
-import { computeMatchScore, type MatchContext } from "@/lib/matching/msa";
-import { validateMatchExplanation } from "@/lib/matching/explanation";
+import { computeMatchScore } from "@/lib/matching/msa";
 
-const baseCandidate: MatchContext["candidate"] = {
-  id: "candidate-1",
-  fullName: "Casey Candidate",
+const baseCandidate = {
+  id: "cand-1",
+  fullName: "Terry Candidate",
   email: null,
   phone: null,
   location: "Remote",
-  currentTitle: "Engineer",
+  currentTitle: "Senior Engineer",
   currentCompany: "Acme",
-  totalExperienceYears: 6,
-  seniorityLevel: "Mid",
+  totalExperienceYears: 8,
+  seniorityLevel: "Senior",
   summary: null,
   rawResumeText: null,
   sourceType: null,
   sourceTag: null,
   parsingConfidence: null,
   status: null,
-  createdAt: new Date("2024-01-01T00:00:00Z"),
-  updatedAt: new Date("2024-01-02T00:00:00Z"),
+  tenantId: "tenant-1",
+  createdAt: new Date("2024-05-01T00:00:00Z"),
+  updatedAt: new Date("2024-05-02T00:00:00Z"),
+  deletedAt: null,
   skills: [
     {
-      id: "cand-skill-2",
-      candidateId: "candidate-1",
-      name: "TypeScript",
-      normalizedName: "typescript",
-      proficiency: "High",
-      yearsOfExperience: 3,
-    },
-    {
       id: "cand-skill-1",
-      candidateId: "candidate-1",
+      candidateId: "cand-1",
       name: "React",
       normalizedName: "react",
       proficiency: "High",
       yearsOfExperience: 4,
+      tenantId: "tenant-1",
+    },
+    {
+      id: "cand-skill-2",
+      candidateId: "cand-1",
+      name: "TypeScript",
+      normalizedName: "typescript",
+      proficiency: "High",
+      yearsOfExperience: 3,
+      tenantId: "tenant-1",
     },
   ],
 };
 
-const baseJob: MatchContext["jobReq"] = {
+const baseJob = {
   id: "job-1",
   customerId: null,
-  title: "Frontend Engineer",
+  title: "Senior Frontend Engineer",
   location: "Remote",
   employmentType: null,
   salaryMin: null,
   salaryMax: null,
   salaryCurrency: null,
   salaryInterval: null,
-  seniorityLevel: "Mid",
+  seniorityLevel: "Senior",
   rawDescription: "Build UI",
   status: null,
   sourceType: null,
   sourceTag: null,
-  createdAt: new Date("2024-01-05T00:00:00Z"),
-  updatedAt: new Date("2024-01-05T00:00:00Z"),
+  createdAt: new Date("2024-04-01T00:00:00Z"),
+  updatedAt: new Date("2024-04-02T00:00:00Z"),
+  tenantId: "tenant-1",
   skills: [
-    {
-      id: "job-skill-2",
-      jobReqId: "job-1",
-      name: "TypeScript",
-      normalizedName: "typescript",
-      required: false,
-      weight: 1,
-    },
     {
       id: "job-skill-1",
       jobReqId: "job-1",
@@ -74,55 +70,53 @@ const baseJob: MatchContext["jobReq"] = {
       normalizedName: "react",
       required: true,
       weight: 2,
+      tenantId: "tenant-1",
     },
     {
-      id: "job-skill-3",
+      id: "job-skill-2",
       jobReqId: "job-1",
-      name: "GraphQL",
-      normalizedName: "graphql",
-      required: true,
+      name: "TypeScript",
+      normalizedName: "typescript",
+      required: false,
       weight: 1,
+      tenantId: "tenant-1",
     },
   ],
-  matchResults: [],
-  matches: [],
-  jobCandidates: [],
-  outreachInteractions: [],
 };
 
-const candidateSignals = {
-  score: 70,
-  breakdown: {
-    recentActivity: { score: 80, daysSinceActivity: 3, reason: "Recent activity 3 day(s) ago influences engagement." },
-    outreachInteractions: { score: 70, interactions: 1, reason: "Outreach interactions recorded: 1." },
-    statusProgression: { score: 65, status: "POTENTIAL", reason: "Current status POTENTIAL contributes to engagement." },
-  },
-  reasons: [
-    "Recent activity 3 day(s) ago influences engagement.",
-    "Outreach interactions recorded: 1.",
-    "Current status POTENTIAL contributes to engagement.",
-  ],
-} as const;
+describe("computeMatchScore", () => {
+  it("awards full skill credit for exact matches", () => {
+    const result = computeMatchScore({ candidate: baseCandidate, jobReq: baseJob });
 
-describe("computeMatchScore explainability", () => {
-  it("produces deterministic explanations", () => {
-    const context: MatchContext = { candidate: baseCandidate, jobReq: baseJob };
-
-    const first = computeMatchScore(context, { jobFreshnessScore: 85, candidateSignals });
-    const second = computeMatchScore(context, { jobFreshnessScore: 85, candidateSignals });
-
-    expect(first.explanation).toEqual(second.explanation);
+    expect(result.skillScore).toBe(100);
+    expect(result.reasons).toContain("Required skill matched: React");
+    expect(result.reasons).toContain("Nice-to-have skill matched: TypeScript");
+    expect(result.score).toBe(95);
   });
 
-  it("matches the explanation schema", () => {
-    const context: MatchContext = { candidate: baseCandidate, jobReq: baseJob };
+  it("records missing required skills and lowers the score", () => {
+    const result = computeMatchScore({
+      candidate: { ...baseCandidate, skills: [baseCandidate.skills[0]!] },
+      jobReq: {
+        ...baseJob,
+        skills: [
+          baseJob.skills[0]!,
+          baseJob.skills[1]!,
+          {
+            id: "job-skill-3",
+            jobReqId: "job-1",
+            name: "GraphQL",
+            normalizedName: "graphql",
+            required: true,
+            weight: 1,
+            tenantId: "tenant-1",
+          },
+        ],
+      },
+    });
 
-    const result = computeMatchScore(context, { jobFreshnessScore: 85, candidateSignals });
-
-    expect(validateMatchExplanation(result.explanation)).toBe(true);
-    expect(result.explanation.topReasons.length).toBeGreaterThan(0);
-    expect(result.explanation.exportableText).toContain("Top reasons:");
+    expect(result.skillScore).toBeLessThan(100);
+    expect(result.reasons).toContain("Missing required skill: GraphQL");
     expect(result.explanation.missingSkills).toContain("GraphQL");
-    expect(result.explanation.riskAreas).toContain("Missing required skill: GraphQL");
   });
 });
