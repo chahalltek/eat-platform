@@ -4,17 +4,42 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "displayName" TEXT;
 
 -- Backfill missing tenantId/displayName values from legacy fields if present
 DO $$
+DECLARE
+  tenant_id_exists BOOLEAN := EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'User'
+      AND column_name = 'tenantId'
+  );
+  display_name_exists BOOLEAN := EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'User'
+      AND column_name = 'displayName'
+  );
+  legacy_name_exists BOOLEAN := EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'User'
+      AND column_name = 'name'
+  );
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'User' AND column_name = 'tenantId') THEN
+  IF tenant_id_exists THEN
     UPDATE "User"
     SET "tenantId" = COALESCE("tenantId", 'default-tenant')
     WHERE "tenantId" IS NULL;
   END IF;
 
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'User' AND column_name = 'displayName') THEN
-    UPDATE "User"
-    SET "displayName" = COALESCE("displayName", "name", "email")
-    WHERE "displayName" IS NULL;
+  IF display_name_exists THEN
+    IF legacy_name_exists THEN
+      UPDATE "User"
+      SET "displayName" = COALESCE("displayName", "name", "email")
+      WHERE "displayName" IS NULL;
+    ELSE
+      UPDATE "User"
+      SET "displayName" = COALESCE("displayName", "email")
+      WHERE "displayName" IS NULL;
+    END IF;
   END IF;
 END $$;
 
