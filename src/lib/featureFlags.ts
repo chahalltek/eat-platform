@@ -52,7 +52,7 @@ function isPrismaUnavailableError(error: unknown) {
 
 async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) {
   try {
-    return await prisma.featureFlag.findUnique({ where: { tenantId_name: { tenantId, name } } });
+    return await prisma.featureFlag.findFirst({ where: { tenantId, name } });
   } catch (error) {
     if (isMissingTableError(error) || isPrismaUnavailableError(error)) return null;
     throw error;
@@ -135,10 +135,16 @@ export const isEnabled = isFeatureEnabled;
 export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): Promise<FeatureFlagRecord> {
   const tenantId = await getCurrentTenantId();
 
-  const flag = await prisma.featureFlag.upsert({
-    where: { tenantId_name: { tenantId, name } },
-    update: { enabled },
-    create: { tenantId, name, enabled, description: DEFAULT_FLAG_DESCRIPTIONS[name] },
+  const flag = await prisma.$transaction(async (tx) => {
+    const existing = await tx.featureFlag.findFirst({ where: { tenantId, name } });
+
+    if (existing) {
+      return tx.featureFlag.update({ where: { id: existing.id }, data: { enabled } });
+    }
+
+    return tx.featureFlag.create({
+      data: { tenantId, name, enabled, description: DEFAULT_FLAG_DESCRIPTIONS[name] },
+    });
   }).catch((error) => {
     if (
       (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021') ||

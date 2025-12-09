@@ -11,10 +11,12 @@ import { configurePlanFeatureFlags, resetPlanFeatureFlags } from './featureFlags
 
 const prismaMock = vi.hoisted(() => ({
   featureFlag: {
-    findUnique: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
-    upsert: vi.fn(),
+    update: vi.fn(),
+    create: vi.fn(),
   },
+  $transaction: vi.fn((cb) => cb(prismaMock)),
 }));
 
 vi.mock('./prisma', () => ({
@@ -50,7 +52,7 @@ describe('isFeatureEnabledForTenant', () => {
     resetFeatureFlagCache();
     resetPlanFeatureFlags();
     configurePlanFeatureFlags({ [subscriptionPlan.id]: [FEATURE_FLAGS.AGENTS] });
-    prismaMock.featureFlag.findUnique.mockReset();
+    prismaMock.featureFlag.findFirst.mockReset();
     getTenantPlan.mockReset();
   });
 
@@ -61,20 +63,20 @@ describe('isFeatureEnabledForTenant', () => {
   });
 
   it('returns plan defaults when no override exists', async () => {
-    prismaMock.featureFlag.findUnique.mockResolvedValue(null);
+    prismaMock.featureFlag.findFirst.mockResolvedValue(null);
     getTenantPlan.mockResolvedValue({ plan: subscriptionPlan, subscription: activeSubscription });
 
     const enabled = await isFeatureEnabledForTenant('tenant-1', FEATURE_FLAGS.AGENTS);
 
     expect(enabled).toBe(true);
-    expect(prismaMock.featureFlag.findUnique).toHaveBeenCalledWith({
-      where: { tenantId_name: { tenantId: 'tenant-1', name: FEATURE_FLAGS.AGENTS } },
+    expect(prismaMock.featureFlag.findFirst).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-1', name: FEATURE_FLAGS.AGENTS },
     });
     expect(getTenantPlan).toHaveBeenCalledWith('tenant-1');
   });
 
   it('prefers override values over plan mappings', async () => {
-    prismaMock.featureFlag.findUnique.mockResolvedValue({
+    prismaMock.featureFlag.findFirst.mockResolvedValue({
       id: 'flag-1',
       tenantId: 'tenant-2',
       name: FEATURE_FLAGS.AGENTS,
