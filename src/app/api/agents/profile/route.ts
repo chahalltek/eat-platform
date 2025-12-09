@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -54,12 +55,54 @@ Return a valid JSON object matching this TypeScript type:
 
 function trimString(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
+=======
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { callLLM } from "@/lib/llm";
+import { getCurrentUser } from "@/lib/auth/user";
+import { normalizeRole, USER_ROLES, type UserRole } from "@/lib/auth/roles";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { candidateProfileSchema } from "@/types/candidateIntake";
+
+const recruiterRoles = new Set<UserRole>([
+  USER_ROLES.ADMIN,
+  USER_ROLES.SYSTEM_ADMIN,
+  USER_ROLES.MANAGER,
+  USER_ROLES.RECRUITER,
+  USER_ROLES.SOURCER,
+]);
+
+const requestSchema = z.object({
+  rawResumeText: z.string().min(1, "rawResumeText is required"),
+  tenantId: z.string().trim().optional(),
+});
+
+function buildProfilePrompt() {
+  return `You are a recruiter intake agent that converts a raw resume into a structured profile.
+Return JSON matching this TypeScript type:
+{
+  fullName: string;
+  currentTitle?: string | null;
+  location?: string | null;
+  seniorityLevel?: string | null;
+  totalExperienceYears?: number | null;
+  summary?: string | null;
+  parsingConfidence?: number | null; // 0-1 where 1 is highest confidence
+  skills: Array<{ name: string; normalizedName?: string; proficiency?: string; yearsOfExperience?: number | null }>;
+}
+- Keep responses concise and avoid extra commentary.
+- Estimate seniority and totalExperienceYears when possible.
+- Include at least 5 relevant skills when present.
+- Always reply with JSON only.`;
+>>>>>>> theirs
 }
 
 export async function POST(req: NextRequest) {
   const currentUser = await getCurrentUser(req);
 
   if (!currentUser) {
+<<<<<<< ours
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -236,5 +279,44 @@ export async function POST(req: NextRequest) {
     const status = userMessage === 'Candidate not found' ? 404 : 500;
 
     return NextResponse.json({ error: userMessage }, { status });
+=======
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const normalizedRole = normalizeRole(currentUser.role);
+
+  if (!normalizedRole || !recruiterRoles.has(normalizedRole)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  let parsedBody: z.infer<typeof requestSchema>;
+
+  try {
+    parsedBody = requestSchema.parse(await req.json());
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid request body";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  const { rawResumeText, tenantId } = parsedBody;
+  const resolvedTenantId = (tenantId ?? currentUser.tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  try {
+    const llmRaw = await callLLM({
+      systemPrompt: buildProfilePrompt(),
+      userPrompt: `Resume:\n"""${rawResumeText.trim()}"""`,
+    });
+
+    const parsedJson = JSON.parse(llmRaw);
+    const profile = candidateProfileSchema.parse({
+      ...parsedJson,
+      rawResumeText,
+    });
+
+    return NextResponse.json({ profile, tenantId: resolvedTenantId });
+  } catch (error) {
+    console.error("Failed to generate candidate profile", error);
+    return NextResponse.json({ error: "Unable to generate profile" }, { status: 500 });
+>>>>>>> theirs
   }
 }
