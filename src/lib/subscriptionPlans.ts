@@ -32,7 +32,10 @@ export async function getTenantPlan(tenantId: string): Promise<ActiveTenantPlan 
       include: { plan: true },
     })
     .catch((error) => {
-      if (error instanceof Prisma.PrismaClientInitializationError) {
+      if (
+        error instanceof Prisma.PrismaClientInitializationError ||
+        (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021')
+      ) {
         return null;
       }
 

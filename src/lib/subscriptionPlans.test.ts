@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { Prisma } from '@prisma/client';
 import type { SubscriptionPlan, TenantSubscription } from '@prisma/client';
 import { getTenantPlan } from './subscriptionPlans';
 
@@ -71,5 +72,16 @@ describe('getTenantPlan', () => {
 
     expect(result).toBeNull();
     expect(prismaMock.tenantSubscription.findFirst).toHaveBeenCalledOnce();
+  });
+
+  it('returns null when the subscription table is missing', async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError('Missing table', {
+      code: 'P2021',
+      clientVersion: '5.19.0',
+    });
+
+    prismaMock.tenantSubscription.findFirst.mockRejectedValue(prismaError);
+
+    await expect(getTenantPlan('tenant-1')).resolves.toBeNull();
   });
 });
