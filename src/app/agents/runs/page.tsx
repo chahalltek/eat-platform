@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Prisma } from "@prisma/client";
 
 import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
+import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
 
@@ -134,6 +135,21 @@ function AgentRunHistory({ runs }: { runs: AgentRunTableRow[] }) {
 
 export default async function AgentRunsPage() {
   const tenantId = await getCurrentTenantId();
+
+  const agentUiEnabled = await isEnabled(tenantId, FEATURE_FLAGS.AGENTS_MATCHED_UI_V1);
+
+  if (!agentUiEnabled) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-10">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-900">
+          <h1 className="text-xl font-semibold">Agents UI unavailable</h1>
+          <p className="mt-2 text-sm text-slate-700">
+            Enable the agents matched UI feature flag to access agent run history.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const runs = await prisma.$queryRaw<AgentRunRecord[]>(Prisma.sql`
     SELECT

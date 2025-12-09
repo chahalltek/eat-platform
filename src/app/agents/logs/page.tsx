@@ -1,5 +1,6 @@
 import AgentRunLogsView from "./logs-view";
 import { SerializableLog } from "./types";
+import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
 import { canViewAgentLogs } from "@/lib/auth/permissions";
@@ -16,6 +17,21 @@ export default async function AgentRunLogsPage() {
           <h1 className="text-xl font-semibold">Access denied</h1>
           <p className="mt-2 text-sm text-amber-800">
             You need admin-level permissions to review agent run logs.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const agentUiEnabled = await isEnabled(tenantId, FEATURE_FLAGS.AGENTS_MATCHED_UI_V1);
+
+  if (!agentUiEnabled) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-10">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-900">
+          <h1 className="text-xl font-semibold">Agents UI unavailable</h1>
+          <p className="mt-2 text-sm text-slate-700">
+            Enable the agents matched UI feature flag to access agent log details.
           </p>
         </div>
       </div>

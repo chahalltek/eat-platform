@@ -126,13 +126,22 @@ export async function isFeatureEnabledForTenant(
   return plan ? isFeatureEnabledForPlan(plan.plan.id, name) : false;
 }
 
-export async function isFeatureEnabled(name: FeatureFlagName): Promise<boolean> {
-  const tenantId = await getCurrentTenantId();
-
+export async function getFeatureFlag(
+  tenantId: string,
+  name: FeatureFlagName,
+): Promise<boolean> {
   return isFeatureEnabledForTenant(tenantId, name);
 }
 
-export const isEnabled = isFeatureEnabled;
+export async function isFeatureEnabled(name: FeatureFlagName): Promise<boolean> {
+  const tenantId = await getCurrentTenantId();
+
+  return getFeatureFlag(tenantId, name);
+}
+
+export async function isEnabled(tenantId: string, name: FeatureFlagName): Promise<boolean> {
+  return getFeatureFlag(tenantId, name);
+}
 
 export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): Promise<FeatureFlagRecord> {
   const tenantId = await getCurrentTenantId();

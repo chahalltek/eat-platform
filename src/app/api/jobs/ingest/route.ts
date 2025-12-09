@@ -6,6 +6,8 @@ import { ingestJob } from "@/lib/matching/matcher";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 
+// TODO: Enforce RBAC/tenant ownership before allowing job ingestion.
+
 const jobSkillSchema = z.object({
   name: z.string().min(1, "Skill name is required"),
   required: z.boolean().optional(),

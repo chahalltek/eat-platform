@@ -8,6 +8,8 @@ import { recordAuditEvent } from "@/lib/audit/trail";
 import { getClientIp } from "@/lib/request/ip";
 import { prisma } from "@/lib/prisma";
 
+// TODO: Add tenant/role-based authorization before allowing status changes.
+
 function parseRequestBody(body: unknown) {
   const { jobCandidateId, status } = (body ?? {}) as {
     jobCandidateId?: string;
