@@ -1,12 +1,55 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
-
 import { headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 
 import { DEFAULT_TENANT_ID, TENANT_HEADER, TENANT_QUERY_PARAM } from './auth/config';
 import { getSessionClaims } from './auth/session';
 
-const tenantContext = new AsyncLocalStorage<string>();
+type TenantContext = {
+  run<T>(tenantId: string, callback: () => Promise<T>): Promise<T>;
+  getStore(): Promise<string | undefined>;
+};
+
+const asyncHooksPromise = typeof EdgeRuntime === 'undefined' ? import('node:async_hooks') : null;
+let asyncStoragePromise: Promise<import('node:async_hooks').AsyncLocalStorage<string> | null> | null = null;
+let fallbackTenantId: string | undefined;
+
+async function getAsyncLocalStorage() {
+  if (typeof EdgeRuntime !== 'undefined') {
+    return null;
+  }
+
+  if (!asyncStoragePromise) {
+    asyncStoragePromise = asyncHooksPromise?.then(
+      ({ AsyncLocalStorage }) => new AsyncLocalStorage<string>(),
+    ) ?? Promise.resolve(null);
+  }
+
+  return asyncStoragePromise;
+}
+
+const tenantContext: TenantContext = {
+  async run<T>(tenantId: string, callback: () => Promise<T>) {
+    const storage = await getAsyncLocalStorage();
+
+    if (storage) {
+      return storage.run(tenantId, callback);
+    }
+
+    const previousTenantId = fallbackTenantId;
+    fallbackTenantId = tenantId;
+
+    try {
+      return await callback();
+    } finally {
+      fallbackTenantId = previousTenantId;
+    }
+  },
+  async getStore() {
+    const storage = await getAsyncLocalStorage();
+
+    return storage?.getStore() ?? fallbackTenantId;
+  },
+};
 
 async function extractTenantIdFromRequest(req: NextRequest) {
   const sessionTenant = (await getSessionClaims(req))?.tenantId;
@@ -54,7 +97,7 @@ export function withTenantContext<T>(tenantId: string, callback: () => Promise<T
 }
 
 export async function getCurrentTenantId(req?: NextRequest) {
-  const tenantIdFromContext = tenantContext.getStore();
+  const tenantIdFromContext = await tenantContext.getStore();
 
   if (tenantIdFromContext) {
     return tenantIdFromContext;

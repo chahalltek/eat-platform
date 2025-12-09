@@ -3,30 +3,18 @@ import { z } from "zod";
 
 import type { Prisma } from "@prisma/client";
 
+import { createAgentRunLog } from "@/lib/agents/agentRunLog";
+import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
+import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
+import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
+import { requireRole } from "@/lib/auth/requireRole";
+import { USER_ROLES } from "@/lib/auth/roles";
 import { callLLM } from "@/lib/llm";
+import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
-import { createAgentRunLog } from "@/lib/agents/agentRunLog";
-<<<<<<< ours
-import { getCurrentUser } from "@/lib/auth/user";
-=======
-import { getUserTenantId } from "@/lib/auth/user";
->>>>>>> theirs
-import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
-import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
-<<<<<<< ours
-import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-<<<<<<< ours
-import { computeMatchConfidence } from "@/lib/matching/confidence";
-=======
-import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
->>>>>>> theirs
-=======
-import { requireRole } from "@/lib/auth/requireRole";
-import { USER_ROLES } from "@/lib/auth/roles";
->>>>>>> theirs
 
 const requestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId is required"),
@@ -77,8 +65,6 @@ export async function POST(req: NextRequest) {
   if (!roleCheck.ok) {
     return roleCheck.response;
   }
-
-  const currentUser = roleCheck.user;
 
   const flagCheck = await agentFeatureGuard();
 
@@ -135,51 +121,28 @@ export async function POST(req: NextRequest) {
       take: candidateIds ? undefined : limit,
     });
 
-<<<<<<< ours
-  try {
-    const matches = [] as Array<{
-      matchResultId: string;
-      candidateId: string;
-      jobReqId: string;
-      score: number;
-      confidence: number;
-      confidenceCategory: string;
-      confidenceReasons: string[];
-      breakdown: Record<string, unknown>;
-      explanation: string;
-    }>;
-
-    for (const candidate of candidates) {
-      const candidateSignals = computeCandidateSignalScore({
-        candidate,
-        jobCandidate: jobCandidateById.get(candidate.id),
-        outreachInteractions: outreachByCandidateId.get(candidate.id) ?? 0,
-      });
-=======
     if (candidates.length === 0) {
       return NextResponse.json({ matches: [], jobReqId, agentRunId: null }, { status: 200 });
     }
->>>>>>> theirs
 
     const candidateIdList = candidates.map((candidate) => candidate.id);
 
-    const [jobCandidates, outreachInteractions, existingMatchResults, existingMatches] =
-      await Promise.all([
-        scopedPrisma.jobCandidate.findMany({
-          where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
-        }),
-        scopedPrisma.outreachInteraction.groupBy({
-          by: ["candidateId"],
-          where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
-          _count: { _all: true },
-        }),
-        scopedPrisma.matchResult.findMany({
-          where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
-        }),
-        scopedPrisma.match.findMany({
-          where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
-        }),
-      ]);
+    const [jobCandidates, outreachInteractions, existingMatchResults, existingMatches] = await Promise.all([
+      scopedPrisma.jobCandidate.findMany({
+        where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
+      }),
+      scopedPrisma.outreachInteraction.groupBy({
+        by: ["candidateId"],
+        where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
+        _count: { _all: true },
+      }),
+      scopedPrisma.matchResult.findMany({
+        where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
+      }),
+      scopedPrisma.match.findMany({
+        where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
+      }),
+    ]);
 
     const jobCandidateById = new Map(jobCandidates.map((jc) => [jc.candidateId, jc]));
     const outreachByCandidateId = new Map(
@@ -188,44 +151,14 @@ export async function POST(req: NextRequest) {
     const existingResultByCandidate = new Map(
       existingMatchResults.map((result) => [result.candidateId, result]),
     );
-    const existingMatchByCandidate = new Map(
-      existingMatches.map((match) => [match.candidateId, match]),
-    );
+    const existingMatchByCandidate = new Map(existingMatches.map((match) => [match.candidateId, match]));
 
-<<<<<<< ours
-      const confidence = computeMatchConfidence({ candidate, jobReq });
-
-      const breakdown = {
-        score: matchScore.score,
-        skillScore: matchScore.skillScore,
-        seniorityScore: matchScore.seniorityScore,
-        locationScore: matchScore.locationScore,
-        candidateSignalScore: matchScore.candidateSignalScore,
-        candidateSignalBreakdown: {
-          ...(matchScore.candidateSignalBreakdown ?? {}),
-          confidence,
-        },
-        jobFreshnessScore: jobFreshness.score,
-        confidence,
-      } as const;
-
-      const jobDescription = jobReq.rawDescription?.trim() || null;
-
-      const explanation = await buildMatchExplanation(
-        jobReq.title,
-        jobDescription,
-        candidate.fullName,
-        candidate.summary ?? candidate.rawResumeText ?? null,
-        breakdown,
-      );
-=======
     const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
     const jobFreshness = computeJobFreshnessScore({
       createdAt: jobReq.createdAt,
       updatedAt: jobReq.updatedAt,
       latestMatchActivity,
     });
->>>>>>> theirs
 
     const startedAt = new Date();
     const agentRun = await createAgentRunLog(scopedPrisma, {
@@ -245,6 +178,9 @@ export async function POST(req: NextRequest) {
         candidateId: string;
         jobReqId: string;
         score: number;
+        confidence: number;
+        confidenceCategory: string;
+        confidenceReasons: string[];
         breakdown: Record<string, unknown>;
         explanation: string;
       }>;
@@ -261,23 +197,20 @@ export async function POST(req: NextRequest) {
           { candidateSignals, jobFreshnessScore: jobFreshness.score },
         );
 
+        const confidence = computeMatchConfidence({ candidate, jobReq });
+        const candidateSignalBreakdown = {
+          ...(matchScore.candidateSignalBreakdown ?? {}),
+          confidence,
+        } as const;
+
         const breakdown = {
           score: matchScore.score,
           skillScore: matchScore.skillScore,
           seniorityScore: matchScore.seniorityScore,
           locationScore: matchScore.locationScore,
           candidateSignalScore: matchScore.candidateSignalScore,
-<<<<<<< ours
-          candidateSignalBreakdown: {
-            ...(matchScore.candidateSignalBreakdown ?? {}),
-            confidence,
-          },
-          tenantId,
-          agentRunId: agentRun.id,
-=======
-          candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
+          candidateSignalBreakdown,
           jobFreshnessScore: jobFreshness.score,
->>>>>>> theirs
         } as const;
 
         const jobDescription = jobReq.rawDescription?.trim() || null;
@@ -303,7 +236,7 @@ export async function POST(req: NextRequest) {
             seniorityScore: matchScore.seniorityScore,
             locationScore: matchScore.locationScore,
             candidateSignalScore: matchScore.candidateSignalScore,
-            candidateSignalBreakdown: matchScore.candidateSignalBreakdown,
+            candidateSignalBreakdown,
             tenantId,
             agentRunId: agentRun.id,
           } as const;
@@ -348,6 +281,9 @@ export async function POST(req: NextRequest) {
           candidateId: candidate.id,
           jobReqId,
           score: matchScore.score,
+          confidence: confidence.score,
+          confidenceCategory: confidence.category,
+          confidenceReasons: confidence.reasons,
           breakdown,
           explanation,
         });
@@ -371,18 +307,6 @@ export async function POST(req: NextRequest) {
         },
       });
 
-<<<<<<< ours
-      matches.push({
-        matchResultId: savedMatchResult.id,
-        candidateId: candidate.id,
-        jobReqId,
-        score: matchScore.score,
-        confidence: confidence.score,
-        confidenceCategory: confidence.category,
-        confidenceReasons: confidence.reasons,
-        breakdown,
-        explanation,
-=======
       return NextResponse.json(
         { matches: sortedMatches, jobReqId, agentRunId: agentRun.id },
         { status: 200 },
@@ -401,7 +325,6 @@ export async function POST(req: NextRequest) {
           finishedAt,
           output: { durationMs, errorCategory: "error" },
         },
->>>>>>> theirs
       });
 
       return NextResponse.json({ error: "Internal server error" }, { status: 500 });

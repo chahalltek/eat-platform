@@ -9,30 +9,13 @@ const {
   mockJobReqCreate,
   mockUserFindUnique,
   mockPrisma,
-<<<<<<< ours
   mockGetTenantScopedPrismaClient,
-=======
   mockGetCurrentUser,
->>>>>>> theirs
 } = vi.hoisted(() => {
   const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-1", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockJobReqCreate = vi.fn(async ({ data }) => ({ id: "job-1", ...data }));
   const mockUserFindUnique = vi.fn(async () => ({ id: "recruiter-1", tenantId: "tenant-1" }));
-<<<<<<< ours
-  const mockGetTenantScopedPrismaClient = vi.fn(async () => ({
-    prisma: mockPrisma as any,
-    tenantId: "tenant-1",
-    runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
-  }));
-=======
-  const mockGetCurrentUser = vi.fn().mockResolvedValue({
-    id: "user-1",
-    tenantId: "tenant-1",
-    role: "RECRUITER",
-  });
->>>>>>> theirs
-
   const mockPrisma = {
     agentRunLog: {
       create: mockAgentRunLogCreate,
@@ -45,20 +28,27 @@ const {
       findUnique: mockUserFindUnique,
     },
   } as const;
+  const mockGetTenantScopedPrismaClient = vi.fn(async () => ({
+    prisma: mockPrisma as any,
+    tenantId: "tenant-1",
+    runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
+  }));
+  const mockGetCurrentUser = vi.fn().mockResolvedValue({
+    id: "user-1",
+    tenantId: "tenant-1",
+    role: "RECRUITER",
+  });
 
-  return {
-    mockAgentRunLogCreate,
-    mockAgentRunLogUpdate,
-    mockJobReqCreate,
-    mockUserFindUnique,
-    mockPrisma,
-<<<<<<< ours
-    mockGetTenantScopedPrismaClient,
-=======
-    mockGetCurrentUser,
->>>>>>> theirs
-  };
-});
+    return {
+      mockAgentRunLogCreate,
+      mockAgentRunLogUpdate,
+      mockJobReqCreate,
+      mockUserFindUnique,
+      mockPrisma,
+      mockGetTenantScopedPrismaClient,
+      mockGetCurrentUser,
+    };
+  });
 
 const { mockCallLLM } = vi.hoisted(() => ({ mockCallLLM: vi.fn() }));
 
@@ -167,41 +157,24 @@ describe("INTAKE agent API", () => {
     );
   });
 
-<<<<<<< ours
-  it("blocks requests without a tenant", async () => {
-    const { TenantScopeError } = await import("@/lib/agents/tenantScope");
+    it("denies access for unauthorized roles", async () => {
+      mockGetCurrentUser.mockResolvedValueOnce({
+        id: "user-1",
+        tenantId: "tenant-1",
+        role: "SALES",
+      });
 
-    mockGetTenantScopedPrismaClient.mockRejectedValue(
-      new TenantScopeError("Tenant is required", 400),
-    );
-=======
-  it("denies access for unauthorized roles", async () => {
-    mockGetCurrentUser.mockResolvedValueOnce({
-      id: "user-1",
-      tenantId: "tenant-1",
-      role: "SALES",
+      const request = new NextRequest(
+        new Request("http://localhost/api/agents/intake", {
+          method: "POST",
+          body: JSON.stringify({ rawJobText: "A role" }),
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+      const response = await intakePost(request);
+
+      expect(response.status).toBe(403);
+      expect(mockAgentRunLogCreate).not.toHaveBeenCalled();
     });
->>>>>>> theirs
-
-    const request = new NextRequest(
-      new Request("http://localhost/api/agents/intake", {
-        method: "POST",
-<<<<<<< ours
-        body: JSON.stringify({ rawJobText: "bad" }),
-=======
-        body: JSON.stringify({ rawJobText: "A role" }),
->>>>>>> theirs
-        headers: { "content-type": "application/json" },
-      }),
-    );
-
-    const response = await intakePost(request);
-
-<<<<<<< ours
-    expect(response.status).toBe(400);
-=======
-    expect(response.status).toBe(403);
-    expect(mockAgentRunLogCreate).not.toHaveBeenCalled();
->>>>>>> theirs
   });
-});

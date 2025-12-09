@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runMatcher } from '@/lib/agents/matcher';
-<<<<<<< ours
 import { requireRole } from '@/lib/auth/requireRole';
 import { USER_ROLES } from '@/lib/auth/roles';
-=======
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
->>>>>>> theirs
 
 // TODO: Add role/tenant-aware RBAC before allowing matcher runs.
 
