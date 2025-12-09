@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 const findUnique = vi.hoisted(() => vi.fn());
 
@@ -94,5 +94,14 @@ describe("POST /api/auth/login", () => {
 
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: "Invalid email or password" });
+  });
+});
+
+describe("GET /api/auth/login", () => {
+  it("redirects to the login page", async () => {
+    const response = await GET(new NextRequest("http://localhost/api/auth/login"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost/login");
   });
 });
