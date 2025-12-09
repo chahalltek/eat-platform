@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { FilterFn } from "@tanstack/react-table";
 
 import { StandardTable } from "@/components/table/StandardTable";
@@ -19,6 +19,7 @@ export type MatchRow = {
   id: string;
   candidateId: string;
   jobId: string;
+  jobTitle?: string;
   candidateName: string;
   currentTitle?: string | null;
   score?: number | null;
@@ -32,9 +33,27 @@ export type MatchRow = {
   candidateSignalScore?: number | null;
   candidateSignalBreakdown?: CandidateSignalBreakdown | null;
   keySkills?: string[];
+  jobSkills?: string[];
+  candidateLocation?: string | null;
   confidenceScore?: number | null;
   confidenceCategory?: "High" | "Medium" | "Low";
   confidenceReasons?: string[];
+};
+
+type ExplainAgentResponse = {
+  summary: string;
+  strengths: string[];
+  risks: string[];
+  systemFacts: {
+    jobTitle?: string;
+    candidateName?: string;
+    candidateTitle?: string | null;
+    candidateLocation?: string | null;
+    jobSkills?: string[];
+    candidateSkills?: string[];
+    matchScore?: number | null;
+    confidenceScore?: number | null;
+  };
 };
 
 const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
@@ -44,9 +63,14 @@ const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
   return values.some((value) => value.toString().toLowerCase().includes(query));
 };
 
-export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
+export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jobTitle: string }) {
   const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
   const [hideLowConfidence, setHideLowConfidence] = useState(false);
+  const [explainTarget, setExplainTarget] = useState<MatchRow | null>(null);
+  const [explainResult, setExplainResult] = useState<ExplainAgentResponse | null>(null);
+  const [isExplainOpen, setIsExplainOpen] = useState(false);
+  const [isExplainLoading, setIsExplainLoading] = useState(false);
+  const [explainError, setExplainError] = useState<string | null>(null);
   const filteredMatches = useMemo(
     () =>
       hideLowConfidence
@@ -57,6 +81,51 @@ export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
         : matches,
     [hideLowConfidence, matches],
   );
+  const handleExplain = useCallback(
+    async (match: MatchRow) => {
+      setExplainTarget(match);
+      setExplainResult(null);
+      setExplainError(null);
+      setIsExplainOpen(true);
+      setIsExplainLoading(true);
+
+      try {
+        const response = await fetch("/api/agents/explain", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            jobId: match.jobId,
+            jobTitle,
+            candidateId: match.candidateId,
+            candidateName: match.candidateName,
+            candidateTitle: match.currentTitle,
+            candidateLocation: match.candidateLocation,
+            candidateSkills: match.keySkills,
+            jobSkills: match.jobSkills,
+            matchScore: match.score,
+            confidenceScore: match.confidenceScore,
+          }),
+        });
+
+        const payload = (await response.json()) as ExplainAgentResponse & { error?: string };
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Failed to fetch explanation");
+        }
+
+        setExplainResult(payload);
+      } catch (err) {
+        console.error("Explain agent failed", err);
+        setExplainError(err instanceof Error ? err.message : "Failed to fetch explanation");
+      } finally {
+        setIsExplainLoading(false);
+      }
+    },
+    [jobTitle],
+  );
+
   const columns = useMemo<EATTableColumn<MatchRow>[]>(
     () => [
       {
@@ -171,34 +240,65 @@ export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
         id: "explanation",
         header: "Explainability",
         enableSorting: false,
-        cell: ({ row }) => <ExplainabilityCell match={row.original} />,
+        cell: ({ row }) => <ExplainabilityCell match={row.original} onExplain={() => handleExplain(row.original)} />,
+      },
+      {
+        id: "explainAgent",
+        header: "Explain",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => handleExplain(row.original)}
+            className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 hover:border-blue-300 hover:bg-blue-100"
+          >
+            Explain
+          </button>
+        ),
       },
     ],
-    [shortlisted],
+    [handleExplain, shortlisted],
   );
 
   return (
-    <StandardTable
-      data={filteredMatches}
-      columns={columns}
-      sorting={{ initialState: [{ id: "score", desc: true }] }}
-      filtering={{ globalFilter: { initialState: "" }, globalFilterFn }}
-      renderToolbar={(table) => (
-        <>
-          <TableSearchInput table={table} placeholder="Search candidates" label="Search" />
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              checked={hideLowConfidence}
-              onChange={(event) => setHideLowConfidence(event.target.checked)}
-            />
-            Hide low-confidence matches
-          </label>
-        </>
-      )}
-      emptyState={<p className="px-6 py-8 text-center text-sm text-gray-700">No matches found for this job yet.</p>}
-    />
+    <>
+      <StandardTable
+        data={filteredMatches}
+        columns={columns}
+        sorting={{ initialState: [{ id: "score", desc: true }] }}
+        filtering={{ globalFilter: { initialState: "" }, globalFilterFn }}
+        renderToolbar={(table) => (
+          <>
+            <TableSearchInput table={table} placeholder="Search candidates" label="Search" />
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                checked={hideLowConfidence}
+                onChange={(event) => setHideLowConfidence(event.target.checked)}
+              />
+              Hide low-confidence matches
+            </label>
+          </>
+        )}
+        emptyState={<p className="px-6 py-8 text-center text-sm text-gray-700">No matches found for this job yet.</p>}
+      />
+
+      {isExplainOpen && explainTarget ? (
+        <ExplainAgentPanel
+          isLoading={isExplainLoading}
+          result={explainResult}
+          match={explainTarget}
+          onClose={() => {
+            setIsExplainOpen(false);
+            setExplainResult(null);
+            setExplainError(null);
+          }}
+          error={explainError}
+          jobTitle={jobTitle}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -252,7 +352,7 @@ function ConfidenceCell({ match }: { match: MatchRow }) {
   );
 }
 
-function ExplainabilityCell({ match }: { match: MatchRow }) {
+function ExplainabilityCell({ match, onExplain }: { match: MatchRow; onExplain: () => void }) {
   const [open, setOpen] = useState(false);
   const explanation = normalizeMatchExplanation(match.explanation);
 
@@ -265,6 +365,16 @@ function ExplainabilityCell({ match }: { match: MatchRow }) {
       >
         {open ? "Hide reasoning" : "Show reasoning"}
       </button>
+
+      <div>
+        <button
+          type="button"
+          onClick={onExplain}
+          className="text-[11px] font-semibold text-blue-700 underline decoration-dotted underline-offset-2 hover:text-blue-900"
+        >
+          Run explain agent
+        </button>
+      </div>
 
       {open && (
         <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-800">
@@ -377,6 +487,161 @@ function ExplainabilityCell({ match }: { match: MatchRow }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+type ExplainAgentPanelProps = {
+  isLoading: boolean;
+  result: ExplainAgentResponse | null;
+  match: MatchRow;
+  onClose: () => void;
+  error: string | null;
+  jobTitle: string;
+};
+
+function ExplainAgentPanel({ isLoading, result, match, onClose, error, jobTitle }: ExplainAgentPanelProps) {
+  const systemFacts = result?.systemFacts ?? {
+    jobTitle,
+    candidateName: match.candidateName,
+    candidateTitle: match.currentTitle,
+    candidateLocation: match.candidateLocation,
+    jobSkills: match.jobSkills ?? [],
+    candidateSkills: match.keySkills ?? [],
+    matchScore: match.score,
+    confidenceScore: match.confidenceScore,
+  };
+
+  const strengths = result?.strengths ?? [];
+  const risks = result?.risks ?? [];
+
+  return (
+    <div className="fixed inset-0 z-20 flex justify-end bg-black/30">
+      <button aria-label="Close explain panel" className="flex-1" onClick={onClose} />
+      <div className="flex h-full w-full max-w-xl flex-col overflow-y-auto bg-white shadow-xl">
+        <div className="flex items-start justify-between border-b border-gray-200 px-6 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Explain agent</p>
+            <h3 className="text-lg font-semibold text-gray-900">{match.candidateName}</h3>
+            <p className="text-sm text-gray-600">{match.currentTitle ?? "No title"}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md border border-gray-200 px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="space-y-6 px-6 py-5">
+          <div className="space-y-2 rounded-md border border-gray-200 bg-gray-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">System facts (no AI)</p>
+            <dl className="grid grid-cols-1 gap-3 text-sm text-gray-800 sm:grid-cols-2">
+              <div>
+                <dt className="text-gray-600">Job title</dt>
+                <dd className="font-semibold text-gray-900">{systemFacts.jobTitle ?? jobTitle}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-600">Candidate title</dt>
+                <dd className="font-semibold text-gray-900">{systemFacts.candidateTitle ?? "Unknown"}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-600">Location</dt>
+                <dd className="font-semibold text-gray-900">{systemFacts.candidateLocation ?? "Unknown"}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-600">Match score</dt>
+                <dd className="font-semibold text-gray-900">{systemFacts.matchScore ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-600">Confidence</dt>
+                <dd className="font-semibold text-gray-900">{systemFacts.confidenceScore ?? "—"}%</dd>
+              </div>
+            </dl>
+            <div className="space-y-1">
+              <p className="text-gray-600">Candidate skills (from profile)</p>
+              <div className="flex flex-wrap gap-2">
+                {(systemFacts.candidateSkills ?? []).length === 0 ? (
+                  <span className="text-xs text-gray-700">No skills recorded</span>
+                ) : (
+                  (systemFacts.candidateSkills ?? []).map((skill) => (
+                    <span key={`${match.id}-cand-skill-${skill}`} className="rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-gray-800">
+                      {skill}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-gray-600">Job skills (from intake)</p>
+              <div className="flex flex-wrap gap-2">
+                {(systemFacts.jobSkills ?? []).length === 0 ? (
+                  <span className="text-xs text-gray-700">No job skills recorded</span>
+                ) : (
+                  (systemFacts.jobSkills ?? []).map((skill) => (
+                    <span key={`${match.id}-job-skill-${skill}`} className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-800">
+                      {skill}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Agent-generated insight</p>
+              {isLoading ? <span className="text-xs text-blue-700">Calling /api/agents/explain…</span> : null}
+            </div>
+
+            {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+            <div className="space-y-2 rounded-md border border-gray-200 p-4">
+              <p className="text-sm font-semibold text-gray-900">Summary</p>
+              <p className="text-sm text-gray-800">
+                {result?.summary ?? (isLoading ? "Generating summary..." : "No summary yet.")}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2 rounded-md border border-green-200 bg-green-50 p-4">
+                <p className="text-sm font-semibold text-green-800">Strengths</p>
+                {isLoading && strengths.length === 0 ? (
+                  <p className="text-sm text-green-800">Generating strengths...</p>
+                ) : strengths.length === 0 ? (
+                  <p className="text-sm text-green-800">No strengths recorded.</p>
+                ) : (
+                  <ul className="list-inside list-disc space-y-1 text-sm text-green-800">
+                    {strengths.map((item, idx) => (
+                      <li key={`${match.id}-strength-${idx}`}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-800">Risks</p>
+                {isLoading && risks.length === 0 ? (
+                  <p className="text-sm text-amber-800">Generating risks...</p>
+                ) : risks.length === 0 ? (
+                  <p className="text-sm text-amber-800">No risks flagged.</p>
+                ) : (
+                  <ul className="list-inside list-disc space-y-1 text-sm text-amber-800">
+                    {risks.map((item, idx) => (
+                      <li key={`${match.id}-risk-${idx}`}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600">
+              Summary, strengths, and risks come from the explain agent. System facts above are direct copies of the job and candidate records to prevent hallucinations.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

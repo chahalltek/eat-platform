@@ -76,6 +76,7 @@ export default async function JobMatchesPage({
       id: match.id,
       candidateId,
       jobId: job.id,
+      jobTitle: job.title,
       candidateName: match.candidate.fullName ?? "Unknown",
       currentTitle: match.candidate.currentTitle ?? match.candidate.currentCompany ?? null,
       score: match.score,
@@ -91,6 +92,8 @@ export default async function JobMatchesPage({
         | undefined,
       category: jobCandidate?.status ?? "POTENTIAL",
       keySkills: (match.candidate.normalizedSkills ?? []).slice(0, 4),
+      jobSkills: job.skills.map((skill) => skill.name),
+      candidateLocation: match.candidate.location,
       confidenceScore: confidence.score,
       confidenceCategory: confidenceCategory ?? undefined,
       confidenceReasons,
@@ -191,7 +194,7 @@ export default async function JobMatchesPage({
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <JobMatchesTable matches={matchRows} />
+        <JobMatchesTable matches={matchRows} jobTitle={job.title} />
       </div>
     </div>
   );
