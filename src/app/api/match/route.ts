@@ -11,7 +11,9 @@ import { enforceKillSwitch } from "@/lib/killSwitch/middleware";
 import { prisma } from "@/lib/prisma";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { getCurrentUser } from "@/lib/auth/user";
+import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 
 const matchRequestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId must be a non-empty string"),
@@ -23,6 +25,25 @@ export async function POST(req: Request) {
 
   if (killSwitchResponse) {
     return killSwitchResponse;
+  }
+
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const normalizedRole = normalizeRole(currentUser.role);
+  const recruiterRoles = new Set<UserRole>([
+    USER_ROLES.ADMIN,
+    USER_ROLES.SYSTEM_ADMIN,
+    USER_ROLES.MANAGER,
+    USER_ROLES.RECRUITER,
+    USER_ROLES.SOURCER,
+  ]);
+
+  if (!normalizedRole || !recruiterRoles.has(normalizedRole)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   let body: unknown;
@@ -45,8 +66,7 @@ export async function POST(req: Request) {
   }
 
   const { jobReqId, candidateId } = parsedBody.data;
-
-  const tenantId = await getCurrentTenantId();
+  const tenantId = (currentUser.tenantId ?? DEFAULT_TENANT_ID).trim();
 
   const flagCheck = await enforceFeatureFlag(FEATURE_FLAGS.SCORING, {
     featureName: "Scoring",
@@ -57,7 +77,7 @@ export async function POST(req: Request) {
   }
 
   const candidate = await prisma.candidate.findUnique({
-    where: { id: candidateId },
+    where: { id: candidateId, tenantId },
     include: { skills: true },
   });
 
@@ -66,7 +86,7 @@ export async function POST(req: Request) {
   }
 
   const jobReq = await prisma.jobReq.findUnique({
-    where: { id: jobReqId },
+    where: { id: jobReqId, tenantId },
     include: {
       skills: true,
       matchResults: {
@@ -86,7 +106,7 @@ export async function POST(req: Request) {
   });
 
   const outreachInteractions = await prisma.outreachInteraction.count({
-    where: { jobReqId, candidateId },
+    where: { jobReqId, candidateId, tenantId },
   });
 
   const candidateSignals = computeCandidateSignalScore({
@@ -120,17 +140,17 @@ export async function POST(req: Request) {
   };
 
   const existingMatch = await prisma.matchResult.findFirst({
-    where: { candidateId, jobReqId },
+    where: { candidateId, jobReqId, tenantId },
   });
 
   const matchResult = existingMatch
     ? await prisma.matchResult.update({
         where: { id: existingMatch.id },
-        data,
+        data: { ...data, tenantId },
       })
-    : await prisma.matchResult.create({ data });
+    : await prisma.matchResult.create({ data: { ...data, tenantId } });
 
-  await upsertJobCandidateForMatch(jobReqId, candidateId, matchResult.id);
+  await upsertJobCandidateForMatch(jobReqId, candidateId, matchResult.id, tenantId);
 
   return NextResponse.json(matchResult);
 }

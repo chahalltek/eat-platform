@@ -13,6 +13,11 @@ export type SessionPayload = {
   iat: number;
 };
 
+export type SessionValidationResult = {
+  session: SessionPayload | null;
+  error: "invalid" | "expired" | null;
+};
+
 const SESSION_COOKIE_NAME = "eat_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
@@ -123,12 +128,12 @@ export function clearSessionCookie() {
   };
 }
 
-export async function parseSessionToken(token: string | undefined): Promise<SessionPayload | null> {
-  if (!token) return null;
+export async function validateSessionToken(token: string | undefined): Promise<SessionValidationResult> {
+  if (!token) return { session: null, error: null };
 
   try {
     const [encodedPayload, signature] = token.split(".");
-    if (!encodedPayload || !signature) return null;
+    if (!encodedPayload || !signature) return { session: null, error: "invalid" };
 
     const key = await getSigningKey();
     const isValid = await crypto.subtle.verify(
@@ -139,21 +144,26 @@ export async function parseSessionToken(token: string | undefined): Promise<Sess
     );
 
     if (!isValid) {
-      return null;
+      return { session: null, error: "invalid" };
     }
 
     const payload = decodePayload(encodedPayload);
-    if (!payload) return null;
+    if (!payload) return { session: null, error: "invalid" };
 
     if (payload.exp <= Math.floor(Date.now() / 1000)) {
-      return null;
+      return { session: null, error: "expired" };
     }
 
-    return payload;
+    return { session: payload, error: null };
   } catch (error) {
     console.warn("Failed to parse session token", error);
-    return null;
+    return { session: null, error: "invalid" };
   }
+}
+
+export async function parseSessionToken(token: string | undefined): Promise<SessionPayload | null> {
+  const { session } = await validateSessionToken(token);
+  return session;
 }
 
 async function getTokenFromRequest(req?: NextRequest) {
@@ -173,6 +183,11 @@ async function getTokenFromRequest(req?: NextRequest) {
 export async function getSessionClaims(req?: NextRequest) {
   const token = await getTokenFromRequest(req);
   return parseSessionToken(token);
+}
+
+export async function getValidatedSession(req?: NextRequest) {
+  const token = await getTokenFromRequest(req);
+  return validateSessionToken(token);
 }
 
 export { SESSION_COOKIE_NAME, SESSION_DURATION_SECONDS };

@@ -1,5 +1,6 @@
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { prisma } from '@/lib/prisma';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 export const OAA_PROMPT_VERSION = 'v1.1.0';
 
@@ -85,23 +86,25 @@ async function buildTemplateContext({
   recruiterId?: string;
   matchId?: string;
 }) {
+  const tenantId = await getCurrentTenantId();
+
   const [candidate, jobReq, match, recruiter] = await Promise.all([
     prisma.candidate.findUnique({
-      where: { id: candidateId },
+      where: { id: candidateId, tenantId },
       include: { skills: true },
     }),
     prisma.jobReq.findUnique({
-      where: { id: jobReqId },
+      where: { id: jobReqId, tenantId },
       include: { customer: true, skills: true },
     }),
     prisma.match.findFirst({
       where: matchId
-        ? { id: matchId }
-        : { candidateId, jobReqId },
+        ? { id: matchId, tenantId }
+        : { candidateId, jobReqId, tenantId },
       orderBy: { createdAt: 'desc' },
     }),
     recruiterId
-      ? prisma.user.findUnique({ where: { id: recruiterId } })
+      ? prisma.user.findUnique({ where: { id: recruiterId, tenantId } })
       : Promise.resolve(null),
   ]);
 

@@ -4,6 +4,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { USER_HEADER, ROLE_HEADER, TENANT_HEADER } from './lib/auth/config';
 import { middleware } from './middleware';
 
+vi.mock('./lib/auth/session', () => ({
+  getValidatedSession: vi.fn(async () => ({
+    session: {
+      userId: 'charlie',
+      tenantId: 'default-tenant',
+      role: 'RECRUITER',
+      exp: Math.floor(Date.now() / 1000) + 60,
+      iat: Math.floor(Date.now() / 1000),
+    },
+    error: null,
+  })),
+  clearSessionCookie: vi.fn(() => ({ name: 'eat_session', value: '', maxAge: 0 })),
+}));
+
 vi.mock('./lib/rateLimiting/rateLimiter', () => ({
   consumeRateLimit: vi.fn(),
   isRateLimitError: () => false,
@@ -21,7 +35,7 @@ function createRequest(path: string) {
 
 describe('middleware role enforcement', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   it('allows public health endpoints without auth checks', async () => {

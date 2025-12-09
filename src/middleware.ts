@@ -12,11 +12,18 @@ import {
   USER_QUERY_PARAM,
 } from './lib/auth/config';
 import { isAdminRole, normalizeRole, USER_ROLES, type UserRole } from './lib/auth/roles';
-import { getSessionClaims } from './lib/auth/session';
+import { clearSessionCookie, getValidatedSession } from './lib/auth/session';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from './lib/rateLimiting/http';
 
-const PUBLIC_PATHS = ['/health', '/api/health', '/api/ats/bullhorn/webhook', '/admin/feature-flags'];
+const PUBLIC_PATHS = [
+  '/health',
+  '/api/health',
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/ats/bullhorn/webhook',
+  '/login',
+];
 const ADMIN_PATH_PREFIXES = ['/admin', '/api/admin'];
 const RECRUITER_PATH_PREFIXES = ['/candidates', '/jobs', '/agents', '/dashboard', '/api'];
 const RECRUITER_ROLES = new Set<UserRole>([
@@ -30,20 +37,36 @@ const RECRUITER_ROLES = new Set<UserRole>([
 
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
-  const session = await getSessionClaims(request);
+  const { session, error: sessionError } = await getValidatedSession(request);
   const searchParams = request.nextUrl.searchParams;
 
   if (PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
+  if (sessionError === 'invalid') {
+    const response = NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    response.cookies.set(clearSessionCookie());
+    return response;
+  }
+
+  if (sessionError === 'expired') {
+    const response = NextResponse.json({ error: 'Session expired' }, { status: 401 });
+    response.cookies.set(clearSessionCookie());
+    return response;
+  }
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const queryUserId = searchParams.get(USER_QUERY_PARAM)?.trim();
-  const resolvedUserId = queryUserId || session?.userId || DEFAULT_USER_ID;
+  const resolvedUserId = queryUserId || session.userId || DEFAULT_USER_ID;
 
   const queryTenantId = searchParams.get(TENANT_QUERY_PARAM)?.trim();
-  const resolvedTenantId = queryTenantId || session?.tenantId || DEFAULT_TENANT_ID;
+  const resolvedTenantId = session.tenantId || queryTenantId || DEFAULT_TENANT_ID;
 
-  const normalizedRole = normalizeRole(session?.role ?? DEFAULT_USER_ROLE);
+  const normalizedRole = normalizeRole(session.role ?? DEFAULT_USER_ROLE);
 
   if (!normalizedRole) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -2,6 +2,7 @@
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { prisma } from '@/lib/prisma';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 export type OutreachInput = {
   recruiterId?: string;
@@ -94,6 +95,7 @@ export async function runOutreach(
   retryMetadata?: AgentRetryMetadata,
 ): Promise<{ message: string; agentRunId: string }> {
   const { recruiterId, candidateId, jobReqId } = input;
+  const tenantId = await getCurrentTenantId();
 
   const [result, agentRunId] = await withAgentRun<{ message: string }>(
     {
@@ -104,7 +106,7 @@ export async function runOutreach(
     },
     async () => {
       const candidate = await prisma.candidate.findUnique({
-        where: { id: candidateId },
+        where: { id: candidateId, tenantId },
         include: { skills: true },
       });
 
@@ -113,12 +115,16 @@ export async function runOutreach(
       }
 
       const jobReq = await prisma.jobReq.findUnique({
-        where: { id: jobReqId },
+        where: { id: jobReqId, tenantId },
         include: { customer: true, skills: true },
       });
 
       if (!jobReq) {
         throw new Error('JobReq not found');
+      }
+
+      if (candidate.tenantId !== jobReq.tenantId) {
+        throw new Error('Cross-tenant outreach is not allowed');
       }
 
       const candidateSummary = formatCandidateSummary({
@@ -162,6 +168,7 @@ export async function runOutreach(
       data: {
         candidateId,
         jobReqId,
+        tenantId,
         agentRunId,
         interactionType: "OUTREACH_GENERATED",
       },

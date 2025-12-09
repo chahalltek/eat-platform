@@ -10,14 +10,15 @@ import {
   enforceFeatureFlag,
   getAgentFeatureName,
 } from '@/lib/featureFlags/middleware';
+import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 
 function asString(value: unknown) {
   return typeof value === 'string' ? value : undefined;
 }
 
-async function buildRetryMetadata(runId: string, retryOfId?: string) {
+async function buildRetryMetadata(runId: string, tenantId: string, retryOfId?: string) {
   const rootRunId = retryOfId ?? runId;
-  const previousRetries = await prisma.agentRunLog.count({ where: { retryOfId: rootRunId } });
+  const previousRetries = await prisma.agentRunLog.count({ where: { retryOfId: rootRunId, tenantId } });
 
   return { retryOfId: rootRunId, retryCount: previousRetries + 1 } as const;
 }
@@ -31,8 +32,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
   const { id } = await context.params;
 
-  const run = await prisma.agentRunLog.findUnique({
-    where: { id },
+  const tenantId = (currentUser.tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  const run = await prisma.agentRunLog.findFirst({
+    where: { id, tenantId },
     select: {
       id: true,
       agentName: true,
@@ -53,7 +56,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     return flagCheck;
   }
 
-  const retryMetadata = await buildRetryMetadata(run.id, run.retryOfId ?? undefined);
+  const retryMetadata = await buildRetryMetadata(run.id, tenantId, run.retryOfId ?? undefined);
 
   switch (run.agentName) {
     case 'EAT-TS.RINA': {

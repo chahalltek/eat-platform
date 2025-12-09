@@ -28,7 +28,7 @@ export async function OPTIONS(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const response = NextResponse.json({ success: true });
+  const response = NextResponse.json({ success: true, session: null });
   response.cookies.set(clearSessionCookie());
 
   return withCors(request, response);

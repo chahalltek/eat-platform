@@ -3,7 +3,7 @@
 const mocks = vi.hoisted(() => ({
   enforceKillSwitchMock: vi.fn(),
   enforceFeatureFlagMock: vi.fn(),
-  getCurrentTenantIdMock: vi.fn(),
+  getCurrentUserMock: vi.fn(),
   prisma: {
     candidate: { findUnique: vi.fn() },
     jobReq: { findUnique: vi.fn() },
@@ -17,7 +17,7 @@ vi.mock('@/lib/killSwitch', () => ({ KILL_SWITCHES: { SCORERS: 'scorers' } }));
 vi.mock('@/lib/killSwitch/middleware', () => ({ enforceKillSwitch: mocks.enforceKillSwitchMock }));
 vi.mock('@/lib/featureFlags', () => ({ FEATURE_FLAGS: { SCORING: 'scoring' } }));
 vi.mock('@/lib/featureFlags/middleware', () => ({ enforceFeatureFlag: mocks.enforceFeatureFlagMock }));
-vi.mock('@/lib/tenant', () => ({ getCurrentTenantId: mocks.getCurrentTenantIdMock }));
+vi.mock('@/lib/auth/user', () => ({ getCurrentUser: mocks.getCurrentUserMock }));
 vi.mock('@/lib/prisma', () => ({ prisma: mocks.prisma }));
 vi.mock('@/lib/matching/candidateSignals', () => ({ computeCandidateSignalScore: vi.fn() }));
 vi.mock('@/lib/matching/freshness', () => ({ computeJobFreshnessScore: vi.fn() }));
@@ -31,7 +31,11 @@ describe('POST /api/match', () => {
     vi.clearAllMocks();
     mocks.enforceKillSwitchMock.mockReturnValue(null);
     mocks.enforceFeatureFlagMock.mockResolvedValue(null);
-    mocks.getCurrentTenantIdMock.mockResolvedValue('tenant-123');
+    mocks.getCurrentUserMock.mockResolvedValue({
+      id: 'user-123',
+      role: 'RECRUITER',
+      tenantId: 'tenant-123',
+    });
   });
 
   it('rejects malformed payloads before hitting downstream services', async () => {
@@ -47,7 +51,7 @@ describe('POST /api/match', () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe('jobReqId and candidateId must be non-empty strings');
-    expect(mocks.getCurrentTenantIdMock).not.toHaveBeenCalled();
+    expect(mocks.getCurrentUserMock).toHaveBeenCalled();
     expect(mocks.prisma.candidate.findUnique).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith('Match payload validation failed', {
       body: { candidateId: 123, jobReqId: '   ' },

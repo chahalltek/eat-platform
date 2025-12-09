@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 export type RecruiterValidationResult =
   | { recruiterId: string | null }
@@ -18,7 +19,12 @@ export async function validateRecruiterId(
     return { recruiterId: null };
   }
 
-  const user = await prisma.user.findUnique({ where: { id: trimmedRecruiterId }, select: { id: true } });
+  const tenantId = await getCurrentTenantId();
+
+  const user = await prisma.user.findUnique({
+    where: { id: trimmedRecruiterId, tenantId },
+    select: { id: true },
+  });
 
   if (!user) {
     return { error: 'Recruiter not found', status: 404 };

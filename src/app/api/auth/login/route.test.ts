@@ -3,12 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET, POST } from "./route";
 
-const findUnique = vi.hoisted(() => vi.fn());
+const findFirst = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
-      findUnique,
+      findFirst,
     },
   },
 }));
@@ -37,7 +37,7 @@ describe("POST /api/auth/login", () => {
     });
 
   it("authenticates with the configured password", async () => {
-    findUnique.mockResolvedValue({
+    findFirst.mockResolvedValue({
       id: "user-123",
       email: "recruiter@test.demo",
       displayName: "Recruiter",
@@ -59,6 +59,12 @@ describe("POST /api/auth/login", () => {
       role: "RECRUITER",
       tenantId: "default-tenant",
     });
+    expect(payload.session).toEqual({
+      userId: "user-123",
+      tenantId: "default-tenant",
+      role: "RECRUITER",
+      expiresAt: expect.any(String),
+    });
     expect(response.cookies.get("eat_session")?.value).toBeTruthy();
   });
 
@@ -66,7 +72,7 @@ describe("POST /api/auth/login", () => {
     delete process.env.AUTH_PASSWORD;
     delete process.env.AUTH_PASSWORD_LOCAL;
 
-    findUnique.mockResolvedValue({
+    findFirst.mockResolvedValue({
       id: "user-123",
       email: "recruiter@test.demo",
       displayName: "Recruiter",
@@ -82,7 +88,7 @@ describe("POST /api/auth/login", () => {
   });
 
   it("rejects invalid credentials", async () => {
-    findUnique.mockResolvedValue({
+    findFirst.mockResolvedValue({
       id: "user-123",
       email: "recruiter@test.demo",
       displayName: "Recruiter",

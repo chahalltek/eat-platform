@@ -9,6 +9,7 @@ import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { prisma } from '@/lib/prisma';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 export type RuaInput = {
   recruiterId?: string;
@@ -23,6 +24,7 @@ export async function runRua(
   llmAdapter?: OpenAIAdapter,
 ): Promise<{ jobReqId: string; agentRunId: string }> {
   const { recruiterId, rawJobText, sourceType, sourceTag } = input;
+  const tenantId = await getCurrentTenantId();
 
   const promptContract = await resolveAgentPrompt(AGENT_PROMPTS.RUA_SYSTEM, {
     version: RUA_PROMPT_VERSION,
@@ -69,6 +71,7 @@ ${rawJobText}
 
       const jobReq = await prisma.jobReq.create({
         data: {
+          tenantId,
           title: parsed.title,
           seniorityLevel: parsed.seniorityLevel ?? null,
           location: parsed.location ?? null,

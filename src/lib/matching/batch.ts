@@ -34,6 +34,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   }
 
   const candidates = await prisma.candidate.findMany({
+    where: { tenantId: jobReq.tenantId },
     include: { skills: true },
     orderBy: { createdAt: "desc" },
     take: limit,
@@ -45,6 +46,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
   const jobCandidates = await prisma.jobCandidate.findMany({
     where: {
+      tenantId: jobReq.tenantId,
       jobReqId,
       candidateId: { in: candidates.map((candidate) => candidate.id) },
     },
@@ -52,7 +54,11 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
   const outreachInteractions = await prisma.outreachInteraction.groupBy({
     by: ["candidateId"],
-    where: { jobReqId, candidateId: { in: candidates.map((candidate) => candidate.id) } },
+    where: {
+      tenantId: jobReq.tenantId,
+      jobReqId,
+      candidateId: { in: candidates.map((candidate) => candidate.id) },
+    },
     _count: { _all: true },
   });
 
@@ -66,6 +72,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
   const existingResults = await prisma.matchResult.findMany({
     where: {
+      tenantId: jobReq.tenantId,
       jobReqId,
       candidateId: { in: candidates.map((candidate) => candidate.id) },
     },
@@ -113,11 +120,11 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       const savedResult = existing
         ? await tx.matchResult.update({
             where: { id: existing.id },
-            data,
+            data: { ...data, tenantId: jobReq.tenantId },
           })
-        : await tx.matchResult.create({ data });
+        : await tx.matchResult.create({ data: { ...data, tenantId: jobReq.tenantId } });
 
-      await upsertJobCandidateForMatch(jobReqId, candidate.id, savedResult.id, tx);
+      await upsertJobCandidateForMatch(jobReqId, candidate.id, savedResult.id, jobReq.tenantId, tx);
 
       return savedResult;
     });

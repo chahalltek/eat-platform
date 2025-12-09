@@ -81,6 +81,13 @@ export async function POST(request: Request) {
     tenantId: user.tenantId ?? DEFAULT_TENANT_ID,
   });
 
+  const session = {
+    userId: user.id,
+    tenantId: user.tenantId ?? DEFAULT_TENANT_ID,
+    role: user.role,
+    expiresAt: new Date(Date.now() + cookie.maxAge * 1000).toISOString(),
+  };
+
   const response = NextResponse.json({
     user: {
       id: user.id,
@@ -89,6 +96,7 @@ export async function POST(request: Request) {
       role: user.role,
       tenantId: user.tenantId ?? DEFAULT_TENANT_ID,
     },
+    session,
   });
 
   response.cookies.set(cookie);

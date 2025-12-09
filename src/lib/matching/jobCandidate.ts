@@ -7,17 +7,18 @@ export async function upsertJobCandidateForMatch(
   jobReqId: string,
   candidateId: string,
   matchResultId: string,
+  tenantId?: string,
   db: Prisma.TransactionClient | PrismaClient = prisma,
 ) {
-  const tenantId = await getCurrentTenantId();
+  const resolvedTenantId = tenantId ?? (await getCurrentTenantId());
 
   await db.jobCandidate.upsert({
-    where: { tenantId_jobReqId_candidateId: { tenantId, jobReqId, candidateId } },
+    where: { tenantId_jobReqId_candidateId: { tenantId: resolvedTenantId, jobReqId, candidateId } },
     update: { lastMatchResultId: matchResultId },
     create: {
       jobReqId,
       candidateId,
-      tenantId,
+      tenantId: resolvedTenantId,
       status: JobCandidateStatus.POTENTIAL,
       lastMatchResultId: matchResultId,
     },
