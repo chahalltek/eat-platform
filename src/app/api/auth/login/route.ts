@@ -27,6 +27,10 @@ function withCors(request: Request, response: NextResponse) {
   return response;
 }
 
+export async function GET(request: Request) {
+  return NextResponse.redirect(new URL('/login', request.url));
+}
+
 export async function OPTIONS(request: Request) {
   return new NextResponse(null, { status: 204, headers: corsHeaders(request) });
 }
