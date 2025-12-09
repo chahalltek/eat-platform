@@ -3,40 +3,14 @@ import type { NextRequest } from 'next/server';
 
 import { DEFAULT_TENANT_ID, TENANT_HEADER, TENANT_QUERY_PARAM } from './auth/config';
 import { getSessionClaims } from './auth/session';
-import type { AsyncLocalStorage } from 'node:async_hooks';
-
-const isEdgeRuntime = typeof globalThis !== 'undefined' && 'EdgeRuntime' in globalThis;
-
 type TenantContext = {
   run<T>(tenantId: string, callback: () => Promise<T>): Promise<T>;
   getStore(): Promise<string | undefined>;
 };
-
-let asyncStoragePromise: Promise<AsyncLocalStorage<string> | null> | null = null;
 let fallbackTenantId: string | undefined;
-
-async function getAsyncLocalStorage() {
-  if (isEdgeRuntime) {
-    return null;
-  }
-
-  if (!asyncStoragePromise) {
-    asyncStoragePromise = import('node:async_hooks')
-      .then(({ AsyncLocalStorage }) => new AsyncLocalStorage<string>())
-      .catch(() => null);
-  }
-
-  return asyncStoragePromise;
-}
 
 const tenantContext: TenantContext = {
   async run<T>(tenantId: string, callback: () => Promise<T>) {
-    const storage = await getAsyncLocalStorage();
-
-    if (storage) {
-      return storage.run(tenantId, callback);
-    }
-
     const previousTenantId = fallbackTenantId;
     fallbackTenantId = tenantId;
 
@@ -47,9 +21,7 @@ const tenantContext: TenantContext = {
     }
   },
   async getStore() {
-    const storage = await getAsyncLocalStorage();
-
-    return storage?.getStore() ?? fallbackTenantId;
+    return fallbackTenantId;
   },
 };
 
