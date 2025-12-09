@@ -5,6 +5,8 @@ import { DEFAULT_TENANT_ID, TENANT_HEADER, TENANT_QUERY_PARAM } from './auth/con
 import { getSessionClaims } from './auth/session';
 import type { AsyncLocalStorage } from 'node:async_hooks';
 
+const isEdgeRuntime = typeof globalThis !== 'undefined' && 'EdgeRuntime' in globalThis;
+
 type TenantContext = {
   run<T>(tenantId: string, callback: () => Promise<T>): Promise<T>;
   getStore(): Promise<string | undefined>;
@@ -14,7 +16,7 @@ let asyncStoragePromise: Promise<AsyncLocalStorage<string> | null> | null = null
 let fallbackTenantId: string | undefined;
 
 async function getAsyncLocalStorage() {
-  if (typeof EdgeRuntime !== 'undefined') {
+  if (isEdgeRuntime) {
     return null;
   }
 
