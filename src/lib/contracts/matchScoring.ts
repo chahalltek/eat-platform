@@ -12,7 +12,7 @@ export const matchScoreBreakdownSchema = z.object({
   compensationScore: z.number().optional().nullable(),
   availabilityScore: z.number().optional().nullable(),
   cultureScore: z.number().optional().nullable(),
-  additionalScores: z.record(z.number()).optional().nullable(),
+  additionalScores: z.record(z.string(), z.number()).optional().nullable(),
 });
 
 export const matchResultViewSchema = z.object({
