@@ -6,34 +6,59 @@ import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 
 const VALIDATION_ERROR = { error: 'Invalid email or password' };
 
+function corsHeaders(request: Request) {
+  const origin = request.headers.get('origin') ?? '*';
+
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
+  } satisfies Record<string, string>;
+}
+
+function withCors(request: Request, response: NextResponse) {
+  const headers = corsHeaders(request);
+
+  Object.entries(headers).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  return response;
+}
+
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, { status: 204, headers: corsHeaders(request) });
+}
+
 export async function POST(request: Request) {
   let body: unknown;
 
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(VALIDATION_ERROR, { status: 400 });
+    return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 400 }));
   }
 
   if (!body || typeof body !== 'object') {
-    return NextResponse.json(VALIDATION_ERROR, { status: 400 });
+    return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 400 }));
   }
 
   const { email, password } = body as { email?: unknown; password?: unknown };
 
   if (typeof email !== 'string' || typeof password !== 'string') {
-    return NextResponse.json(VALIDATION_ERROR, { status: 400 });
+    return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 400 }));
   }
 
   const expectedPassword = process.env.AUTH_PASSWORD ?? process.env.AUTH_PASSWORD_LOCAL;
   if (!expectedPassword) {
-    return NextResponse.json({ error: 'Authentication not configured' }, { status: 500 });
+    return withCors(request, NextResponse.json({ error: 'Authentication not configured' }, { status: 500 }));
   }
 
   const normalizedEmail = email.trim().toLowerCase();
 
   if (!normalizedEmail || password !== expectedPassword) {
-    return NextResponse.json(VALIDATION_ERROR, { status: 401 });
+    return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
   }
 
   const user = await prisma.user.findUnique({
@@ -41,7 +66,7 @@ export async function POST(request: Request) {
   });
 
   if (!user) {
-    return NextResponse.json(VALIDATION_ERROR, { status: 401 });
+    return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
   }
 
   const cookie = await createSessionCookie({
@@ -64,5 +89,5 @@ export async function POST(request: Request) {
 
   response.cookies.set(cookie);
 
-  return response;
+  return withCors(request, response);
 }
