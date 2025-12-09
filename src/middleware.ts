@@ -16,7 +16,7 @@ import { getSessionClaims } from './lib/auth/session';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from './lib/rateLimiting/http';
 
-const PUBLIC_PATHS = ['/health', '/api/health', '/api/ats/bullhorn/webhook'];
+const PUBLIC_PATHS = ['/health', '/api/health', '/api/ats/bullhorn/webhook', '/admin/feature-flags'];
 const ADMIN_PATH_PREFIXES = ['/admin', '/api/admin'];
 const RECRUITER_PATH_PREFIXES = ['/candidates', '/jobs', '/agents', '/dashboard', '/api'];
 const RECRUITER_ROLES = new Set<UserRole>([
