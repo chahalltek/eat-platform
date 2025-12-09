@@ -5,6 +5,7 @@ import { RunMatcherButton } from "./RunMatcherButton";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { categorizeConfidence } from "./confidence";
 import { prisma } from "@/lib/prisma";
+import { ShortlistActions } from "./ShortlistActions";
 
 export default async function JobMatchesPage({
   params,
@@ -78,10 +79,12 @@ export default async function JobMatchesPage({
       jobId: job.id,
       jobTitle: job.title,
       candidateName: match.candidate.fullName ?? "Unknown",
+      candidateEmail: match.candidate.email,
       currentTitle: match.candidate.currentTitle ?? match.candidate.currentCompany ?? null,
       score: match.score,
       jobCandidateId: jobCandidate?.id,
       jobCandidateStatus: jobCandidate?.status,
+      jobCandidateNotes: jobCandidate?.notes,
       explanation: match.reasons,
       skillScore: match.skillScore,
       seniorityScore: match.seniorityScore,
@@ -196,7 +199,14 @@ export default async function JobMatchesPage({
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+<<<<<<< ours
         <JobMatchesTable matches={matchRows} jobTitle={job.title} />
+=======
+        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+          <ShortlistActions jobId={job.id} matches={matchRows} />
+        </div>
+        <JobMatchesTable matches={matchRows} />
+>>>>>>> theirs
       </div>
     </div>
   );

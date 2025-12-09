@@ -21,11 +21,13 @@ export type MatchRow = {
   jobId: string;
   jobTitle?: string;
   candidateName: string;
+  candidateEmail?: string | null;
   currentTitle?: string | null;
   score?: number | null;
   category?: string | null;
   jobCandidateId?: string;
   jobCandidateStatus?: JobCandidateStatus;
+  jobCandidateNotes?: string | null;
   explanation?: unknown;
   skillScore?: number | null;
   seniorityScore?: number | null;
