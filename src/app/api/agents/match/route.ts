@@ -1,4 +1,3 @@
-<<<<<<< ours
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -294,25 +293,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-=======
-import { NextResponse } from "next/server";
-
-import { runMatcher } from "@/lib/agents/matcher";
-
-export async function POST(request: Request) {
-  try {
-    const body = (await request.json()) as { jobReqId?: string; topN?: number };
-
-    if (!body.jobReqId) {
-      return NextResponse.json({ error: "jobReqId is required" }, { status: 400 });
-    }
-
-    const result = await runMatcher({ jobId: body.jobReqId, topN: body.topN });
-
-    return NextResponse.json(result, { status: 200 });
-  } catch (error) {
-    console.error("Failed to run matcher agent", error);
->>>>>>> theirs
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
