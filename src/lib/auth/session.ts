@@ -23,15 +23,13 @@ function getRawSecret() {
   const explicitSecret = process.env.AUTH_SESSION_SECRET;
   const localSecret = process.env.AUTH_SESSION_SECRET_LOCAL;
 
-  if (process.env.NODE_ENV === "production") {
-    if (!explicitSecret) {
-      throw new Error("AUTH_SESSION_SECRET must be set in production");
-    }
+  if (explicitSecret) return explicitSecret;
 
-    return explicitSecret;
+  if (process.env.NODE_ENV === "production") {
+    return localSecret ?? "development-session-secret";
   }
 
-  return explicitSecret ?? localSecret ?? "development-session-secret";
+  return localSecret ?? "development-session-secret";
 }
 
 function base64UrlEncode(data: Uint8Array) {
