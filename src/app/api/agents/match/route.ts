@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import type { Prisma } from "@prisma/client";
+
 import { callLLM } from "@/lib/llm";
 import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
@@ -265,11 +267,14 @@ export async function POST(req: NextRequest) {
     const finishedAt = new Date();
     const durationMs = finishedAt.getTime() - startedAt.getTime();
 
+    const snapshot = sortedMatches as unknown as Prisma.JsonArray;
+    const outputData: Prisma.InputJsonObject = { snapshot, durationMs };
+
     await prisma.agentRunLog.update({
       where: { id: agentRun.id },
       data: {
-        output: { snapshot: sortedMatches, durationMs },
-        outputSnapshot: sortedMatches,
+        output: outputData,
+        outputSnapshot: snapshot,
         status: "SUCCESS",
         durationMs,
         finishedAt,
