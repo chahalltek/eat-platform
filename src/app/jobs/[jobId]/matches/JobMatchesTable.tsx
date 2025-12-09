@@ -315,15 +315,17 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
         sortable: false,
         cell: ({ getValue }) => <span className="text-sm text-gray-800">{getValue() ?? "Unknown"}</span>,
       }),
-      createNumberColumn<MatchRow, "score">({
-        accessorKey: "score",
-        header: "Score",
-        sortable: true,
+      {
+        ...createNumberColumn<MatchRow, "score">({
+          accessorKey: "score",
+          header: "Score",
+          sortable: true,
+        }),
         cell: ({ getValue }) => {
-          const value = getValue();
+          const value = getValue<number | null>();
           return <span className="text-sm font-semibold text-gray-900">{value ?? "—"}</span>;
         },
-      }),
+      },
       {
         id: "confidence",
         header: "Confidence",
