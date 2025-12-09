@@ -4,6 +4,7 @@ import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { rankCandidates } from "@/lib/agents/ranker";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { setShortlistState } from "@/lib/matching/shortlist";
 
 export type RunShortlistInput = {
   jobId: string;
@@ -144,17 +145,18 @@ export async function runShortlist(
         };
       });
 
-      await prisma.$transaction(async (tx) => {
-        await tx.candidateMatch.updateMany({
-          where: { jobId },
-          data: { shortlisted: false, shortlistReason: null },
-        });
+      const shortlistedByMatchId = new Map(shortlisted.map((entry) => [entry.matchId, entry]));
 
-        for (const entry of shortlisted) {
-          await tx.candidateMatch.update({
-            where: { id: entry.matchId },
-            data: { shortlisted: true, shortlistReason: entry.shortlistReason },
-          });
+      await prisma.$transaction(async (tx) => {
+        for (const match of job.matches) {
+          const shortlistEntry = shortlistedByMatchId.get(match.id);
+          await setShortlistState(
+            job.id,
+            match.candidateId,
+            Boolean(shortlistEntry),
+            shortlistEntry?.shortlistReason,
+            { db: tx, tenantId: job.tenantId },
+          );
         }
       });
 

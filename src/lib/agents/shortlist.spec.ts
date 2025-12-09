@@ -16,24 +16,43 @@ vi.mock("@/lib/subscription/usageLimits", () => ({
   assertTenantWithinLimits: vi.fn(),
 }));
 
+vi.mock("@/lib/auth", () => ({
+  getCurrentUser: vi.fn(async () => ({ id: "user-123" })),
+}));
+
+vi.mock("@/lib/auth/user", () => ({
+  getCurrentUser: vi.fn(async () => ({ id: "user-123" })),
+}));
+
 const {
   mockAgentRunLogCreate,
   mockAgentRunLogUpdate,
+  mockUserFindUnique,
   mockJobFindUnique,
   mockCandidateMatchUpdate,
   mockCandidateMatchUpdateMany,
+  mockJobCandidateFindUnique,
+  mockJobCandidateCreate,
+  mockJobCandidateUpdate,
   mockPrisma,
 } = vi.hoisted(() => {
   const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-123", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
+  const mockUserFindUnique = vi.fn(async ({ where }) => ({ id: where.id, tenantId: "tenant-1" }));
   const mockJobFindUnique = vi.fn();
   const mockCandidateMatchUpdateMany = vi.fn();
   const mockCandidateMatchUpdate = vi.fn();
+  const mockJobCandidateFindUnique = vi.fn();
+  const mockJobCandidateUpdate = vi.fn();
+  const mockJobCandidateCreate = vi.fn();
 
   const mockPrisma = {
     agentRunLog: {
       create: mockAgentRunLogCreate,
       update: mockAgentRunLogUpdate,
+    },
+    user: {
+      findUnique: mockUserFindUnique,
     },
     job: {
       findUnique: mockJobFindUnique,
@@ -42,15 +61,24 @@ const {
       updateMany: mockCandidateMatchUpdateMany,
       update: mockCandidateMatchUpdate,
     },
+    jobCandidate: {
+      findUnique: mockJobCandidateFindUnique,
+      update: mockJobCandidateUpdate,
+      create: mockJobCandidateCreate,
+    },
     $transaction: vi.fn(async (fn) => fn(mockPrisma)),
   };
 
   return {
     mockAgentRunLogCreate,
     mockAgentRunLogUpdate,
+    mockUserFindUnique,
     mockJobFindUnique,
     mockCandidateMatchUpdate,
     mockCandidateMatchUpdateMany,
+    mockJobCandidateFindUnique,
+    mockJobCandidateCreate,
+    mockJobCandidateUpdate,
     mockPrisma,
   };
 });
@@ -69,6 +97,7 @@ describe("shortlist agent", () => {
 
     mockJobFindUnique.mockResolvedValue({
       id: "job-1",
+      tenantId: "tenant-1",
       requiredSkills: ["TypeScript", "SQL", "AWS"],
       matches: [
         {
@@ -128,17 +157,36 @@ describe("shortlist agent", () => {
     expect(result.shortlisted.map((entry) => entry.matchId)).toEqual(["match-2", "match-1"]);
     expect(result.totalMatches).toBe(3);
 
+    expect(mockCandidateMatchUpdateMany).toHaveBeenCalledTimes(3);
     expect(mockCandidateMatchUpdateMany).toHaveBeenCalledWith({
-      where: { jobId: "job-1" },
+      where: { jobId: "job-1", candidateId: "cand-1" },
+      data: { shortlisted: true, shortlistReason: expect.any(String) },
+    });
+    expect(mockCandidateMatchUpdateMany).toHaveBeenCalledWith({
+      where: { jobId: "job-1", candidateId: "cand-2" },
+      data: { shortlisted: true, shortlistReason: expect.any(String) },
+    });
+    expect(mockCandidateMatchUpdateMany).toHaveBeenCalledWith({
+      where: { jobId: "job-1", candidateId: "cand-3" },
       data: { shortlisted: false, shortlistReason: null },
     });
-    expect(mockCandidateMatchUpdate).toHaveBeenCalledTimes(2);
-    expect(mockCandidateMatchUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "match-2" },
-        data: expect.objectContaining({ shortlisted: true, shortlistReason: expect.any(String) }),
-      }),
-    );
+    expect(mockJobCandidateCreate).toHaveBeenCalledTimes(2);
+    expect(mockJobCandidateCreate).toHaveBeenCalledWith({
+      data: {
+        candidateId: "cand-1",
+        jobReqId: "job-1",
+        tenantId: "tenant-1",
+        status: "SHORTLISTED",
+      },
+    });
+    expect(mockJobCandidateCreate).toHaveBeenCalledWith({
+      data: {
+        candidateId: "cand-2",
+        jobReqId: "job-1",
+        tenantId: "tenant-1",
+        status: "SHORTLISTED",
+      },
+    });
     expect(mockAgentRunLogUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: "SUCCESS" }) }),
     );
