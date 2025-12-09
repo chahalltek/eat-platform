@@ -3,14 +3,14 @@ import type { NextRequest } from 'next/server';
 
 import { DEFAULT_TENANT_ID, TENANT_HEADER, TENANT_QUERY_PARAM } from './auth/config';
 import { getSessionClaims } from './auth/session';
+import type { AsyncLocalStorage } from 'node:async_hooks';
 
 type TenantContext = {
   run<T>(tenantId: string, callback: () => Promise<T>): Promise<T>;
   getStore(): Promise<string | undefined>;
 };
 
-const asyncHooksPromise = typeof EdgeRuntime === 'undefined' ? import('node:async_hooks') : null;
-let asyncStoragePromise: Promise<import('node:async_hooks').AsyncLocalStorage<string> | null> | null = null;
+let asyncStoragePromise: Promise<AsyncLocalStorage<string> | null> | null = null;
 let fallbackTenantId: string | undefined;
 
 async function getAsyncLocalStorage() {
@@ -19,9 +19,9 @@ async function getAsyncLocalStorage() {
   }
 
   if (!asyncStoragePromise) {
-    asyncStoragePromise = asyncHooksPromise?.then(
-      ({ AsyncLocalStorage }) => new AsyncLocalStorage<string>(),
-    ) ?? Promise.resolve(null);
+    asyncStoragePromise = import('node:async_hooks')
+      .then(({ AsyncLocalStorage }) => new AsyncLocalStorage<string>())
+      .catch(() => null);
   }
 
   return asyncStoragePromise;

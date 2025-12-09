@@ -13,10 +13,15 @@ function normalize(str?: string | null): string | null {
 function evaluateRequiredSkills(job: JobIntakeProfile, candidate: CandidateProfile) {
   const requiredSkills = job.skills?.filter(skill => skill.required) ?? [];
   const candidateSkillSet = new Set(
-    (candidate.normalizedSkills ?? []).map(skill => normalize(skill.normalizedName)).filter(Boolean) as string[],
+    (candidate.normalizedSkills ?? [])
+      .map(skill => normalize(skill.normalizedName))
+      .filter((name): name is string => Boolean(name)),
   );
 
-  const matchedRequired = requiredSkills.filter(skill => candidateSkillSet.has(normalize(skill.normalizedName))).length;
+  const matchedRequired = requiredSkills.filter(skill => {
+    const normalizedName = normalize(skill.normalizedName);
+    return normalizedName ? candidateSkillSet.has(normalizedName) : false;
+  }).length;
   const requiredCoverage = requiredSkills.length === 0 ? 1 : matchedRequired / requiredSkills.length;
   return { requiredSkills, matchedRequired, requiredCoverage };
 }
