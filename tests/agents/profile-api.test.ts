@@ -36,6 +36,9 @@ vi.mock("@/lib/prisma", () => ({
     candidate: {
       create: mockCandidateCreate,
     },
+    tenant: {
+      findUnique: vi.fn().mockResolvedValue({ id: "tenant-1" }),
+    },
   },
 }));
 
@@ -62,7 +65,10 @@ const { mockGetCurrentUser } = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth", () => ({ getCurrentUser: mockGetCurrentUser }));
 vi.mock("@/lib/auth/user", () => ({ getCurrentUser: mockGetCurrentUser }));
-vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1") }));
+vi.mock("@/lib/tenant", () => ({
+  getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1"),
+  withTenantContext: async (_tenantId: string, callback: () => Promise<unknown>) => callback(),
+}));
 vi.mock("@/lib/killSwitch", () => ({
   assertKillSwitchDisarmed: vi.fn(),
   KILL_SWITCHES: { AGENTS: "AGENTS" },
@@ -113,6 +119,7 @@ describe("PROFILE agent API", () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ candidateId: "candidate-123", agentRunId: "agent-run-abc" });
+    expect(mockWithAgentRun).toHaveBeenCalled();
     expect(mockCandidateCreate).toHaveBeenCalledTimes(1);
 
     const createCall = mockCandidateCreate.mock.calls[0]?.[0];

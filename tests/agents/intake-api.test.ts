@@ -122,8 +122,11 @@ describe("INTAKE agent API", () => {
     );
 
     const response = await intakePost(request);
+    const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(body.title).toBe("Engineer");
+    expect(mockGetTenantScopedPrismaClient).toHaveBeenCalled();
     expect(mockAgentRunLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: "RUNNING" }),

@@ -10,21 +10,18 @@ const {
   mockUserFindUnique,
   mockPrisma,
 } = vi.hoisted(() => {
-  const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-123", ...data }));
+  const mockAgentRunLogCreate = vi.fn(async (_client, data) => ({ id: "run-123", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockCandidateCreate = vi.fn(async ({ data }) => ({ id: "cand-123", ...data }));
-  const mockUserFindUnique = vi.fn(async ({ where }) => {
-    if (where?.id === "test-user-1") {
-      return { id: "test-user-1", tenantId: "tenant-1" };
-    }
-
-    return null;
-  });
+  const mockUserFindUnique = vi.fn(async ({ where }) => ({ id: where?.id ?? "test-user-1", tenantId: "tenant-1" }));
 
   const mockPrisma = {
     agentRunLog: {
       create: mockAgentRunLogCreate,
       update: mockAgentRunLogUpdate,
+    },
+    tenant: {
+      findUnique: vi.fn().mockResolvedValue({ id: "tenant-1" }),
     },
     candidate: {
       create: mockCandidateCreate,
@@ -42,6 +39,19 @@ const {
     mockPrisma,
   };
 });
+
+vi.mock("@/lib/agents/tenantScope", () => ({
+  getTenantScopedPrismaClient: vi.fn(async () => ({
+    prisma: mockPrisma as any,
+    tenantId: "tenant-1",
+    runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
+  })),
+  toTenantErrorResponse: () => null,
+}));
+
+vi.mock("@/lib/auth/requireRole", () => ({
+  requireRole: vi.fn(async () => ({ ok: true, user: { id: "test-user-1", tenantId: "tenant-1" } })),
+}));
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
@@ -127,7 +137,7 @@ describe("Agent run logging", () => {
     expect(response.status).toBe(200);
     expect(mockAgentRunLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ userId: "test-user-1" }),
+        data: expect.objectContaining({ agentName: "EAT-TS.RINA", tenantId: "tenant-1", userId: "test-user-1" }),
       }),
     );
   });

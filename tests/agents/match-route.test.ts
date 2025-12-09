@@ -80,6 +80,10 @@ vi.mock("@/lib/agents/tenantScope", async () => {
   };
 });
 
+vi.mock("@/lib/auth/requireRole", () => ({
+  requireRole: vi.fn(async () => ({ ok: true, user: { id: "user-1", tenantId: "tenant-1" } })),
+}));
+
 vi.mock("@/lib/agents/agentRunLog", () => ({
   createAgentRunLog: vi.fn(async () => ({ id: "agent-run-1" })),
 }));

@@ -1,3 +1,5 @@
+import type { NextRequest } from "next/server";
+
 import { withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
@@ -20,8 +22,8 @@ export type RunConfidenceResult = {
 export async function runConfidence({
   jobId,
   recruiterId,
-}: RunConfidenceInput): Promise<RunConfidenceResult> {
-  const tenantId = await getCurrentTenantId();
+}: RunConfidenceInput, req?: NextRequest): Promise<RunConfidenceResult> {
+  const tenantId = await getCurrentTenantId(req);
 
   const [result] = await withAgentRun<RunConfidenceResult>(
     {

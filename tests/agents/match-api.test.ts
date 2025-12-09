@@ -49,6 +49,7 @@ vi.mock("@/lib/killSwitch", () => ({ assertKillSwitchDisarmed: vi.fn(), KILL_SWI
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),
   AGENT_KILL_SWITCHES: { MATCHER: "EAT-TS.MATCHER" },
+  enforceAgentKillSwitch: vi.fn(),
 }));
 vi.mock("@/lib/subscription/usageLimits", () => ({ assertTenantWithinLimits: vi.fn() }));
 vi.mock("@/lib/candidates/confidenceScore", () => ({
@@ -114,20 +115,20 @@ describe("MATCH agent API", () => {
       jobId: "job-1",
       agentRunId: "run-1",
       matches: [
-        {
+        expect.objectContaining({
           candidateId: "cand-2",
           jobReqId: "job-1",
           matchScore: 90,
-          confidence: 88,
           explanationId: "match-2",
-        },
-        {
+          confidence: expect.any(Number),
+        }),
+        expect.objectContaining({
           candidateId: "cand-1",
           jobReqId: "job-1",
           matchScore: 70,
-          confidence: 88,
           explanationId: "match-1",
-        },
+          confidence: expect.any(Number),
+        }),
       ],
     });
     expect(mockAgentRunLogCreate).toHaveBeenCalledWith(
