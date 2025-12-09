@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-import { POST, resetProcessedEventIds } from "./route";
+import { GET, OPTIONS, POST, resetProcessedEventIds } from "./route";
 
 const buildRequest = (body: unknown, signature = "secret") =>
   new Request("http://localhost/api/ats/bullhorn/webhook", {
@@ -60,5 +60,22 @@ describe("POST /api/ats/bullhorn/webhook", () => {
     expect(secondResponse.status).toBe(202);
     expect(secondBody.processed).toBe(0);
     expect(secondBody.duplicates).toBe(1);
+  });
+});
+
+describe("Non-POST methods", () => {
+  it("responds to GET with a simple ok payload", async () => {
+    const response = await GET();
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ status: "ok" });
+  });
+
+  it("responds to OPTIONS with an empty 204", async () => {
+    const response = await OPTIONS();
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("allow")).toBe("GET,POST,OPTIONS");
   });
 });

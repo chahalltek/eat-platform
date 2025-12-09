@@ -88,6 +88,19 @@ export function resetProcessedEventIds() {
   processedEventIds.clear();
 }
 
+export function GET() {
+  return NextResponse.json({ status: "ok" });
+}
+
+export function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      Allow: "GET,POST,OPTIONS",
+    },
+  });
+}
+
 export async function POST(request: Request) {
   try {
     verifySignature(request);
