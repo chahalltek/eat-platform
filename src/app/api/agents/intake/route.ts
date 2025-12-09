@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -334,3 +335,6 @@ export async function POST(request: Request) {
   return NextResponse.json(response, { status: 200 });
 >>>>>>> theirs
 }
+=======
+export { POST } from '../rua/route';
+>>>>>>> theirs
