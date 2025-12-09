@@ -62,8 +62,11 @@ export async function POST(request: Request) {
     return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
   }
 
-  const user = await prisma.user.findUnique({
-    where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: normalizedEmail } },
+  const user = await prisma.user.findFirst({
+    where: {
+      tenantId: DEFAULT_TENANT_ID,
+      email: normalizedEmail,
+    },
   });
 
   if (!user) {
