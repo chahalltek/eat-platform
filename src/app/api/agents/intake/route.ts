@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { callLLM } from '@/lib/llm';
-import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth/user';
-import { getCurrentTenantId } from '@/lib/tenant';
 import { normalizeError } from '@/lib/errors';
+import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -52,6 +51,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  let scopedTenant;
+  try {
+    scopedTenant = await getTenantScopedPrismaClient(req);
+  } catch (error) {
+    const tenantError = toTenantErrorResponse(error);
+
+    if (tenantError) {
+      return tenantError;
+    }
+
+    throw error;
+  }
+
   let body: unknown;
 
   try {
@@ -60,21 +72,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { jobReqId, rawDescription, rawJobText, tenantId } =
+  const { jobReqId, rawDescription, rawJobText } =
     (body as {
       jobReqId?: unknown;
       rawDescription?: unknown;
       rawJobText?: unknown;
-      tenantId?: unknown;
     }) ?? {};
 
-   const trimmedDescription = trimString(rawDescription ?? rawJobText);
+  const trimmedDescription = trimString(rawDescription ?? rawJobText);
 
   if (!trimmedDescription) {
     return NextResponse.json({ error: 'rawDescription is required' }, { status: 400 });
   }
 
-  const resolvedTenantId = trimString(tenantId) || (await getCurrentTenantId(req));
+  const { prisma: scopedPrisma, tenantId: resolvedTenantId, runWithTenantContext } = scopedTenant;
 
   const agentName = 'EAT-TS.INTAKE';
   const startedAt = new Date();
@@ -84,123 +95,126 @@ export async function POST(req: NextRequest) {
     tenantId: resolvedTenantId ?? null,
   } as const;
 
-  const agentRun = await prisma.agentRunLog.create({
-    data: {
-      agentName,
-      userId: currentUser.id,
-      tenantId: resolvedTenantId ?? null,
-      input: inputSnapshot,
-      inputSnapshot,
-      status: 'RUNNING',
-      startedAt,
-    },
-  });
-
-  try {
-    const llmRaw = await callLLM({
-      systemPrompt: buildSystemPrompt(),
-      userPrompt: `Job Description:\n"""${trimmedDescription}"""`,
+  return runWithTenantContext(async () => {
+    const agentRun = await scopedPrisma.agentRunLog.create({
+      data: {
+        agentName,
+        userId: currentUser.id,
+        tenantId: resolvedTenantId ?? null,
+        input: inputSnapshot,
+        inputSnapshot,
+        status: 'RUNNING',
+        startedAt,
+      },
     });
 
-    let parsedProfile: JobIntakeProfile;
-
     try {
-      const parsed = JSON.parse(llmRaw);
-      parsedProfile = intakeProfileSchema.parse(parsed);
-    } catch (error) {
-      throw new Error('Failed to parse LLM output');
-    }
+      const llmRaw = await callLLM({
+        systemPrompt: buildSystemPrompt(),
+        userPrompt: `Job Description:\n"""${trimmedDescription}"""`,
+      });
 
-     const runTransaction = prisma.$transaction
-      ? prisma.$transaction.bind(prisma)
-      : async (fn: (tx: typeof prisma) => Promise<void>) => fn(prisma as unknown as typeof prisma);
+      let parsedProfile: JobIntakeProfile;
 
-    await runTransaction(async (tx) => {
-      const skillCreates = parsedProfile.skills.map((skill) => ({
-        name: skill.name,
-        normalizedName: skill.normalizedName || skill.name,
-        required: skill.required ?? false,
-        tenantId: resolvedTenantId,
-      }));
+      try {
+        const parsed = JSON.parse(llmRaw);
+        parsedProfile = intakeProfileSchema.parse(parsed);
+      } catch (error) {
+        throw new Error('Failed to parse LLM output');
+      }
 
-      if (inputSnapshot.jobReqId) {
-        const existing = await tx.jobReq.findUnique({
-          where: { id: inputSnapshot.jobReqId, tenantId: resolvedTenantId },
-          select: { id: true },
-        });
+      const runTransaction = scopedPrisma.$transaction
+        ? scopedPrisma.$transaction.bind(scopedPrisma)
+        : async (fn: (tx: typeof scopedPrisma) => Promise<void>) =>
+            fn(scopedPrisma as unknown as typeof scopedPrisma);
 
-        if (!existing) {
-          throw new Error('JobReq not found');
+      await runTransaction(async (tx) => {
+        const skillCreates = parsedProfile.skills.map((skill) => ({
+          name: skill.name,
+          normalizedName: skill.normalizedName || skill.name,
+          required: skill.required ?? false,
+          tenantId: resolvedTenantId,
+        }));
+
+        if (inputSnapshot.jobReqId) {
+          const existing = await tx.jobReq.findUnique({
+            where: { id: inputSnapshot.jobReqId, tenantId: resolvedTenantId },
+            select: { id: true },
+          });
+
+          if (!existing) {
+            throw new Error('JobReq not found');
+          }
+
+          await tx.jobSkill.deleteMany({
+            where: { jobReqId: existing.id, tenantId: resolvedTenantId },
+          });
+          await tx.jobReq.update({
+            where: { id: existing.id },
+            data: {
+              title: parsedProfile.title,
+              location: parsedProfile.location ?? null,
+              employmentType: parsedProfile.employmentType ?? null,
+              seniorityLevel: parsedProfile.seniorityLevel ?? null,
+              status: parsedProfile.status ?? null,
+              rawDescription: trimmedDescription,
+              tenantId: resolvedTenantId,
+              skills: { create: skillCreates },
+            },
+          });
+
+          return;
         }
 
-        await tx.jobSkill.deleteMany({
-          where: { jobReqId: existing.id, tenantId: resolvedTenantId },
-        });
-        await tx.jobReq.update({
-          where: { id: existing.id },
+        await tx.jobReq.create({
           data: {
+            tenantId: resolvedTenantId,
             title: parsedProfile.title,
             location: parsedProfile.location ?? null,
             employmentType: parsedProfile.employmentType ?? null,
             seniorityLevel: parsedProfile.seniorityLevel ?? null,
             status: parsedProfile.status ?? null,
             rawDescription: trimmedDescription,
-            tenantId: resolvedTenantId,
             skills: { create: skillCreates },
           },
         });
+      });
 
-        return;
-      }
+      const finishedAt = new Date();
+      const durationMs = finishedAt.getTime() - startedAt.getTime();
 
-      await tx.jobReq.create({
+      await scopedPrisma.agentRunLog.update({
+        where: { id: agentRun.id },
         data: {
-          tenantId: resolvedTenantId,
-          title: parsedProfile.title,
-          location: parsedProfile.location ?? null,
-          employmentType: parsedProfile.employmentType ?? null,
-          seniorityLevel: parsedProfile.seniorityLevel ?? null,
-          status: parsedProfile.status ?? null,
-          rawDescription: trimmedDescription,
-          skills: { create: skillCreates },
+          output: { snapshot: parsedProfile, durationMs },
+          outputSnapshot: parsedProfile,
+          durationMs,
+          status: 'SUCCESS',
+          finishedAt,
         },
       });
-    });
 
-    const finishedAt = new Date();
-    const durationMs = finishedAt.getTime() - startedAt.getTime();
+      return NextResponse.json(parsedProfile, { status: 200 });
+    } catch (err) {
+      const finishedAt = new Date();
+      const durationMs = finishedAt.getTime() - startedAt.getTime();
+      const { userMessage, category } = normalizeError(err);
 
-    await prisma.agentRunLog.update({
-      where: { id: agentRun.id },
-      data: {
-        output: { snapshot: parsedProfile, durationMs },
-        outputSnapshot: parsedProfile,
-        durationMs,
-        status: 'SUCCESS',
-        finishedAt,
-      },
-    });
+      await scopedPrisma.agentRunLog.update({
+        where: { id: agentRun.id },
+        data: {
+          output: { durationMs, errorCategory: category },
+          durationMs,
+          status: 'FAILED',
+          errorMessage: userMessage,
+          finishedAt,
+        },
+      });
 
-    return NextResponse.json(parsedProfile, { status: 200 });
-  } catch (err) {
-    const finishedAt = new Date();
-    const durationMs = finishedAt.getTime() - startedAt.getTime();
-    const { userMessage, category } = normalizeError(err);
+      const status = userMessage === 'JobReq not found' ? 404 : 500;
 
-    await prisma.agentRunLog.update({
-      where: { id: agentRun.id },
-      data: {
-        output: { durationMs, errorCategory: category },
-        durationMs,
-        status: 'FAILED',
-        errorMessage: userMessage,
-        finishedAt,
-      },
-    });
-
-    const status = userMessage === 'JobReq not found' ? 404 : 500;
-
-    return NextResponse.json({ error: userMessage }, { status });
-  }
+      return NextResponse.json({ error: userMessage }, { status });
+    }
+  });
 }
 

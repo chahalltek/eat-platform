@@ -7,6 +7,7 @@ import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
 import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
 import { validateRecruiterId } from '../recruiterValidation';
+import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,19 @@ export async function POST(req: NextRequest) {
 
     if (!currentUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let scopedTenant;
+    try {
+      scopedTenant = await getTenantScopedPrismaClient(req);
+    } catch (error) {
+      const tenantError = toTenantErrorResponse(error);
+
+      if (tenantError) {
+        return tenantError;
+      }
+
+      throw error;
     }
 
     const flagCheck = await agentFeatureGuard();
@@ -68,11 +82,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await runRina({
-      rawResumeText,
-      sourceType,
-      sourceTag,
-    });
+    const result = await scopedTenant.runWithTenantContext(() =>
+      runRina({
+        rawResumeText,
+        sourceType,
+        sourceTag,
+      }),
+    );
 
     return NextResponse.json(result, { status: 200 });
   } catch (err) {

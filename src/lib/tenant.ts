@@ -1,8 +1,12 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 import { headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 
 import { DEFAULT_TENANT_ID, TENANT_HEADER, TENANT_QUERY_PARAM } from './auth/config';
 import { getSessionClaims } from './auth/session';
+
+const tenantContext = new AsyncLocalStorage<string>();
 
 async function extractTenantIdFromRequest(req: NextRequest) {
   const sessionTenant = (await getSessionClaims(req))?.tenantId;
@@ -45,7 +49,17 @@ async function extractTenantIdFromHeaders() {
   return null;
 }
 
+export function withTenantContext<T>(tenantId: string, callback: () => Promise<T>) {
+  return tenantContext.run(tenantId, callback);
+}
+
 export async function getCurrentTenantId(req?: NextRequest) {
+  const tenantIdFromContext = tenantContext.getStore();
+
+  if (tenantIdFromContext) {
+    return tenantIdFromContext;
+  }
+
   const tenantId = (req ? await extractTenantIdFromRequest(req) : await extractTenantIdFromHeaders()) ?? DEFAULT_TENANT_ID;
 
   return tenantId;

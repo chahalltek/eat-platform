@@ -9,11 +9,17 @@ const {
   mockJobReqCreate,
   mockUserFindUnique,
   mockPrisma,
+  mockGetTenantScopedPrismaClient,
 } = vi.hoisted(() => {
   const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-1", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockJobReqCreate = vi.fn(async ({ data }) => ({ id: "job-1", ...data }));
   const mockUserFindUnique = vi.fn(async () => ({ id: "recruiter-1", tenantId: "tenant-1" }));
+  const mockGetTenantScopedPrismaClient = vi.fn(async () => ({
+    prisma: mockPrisma as any,
+    tenantId: "tenant-1",
+    runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
+  }));
 
   const mockPrisma = {
     agentRunLog: {
@@ -34,6 +40,7 @@ const {
     mockJobReqCreate,
     mockUserFindUnique,
     mockPrisma,
+    mockGetTenantScopedPrismaClient,
   };
 });
 
@@ -49,6 +56,17 @@ vi.mock("@/lib/agents/killSwitch", () => ({
   AGENT_KILL_SWITCHES: { RUA: "EAT-TS.RUA" },
   enforceAgentKillSwitch: vi.fn(),
 }));
+vi.mock("@/lib/agents/tenantScope", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/agents/tenantScope")>(
+    "@/lib/agents/tenantScope",
+  );
+
+  return {
+    ...actual,
+    getTenantScopedPrismaClient: mockGetTenantScopedPrismaClient,
+    toTenantErrorResponse: actual.toTenantErrorResponse,
+  };
+});
 vi.mock("@/lib/featureFlags/middleware", () => ({
   agentFeatureGuard: vi.fn().mockResolvedValue(null),
   enforceFeatureFlag: vi.fn().mockResolvedValue(null),
@@ -62,7 +80,6 @@ vi.mock("@/lib/llm", () => ({ callLLM: mockCallLLM }));
 vi.mock("@/lib/auth/user", () => ({
   getCurrentUser: vi.fn().mockResolvedValue({ id: "user-1", tenantId: "tenant-1" }),
 }));
-vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: vi.fn().mockResolvedValue("tenant-1") }));
 vi.mock("@/app/api/agents/recruiterValidation", () => ({
   validateRecruiterId: vi.fn().mockResolvedValue({ recruiterId: "recruiter-1" }),
 }));
@@ -132,5 +149,25 @@ describe("INTAKE agent API", () => {
         data: expect.objectContaining({ status: "FAILED" }),
       }),
     );
+  });
+
+  it("blocks requests without a tenant", async () => {
+    const { TenantScopeError } = await import("@/lib/agents/tenantScope");
+
+    mockGetTenantScopedPrismaClient.mockRejectedValue(
+      new TenantScopeError("Tenant is required", 400),
+    );
+
+    const request = new NextRequest(
+      new Request("http://localhost/api/agents/intake", {
+        method: "POST",
+        body: JSON.stringify({ rawJobText: "bad" }),
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const response = await intakePost(request);
+
+    expect(response.status).toBe(400);
   });
 });

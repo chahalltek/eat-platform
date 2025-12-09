@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { JobMatchesTable, type MatchRow } from "./JobMatchesTable";
 import { RunMatcherButton } from "./RunMatcherButton";
+import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
+import { categorizeConfidence } from "./confidence";
 import { prisma } from "@/lib/prisma";
 
 export default async function JobMatchesPage({
@@ -16,7 +18,9 @@ export default async function JobMatchesPage({
         customer: { select: { name: true } },
         matchResults: {
           include: {
-            candidate: true,
+            candidate: {
+              include: { skills: { select: { id: true, name: true, proficiency: true, yearsOfExperience: true } } },
+            },
           },
           orderBy: { score: "desc" },
         },
@@ -54,6 +58,19 @@ export default async function JobMatchesPage({
   const matchRows: MatchRow[] = job.matchResults.map((match) => {
     const candidateId = match.candidateId ?? match.candidate.id;
     const jobCandidate = candidateId ? jobCandidateByCandidateId.get(candidateId) : undefined;
+    const confidence = computeCandidateConfidenceScore({
+      candidate: {
+        ...match.candidate,
+        skills: match.candidate.skills,
+      },
+    });
+    const confidenceCategory = categorizeConfidence(confidence.score);
+    const confidenceReasons = [
+      confidence.breakdown.resumeCompleteness.reason,
+      confidence.breakdown.skillCoverage.reason,
+      confidence.breakdown.agentAgreement.reason,
+      confidence.breakdown.unknownFields.reason,
+    ];
 
     return {
       id: match.id,
@@ -74,6 +91,9 @@ export default async function JobMatchesPage({
         | undefined,
       category: jobCandidate?.status ?? "POTENTIAL",
       keySkills: (match.candidate.normalizedSkills ?? []).slice(0, 4),
+      confidenceScore: confidence.score,
+      confidenceCategory: confidenceCategory ?? undefined,
+      confidenceReasons,
     };
   });
 

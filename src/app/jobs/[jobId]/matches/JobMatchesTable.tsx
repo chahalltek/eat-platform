@@ -13,6 +13,7 @@ import { JobCandidateStatusControl } from "./JobCandidateStatusControl";
 import { OutreachGenerator } from "./OutreachGenerator";
 import type { CandidateSignalBreakdown } from "@/lib/matching/candidateSignals";
 import { normalizeMatchExplanation } from "@/lib/matching/explanation";
+import { LOW_CONFIDENCE_THRESHOLD, categorizeConfidence } from "./confidence";
 
 export type MatchRow = {
   id: string;
@@ -31,6 +32,9 @@ export type MatchRow = {
   candidateSignalScore?: number | null;
   candidateSignalBreakdown?: CandidateSignalBreakdown | null;
   keySkills?: string[];
+  confidenceScore?: number | null;
+  confidenceCategory?: "High" | "Medium" | "Low";
+  confidenceReasons?: string[];
 };
 
 const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
@@ -42,6 +46,17 @@ const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
 
 export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
   const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
+  const [hideLowConfidence, setHideLowConfidence] = useState(false);
+  const filteredMatches = useMemo(
+    () =>
+      hideLowConfidence
+        ? matches.filter((match) => {
+            const category = match.confidenceCategory ?? categorizeConfidence(match.confidenceScore);
+            return category !== "Low" || (match.confidenceScore ?? 0) >= LOW_CONFIDENCE_THRESHOLD;
+          })
+        : matches,
+    [hideLowConfidence, matches],
+  );
   const columns = useMemo<EATTableColumn<MatchRow>[]>(
     () => [
       {
@@ -93,6 +108,12 @@ export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
           return `${Math.round(normalized)}%`;
         },
         sortingFn: (rowA, rowB) => (rowA.original.score ?? 0) - (rowB.original.score ?? 0),
+      },
+      {
+        id: "confidence",
+        header: "Confidence",
+        cell: ({ row }) => <ConfidenceCell match={row.original} />, 
+        sortingFn: (rowA, rowB) => (rowA.original.confidenceScore ?? 0) - (rowB.original.confidenceScore ?? 0),
       },
       {
         id: "category",
@@ -158,15 +179,76 @@ export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
 
   return (
     <StandardTable
-      data={matches}
+      data={filteredMatches}
       columns={columns}
       sorting={{ initialState: [{ id: "score", desc: true }] }}
       filtering={{ globalFilter: { initialState: "" }, globalFilterFn }}
       renderToolbar={(table) => (
-        <TableSearchInput table={table} placeholder="Search candidates" label="Search" />
+        <>
+          <TableSearchInput table={table} placeholder="Search candidates" label="Search" />
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              checked={hideLowConfidence}
+              onChange={(event) => setHideLowConfidence(event.target.checked)}
+            />
+            Hide low-confidence matches
+          </label>
+        </>
       )}
       emptyState={<p className="px-6 py-8 text-center text-sm text-gray-700">No matches found for this job yet.</p>}
     />
+  );
+}
+
+function ConfidenceCell({ match }: { match: MatchRow }) {
+  const [open, setOpen] = useState(false);
+  const score = match.confidenceScore;
+  const category = match.confidenceCategory ?? categorizeConfidence(score);
+  const reasons = match.confidenceReasons ?? [];
+  const hasReasons = reasons.length > 0;
+
+  if (typeof score !== "number") {
+    return <span className="text-sm text-gray-500">—</span>;
+  }
+
+  const pillClasses =
+    category === "High"
+      ? "bg-green-50 text-green-800 border border-green-200"
+      : category === "Medium"
+        ? "bg-amber-50 text-amber-800 border border-amber-200"
+        : "bg-red-50 text-red-800 border border-red-200";
+
+  return (
+    <div className="space-y-2 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-semibold text-gray-900" title={hasReasons ? reasons.join(" • ") : undefined}>
+          {score}%
+        </span>
+        {category ? (
+          <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${pillClasses}`} title={`Confidence: ${category}`}>
+            {category}
+          </span>
+        ) : null}
+        {hasReasons ? (
+          <button
+            type="button"
+            className="text-[11px] font-semibold text-blue-700 underline decoration-dotted underline-offset-2 hover:text-blue-900"
+            onClick={() => setOpen((current) => !current)}
+          >
+            {open ? "Hide details" : "Show details"}
+          </button>
+        ) : null}
+      </div>
+      {open && hasReasons ? (
+        <ul className="list-inside list-disc space-y-1 text-xs text-gray-700">
+          {reasons.map((reason, index) => (
+            <li key={`${match.id}-reason-${index}`}>{reason}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
   );
 }
 
