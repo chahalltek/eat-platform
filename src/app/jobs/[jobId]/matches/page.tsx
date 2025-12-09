@@ -199,14 +199,10 @@ export default async function JobMatchesPage({
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-<<<<<<< ours
-        <JobMatchesTable matches={matchRows} jobTitle={job.title} />
-=======
         <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
           <ShortlistActions jobId={job.id} matches={matchRows} />
         </div>
-        <JobMatchesTable matches={matchRows} />
->>>>>>> theirs
+        <JobMatchesTable matches={matchRows} jobTitle={job.title} />
       </div>
     </div>
   );
