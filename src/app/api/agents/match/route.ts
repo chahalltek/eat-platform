@@ -189,9 +189,11 @@ export async function POST(req: NextRequest) {
         jobFreshnessScore: jobFreshness.score,
       } as const;
 
+      const jobDescription = jobReq.rawDescription?.trim() || null;
+
       const explanation = await buildMatchExplanation(
         jobReq.title,
-        jobReq.rawDescription ?? jobReq.description ?? null,
+        jobDescription,
         candidate.fullName,
         candidate.summary ?? candidate.rawResumeText ?? null,
         breakdown,
