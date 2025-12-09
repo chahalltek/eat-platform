@@ -21,6 +21,7 @@ const prismaMock = vi.hoisted(() => ({
 
 vi.mock('./prisma', () => ({
   prisma: prismaMock,
+  isTableAvailable: vi.fn().mockResolvedValue(true),
 }));
 
 const getTenantPlan = vi.hoisted(() => vi.fn());

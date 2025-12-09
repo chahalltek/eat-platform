@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 const FALLBACK_DATABASE_URL = 'postgresql://placeholder.invalid:5432/placeholder';
 
@@ -113,6 +113,34 @@ const prismaClient =
   new PrismaClient({
     log: ['error', 'warn'],
   });
+
+const tableAvailabilityCache = new Map<string, boolean>();
+
+export function isPrismaUnavailableError(error: unknown) {
+  return error instanceof Prisma.PrismaClientInitializationError;
+}
+
+export async function isTableAvailable(tableName: string) {
+  if (tableAvailabilityCache.has(tableName)) {
+    return tableAvailabilityCache.get(tableName)!;
+  }
+
+  const [result] = await prismaClient
+    .$queryRaw<{ exists: boolean }[]>`
+      SELECT to_regclass(${`public."${tableName}"`}) IS NOT NULL AS "exists"
+    `
+    .catch((error) => {
+      if (isPrismaUnavailableError(error)) return [];
+
+      throw error;
+    });
+
+  const exists = Boolean(result?.exists);
+
+  tableAvailabilityCache.set(tableName, exists);
+
+  return exists;
+}
 
 prismaClient.$use(async (params, next) => {
   const tenantId = await getCurrentTenantId();

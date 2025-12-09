@@ -1,7 +1,7 @@
 import type { SubscriptionPlan, TenantSubscription } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
-import { prisma } from './prisma';
+import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 
 export type ActiveTenantPlan = {
   plan: SubscriptionPlan;
@@ -10,6 +10,12 @@ export type ActiveTenantPlan = {
 
 export async function getTenantPlan(tenantId: string): Promise<ActiveTenantPlan | null> {
   const now = new Date();
+
+  const hasSubscriptionTable = await isTableAvailable('TenantSubscription');
+
+  if (!hasSubscriptionTable) {
+    return null;
+  }
 
   // Some tests partially mock the Prisma client. If the tenant subscription model
   // is unavailable, fall back to the default plan behaviour instead of throwing.
@@ -33,7 +39,7 @@ export async function getTenantPlan(tenantId: string): Promise<ActiveTenantPlan 
     })
     .catch((error) => {
       if (
-        error instanceof Prisma.PrismaClientInitializationError ||
+        isPrismaUnavailableError(error) ||
         (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021')
       ) {
         return null;

@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 
 import { DEFAULT_FLAG_DESCRIPTIONS, FEATURE_FLAGS, type FeatureFlagName } from './featureFlags/constants';
 import { isFeatureEnabledForPlan } from './featureFlags/planMapping';
-import { prisma } from './prisma';
+import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 import { getTenantPlan } from './subscriptionPlans';
 import { getCurrentTenantId } from './tenant';
 
@@ -46,11 +46,9 @@ function isMissingTableError(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021';
 }
 
-function isPrismaUnavailableError(error: unknown) {
-  return error instanceof Prisma.PrismaClientInitializationError;
-}
-
 async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) {
+  if (!(await isTableAvailable('FeatureFlag'))) return null;
+
   try {
     return await prisma.featureFlag.findFirst({ where: { tenantId, name } });
   } catch (error) {
@@ -60,6 +58,10 @@ async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) 
 }
 
 async function fetchFeatureFlagOverrides(tenantId: string) {
+  if (!(await isTableAvailable('FeatureFlag'))) {
+    return new Map<FeatureFlagName, FeatureFlagModel>();
+  }
+
   try {
     const overrides = await prisma.featureFlag.findMany({ where: { tenantId } });
 
@@ -134,6 +136,14 @@ export const isEnabled = isFeatureEnabled;
 
 export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): Promise<FeatureFlagRecord> {
   const tenantId = await getCurrentTenantId();
+
+  if (!(await isTableAvailable('FeatureFlag'))) {
+    const fallback = buildFallbackFlag(name, enabled);
+
+    flagCache.set(cacheKey(tenantId, name), fallback.enabled);
+
+    return fallback;
+  }
 
   const flag = await prisma.$transaction(async (tx) => {
     const existing = await tx.featureFlag.findFirst({ where: { tenantId, name } });
