@@ -8,7 +8,12 @@ ALTER TABLE "AgentRunLog" ADD COLUMN     "inputSnapshot" JSONB NOT NULL DEFAULT 
 ALTER TABLE "AgentRunLog" ADD COLUMN     "outputSnapshot" JSONB;
 ALTER TABLE "AgentRunLog" ADD COLUMN     "status_new" "AgentRunStatus" NOT NULL DEFAULT 'RUNNING';
 UPDATE "AgentRunLog"
-SET "status_new" = "status"::"AgentRunStatus";
+SET "status_new" = CASE
+  WHEN "status" IN ('RUNNING', 'Running') THEN 'RUNNING'::"AgentRunStatus"
+  WHEN "status" IN ('SUCCESS', 'Success') THEN 'SUCCESS'::"AgentRunStatus"
+  WHEN "status" IN ('ERROR', 'Error', 'Failure', 'FAILED') THEN 'ERROR'::"AgentRunStatus"
+  ELSE 'ERROR'::"AgentRunStatus"
+END;
 ALTER TABLE "AgentRunLog" DROP COLUMN "status";
 ALTER TABLE "AgentRunLog" RENAME COLUMN "status_new" TO "status";
 ALTER TABLE "AgentRunLog" ALTER COLUMN "inputSnapshot" DROP DEFAULT;
