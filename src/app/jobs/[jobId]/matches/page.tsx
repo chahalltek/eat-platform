@@ -97,6 +97,8 @@ export default async function JobMatchesPage({
       confidenceScore: confidence.score,
       confidenceCategory: confidenceCategory ?? undefined,
       confidenceReasons,
+      shortlisted: match.shortlisted ?? false,
+      shortlistReason: match.shortlistReason,
     };
   });
 

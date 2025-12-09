@@ -38,8 +38,11 @@ export type MatchRow = {
   confidenceScore?: number | null;
   confidenceCategory?: "High" | "Medium" | "Low";
   confidenceReasons?: string[];
+  shortlisted?: boolean;
+  shortlistReason?: string | null;
 };
 
+<<<<<<< ours
 type ExplainAgentResponse = {
   summary: string;
   strengths: string[];
@@ -55,6 +58,9 @@ type ExplainAgentResponse = {
     confidenceScore?: number | null;
   };
 };
+=======
+type ShortlistState = { shortlisted: boolean; reason: string };
+>>>>>>> theirs
 
 const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
   const query = typeof filterValue === "string" ? filterValue.trim().toLowerCase() : "";
@@ -63,6 +69,7 @@ const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
   return values.some((value) => value.toString().toLowerCase().includes(query));
 };
 
+<<<<<<< ours
 export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jobTitle: string }) {
   const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
   const [hideLowConfidence, setHideLowConfidence] = useState(false);
@@ -72,15 +79,131 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
   const [isExplainLoading, setIsExplainLoading] = useState(false);
   const [explainError, setExplainError] = useState<string | null>(null);
   const filteredMatches = useMemo(
+=======
+export function JobMatchesTable({ matches }: { matches: MatchRow[] }) {
+  const [shortlistState, setShortlistState] = useState<Map<string, ShortlistState>>(
     () =>
-      hideLowConfidence
-        ? matches.filter((match) => {
-            const category = match.confidenceCategory ?? categorizeConfidence(match.confidenceScore);
-            return category !== "Low" || (match.confidenceScore ?? 0) >= LOW_CONFIDENCE_THRESHOLD;
-          })
-        : matches,
-    [hideLowConfidence, matches],
+      new Map(
+        matches.map((match) => [
+          match.id,
+          { shortlisted: match.shortlisted ?? false, reason: match.shortlistReason ?? "" },
+        ]),
+      ),
   );
+  const [shortlistErrors, setShortlistErrors] = useState<Map<string, string>>(new Map());
+  const [savingShortlists, setSavingShortlists] = useState<Set<string>>(new Set());
+  const [hideLowConfidence, setHideLowConfidence] = useState(false);
+  const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
+
+  const shortlistStateFor = useCallback(
+    (matchId: string): ShortlistState => {
+      const existing = shortlistState.get(matchId);
+      return existing ?? { shortlisted: false, reason: "" };
+    },
+    [shortlistState],
+  );
+
+  const updateShortlistState = useCallback((matchId: string, nextState: ShortlistState) => {
+    setShortlistState((current) => {
+      const next = new Map(current);
+      next.set(matchId, nextState);
+      return next;
+    });
+  }, []);
+
+  const updateShortlistReason = useCallback((matchId: string, reason: string) => {
+    setShortlistState((current) => {
+      const next = new Map(current);
+      const existing = next.get(matchId) ?? { shortlisted: false, reason: "" };
+      next.set(matchId, { ...existing, reason });
+      return next;
+    });
+  }, []);
+
+  const persistShortlistState = useCallback(
+    async (matchId: string, overrideState?: ShortlistState) => {
+      const state = overrideState ?? shortlistStateFor(matchId);
+
+      setSavingShortlists((current) => new Set(current).add(matchId));
+      setShortlistErrors((current) => {
+        const next = new Map(current);
+        next.delete(matchId);
+        return next;
+      });
+
+      try {
+        const response = await fetch("/api/agents/shortlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            matchId,
+            shortlisted: state.shortlisted,
+            reason: state.reason,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: "Unable to update shortlist" }));
+          throw new Error(error.error ?? "Unable to update shortlist");
+        }
+
+        const payload = (await response.json()) as { shortlisted: boolean; shortlistReason: string | null };
+
+        updateShortlistState(matchId, {
+          shortlisted: payload.shortlisted,
+          reason: payload.shortlistReason ?? "",
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unable to update shortlist";
+
+        setShortlistErrors((current) => {
+          const next = new Map(current);
+          next.set(matchId, message);
+          return next;
+        });
+
+        updateShortlistState(matchId, shortlistStateFor(matchId));
+      } finally {
+        setSavingShortlists((current) => {
+          const next = new Set(current);
+          next.delete(matchId);
+          return next;
+        });
+      }
+    },
+    [shortlistStateFor, updateShortlistState],
+  );
+
+  const handleShortlistToggle = useCallback(
+    (matchId: string, shortlisted: boolean) => {
+      const nextState = { ...shortlistStateFor(matchId), shortlisted };
+      updateShortlistState(matchId, nextState);
+      void persistShortlistState(matchId, nextState);
+    },
+    [persistShortlistState, shortlistStateFor, updateShortlistState],
+  );
+
+  const handleShortlistSave = useCallback(
+    (matchId: string) => {
+      void persistShortlistState(matchId);
+    },
+    [persistShortlistState],
+  );
+
+  const matchesWithShortlist = useMemo(
+>>>>>>> theirs
+    () =>
+      matches.map((match) => {
+        const shortlist = shortlistState.get(match.id);
+        return {
+          ...match,
+          shortlisted: shortlist?.shortlisted ?? match.shortlisted ?? false,
+          shortlistReason: shortlist?.reason ?? match.shortlistReason ?? "",
+        };
+      }),
+    [matches, shortlistState],
+  );
+<<<<<<< ours
   const handleExplain = useCallback(
     async (match: MatchRow) => {
       setExplainTarget(match);
@@ -126,31 +249,85 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
     [jobTitle],
   );
 
+=======
+
+  const filteredMatches = useMemo(() => {
+    let scopedMatches = matchesWithShortlist;
+
+    if (hideLowConfidence) {
+      scopedMatches = scopedMatches.filter((match) => {
+        const category = match.confidenceCategory ?? categorizeConfidence(match.confidenceScore);
+        return category !== "Low" || (match.confidenceScore ?? 0) >= LOW_CONFIDENCE_THRESHOLD;
+      });
+    }
+
+    if (showShortlistedOnly) {
+      scopedMatches = scopedMatches.filter((match) => match.shortlisted);
+    }
+
+    return scopedMatches;
+  }, [hideLowConfidence, matchesWithShortlist, showShortlistedOnly]);
+>>>>>>> theirs
   const columns = useMemo<EATTableColumn<MatchRow>[]>(
     () => [
       {
         id: "shortlist",
         header: "Shortlist",
         enableSorting: false,
-        cell: ({ row }) => (
-          <input
-            type="checkbox"
-            aria-label={`Shortlist ${row.original.candidateName}`}
-            checked={shortlisted.has(row.original.candidateId)}
-            onChange={(event) => {
-              setShortlisted((current) => {
-                const next = new Set(current);
-                if (event.target.checked) {
-                  next.add(row.original.candidateId);
-                } else {
-                  next.delete(row.original.candidateId);
-                }
-                return next;
-              });
-            }}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-        ),
+        cell: ({ row }) => {
+          const shortlist = shortlistStateFor(row.original.id);
+          const isSaving = savingShortlists.has(row.original.id);
+          const error = shortlistErrors.get(row.original.id);
+
+          return (
+            <div className="space-y-2 text-sm">
+              <label className="flex items-center gap-2 font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  aria-label={`Shortlist ${row.original.candidateName}`}
+                  checked={shortlist.shortlisted}
+                  onChange={(event) => handleShortlistToggle(row.original.id, event.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={isSaving}
+                />
+                <span>Shortlist</span>
+              </label>
+
+              <div className="space-y-1">
+                <label className="sr-only" htmlFor={`shortlist-reason-${row.id}`}>
+                  Shortlist reason for {row.original.candidateName}
+                </label>
+                <input
+                  id={`shortlist-reason-${row.id}`}
+                  type="text"
+                  value={shortlist.reason}
+                  placeholder="Add reason (optional)"
+                  onChange={(event) => updateShortlistReason(row.original.id, event.target.value)}
+                  className="w-full rounded border border-gray-300 px-2 py-1 text-xs text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+                  disabled={isSaving}
+                />
+                <div className="flex items-center justify-between text-[11px]">
+                  {error ? (
+                    <span className="text-red-700">{error}</span>
+                  ) : (
+                    <span className="text-gray-500">Optional context</span>
+                  )}
+                  <div className="flex items-center gap-2">
+                    {isSaving ? <span className="text-gray-500">Saving…</span> : null}
+                    <button
+                      type="button"
+                      onClick={() => handleShortlistSave(row.original.id)}
+                      className="rounded bg-blue-600 px-2 py-1 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+                      disabled={isSaving}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        },
       },
       {
         ...createTextColumn<MatchRow, "candidateName">({
@@ -257,6 +434,7 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
         ),
       },
     ],
+<<<<<<< ours
     [handleExplain, shortlisted],
   );
 
@@ -299,6 +477,42 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
         />
       ) : null}
     </>
+=======
+    [handleShortlistSave, handleShortlistToggle, savingShortlists, shortlistErrors, shortlistStateFor, updateShortlistReason],
+  );
+
+  return (
+    <StandardTable
+      data={filteredMatches}
+      columns={columns}
+      sorting={{ initialState: [{ id: "score", desc: true }] }}
+      filtering={{ globalFilter: { initialState: "" }, globalFilterFn }}
+      renderToolbar={(table) => (
+        <>
+          <TableSearchInput table={table} placeholder="Search candidates" label="Search" />
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              checked={hideLowConfidence}
+              onChange={(event) => setHideLowConfidence(event.target.checked)}
+            />
+            Hide low-confidence matches
+          </label>
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              checked={showShortlistedOnly}
+              onChange={(event) => setShowShortlistedOnly(event.target.checked)}
+            />
+            Show shortlisted only
+          </label>
+        </>
+      )}
+      emptyState={<p className="px-6 py-8 text-center text-sm text-gray-700">No matches found for this job yet.</p>}
+    />
+>>>>>>> theirs
   );
 }
 

@@ -293,6 +293,8 @@ model MatchResult {
 
   score     Int
   reasons   Json?
+  shortlisted Boolean   @default(false)
+  shortlistReason String?
   createdAt DateTime @default(now())
   deletedAt DateTime?
 
