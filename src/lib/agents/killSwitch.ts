@@ -1,12 +1,13 @@
 import type { AgentKillSwitch as AgentKillSwitchModel } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
-import { logKillSwitchChange } from '@/lib/audit/securityEvents';
+import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { prisma } from '@/lib/prisma';
 
 export const AGENT_KILL_SWITCHES = {
   MATCHER: 'EAT-TS.MATCHER',
   RANKER: 'EAT-TS.RANKER',
+  INTAKE: 'EAT-TS.INTAKE',
   RINA: 'EAT-TS.RINA',
   RUA: 'EAT-TS.RUA',
   OUTREACH: 'EAT-TS.OUTREACH',
@@ -74,6 +75,8 @@ export function describeAgentKillSwitch(name: AgentName) {
       return 'Resume parser (RINA)';
     case AGENT_KILL_SWITCHES.RUA:
       return 'Job parser (RUA)';
+    case AGENT_KILL_SWITCHES.INTAKE:
+      return 'Job intake parser';
     case AGENT_KILL_SWITCHES.OUTREACH:
       return 'Outreach writer';
     case AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION:
@@ -146,6 +149,12 @@ export async function enforceAgentKillSwitch(agentName: AgentName) {
   if (!state.latched) return null;
 
   const label = describeAgentKillSwitch(agentName);
+  await logKillSwitchBlock({
+    switchName: agentName,
+    reason: state.reason ?? DEFAULT_REASON,
+    latchedAt: state.latchedAt,
+    scope: 'agent',
+  });
 
   return NextResponse.json(
     {

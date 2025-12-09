@@ -15,6 +15,7 @@ export const SECURITY_EVENT_TYPES = {
   COMPLIANCE_ALERT: 'COMPLIANCE_ALERT',
   COMPLIANCE_SCAN: 'COMPLIANCE_SCAN',
   KILL_SWITCH_UPDATED: 'KILL_SWITCH_UPDATED',
+  KILL_SWITCH_BLOCKED: 'KILL_SWITCH_BLOCKED',
 } as const;
 
 export type SecurityEventType = (typeof SECURITY_EVENT_TYPES)[keyof typeof SECURITY_EVENT_TYPES];
@@ -264,6 +265,26 @@ export async function logKillSwitchChange(params: {
     metadata: {
       switchName: params.switchName,
       latched: params.latched,
+      reason: params.reason ?? null,
+      latchedAt: params.latchedAt?.toISOString() ?? null,
+      scope: params.scope ?? 'system',
+    },
+  });
+}
+
+export async function logKillSwitchBlock(params: {
+  tenantId?: string;
+  userId?: string | null;
+  switchName: string;
+  reason?: string | null;
+  latchedAt?: Date | null;
+  scope?: 'agent' | 'system';
+}) {
+  return recordSecurityEvent({
+    ...params,
+    eventType: SECURITY_EVENT_TYPES.KILL_SWITCH_BLOCKED,
+    metadata: {
+      switchName: params.switchName,
       reason: params.reason ?? null,
       latchedAt: params.latchedAt?.toISOString() ?? null,
       scope: params.scope ?? 'system',

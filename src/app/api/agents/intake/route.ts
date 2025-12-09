@@ -10,8 +10,12 @@ import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents
 import { prisma } from '@/lib/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { normalizeError } from '@/lib/errors';
+<<<<<<< ours
 import { requireRole } from '@/lib/auth/requireRole';
 import { USER_ROLES } from '@/lib/auth/roles';
+>>>>>>> theirs
+=======
+import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 >>>>>>> theirs
 
 const jobSkillSchema = z.object({
@@ -97,9 +101,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'rawDescription is required' }, { status: 400 });
   }
 
+<<<<<<< ours
   const { prisma: scopedPrisma, tenantId: resolvedTenantId, runWithTenantContext } = scopedTenant;
+=======
+  const resolvedTenantId = trimString(tenantId) || (await getCurrentTenantId(req));
+  const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.INTAKE);
+>>>>>>> theirs
 
-  const agentName = 'EAT-TS.INTAKE';
+  if (killSwitchResponse) {
+    return killSwitchResponse;
+  }
+
+  const agentName = AGENT_KILL_SWITCHES.INTAKE;
   const startedAt = new Date();
   const inputSnapshot = {
     jobReqId: trimString(jobReqId) || null,

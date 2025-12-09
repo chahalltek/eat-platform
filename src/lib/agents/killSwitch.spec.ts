@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { logKillSwitchChange } from '@/lib/audit/securityEvents';
+import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { prisma } from '@/lib/prisma';
 
 import {
@@ -26,6 +26,7 @@ vi.mock('@/lib/prisma', () => ({
 
 vi.mock('@/lib/audit/securityEvents', () => ({
   logKillSwitchChange: vi.fn(),
+  logKillSwitchBlock: vi.fn(),
 }));
 
 afterEach(() => {
@@ -118,6 +119,13 @@ describe('agent kill switch', () => {
 
     const payload = await response?.json();
     expect(payload).toMatchObject({ reason: 'safety pause' });
+    expect(logKillSwitchBlock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        switchName: AGENT_KILL_SWITCHES.OUTREACH,
+        reason: 'safety pause',
+        scope: 'agent',
+      }),
+    );
   });
 
   test('setAgentKillSwitch persists state', async () => {
@@ -232,6 +240,7 @@ describe('agent kill switch', () => {
     expect(describeAgentKillSwitch(AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION)).toBe(
       'Outreach automation',
     );
+    expect(describeAgentKillSwitch(AGENT_KILL_SWITCHES.INTAKE)).toBe('Job intake parser');
     expect(describeAgentKillSwitch(AGENT_KILL_SWITCHES.RANKER)).toBe('Shortlist ranker');
     expect(describeAgentKillSwitch('unknown' as any)).toBe('unknown');
   });
