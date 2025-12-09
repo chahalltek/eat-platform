@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/db-safety.js --ci && next build",
-    "vercel-build": "node scripts/db-safety.js --ci && prisma migrate deploy && prisma generate && next build",
+   "vercel-build": "node scripts/db-safety.js --ci && prisma migrate resolve --rolled-back 20250207120000_agent_run_log_observability && prisma migrate deploy && prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
