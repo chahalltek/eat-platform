@@ -26,6 +26,7 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
     },
   },
+  isTableAvailable: vi.fn(async () => true),
 }));
 
 vi.mock('@/lib/agents/agentRun', () => ({
