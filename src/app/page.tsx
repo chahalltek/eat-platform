@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
+import { getSystemStatus } from "@/lib/systemStatus";
+import { SystemStatus } from "@/components/SystemStatus";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -22,10 +24,11 @@ const links: HomeLink[] = [
 ];
 
 export default async function Home() {
-  const [uiEnabled, agentsEnabled, scoringEnabled] = await Promise.all([
+  const [uiEnabled, agentsEnabled, scoringEnabled, systemStatus] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
     isFeatureEnabled(FEATURE_FLAGS.AGENTS),
     isFeatureEnabled(FEATURE_FLAGS.SCORING),
+    getSystemStatus(),
   ]);
 
   const featureMap: Record<string, boolean> = {
@@ -63,6 +66,8 @@ export default async function Home() {
             Quick links to the core workflows for the EDGE (Emerging, Disruptive & Growth Enabling) Agent Toolkit.
           </p>
         </header>
+
+        <SystemStatus initialStatus={systemStatus} />
 
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {links.map((link) => {
