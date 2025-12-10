@@ -9,7 +9,11 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
+<<<<<<< ours
     "test": "vitest run",
+=======
+    "test": "vitest",
+>>>>>>> theirs
     "test:coverage": "vitest run --coverage",
     "coverage": "npm run test:coverage",
     "ci:config-validate": "tsx scripts/config-validate.ts",
@@ -38,6 +42,7 @@
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
