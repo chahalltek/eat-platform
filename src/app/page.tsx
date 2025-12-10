@@ -112,7 +112,7 @@ export default async function Home() {
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">EAT</p>
           <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
           <p className="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-            Quick links to the core workflows for the EDGE (Emerging, Disruptive & Growth Enabling) Agent Toolkit.
+            Control plane for AI-driven recruiting workflows across intake, scoring, and selection.
           </p>
         </header>
 
