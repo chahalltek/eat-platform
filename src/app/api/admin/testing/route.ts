@@ -196,7 +196,6 @@ function buildSampleJob(): JobReq & { skills: JobSkill[] } {
         weight: 1,
       },
     ],
-    customer: null,
     matches: [],
     matchResults: [],
     jobCandidates: [],
