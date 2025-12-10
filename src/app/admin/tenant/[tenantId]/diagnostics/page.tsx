@@ -52,11 +52,11 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "2-digit", year: "numeric" }).format(date);
 }
 
-export default async function TenantDiagnosticsPage({ params }: { params: { tenantId: string } }) {
+export default async function TenantDiagnosticsPage({ params }: { params: { tenantId?: string } }) {
   const user = await getCurrentUser();
-  const requestedTenant = params.tenantId.trim();
-  const currentTenantId = (await getCurrentTenantId())?.trim();
-  const userTenant = (user?.tenantId ?? DEFAULT_TENANT_ID).trim();
+  const requestedTenant = params.tenantId?.trim?.() ?? "";
+  const currentTenantId = (await getCurrentTenantId())?.trim?.() ?? "";
+  const userTenant = (user?.tenantId ?? DEFAULT_TENANT_ID)?.trim?.() ?? "";
   const isAuthorized = user && isAdminRole(user.role) && userTenant === requestedTenant && currentTenantId === requestedTenant;
 
   if (!isAuthorized) {
