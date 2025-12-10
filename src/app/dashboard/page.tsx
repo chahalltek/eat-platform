@@ -1,5 +1,7 @@
 import { ArrowTrendingUpIcon, ChartBarIcon, ExclamationTriangleIcon, UsersIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { AgentsStatusPanel } from '@/components/AgentsStatusPanel';
+import { getAgentsStatus } from '@/lib/agents/statusBoard';
 import { getDashboardMetrics } from '@/lib/metrics/dashboard';
 
 export const dynamic = 'force-dynamic';
@@ -116,7 +118,7 @@ function HorizontalBarList({
 }
 
 export default async function DashboardPage() {
-  const metrics = await getDashboardMetrics();
+  const [metrics, agentsStatus] = await Promise.all([getDashboardMetrics(), getAgentsStatus()]);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
@@ -173,6 +175,7 @@ export default async function DashboardPage() {
             />
           </div>
           <div className="flex flex-col gap-6">
+            <AgentsStatusPanel initialData={agentsStatus} />
             <HorizontalBarList
               title="Errors by Agent"
               description="Failed runs grouped by agent name."
