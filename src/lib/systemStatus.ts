@@ -4,9 +4,10 @@ import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 export type SubsystemKey = 'agents' | 'scoring' | 'database' | 'tenantConfig';
 export type SubsystemState = 'healthy' | 'warning' | 'error' | 'unknown';
 
-export type SystemStatusMap = Record<SubsystemKey, { status: SubsystemState; detail?: string }>;
+export type SystemStatus = { status: SubsystemState; detail?: string };
+export type SystemStatusMap = Record<SubsystemKey, SystemStatus>;
 
-async function checkDatabase(): Promise<{ status: SubsystemState; detail?: string }> {
+async function checkDatabase(): Promise<SystemStatus> {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return { status: 'healthy', detail: 'Connected' };
@@ -19,7 +20,7 @@ async function checkDatabase(): Promise<{ status: SubsystemState; detail?: strin
   }
 }
 
-async function checkTenantConfig(): Promise<{ status: SubsystemState; detail?: string }> {
+async function checkTenantConfig(): Promise<SystemStatus> {
   try {
     const tableAvailable = await isTableAvailable('Tenant');
 
@@ -43,17 +44,21 @@ async function checkTenantConfig(): Promise<{ status: SubsystemState; detail?: s
   }
 }
 
-async function checkFeatureFlagStatus(flag: (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS]): Promise<SubsystemState> {
+async function checkFeatureFlagStatus(
+  flag: (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS],
+): Promise<SystemStatus> {
   try {
     const enabled = await isFeatureEnabled(flag);
 
-    return enabled ? 'healthy' : 'warning';
+    return enabled
+      ? { status: 'healthy', detail: 'Feature enabled' }
+      : { status: 'warning', detail: 'Feature flag disabled' };
   } catch (error) {
     if (isPrismaUnavailableError(error)) {
-      return 'error';
+      return { status: 'error', detail: 'Feature flag service unavailable' };
     }
 
-    return 'unknown';
+    return { status: 'unknown', detail: 'Feature flag status unknown' };
   }
 }
 
@@ -73,8 +78,8 @@ export async function getSystemStatus(): Promise<SystemStatusMap> {
   }
 
   result.tenantConfig = await checkTenantConfig();
-  result.agents = { status: await checkFeatureFlagStatus(FEATURE_FLAGS.AGENTS) };
-  result.scoring = { status: await checkFeatureFlagStatus(FEATURE_FLAGS.SCORING) };
+  result.agents = await checkFeatureFlagStatus(FEATURE_FLAGS.AGENTS);
+  result.scoring = await checkFeatureFlagStatus(FEATURE_FLAGS.SCORING);
 
   return result;
 }

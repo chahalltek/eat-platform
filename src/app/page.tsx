@@ -1,7 +1,12 @@
 import Link from "next/link";
 
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
-import { getSystemStatus } from "@/lib/systemStatus";
+import {
+  getSystemStatus,
+  type SubsystemKey,
+  type SubsystemState,
+  type SystemStatusMap,
+} from "@/lib/systemStatus";
 import { SystemStatus } from "@/components/SystemStatus";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 
@@ -11,9 +16,13 @@ export const fetchCache = "force-no-store";
 type HomeLink = {
   label: string;
   href: string;
-  requires?: Array<(typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS]>;
   description?: string;
   stats?: { label: string; value: string }[];
+  dependency?: {
+    subsystem: SubsystemKey;
+    allowWhenDataPresent?: boolean;
+    dataCount?: number | null;
+  };
 };
 
 function formatCount(value: number | null) {
@@ -27,62 +36,122 @@ function formatAgentRuns(value: number | null) {
   return `${value.toLocaleString()} runs`;
 }
 
+const dependencyLabels: Record<SubsystemKey, string> = {
+  agents: "Agents",
+  scoring: "Scoring Engine",
+  database: "Database",
+  tenantConfig: "Tenant Config",
+};
+
+type BadgeState = "enabled" | SubsystemState;
+
+function formatStatusText(status: BadgeState) {
+  switch (status) {
+    case "enabled":
+      return "Enabled";
+    case "warning":
+      return "Setup required";
+    case "error":
+      return "Unavailable";
+    case "unknown":
+      return "Status unknown";
+    default:
+      return "Status unknown";
+  }
+}
+
+const badgeStyles: Record<BadgeState, string> = {
+  enabled:
+    "border-zinc-200 text-zinc-600 group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700 dark:border-zinc-700 dark:text-zinc-300 dark:group-hover:border-indigo-600/60 dark:group-hover:bg-indigo-600/10 dark:group-hover:text-indigo-300",
+  warning: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200",
+  error: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200",
+  unknown: "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+  healthy: "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+};
+
+const messageStyles: Record<string, string> = {
+  warning: "text-amber-700 dark:text-amber-200",
+  error: "text-rose-700 dark:text-rose-200",
+  unknown: "text-zinc-600 dark:text-zinc-400",
+};
+
 function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
   return [
     {
       label: "Upload and parse resume",
       href: "/rina-test",
-      requires: [FEATURE_FLAGS.AGENTS],
       description: "RINA — Resume ingestion agent",
+      dependency: { subsystem: "agents" },
     },
     {
       label: "Create job intake",
       href: "/rua-test",
-      requires: [FEATURE_FLAGS.AGENTS],
       description: "RUA — Job intake agent",
+      dependency: { subsystem: "agents" },
     },
     {
       label: "Execution history",
       href: "/agents/runs",
-      requires: [FEATURE_FLAGS.AGENTS],
       description: "Latest agent runs",
       stats: [{ label: "Agent runs in last 7 days", value: formatAgentRuns(metrics.agentRunsLast7d) }],
+      dependency: { subsystem: "agents" },
     },
     {
       label: "Job library",
       href: "/jobs",
-      requires: [FEATURE_FLAGS.SCORING],
       description: "Roles with scoring",
       stats: [
         { label: "Job library", value: formatCount(metrics.totalJobs) },
         { label: "Roles with test content", value: formatCount(metrics.testContentRoles) },
       ],
+      dependency: { subsystem: "scoring", allowWhenDataPresent: true, dataCount: metrics.totalJobs },
     },
     {
       label: "Candidate pool",
       href: "/candidates",
-      requires: [FEATURE_FLAGS.SCORING],
       description: "Candidate library",
       stats: [{ label: "Candidate pool", value: formatCount(metrics.totalCandidates) }],
+      dependency: { subsystem: "scoring", allowWhenDataPresent: true, dataCount: metrics.totalCandidates },
     },
-    { label: "System controls", href: "/admin/feature-flags", description: "Admin feature toggles" },
+    {
+      label: "System controls",
+      href: "/admin/feature-flags",
+      description: "Admin feature toggles",
+      dependency: { subsystem: "tenantConfig" },
+    },
   ];
 }
 
+function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
+  if (!link.dependency) {
+    return { status: "enabled", isActive: true } as const;
+  }
+
+  const dependency = statusMap[link.dependency.subsystem] ?? { status: "unknown" };
+  const dataAvailable = (link.dependency.dataCount ?? 0) > 0;
+  const canOpenWithData = link.dependency.allowWhenDataPresent && dataAvailable;
+
+  if (dependency.status === "healthy") {
+    return { status: "enabled", isActive: true } as const;
+  }
+
+  const statusLabel = dependency.status ?? "unknown";
+  const detail =
+    dependency.detail ?? `${dependencyLabels[link.dependency.subsystem]} subsystem ${statusLabel.toLowerCase()}`;
+
+  if (canOpenWithData) {
+    return { status: statusLabel, isActive: true, message: detail } as const;
+  }
+
+  return { status: statusLabel, isActive: false, message: detail } as const;
+}
+
 export default async function Home() {
-  const [uiEnabled, agentsEnabled, scoringEnabled, systemStatus, metrics] = await Promise.all([
+  const [uiEnabled, systemStatus, metrics] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
-    isFeatureEnabled(FEATURE_FLAGS.AGENTS),
-    isFeatureEnabled(FEATURE_FLAGS.SCORING),
     getSystemStatus(),
     getHomeCardMetrics(),
   ]);
-
-  const featureMap: Record<string, boolean> = {
-    [FEATURE_FLAGS.UI_BLOCKS]: uiEnabled,
-    [FEATURE_FLAGS.AGENTS]: agentsEnabled,
-    [FEATURE_FLAGS.SCORING]: scoringEnabled,
-  };
 
   const links = buildLinks(metrics);
 
@@ -120,26 +189,30 @@ export default async function Home() {
 
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {links.map((link) => {
-            const isActive = (link.requires ?? []).every((flag) => featureMap[flag]);
+            const dependencyState = getDependencyState(link, systemStatus);
+            const badgeState = dependencyState.status;
+            const isActive = dependencyState.isActive;
 
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={`group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition dark:border-zinc-800 dark:bg-zinc-900 ${
-                  isActive ? "hover:-translate-y-1 hover:shadow-lg" : "opacity-60"
+                  isActive ? "hover:-translate-y-1 hover:shadow-lg" : "cursor-not-allowed opacity-60"
                 }`}
+                aria-disabled={!isActive}
+                onClick={(event) => {
+                  if (!isActive) {
+                    event.preventDefault();
+                  }
+                }}
               >
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold">{link.label}</h2>
                   <span
-                    className={`rounded-full border px-3 py-1 text-sm transition ${
-                      isActive
-                        ? "border-zinc-200 text-zinc-600 group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700 dark:border-zinc-700 dark:text-zinc-300 dark:group-hover:border-indigo-600/60 dark:group-hover:bg-indigo-600/10 dark:group-hover:text-indigo-300"
-                        : "border-amber-200 bg-amber-50 text-amber-700"
-                    }`}
+                    className={`rounded-full border px-3 py-1 text-sm transition ${badgeStyles[badgeState]}`}
                   >
-                    {isActive ? "Open" : "Disabled"}
+                    {formatStatusText(badgeState)}
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
@@ -157,9 +230,9 @@ export default async function Home() {
                     ))}
                   </dl>
                 ) : null}
-                {link.requires && link.requires.length > 0 && (
-                  <p className="mt-2 text-xs text-zinc-500">
-                    Requires: {link.requires.map((flag) => flag.replace("-", " ")).join(", ")}
+                {dependencyState.message && (
+                  <p className={`mt-2 text-xs ${messageStyles[badgeState] ?? "text-zinc-500"}`}>
+                    {dependencyState.message}
                   </p>
                 )}
               </Link>
