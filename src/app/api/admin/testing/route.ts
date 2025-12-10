@@ -198,10 +198,6 @@ function buildSampleJob(): JobReq & { skills: JobSkill[] } {
         weight: 1,
       },
     ],
-    matches: [],
-    matchResults: [],
-    jobCandidates: [],
-    outreachInteractions: [],
   } satisfies JobReq & { skills: JobSkill[] };
 }
 
