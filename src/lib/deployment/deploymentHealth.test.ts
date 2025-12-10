@@ -84,6 +84,12 @@ describe("deployment health gates", () => {
     expect(() => validateMigrations(migrationsDir)).toThrow(/unresolved merge markers/);
   });
 
+  it("rejects empty migration files", () => {
+    const migrationsDir = writeMigration("   \n  \n   ");
+
+    expect(() => validateMigrations(migrationsDir)).toThrow(/contains no SQL/);
+  });
+
   it("enforces coverage freshness and thresholds", () => {
     const coveragePath = writeCoverage(DEFAULT_COVERAGE_THRESHOLD + 1);
 
@@ -104,6 +110,17 @@ describe("deployment health gates", () => {
 
     fs.writeFileSync(generatedSchemaPath, "different", "utf8");
     expect(() => ensurePrismaGeneration(schemaPath, generatedSchemaPath)).toThrow(/out of date/);
+  });
+
+  it("requires the generated Prisma client to exist", () => {
+    const schemaPath = path.join(tempDir, "prisma", "schema.prisma");
+    const generatedSchemaPath = path.join(tempDir, "node_modules", ".prisma", "client", "schema.prisma");
+
+    const schemaContent = "datasource db { provider = \"postgresql\" }";
+    fs.mkdirSync(path.dirname(schemaPath), { recursive: true });
+    fs.writeFileSync(schemaPath, schemaContent, "utf8");
+
+    expect(() => ensurePrismaGeneration(schemaPath, generatedSchemaPath)).toThrow(/has not been generated/);
   });
 
   it("injects a synthetic failure when requested", () => {
