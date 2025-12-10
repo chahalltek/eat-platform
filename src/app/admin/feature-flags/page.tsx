@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
@@ -30,6 +31,8 @@ export default async function FeatureFlagsPage() {
   }
 
   const flags = await listFeatureFlags();
+  const tenantId = user?.tenantId ?? DEFAULT_TENANT_ID;
+  const diagnosticsPath = `/admin/tenant/${tenantId}/diagnostics`;
 
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-10">
@@ -50,6 +53,24 @@ export default async function FeatureFlagsPage() {
             Back to home
           </Link>
         </header>
+
+        <section className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-zinc-900">Test &amp; diagnostics</h2>
+              <p className="text-sm text-zinc-600">
+                Run quick checks on EAT agents, data, and scoring for this tenant.
+              </p>
+            </div>
+
+            <Link
+              href={diagnosticsPath}
+              className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500"
+            >
+              Open test panel
+            </Link>
+          </div>
+        </section>
 
         <FeatureFlagsPanel
           initialFlags={flags.map((flag) => ({
