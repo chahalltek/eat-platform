@@ -15,12 +15,27 @@ type HomeLink = {
 };
 
 const links: HomeLink[] = [
-  { label: "Run RINA", href: "/rina-test", requires: [FEATURE_FLAGS.AGENTS], description: "Resume ingestion agent" },
-  { label: "RUA (Role Intake)", href: "/rua-test", requires: [FEATURE_FLAGS.AGENTS], description: "Job intake agent" },
-  { label: "Agent Runs", href: "/agents/runs", requires: [FEATURE_FLAGS.AGENTS], description: "Latest agent executions" },
-  { label: "Jobs", href: "/jobs", requires: [FEATURE_FLAGS.SCORING], description: "Job library with scoring" },
-  { label: "Candidates", href: "/candidates", requires: [FEATURE_FLAGS.SCORING], description: "Candidate library" },
-  { label: "Feature Flags", href: "/admin/feature-flags", description: "Admin-only toggle panel" },
+  {
+    label: "Upload and parse resume",
+    href: "/rina-test",
+    requires: [FEATURE_FLAGS.AGENTS],
+    description: "RINA — Resume ingestion agent",
+  },
+  {
+    label: "Create job intake",
+    href: "/rua-test",
+    requires: [FEATURE_FLAGS.AGENTS],
+    description: "RUA — Job intake agent",
+  },
+  {
+    label: "Execution history",
+    href: "/agents/runs",
+    requires: [FEATURE_FLAGS.AGENTS],
+    description: "Latest agent runs",
+  },
+  { label: "Job library", href: "/jobs", requires: [FEATURE_FLAGS.SCORING], description: "Roles with scoring" },
+  { label: "Candidate pool", href: "/candidates", requires: [FEATURE_FLAGS.SCORING], description: "Candidate library" },
+  { label: "System controls", href: "/admin/feature-flags", description: "Admin feature toggles" },
 ];
 
 export default async function Home() {
