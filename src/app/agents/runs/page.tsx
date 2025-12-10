@@ -159,8 +159,8 @@ export default async function AgentRunsPage() {
       "startedAt",
       input,
       output,
-      "sourceType",
-      "sourceTag"
+      COALESCE(input->>'sourceType', output->>'sourceType') AS "sourceType",
+      COALESCE(input->>'sourceTag', output->>'sourceTag') AS "sourceTag"
     FROM "AgentRunLog"
     WHERE "tenantId" = ${tenantId}
     ORDER BY "startedAt" DESC
