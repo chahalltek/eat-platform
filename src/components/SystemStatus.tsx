@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { StatusPill, type StatusPillStatus } from "@/components/StatusPill";
 import type { SubsystemKey, SubsystemState, SystemStatusMap } from "@/lib/systemStatus";
@@ -53,10 +53,33 @@ type SystemStatusProps = {
 export function SystemStatus({ initialStatus }: SystemStatusProps) {
   const [statusMap, setStatusMap] = useState<SystemStatusMap>(initialStatus);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [shouldPulse, setShouldPulse] = useState(true);
+  const pulseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshRequestedRef = useRef(false);
+
+  const triggerPulse = useCallback(() => {
+    if (pulseTimeoutRef.current) {
+      clearTimeout(pulseTimeoutRef.current);
+    }
+
+    setShouldPulse(true);
+    pulseTimeoutRef.current = setTimeout(() => setShouldPulse(false), 900);
+  }, []);
+
+  useEffect(() => {
+    triggerPulse();
+
+    return () => {
+      if (pulseTimeoutRef.current) {
+        clearTimeout(pulseTimeoutRef.current);
+      }
+    };
+  }, [triggerPulse]);
 
   async function handleRefresh() {
     try {
       setIsRefreshing(true);
+      refreshRequestedRef.current = true;
       const response = await fetch("/api/system-status", { cache: "no-store" });
 
       if (!response.ok) {
@@ -75,6 +98,10 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
       });
     } finally {
       setIsRefreshing(false);
+      if (refreshRequestedRef.current) {
+        triggerPulse();
+      }
+      refreshRequestedRef.current = false;
     }
   }
 
@@ -96,7 +123,7 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {(Object.keys(statusLabels) as SubsystemKey[]).map((key) => {
+        {(Object.keys(statusLabels) as SubsystemKey[]).map((key, index) => {
           const entry = statusMap[key];
           const status = entry?.status ?? "unknown";
           const description = entry?.detail ?? statusDescriptions[key];
@@ -104,7 +131,10 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
           return (
             <div
               key={key}
-              className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3"
+              className={`flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 ${
+                shouldPulse ? "telemetry-pulse" : ""
+              }`}
+              style={shouldPulse ? { animationDelay: `${index * 80}ms` } : undefined}
             >
               <div>
                 <p className="text-sm font-semibold text-slate-900">{statusLabels[key]}</p>
@@ -115,6 +145,27 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
           );
         })}
       </div>
+
+      <style jsx>{`
+        @keyframes telemetryPulse {
+          0% {
+            transform: translateY(0);
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.08);
+          }
+          35% {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 30px -18px rgba(79, 70, 229, 0.18);
+          }
+          100% {
+            transform: translateY(0);
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.08);
+          }
+        }
+
+        .telemetry-pulse {
+          animation: telemetryPulse 1s ease-out;
+        }
+      `}</style>
     </section>
   );
 }
