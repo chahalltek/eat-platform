@@ -1,6 +1,8 @@
 import { JobTable, type JobTableRow } from "./JobTable";
 import { prisma } from "@/lib/prisma";
 
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+
 function formatSource(job: { sourceType: string | null; sourceTag: string | null }) {
   if (job.sourceType && job.sourceTag) {
     return `${job.sourceType} • ${job.sourceTag}`;
@@ -50,13 +52,14 @@ export default async function JobsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Job Requisitions</h1>
           <p className="text-sm text-gray-600">
             Showing the 50 most recent job requisitions.
           </p>
         </div>
+        <BackToConsoleButton />
       </div>
 
       <div className="mt-6">

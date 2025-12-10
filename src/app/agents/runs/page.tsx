@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
@@ -181,14 +182,17 @@ export default async function AgentRunsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Agent Runs</h1>
           <p className="text-sm text-gray-600">Most recent runs for this tenant.</p>
         </div>
-        <Link href="/agents/logs" className="text-blue-600 hover:text-blue-800">
-          View detailed logs
-        </Link>
+        <div className="flex items-center gap-3">
+          <BackToConsoleButton />
+          <Link href="/agents/logs" className="text-blue-600 hover:text-blue-800">
+            View detailed logs
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">

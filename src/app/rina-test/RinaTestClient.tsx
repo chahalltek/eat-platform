@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+
 type RinaResult = {
   candidateId: string;
   agentRunId: string;
@@ -69,17 +71,20 @@ export function RinaTestClient({ agentsEnabled }: RinaTestClientProps) {
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
       <div className="mx-auto flex max-w-4xl flex-col gap-6 rounded-2xl bg-white p-8 shadow-sm ring-1 ring-zinc-200">
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">EAT-001</p>
-          <h1 className="text-3xl font-semibold">RINA Test Console</h1>
-          <p className="text-sm text-zinc-600">
-            Paste a resume below and send it through the RINA agent. The response should mirror the JSON you get from curl today.
-          </p>
-          {!agentsEnabled && (
-            <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Agents are disabled. Enable the Agents feature flag to run this workflow.
-            </div>
-          )}
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">EAT-001</p>
+            <h1 className="text-3xl font-semibold">RINA Test Console</h1>
+            <p className="text-sm text-zinc-600">
+              Paste a resume below and send it through the RINA agent. The response should mirror the JSON you get from curl today.
+            </p>
+            {!agentsEnabled && (
+              <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Agents are disabled. Enable the Agents feature flag to run this workflow.
+              </div>
+            )}
+          </div>
+          <BackToConsoleButton />
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-4">
