@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { computeMatchScore } from "@/lib/matching/msa";
 import type { Candidate, CandidateSkill, JobReq, JobSkill } from "@prisma/client";
+import { getCurrentUser } from "@/lib/auth/user";
+import { isAdminRole } from "@/lib/auth/roles";
 
 type TestResult = {
   testKey: string;
@@ -246,7 +248,17 @@ function resolveTestKeys(request: TestRequest): string[] {
   return Array.from(keys);
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const user = await getCurrentUser(req);
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!isAdminRole(user.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   let body: TestRequest;
 
   try {
