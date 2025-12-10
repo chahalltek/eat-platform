@@ -1,8 +1,9 @@
-import { AgentRunStatus, JobCandidateStatus } from '@prisma/client';
+import { AgentRunStatus, JobCandidateStatus, PrismaClient } from '@prisma/client';
 
 import { DEFAULT_TENANT_ID } from '../src/lib/auth/config';
-import { prisma } from '../src/lib/prisma';
 import { FEATURE_FLAGS, setFeatureFlag } from '../src/lib/featureFlags';
+
+const prisma = new PrismaClient();
 
 const ADMIN_USER_ID = 'admin-user';
 const RECRUITER_USER_ID = 'charlie';
@@ -34,7 +35,7 @@ async function seedUsers() {
       id: ADMIN_USER_ID,
       email: 'admin@test.demo',
       displayName: 'Admin',
-      role: 'ADMIN',
+      role: 'Admin',
     },
   ];
 
@@ -57,6 +58,7 @@ async function seedTenantMemberships() {
     },
     update: { role: 'ADMIN' },
     create: {
+      id: 'admin-default-tenant',
       userId: ADMIN_USER_ID,
       tenantId: DEFAULT_TENANT_ID,
       role: 'ADMIN',
