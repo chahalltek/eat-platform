@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { TenantDeletionMode } from "@prisma/client";
 
 import { buildTenantDiagnostics, TenantNotFoundError } from "./diagnostics";
+import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
 
 const mockGetAppConfig = vi.hoisted(() => vi.fn());
 const mockGetTenantPlan = vi.hoisted(() => vi.fn());
@@ -81,8 +82,10 @@ describe("buildTenantDiagnostics", () => {
         override: { dailyLimit: 200 },
       },
     ]);
-    expect(diagnostics.featureFlags.enabledFlags.length).toBeGreaterThan(0);
-    expect(mockIsFeatureEnabledForTenant).toHaveBeenCalledTimes(3);
+    const expectedFlags = Object.values(FEATURE_FLAGS);
+
+    expect(diagnostics.featureFlags.enabled).toBe(true);
+    expect(diagnostics.featureFlags.enabledFlags).toEqual(expectedFlags);
   });
 
   it("handles missing optional features gracefully", async () => {
