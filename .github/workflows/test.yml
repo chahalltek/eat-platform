@@ -21,6 +21,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Detect unresolved merge conflicts
+        run: npm run ci:conflict-scan
+
       - name: Validate configuration for production
         run: npm run ci:config-validate
         env:
