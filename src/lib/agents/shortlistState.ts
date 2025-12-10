@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth/user";
 import { prisma } from "@/lib/prisma";
 
 export type SetShortlistStateInput = {
