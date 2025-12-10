@@ -6,6 +6,8 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { buildTenantDiagnostics, TenantNotFoundError } from "@/lib/tenant/diagnostics";
 import { getTenantMembershipsForUser, resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { EATCard } from "@/components/EATCard";
+import { StatusPill } from "@/components/StatusPill";
 import { TenantTestTable } from "./TenantTestTable";
 
 export const dynamic = "force-dynamic";
@@ -31,17 +33,26 @@ function DiagnosticCard({
   description: string;
   children: ReactNode;
 }) {
+  const pillStatus = status === "warn" ? "warning" : status === "off" ? "off" : "ok";
+  const pillLabel =
+    status === "warn" ? "Action needed" : status === "off" ? "Disabled" : "Enabled";
+
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start gap-3">
-        <StatusIcon status={status} />
-        <div className="flex-1">
-          <h3 className="text-base font-semibold text-zinc-900">{title}</h3>
-          <p className="text-sm text-zinc-600">{description}</p>
+    <EATCard className="gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <StatusIcon status={status} />
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
+          </div>
         </div>
+        <StatusPill status={pillStatus} label={pillLabel} />
       </div>
-      <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-800">{children}</div>
-    </div>
+      <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-100">
+        {children}
+      </div>
+    </EATCard>
   );
 }
 

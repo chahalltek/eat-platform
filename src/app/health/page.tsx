@@ -1,11 +1,16 @@
 import Link from "next/link";
 
 import { recordHealthCheck, runHealthChecks } from "@/lib/health";
+<<<<<<< ours
 import { StatusPill, type Status } from "@/components/StatusPill";
 
 function healthStatusToPill(status: "ok" | "error"): Status {
   return status === "ok" ? "healthy" : "down";
 }
+=======
+import { EATCard } from "@/components/EATCard";
+import { StatusPill } from "@/components/StatusPill";
+>>>>>>> theirs
 
 export const dynamic = "force-dynamic";
 
@@ -39,32 +44,53 @@ export default async function HealthPage() {
           </Link>
         </div>
 
+<<<<<<< ours
         <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-wrap items-center gap-3">
             <StatusPill status={healthStatusToPill(report.status)} label={report.status === "ok" ? "Healthy" : "Unhealthy"} />
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Last checked at {new Date(report.timestamp).toLocaleString()}
             </span>
+=======
+        <EATCard className="gap-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <StatusPill
+                status={report.status === "ok" ? "ok" : "error"}
+                label={report.status === "ok" ? "Healthy" : "Unhealthy"}
+              />
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                Last checked at {new Date(report.timestamp).toLocaleString()}
+              </span>
+            </div>
+>>>>>>> theirs
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             {report.checks.map((check) => (
-              <div
+              <EATCard
                 key={check.name}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950"
+                className="gap-3 border-zinc-100 bg-zinc-50 transition-none hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">{check.name}</p>
-                    <h2 className="text-lg font-semibold capitalize">{check.name}</h2>
+                    <h2 className="text-lg font-semibold capitalize text-zinc-900 dark:text-zinc-50">{check.name}</h2>
                   </div>
+<<<<<<< ours
                   <StatusPill status={healthStatusToPill(check.status)} label={check.status === "ok" ? "Pass" : "Fail"} />
+=======
+                  <StatusPill
+                    status={check.status === "ok" ? "ok" : "error"}
+                    label={check.status === "ok" ? "Pass" : "Fail"}
+                  />
+>>>>>>> theirs
                 </div>
-                <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">{check.message}</p>
-              </div>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">{check.message}</p>
+              </EATCard>
             ))}
           </div>
-        </section>
+        </EATCard>
       </main>
     </div>
   );

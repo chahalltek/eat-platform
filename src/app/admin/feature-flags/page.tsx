@@ -4,7 +4,11 @@ import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
+<<<<<<< ours
 import { EATClientLayout } from "@/components/EATClientLayout";
+=======
+import { EATCard } from "@/components/EATCard";
+>>>>>>> theirs
 
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 
@@ -55,7 +59,7 @@ export default async function FeatureFlagsPage() {
           </Link>
         </header>
 
-        <section className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+        <EATCard className="gap-4 border-indigo-100 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-zinc-900">Test &amp; diagnostics</h2>
@@ -71,7 +75,7 @@ export default async function FeatureFlagsPage() {
               Open test panel
             </Link>
           </div>
-        </section>
+        </EATCard>
 
         <FeatureFlagsPanel
           initialFlags={flags.map((flag) => ({
