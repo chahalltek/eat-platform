@@ -30,6 +30,7 @@ export default async function JobMatchesPage({
             id: true,
             candidateId: true,
             status: true,
+             notes: true,
           },
         },
         skills: true,
