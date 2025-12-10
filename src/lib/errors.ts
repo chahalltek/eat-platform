@@ -49,12 +49,13 @@ export function normalizeError(error: unknown): NormalizedError {
   }
 
   // Prisma errors indicate data persistence or schema problems.
-  if (
-    typeof Prisma !== "undefined" &&
-    (error instanceof Prisma.PrismaClientKnownRequestError ||
-      error instanceof Prisma.PrismaClientInitializationError ||
-      error instanceof Prisma.PrismaClientRustPanicError)
-  ) {
+  const prismaErrorCtors = [
+    Prisma?.PrismaClientKnownRequestError,
+    Prisma?.PrismaClientInitializationError,
+    Prisma?.PrismaClientRustPanicError,
+  ].filter((ctor): ctor is new (...args: unknown[]) => Error => typeof ctor === "function");
+
+  if (prismaErrorCtors.some((ctor) => error instanceof ctor)) {
     return {
       category: "DATA",
       logMessage,
