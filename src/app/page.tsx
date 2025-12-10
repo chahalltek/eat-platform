@@ -89,11 +89,7 @@ function formatStatusText(status: BadgeState) {
       return "Fault";
     case "unknown":
     default:
-<<<<<<< ours
-      return "Unknown";
-=======
       return "Status pending";
->>>>>>> theirs
   }
 }
 
@@ -154,18 +150,13 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
       cta: "Browse",
       href: "/candidates",
       description: "Candidate library",
-<<<<<<< ours
-      stats: [{ label: "Candidate pool", value: formatCount(metrics.totalCandidates) }],
+      stats: [{ label: "Candidate pool", value: formatCandidateCount(metrics.totalCandidates) }],
       dependency: {
         subsystem: "scoring",
         allowWhenDataPresent: true,
         dataCount: metrics.totalCandidates,
         flow: { source: "Candidate Pool", target: "Scoring Engine" },
       },
-=======
-      stats: [{ label: "Candidate pool", value: formatCandidateCount(metrics.totalCandidates) }],
-      dependency: { subsystem: "scoring", allowWhenDataPresent: true, dataCount: metrics.totalCandidates },
->>>>>>> theirs
     },
     {
       label: "Feature flags",
