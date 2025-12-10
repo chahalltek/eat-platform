@@ -58,13 +58,22 @@ export default function CandidatesPage() {
     loadCandidates();
   }, [loadCandidates]);
 
-  const errorContent = useMemo(() => {
+  type ErrorContent = {
+    title: string;
+    description: string;
+    status?: number;
+    details?: string;
+  };
+
+  const errorContent = useMemo<ErrorContent | null>(() => {
     if (!error) return null;
 
     if (error.type === "forbidden") {
       return {
         title: "Access denied",
         description: "You do not have permission to view candidates for this workspace.",
+        status: undefined,
+        details: undefined,
       };
     }
 
