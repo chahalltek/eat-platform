@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { JobCandidateStatus } from "@prisma/client";
@@ -44,9 +44,11 @@ describe("Refactored table views", () => {
       />,
     );
 
-    expect(screen.getByText("Parser")).toBeInTheDocument();
-    expect(screen.getByText("Success")).toBeInTheDocument();
-    expect(screen.getByText("API")).toBeInTheDocument();
+    const table = screen.getByRole("table");
+
+    expect(within(table).getByRole("cell", { name: /parser/i })).toBeInTheDocument();
+    expect(within(table).getByRole("cell", { name: /success/i })).toBeInTheDocument();
+    expect(within(table).getByRole("cell", { name: /api/i })).toBeInTheDocument();
   });
 
   it("renders job table rows with freshness and links", () => {
@@ -67,8 +69,10 @@ describe("Refactored table views", () => {
       />,
     );
 
-    expect(screen.getByText("Frontend Engineer")).toBeInTheDocument();
-    expect(screen.getByText("Acme")).toBeInTheDocument();
+    const table = screen.getByRole("table");
+
+    expect(within(table).getByRole("link", { name: /frontend engineer/i })).toBeInTheDocument();
+    expect(within(table).getByRole("cell", { name: /acme/i })).toBeInTheDocument();
   });
 
   it("renders candidate job opportunities table", () => {
@@ -88,9 +92,11 @@ describe("Refactored table views", () => {
       />,
     );
 
-    expect(screen.getByText("Data Scientist")).toBeInTheDocument();
-    expect(screen.getByText("Beta Co")).toBeInTheDocument();
-    expect(screen.getByText("87%", { exact: false })).toBeInTheDocument();
+    const table = screen.getByRole("table");
+
+    expect(within(table).getByRole("link", { name: /data scientist/i })).toBeInTheDocument();
+    expect(within(table).getByRole("cell", { name: /beta co/i })).toBeInTheDocument();
+    expect(within(table).getByRole("cell", { name: /87%/i })).toBeInTheDocument();
   });
 
   it("renders job matches table entries", () => {
@@ -108,12 +114,16 @@ describe("Refactored table views", () => {
             jobCandidateStatus: JobCandidateStatus.SHORTLISTED,
           },
         ]}
+        jobTitle="Job title"
       />,
     );
 
-    expect(screen.getByText("Jordan")).toBeInTheDocument();
-    expect(screen.getByText("Engineer")).toBeInTheDocument();
-    expect(screen.getByText("75%", { exact: false })).toBeInTheDocument();
+    const table = screen.getByRole("table");
+    const row = within(table).getByRole("row", { name: /engineer/i });
+
+    expect(screen.getByLabelText(/shortlist jordan/i)).toBeInTheDocument();
+    expect(within(row).getByRole("cell", { name: /engineer/i })).toBeInTheDocument();
+    expect(within(row).getByRole("cell", { name: /0\.75/ })).toBeInTheDocument();
   });
 
   it("renders admin environment table entries", () => {
@@ -126,7 +136,9 @@ describe("Refactored table views", () => {
       />,
     );
 
-    expect(screen.getByText("API_KEY")).toBeInTheDocument();
-    expect(screen.getByText("Visible")).toBeInTheDocument();
+    const table = screen.getByRole("table");
+
+    expect(within(table).getByRole("cell", { name: /api_key/i })).toBeInTheDocument();
+    expect(within(table).getByRole("cell", { name: /visible/i })).toBeInTheDocument();
   });
 });
