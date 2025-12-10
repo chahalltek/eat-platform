@@ -36,9 +36,10 @@ function coerceFlagName(value: unknown): FeatureFlagName | null {
   return (candidates.find((flag) => flag === normalized) as FeatureFlagName | undefined) ?? null;
 }
 
-function readFallbackOverrides(tenantId: string) {
+async function readFallbackOverrides(tenantId: string) {
   try {
-    const raw = cookies().get(FALLBACK_COOKIE_NAME)?.value;
+    const cookieStore = await cookies();
+    const raw = cookieStore.get(FALLBACK_COOKIE_NAME)?.value;
 
     if (!raw) return new Map<FeatureFlagName, FeatureFlagModel>();
 
@@ -66,9 +67,9 @@ function readFallbackOverrides(tenantId: string) {
   }
 }
 
-function writeFallbackOverride(tenantId: string, name: FeatureFlagName, enabled: boolean) {
+async function writeFallbackOverride(tenantId: string, name: FeatureFlagName, enabled: boolean) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const raw = cookieStore.get(FALLBACK_COOKIE_NAME)?.value;
     const parsed = (raw ? JSON.parse(raw) : {}) as Record<string, Record<FeatureFlagName, { enabled: boolean; updatedAt: string }>>;
 
@@ -104,7 +105,7 @@ function isMissingTableError(error: unknown) {
 
 async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) {
   if (!(await isTableAvailable('FeatureFlag'))) {
-    return readFallbackOverrides(tenantId).get(name) ?? null;
+    return (await readFallbackOverrides(tenantId)).get(name) ?? null;
   }
 
   try {
@@ -208,7 +209,7 @@ export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): P
     const fallback = buildFallbackFlag(name, enabled);
 
     flagCache.set(cacheKey(tenantId, name), fallback.enabled);
-    writeFallbackOverride(tenantId, name, enabled);
+    await writeFallbackOverride(tenantId, name, enabled);
 
     return fallback;
   }
@@ -235,7 +236,7 @@ export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): P
   });
 
   flagCache.set(cacheKey(tenantId, name), flag.enabled);
-  writeFallbackOverride(tenantId, name, enabled);
+  await writeFallbackOverride(tenantId, name, enabled);
 
   return {
     name: flag.name as FeatureFlagName,
