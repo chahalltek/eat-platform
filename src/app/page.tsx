@@ -128,11 +128,18 @@ function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
   }
 
   const dependency = statusMap[link.dependency.subsystem] ?? { status: "unknown" };
+  const dependencyStatus = dependency.status ?? "unknown";
   const dataAvailable = (link.dependency.dataCount ?? 0) > 0;
   const canOpenWithData = link.dependency.allowWhenDataPresent && dataAvailable;
 
   if (dependency.status === "healthy") {
-    return { status: "enabled", isActive: true } as const;
+    return {
+      status: "enabled",
+      isActive: true,
+      dependencyStatus,
+      dependencyLabel: dependencyLabels[link.dependency.subsystem],
+      message: dependency.detail,
+    } as const;
   }
 
   const statusLabel = dependency.status ?? "unknown";
@@ -140,10 +147,42 @@ function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
     dependency.detail ?? `${dependencyLabels[link.dependency.subsystem]} subsystem ${statusLabel.toLowerCase()}`;
 
   if (canOpenWithData) {
-    return { status: statusLabel, isActive: true, message: detail } as const;
+    return {
+      status: statusLabel,
+      isActive: true,
+      message: detail,
+      dependencyStatus,
+      dependencyLabel: dependencyLabels[link.dependency.subsystem],
+    } as const;
   }
 
-  return { status: statusLabel, isActive: false, message: detail } as const;
+  return {
+    status: statusLabel,
+    isActive: false,
+    message: detail,
+    dependencyStatus,
+    dependencyLabel: dependencyLabels[link.dependency.subsystem],
+  } as const;
+}
+
+const dependencyStatusStyles: Record<SubsystemState, string> = {
+  healthy: "text-emerald-700 dark:text-emerald-200",
+  warning: "text-amber-700 dark:text-amber-200",
+  error: "text-rose-700 dark:text-rose-200",
+  unknown: "text-zinc-600 dark:text-zinc-400",
+};
+
+function formatDependencyStatus(status: SubsystemState) {
+  switch (status) {
+    case "healthy":
+      return "Healthy";
+    case "warning":
+      return "Warning";
+    case "error":
+      return "Unavailable";
+    default:
+      return "Unknown";
+  }
 }
 
 export default async function Home() {
@@ -225,6 +264,22 @@ export default async function Home() {
                       </div>
                     ))}
                   </dl>
+                ) : null}
+                {link.dependency ? (
+                  <div className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 transition group-hover:border-indigo-100 group-hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:group-hover:border-indigo-700/60 dark:group-hover:bg-indigo-900/20">
+                    <span className="font-semibold text-zinc-700 dark:text-zinc-200">Dependency</span>
+                    <div
+                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-medium ${
+                        dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+                      <span className="text-[11px] uppercase tracking-wide">
+                        {dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}
+                      </span>
+                      <span className="text-xs capitalize">{formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}</span>
+                    </div>
+                  </div>
                 ) : null}
                 {dependencyState.message && (
                   <p className={`mt-2 text-xs ${messageStyles[badgeState] ?? "text-zinc-500"}`}>
