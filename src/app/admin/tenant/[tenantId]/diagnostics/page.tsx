@@ -7,6 +7,7 @@ import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { buildTenantDiagnostics, TenantNotFoundError } from "@/lib/tenant/diagnostics";
+import { TenantTestTable } from "./TenantTestTable";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,8 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
               Back to tenants
             </Link>
           </header>
+
+          <TenantTestTable />
 
           <section className="grid gap-4 md:grid-cols-2">
             <DiagnosticCard
