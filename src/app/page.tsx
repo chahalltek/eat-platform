@@ -198,14 +198,12 @@ export default async function Home() {
                 key={link.href}
                 href={link.href}
                 className={`group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition dark:border-zinc-800 dark:bg-zinc-900 ${
-                  isActive ? "hover:-translate-y-1 hover:shadow-lg" : "cursor-not-allowed opacity-60"
+                  isActive
+                    ? "hover:-translate-y-1 hover:shadow-lg"
+                    : "cursor-not-allowed opacity-60 pointer-events-none"
                 }`}
                 aria-disabled={!isActive}
-                onClick={(event) => {
-                  if (!isActive) {
-                    event.preventDefault();
-                  }
-                }}
+                tabIndex={isActive ? 0 : -1}
               >
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold">{link.label}</h2>
