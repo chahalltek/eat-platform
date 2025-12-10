@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowPathIcon,
   CheckCircleIcon,
@@ -64,10 +64,51 @@ type TestState = {
   lastRun: string | null;
 };
 
+type PersistedResults = Record<string, Record<TestKey, TestState>>;
+
 const initialState: Record<TestKey, TestState> = TESTS.reduce(
   (state, test) => ({ ...state, [test.key]: { status: "idle", message: null, lastRun: null } }),
   {} as Record<TestKey, TestState>,
 );
+
+const STORAGE_KEY = "tenant-test-results";
+
+function readPersistedResults(): PersistedResults {
+  if (typeof window === "undefined") return {};
+
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+
+  if (!raw) return {};
+
+  try {
+    return JSON.parse(raw) as PersistedResults;
+  } catch (error) {
+    console.warn("Failed to parse persisted test results", error);
+    return {};
+  }
+}
+
+function loadTenantResults(tenantId: string): Record<TestKey, TestState> {
+  const persisted = readPersistedResults();
+  const tenantResults = persisted[tenantId] ?? {};
+
+  return {
+    ...initialState,
+    ...tenantResults,
+  };
+}
+
+function persistTenantResults(tenantId: string, results: Record<TestKey, TestState>) {
+  if (typeof window === "undefined") return;
+
+  const persisted = readPersistedResults();
+  const updated: PersistedResults = {
+    ...persisted,
+    [tenantId]: results,
+  };
+
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+}
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -135,9 +176,13 @@ function evaluateTest(key: TestKey, diagnostics: TenantDiagnostics): Pick<TestSt
   }
 }
 
-export function TenantTestTable() {
+export function TenantTestTable({ tenantId }: { tenantId: string }) {
   const [results, setResults] = useState<Record<TestKey, TestState>>(initialState);
   const [runningAll, setRunningAll] = useState(false);
+
+  useEffect(() => {
+    setResults(loadTenantResults(tenantId));
+  }, [tenantId]);
 
   const runDiagnostics = async () => {
     const response = await fetch("/api/tenant/diagnostics", { method: "GET" });
@@ -156,16 +201,21 @@ export function TenantTestTable() {
       const diagnostics = await runDiagnostics();
       const { status, message } = evaluateTest(key, diagnostics);
 
-      setResults((prev) => ({
-        ...prev,
-        [key]: { status, message, lastRun: new Date().toISOString() },
-      }));
+      setResults((prev) => {
+        const updated = { ...prev, [key]: { status, message, lastRun: new Date().toISOString() } };
+        persistTenantResults(tenantId, updated);
+        return updated;
+      });
     } catch (error) {
       console.error("Failed to run test", error);
-      setResults((prev) => ({
-        ...prev,
-        [key]: { status: "fail", message: "Test failed to run", lastRun: new Date().toISOString() },
-      }));
+      setResults((prev) => {
+        const updated = {
+          ...prev,
+          [key]: { status: "fail", message: "Test failed to run", lastRun: new Date().toISOString() },
+        };
+        persistTenantResults(tenantId, updated);
+        return updated;
+      });
     }
   };
 

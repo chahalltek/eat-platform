@@ -98,7 +98,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
             </Link>
           </header>
 
-          <TenantTestTable />
+          <TenantTestTable tenantId={requestedTenant} />
 
           <section className="grid gap-4 md:grid-cols-2">
             <DiagnosticCard
