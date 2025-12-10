@@ -12,6 +12,7 @@ import { prisma } from '@/lib/prisma';
 
 vi.mock('@/lib/prisma', () => {
   return {
+    isTableAvailable: vi.fn(async () => true),
     prisma: {
       agentPrompt: {
         findUnique: vi.fn(async () => null),

@@ -9,9 +9,14 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
+<<<<<<< ours
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "coverage": "npm run test:coverage",
+=======
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+>>>>>>> theirs
     "ci:config-validate": "tsx scripts/config-validate.ts",
     "ci:todo-scan": "tsx scripts/check-todos.ts",
     "predeploy": "node scripts/deployment-health.js",
