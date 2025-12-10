@@ -299,7 +299,7 @@ export default async function Home() {
           </Link>
         </div>
         <p className="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-          Control plane for AI-driven recruiting workflows across intake, scoring, and selection.
+          A real-time control plane for intelligent hiring systems.
         </p>
       </header>
 
