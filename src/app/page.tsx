@@ -16,6 +16,7 @@ export const fetchCache = "force-no-store";
 
 type HomeLink = {
   label: string;
+  cta: string;
   href: string;
   description?: string;
   stats?: { label: string; value: string }[];
@@ -86,19 +87,22 @@ const messageStyles: Record<string, string> = {
 function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
   return [
     {
-      label: "Upload and parse resume",
+      label: "Upload resumes",
+      cta: "Upload now",
       href: "/rina-test",
       description: "RINA — Resume ingestion agent",
       dependency: { subsystem: "agents" },
     },
     {
-      label: "Create job intake",
+      label: "Create intake",
+      cta: "Add job",
       href: "/rua-test",
       description: "RUA — Job intake agent",
       dependency: { subsystem: "agents" },
     },
     {
       label: "Execution history",
+      cta: "Investigate",
       href: "/agents/runs",
       description: "Latest agent runs",
       stats: [{ label: "Agent runs in last 7 days", value: formatAgentRuns(metrics.agentRunsLast7d) }],
@@ -106,6 +110,7 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
     },
     {
       label: "Job library",
+      cta: "View roles",
       href: "/jobs",
       description: "Roles with scoring",
       stats: [
@@ -116,13 +121,15 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
     },
     {
       label: "Candidate pool",
+      cta: "Browse",
       href: "/candidates",
       description: "Candidate library",
       stats: [{ label: "Candidate pool", value: formatCount(metrics.totalCandidates) }],
       dependency: { subsystem: "scoring", allowWhenDataPresent: true, dataCount: metrics.totalCandidates },
     },
     {
-      label: "System controls",
+      label: "Feature flags",
+      cta: "Configure",
       href: "/admin/feature-flags",
       description: "Admin feature toggles",
       dependency: { subsystem: "tenantConfig" },
@@ -207,7 +214,9 @@ export default async function Home() {
         key={link.href}
         href={link.href}
         className={`group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition dark:border-zinc-800 dark:bg-zinc-900 ${
-          isActive ? "hover:-translate-y-1 hover:shadow-lg" : "cursor-not-allowed opacity-60 pointer-events-none"
+          isActive
+            ? "cursor-pointer hover:-translate-y-1 hover:shadow-lg"
+            : "cursor-not-allowed pointer-events-none opacity-60"
         }`}
         aria-disabled={!isActive}
         tabIndex={isActive ? 0 : -1}
@@ -252,6 +261,22 @@ export default async function Home() {
             {dependencyState.message}
           </p>
         )}
+        <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 transition group-hover:text-indigo-800 dark:text-indigo-300 dark:group-hover:text-indigo-200">
+          <span>{link.cta}</span>
+          <svg
+            aria-hidden
+            className="h-3.5 w-3.5 translate-y-px transition group-hover:translate-x-0.5"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+          </svg>
+        </div>
       </Link>
     );
   };

@@ -24,3 +24,65 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.status-change-animate {
+  position: relative;
+  animation: status-fade-shift 420ms ease;
+  box-shadow: 0 0 0 0 var(--status-accent, rgba(59, 130, 246, 0.28));
+}
+
+.status-change-animate::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 var(--status-accent, rgba(59, 130, 246, 0.28));
+  animation: status-soft-glow 900ms ease;
+  pointer-events: none;
+}
+
+.status-dot-animate {
+  animation: status-pulse 900ms ease;
+}
+
+@keyframes status-soft-glow {
+  0% {
+    box-shadow: 0 0 0 0 var(--status-accent, rgba(59, 130, 246, 0.28));
+  }
+  55% {
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+@keyframes status-fade-shift {
+  0% {
+    opacity: 0.92;
+    transform: translateY(0);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+  100% {
+    opacity: 0.95;
+    transform: translateY(0);
+  }
+}
+
+@keyframes status-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+}
