@@ -10,12 +10,6 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-<<<<<<< ours
-=======
-    "test": "vitest",
->>>>>>> theirs
-=======
->>>>>>> theirs
     "test:coverage": "vitest run --coverage",
     "coverage": "npm run test:coverage",
     "ci:config-validate": "tsx scripts/config-validate.ts",
