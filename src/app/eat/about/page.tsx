@@ -1,11 +1,13 @@
 import Link from "next/link";
 
+import { EATClientLayout } from "@/components/EATClientLayout";
+
 const Divider = () => <div className="h-px w-full bg-zinc-200 dark:bg-zinc-800" />;
 
 export default function AboutEatPage() {
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-12 sm:px-12">
+    <EATClientLayout>
+      <div className="flex flex-col gap-10">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
             <nav className="text-sm font-medium text-zinc-500 dark:text-zinc-400" aria-label="Breadcrumb">
@@ -241,7 +243,7 @@ export default function AboutEatPage() {
             </p>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </EATClientLayout>
   );
 }

@@ -4,6 +4,7 @@ import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
+import { EATClientLayout } from "@/components/EATClientLayout";
 
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 
@@ -14,8 +15,8 @@ export default async function FeatureFlagsPage() {
 
   if (!canManageFeatureFlags(user)) {
     return (
-      <main className="mx-auto max-w-4xl px-6 py-12">
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+      <EATClientLayout>
+        <div className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
           <h1 className="text-xl font-semibold">Admin access required</h1>
           <p className="mt-2 text-sm text-amber-800">
             You need an admin role to manage feature flags. Switch to an admin user to continue.
@@ -26,7 +27,7 @@ export default async function FeatureFlagsPage() {
             </Link>
           </div>
         </div>
-      </main>
+      </EATClientLayout>
     );
   }
 
@@ -35,7 +36,7 @@ export default async function FeatureFlagsPage() {
   const diagnosticsPath = `/admin/tenant/${tenantId}/diagnostics`;
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-6 py-10">
+    <EATClientLayout>
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -79,6 +80,6 @@ export default async function FeatureFlagsPage() {
           }))}
         />
       </div>
-    </main>
+    </EATClientLayout>
   );
 }

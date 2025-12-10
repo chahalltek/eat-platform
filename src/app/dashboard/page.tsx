@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { AgentsStatusPanel } from '@/components/AgentsStatusPanel';
 import { getAgentsStatus } from '@/lib/agents/statusBoard';
 import { getDashboardMetrics } from '@/lib/metrics/dashboard';
+import { EATClientLayout } from '@/components/EATClientLayout';
 
 export const dynamic = 'force-dynamic';
 
@@ -121,8 +122,8 @@ export default async function DashboardPage() {
   const [metrics, agentsStatus] = await Promise.all([getDashboardMetrics(), getAgentsStatus()]);
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 sm:px-10">
+    <EATClientLayout>
+      <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Dashboard</p>
@@ -157,7 +158,7 @@ export default async function DashboardPage() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             <BarChart
               title="Matches per Day"
               description="Daily match creation volume across the last 7 days."
@@ -193,7 +194,7 @@ export default async function DashboardPage() {
             </div>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </EATClientLayout>
   );
 }

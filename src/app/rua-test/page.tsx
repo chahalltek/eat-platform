@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
+import { EATClientLayout } from "@/components/EATClientLayout";
 
 import { RuaTestClient } from "./RuaTestClient";
 
@@ -15,7 +16,7 @@ export default async function RuaTestPage() {
 
   if (!uiEnabled) {
     return (
-      <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
+      <EATClientLayout>
         <div className="mx-auto max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 p-8 shadow-sm">
           <h1 className="text-2xl font-semibold text-amber-900">UI blocks are disabled</h1>
           <p className="mt-2 text-sm text-amber-800">
@@ -28,9 +29,13 @@ export default async function RuaTestPage() {
             </Link>
           </div>
         </div>
-      </main>
+      </EATClientLayout>
     );
   }
 
-  return <RuaTestClient agentsEnabled={agentsEnabled} />;
+  return (
+    <EATClientLayout>
+      <RuaTestClient agentsEnabled={agentsEnabled} />
+    </EATClientLayout>
+  );
 }

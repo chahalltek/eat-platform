@@ -9,6 +9,7 @@ import {
 } from "@/lib/systemStatus";
 import { SystemStatus } from "@/components/SystemStatus";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
+import { EATClientLayout } from "@/components/EATClientLayout";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -196,37 +197,37 @@ export default async function Home() {
 
   if (!uiEnabled) {
     return (
-      <div className="min-h-screen bg-zinc-50 text-zinc-900">
-        <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 py-16 sm:px-12">
-        <header className="mt-8 flex flex-col gap-3 sm:mt-12">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-2">
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">EAT</p>
-              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
+      <EATClientLayout>
+        <div className="flex flex-col gap-6">
+          <header className="mt-2 flex flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">EAT</p>
+                <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
+              </div>
+              <Link
+                href="/eat/about"
+                className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg"
+              >
+                About EAT
+              </Link>
             </div>
-            <Link
-              href="/eat/about"
-              className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg"
-            >
-              About EAT
+            <p className="max-w-2xl text-lg text-zinc-600">
+              UI blocks are turned off. Enable the UI Blocks flag to restore navigation and workflows.
+            </p>
+            <Link href="/admin/feature-flags" className="text-sm font-semibold text-indigo-700 underline">
+              Go to Feature Flags
             </Link>
-          </div>
-          <p className="max-w-2xl text-lg text-zinc-600">
-            UI blocks are turned off. Enable the UI Blocks flag to restore navigation and workflows.
-          </p>
-          <Link href="/admin/feature-flags" className="text-sm font-semibold text-indigo-700 underline">
-            Go to Feature Flags
-          </Link>
-        </header>
-        </main>
-      </div>
+          </header>
+        </div>
+      </EATClientLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-      <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-12 px-6 py-16 sm:px-12">
-        <header className="mt-8 flex flex-col gap-3 sm:mt-12">
+    <EATClientLayout>
+      <div className="flex flex-col gap-12">
+        <header className="mt-2 flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-2">
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">EAT</p>
@@ -310,7 +311,7 @@ export default async function Home() {
             );
           })}
         </section>
-      </main>
-    </div>
+      </div>
+    </EATClientLayout>
   );
 }

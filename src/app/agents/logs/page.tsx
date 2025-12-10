@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
 import { canViewAgentLogs } from "@/lib/auth/permissions";
+import { EATClientLayout } from "@/components/EATClientLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -14,14 +15,14 @@ export default async function AgentRunLogsPage() {
 
   if (!canViewAgentLogs(user, resolvedTenantId)) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-10">
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+      <EATClientLayout>
+        <div className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
           <h1 className="text-xl font-semibold">Access denied</h1>
           <p className="mt-2 text-sm text-amber-800">
             You need admin-level permissions to review agent run logs.
           </p>
         </div>
-      </div>
+      </EATClientLayout>
     );
   }
 
@@ -29,14 +30,14 @@ export default async function AgentRunLogsPage() {
 
   if (!agentUiEnabled) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-10">
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-900">
+      <EATClientLayout>
+        <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-900">
           <h1 className="text-xl font-semibold">Agents UI unavailable</h1>
           <p className="mt-2 text-sm text-slate-700">
             Enable the agents matched UI feature flag to access agent log details.
           </p>
         </div>
-      </div>
+      </EATClientLayout>
     );
   }
 
@@ -86,13 +87,15 @@ export default async function AgentRunLogsPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Agent Activity Logs</h1>
-        <p className="text-gray-600">Review all agent executions and their outcomes.</p>
-      </div>
+    <EATClientLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Agent Activity Logs</h1>
+          <p className="text-gray-600">Review all agent executions and their outcomes.</p>
+        </div>
 
-      <AgentRunLogsView logs={serializableLogs} />
-    </div>
+        <AgentRunLogsView logs={serializableLogs} />
+      </div>
+    </EATClientLayout>
   );
 }

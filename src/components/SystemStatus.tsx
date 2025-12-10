@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import type { SubsystemKey, SubsystemState, SystemStatusMap } from "@/lib/systemStatus";
+import { StatusPill } from "@/components/StatusPill";
+import type { SubsystemKey, SystemStatusMap } from "@/lib/systemStatus";
 
 const statusLabels: Record<SubsystemKey, string> = {
   agents: "Agents",
@@ -11,25 +12,12 @@ const statusLabels: Record<SubsystemKey, string> = {
   tenantConfig: "Tenant Config",
 };
 
-const statusStyles: Record<SubsystemState, string> = {
-  healthy: "bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/30",
-  warning: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-500/30",
-  error: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:border-rose-500/30",
-  unknown: "bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700",
+const statusDescriptions: Record<SubsystemKey, string> = {
+  agents: "Orchestration for agent workflows.",
+  scoring: "Automated scoring pipeline.",
+  database: "Primary datastore availability.",
+  tenantConfig: "Feature flags and tenant settings.",
 };
-
-function formatStatusText(status: SubsystemState) {
-  switch (status) {
-    case "healthy":
-      return "Healthy";
-    case "warning":
-      return "Warning";
-    case "error":
-      return "Error";
-    default:
-      return "Unknown";
-  }
-}
 
 type SystemStatusProps = {
   initialStatus: SystemStatusMap;
@@ -64,41 +52,38 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
   }
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">System status</p>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Live health for EAT subsystems</p>
+          <p className="text-xs font-semibold tracking-[0.18em] text-violet-600">SYSTEM STATUS</p>
+          <p className="text-sm text-slate-500">Live health for EAT subsystems.</p>
         </div>
         <button
           type="button"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+          className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isRefreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         {(Object.keys(statusLabels) as SubsystemKey[]).map((key) => {
           const entry = statusMap[key];
           const status = entry?.status ?? "unknown";
+          const description = entry?.detail ?? statusDescriptions[key];
 
           return (
             <div
               key={key}
-              className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900"
+              className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3"
             >
               <div>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{statusLabels[key]}</p>
-                {entry?.detail && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{entry.detail}</p>
-                )}
+                <p className="text-sm font-semibold text-slate-900">{statusLabels[key]}</p>
+                <p className="text-xs text-slate-500">{description}</p>
               </div>
-              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusStyles[status]}`}>
-                {formatStatusText(status)}
-              </span>
+              <StatusPill status={status} />
             </div>
           );
         })}
