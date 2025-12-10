@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { getSystemStatus } from "@/lib/systemStatus";
 import { SystemStatus } from "@/components/SystemStatus";
+import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -12,38 +13,69 @@ type HomeLink = {
   href: string;
   requires?: Array<(typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS]>;
   description?: string;
+  stats?: { label: string; value: string }[];
 };
 
-const links: HomeLink[] = [
-  {
-    label: "Upload and parse resume",
-    href: "/rina-test",
-    requires: [FEATURE_FLAGS.AGENTS],
-    description: "RINA — Resume ingestion agent",
-  },
-  {
-    label: "Create job intake",
-    href: "/rua-test",
-    requires: [FEATURE_FLAGS.AGENTS],
-    description: "RUA — Job intake agent",
-  },
-  {
-    label: "Execution history",
-    href: "/agents/runs",
-    requires: [FEATURE_FLAGS.AGENTS],
-    description: "Latest agent runs",
-  },
-  { label: "Job library", href: "/jobs", requires: [FEATURE_FLAGS.SCORING], description: "Roles with scoring" },
-  { label: "Candidate pool", href: "/candidates", requires: [FEATURE_FLAGS.SCORING], description: "Candidate library" },
-  { label: "System controls", href: "/admin/feature-flags", description: "Admin feature toggles" },
-];
+function formatCount(value: number | null) {
+  if (value == null) return "Unknown";
+  return value.toLocaleString();
+}
+
+function formatAgentRuns(value: number | null) {
+  if (value == null) return "Unknown";
+  if (value === 0) return "No runs recorded";
+  return `${value.toLocaleString()} runs`;
+}
+
+function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
+  return [
+    {
+      label: "Upload and parse resume",
+      href: "/rina-test",
+      requires: [FEATURE_FLAGS.AGENTS],
+      description: "RINA — Resume ingestion agent",
+    },
+    {
+      label: "Create job intake",
+      href: "/rua-test",
+      requires: [FEATURE_FLAGS.AGENTS],
+      description: "RUA — Job intake agent",
+    },
+    {
+      label: "Execution history",
+      href: "/agents/runs",
+      requires: [FEATURE_FLAGS.AGENTS],
+      description: "Latest agent runs",
+      stats: [{ label: "Agent runs in last 7 days", value: formatAgentRuns(metrics.agentRunsLast7d) }],
+    },
+    {
+      label: "Job library",
+      href: "/jobs",
+      requires: [FEATURE_FLAGS.SCORING],
+      description: "Roles with scoring",
+      stats: [
+        { label: "Job library", value: formatCount(metrics.totalJobs) },
+        { label: "Roles with test content", value: formatCount(metrics.testContentRoles) },
+      ],
+    },
+    {
+      label: "Candidate pool",
+      href: "/candidates",
+      requires: [FEATURE_FLAGS.SCORING],
+      description: "Candidate library",
+      stats: [{ label: "Candidate pool", value: formatCount(metrics.totalCandidates) }],
+    },
+    { label: "System controls", href: "/admin/feature-flags", description: "Admin feature toggles" },
+  ];
+}
 
 export default async function Home() {
-  const [uiEnabled, agentsEnabled, scoringEnabled, systemStatus] = await Promise.all([
+  const [uiEnabled, agentsEnabled, scoringEnabled, systemStatus, metrics] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
     isFeatureEnabled(FEATURE_FLAGS.AGENTS),
     isFeatureEnabled(FEATURE_FLAGS.SCORING),
     getSystemStatus(),
+    getHomeCardMetrics(),
   ]);
 
   const featureMap: Record<string, boolean> = {
@@ -51,6 +83,8 @@ export default async function Home() {
     [FEATURE_FLAGS.AGENTS]: agentsEnabled,
     [FEATURE_FLAGS.SCORING]: scoringEnabled,
   };
+
+  const links = buildLinks(metrics);
 
   if (!uiEnabled) {
     return (
@@ -111,6 +145,18 @@ export default async function Home() {
                 <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
                   {link.description ?? `${link.label} workflow`}
                 </p>
+                {link.stats ? (
+                  <dl className="mt-4 space-y-2">
+                    {link.stats.map((stat) => (
+                      <div key={stat.label} className="flex items-baseline justify-between">
+                        <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                          {stat.label}
+                        </dt>
+                        <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{stat.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
                 {link.requires && link.requires.length > 0 && (
                   <p className="mt-2 text-xs text-zinc-500">
                     Requires: {link.requires.map((flag) => flag.replace("-", " ")).join(", ")}
