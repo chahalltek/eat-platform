@@ -8,16 +8,12 @@ export default defineConfig({
     include: ["**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
-<<<<<<< ours
-      reporter: ["text", "json", "lcov"],
+      reporter: ["text", "json", "lcov", "html"],
+      reportsDirectory: "./coverage",
       lines: 70,
       functions: 70,
       branches: 60,
       statements: 70,
-=======
-      reporter: ["text", "html"],
-      reportsDirectory: "./coverage",
->>>>>>> theirs
     },
   },
   resolve: {
