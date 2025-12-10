@@ -48,40 +48,42 @@ const dependencyLabels: Record<SubsystemKey, string> = {
 type BadgeState = "enabled" | SubsystemState;
 
 const badgeStyles: Record<BadgeState, string> = {
-  enabled: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  enabled: "border-blue-200 bg-blue-50 text-blue-700",
   healthy: "border-emerald-200 bg-emerald-50 text-emerald-700",
   warning: "border-amber-200 bg-amber-50 text-amber-700",
-  error: "border-rose-200 bg-rose-50 text-rose-700",
-  unknown: "border-slate-200 bg-slate-50 text-slate-600",
+  error: "border-red-200 bg-red-50 text-red-700",
+  unknown: "border-zinc-200 bg-zinc-50 text-zinc-600",
 };
 
 const dependencyStatusStyles: Record<SubsystemState, string> = {
   healthy: "bg-emerald-50 text-emerald-700 border-emerald-200",
   warning: "bg-amber-50 text-amber-700 border-amber-200",
-  error: "bg-rose-50 text-rose-700 border-rose-200",
-  unknown: "bg-slate-50 text-slate-600 border-slate-200",
+  error: "bg-red-50 text-red-700 border-red-200",
+  unknown: "bg-zinc-50 text-zinc-600 border-zinc-200",
 };
 
 function formatStatusText(status: BadgeState) {
   switch (status) {
     case "enabled":
+      return "Idle";
     case "healthy":
-      return "Enabled";
+      return "Healthy";
     case "warning":
-      return "Setup required";
+      return "Waiting";
     case "error":
-      return "Unavailable";
+      return "Fault";
     case "unknown":
     default:
-      return "Status unknown";
+      return "Unknown";
   }
 }
 
 const messageStyles: Record<string, string> = {
   warning: "text-amber-700 dark:text-amber-200",
-  error: "text-rose-700 dark:text-rose-200",
+  error: "text-red-700 dark:text-red-200",
   unknown: "text-zinc-600 dark:text-zinc-400",
-  enabled: "text-emerald-700",
+  enabled: "text-blue-700 dark:text-blue-200",
+  healthy: "text-emerald-700 dark:text-emerald-200",
 };
 
 function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
@@ -185,9 +187,9 @@ function formatDependencyStatus(status: SubsystemState) {
     case "healthy":
       return "Healthy";
     case "warning":
-      return "Warning";
+      return "Waiting";
     case "error":
-      return "Unavailable";
+      return "Fault";
     default:
       return "Unknown";
   }
@@ -291,10 +293,10 @@ export default async function Home() {
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
             </div>
             <Link
-              href="/eat/about"
+              href="/system-map"
               className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg"
             >
-              About EAT
+              System Map
             </Link>
           </div>
           <p className="max-w-2xl text-lg text-zinc-600">
@@ -317,10 +319,10 @@ export default async function Home() {
             <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
           </div>
           <Link
-            href="/eat/about"
+            href="/system-map"
             className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-indigo-700/60"
           >
-            About EAT
+            System Map
           </Link>
         </div>
         <p className="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">

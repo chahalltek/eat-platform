@@ -22,7 +22,7 @@ export default async function RuaTestPage() {
         <p className="text-sm text-slate-500">Send job text through the RUA agent and view the structured response.</p>
       </div>
       <div className="flex items-center gap-2">
-        <ClientActionLink href="/eat/about">About EAT</ClientActionLink>
+        <ClientActionLink href="/system-map">System Map</ClientActionLink>
         <ClientActionLink href="/">Back to home</ClientActionLink>
       </div>
     </div>

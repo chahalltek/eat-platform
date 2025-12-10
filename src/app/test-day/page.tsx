@@ -44,16 +44,16 @@ export default function TestDayPage() {
               <li>DATA &amp; CONTROLS</li>
             </ul>
           </li>
-          <li>“About EAT” link exists.</li>
+          <li>“System Map” link exists.</li>
           <li>Styling and spacing match other pages.</li>
         </ul>
 
-        <h3>✅ Test 2: About Page</h3>
-        <p>Go to /eat/about (or /about)</p>
+        <h3>✅ Test 2: System Map</h3>
+        <p>Go to /system-map (or /eat/system-map)</p>
         <p>Confirm:</p>
         <ul>
-          <li>Pipeline displayed: INTAKE → PROFILE → MATCHER → CONFIDENCE → EXPLAIN → SHORTLIST</li>
-          <li>RUA and RINA are clearly explained.</li>
+          <li>Pipeline displayed: INTAKE → PROFILE → MATCH → CONFIDENCE → EXPLAIN → SHORTLIST</li>
+          <li>Each agent responsibility is stated plainly.</li>
           <li>Page uses EAT header layout.</li>
           <li>Back to home works.</li>
         </ul>

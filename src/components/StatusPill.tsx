@@ -10,18 +10,25 @@ export type StatusPillStatus =
   | "warn"
   | "error"
   | "off"
-  | "unknown";
+  | "unknown"
+  | "idle"
+  | "waiting"
+  | "fault"
+  | "disabled";
 
-type StatusTone = "success" | "warning" | "danger" | "neutral";
+type StatusTone = "healthy" | "idle" | "waiting" | "fault" | "disabled";
 
 const toneStyles: Record<StatusTone, string> = {
-  success:
+  healthy:
     "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200",
-  warning: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200",
-  danger: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200",
-  neutral: "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200",
+  idle: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200",
+  waiting:
+    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200",
+  fault: "border-red-200 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
+  disabled: "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200",
 };
 
+<<<<<<< ours
 const accentPalette: Record<StatusTone, string> = {
   success: "rgba(16, 185, 129, 0.32)",
   warning: "rgba(245, 158, 11, 0.32)",
@@ -38,23 +45,25 @@ const defaultLabels: Record<StatusPillStatus, string> = {
   error: "Unavailable",
   off: "Disabled",
   unknown: "Status unknown",
+=======
+const statusConfig: Record<StatusPillStatus, { tone: StatusTone; label: string }> = {
+  enabled: { tone: "idle", label: "Idle" },
+  idle: { tone: "idle", label: "Idle" },
+  healthy: { tone: "healthy", label: "Healthy" },
+  ok: { tone: "healthy", label: "Healthy" },
+  warning: { tone: "waiting", label: "Waiting" },
+  warn: { tone: "waiting", label: "Waiting" },
+  waiting: { tone: "waiting", label: "Waiting" },
+  error: { tone: "fault", label: "Fault" },
+  fault: { tone: "fault", label: "Fault" },
+  off: { tone: "disabled", label: "Disabled" },
+  disabled: { tone: "disabled", label: "Disabled" },
+  unknown: { tone: "disabled", label: "Unknown" },
+>>>>>>> theirs
 };
 
 function resolveTone(status: StatusPillStatus): StatusTone {
-  switch (status) {
-    case "enabled":
-    case "healthy":
-    case "ok":
-      return "success";
-    case "warning":
-    case "warn":
-      return "warning";
-    case "error":
-    case "off":
-      return "danger";
-    default:
-      return "neutral";
-  }
+  return statusConfig[status]?.tone ?? "disabled";
 }
 
 export function StatusPill({ status, label }: { status: StatusPillStatus; label?: string }) {
@@ -62,7 +71,7 @@ export function StatusPill({ status, label }: { status: StatusPillStatus; label?
   const previousStatus = useRef<StatusPillStatus | null>(null);
 
   const tone = resolveTone(status);
-  const displayLabel = label ?? defaultLabels[status];
+  const displayLabel = label ?? statusConfig[status]?.label ?? "Status";
 
   useEffect(() => {
     if (previousStatus.current && previousStatus.current !== status) {

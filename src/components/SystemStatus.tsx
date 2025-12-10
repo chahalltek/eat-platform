@@ -24,9 +24,9 @@ function formatStatusText(status: SubsystemState) {
     case "healthy":
       return "Healthy";
     case "warning":
-      return "Warning";
+      return "Waiting";
     case "error":
-      return "Error";
+      return "Fault";
     default:
       return "Unknown";
   }
