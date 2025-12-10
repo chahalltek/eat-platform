@@ -1,8 +1,12 @@
 import Link from "next/link";
 
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
+<<<<<<< ours
 import { getSystemStatus } from "@/lib/systemStatus";
 import { SystemStatus } from "@/components/SystemStatus";
+=======
+import { getSystemStatus, type SubsystemStatus } from "@/lib/systemStatus";
+>>>>>>> theirs
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -30,6 +34,8 @@ export default async function Home() {
     isFeatureEnabled(FEATURE_FLAGS.SCORING),
     getSystemStatus(),
   ]);
+
+  const systemStatus = await getSystemStatus().catch<SubsystemStatus[] | null>(() => null);
 
   const featureMap: Record<string, boolean> = {
     [FEATURE_FLAGS.UI_BLOCKS]: uiEnabled,
@@ -67,7 +73,45 @@ export default async function Home() {
           </p>
         </header>
 
+<<<<<<< ours
         <SystemStatus initialStatus={systemStatus} />
+=======
+        <section
+          className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70"
+          aria-label="System status"
+        >
+          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">System status</p>
+          <div className="flex flex-wrap gap-2">
+            {(systemStatus ?? [
+              { name: "Agents", status: "unknown", detail: "Not loaded" },
+              { name: "Scoring", status: "unknown", detail: "Not loaded" },
+              { name: "Database", status: "unknown", detail: "Not loaded" },
+              { name: "Tenant Config", status: "unknown", detail: "Not loaded" },
+            ]).map((item) => {
+              const tone =
+                item.status === "healthy"
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
+                  : item.status === "warning"
+                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                    : item.status === "error"
+                      ? "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200"
+                      : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-200";
+
+              return (
+                <div
+                  key={item.name}
+                  className={`flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${tone}`}
+                  title={item.detail}
+                >
+                  <span className="h-2 w-2 rounded-full bg-current" aria-hidden />
+                  <span>{item.name}</span>
+                  <span className="text-xs capitalize text-inherit">{item.status}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+>>>>>>> theirs
 
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {links.map((link) => {
