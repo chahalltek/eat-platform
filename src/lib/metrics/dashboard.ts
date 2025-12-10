@@ -17,6 +17,10 @@ type DashboardMetrics = {
   agentRunsPerDay: TimeSeriesBucket[];
   outreachPerDay: TimeSeriesBucket[];
   errorsByAgent: ErrorByAgent[];
+  successfulAgentRuns: {
+    current: number;
+    previous: number;
+  };
   totals: {
     matches: number;
     agentRuns: number;
@@ -64,6 +68,9 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   sinceDate.setHours(0, 0, 0, 0);
   sinceDate.setDate(sinceDate.getDate() - (DAYS_OF_HISTORY - 1));
 
+  const previousPeriodStart = new Date(sinceDate);
+  previousPeriodStart.setDate(previousPeriodStart.getDate() - DAYS_OF_HISTORY);
+
   const [matches, agentRuns, outreachInteractions, failedRuns] = await Promise.all([
     prisma.matchResult.findMany({
       where: { createdAt: { gte: sinceDate } },
@@ -84,6 +91,26 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     }),
   ]);
 
+  const [successfulAgentRunsCurrent, successfulAgentRunsPrevious] = await Promise.all([
+    prisma.agentRunLog.count({
+      where: {
+        status: AgentRunStatus.SUCCESS,
+        startedAt: {
+          gte: sinceDate,
+        },
+      },
+    }),
+    prisma.agentRunLog.count({
+      where: {
+        status: AgentRunStatus.SUCCESS,
+        startedAt: {
+          gte: previousPeriodStart,
+          lt: sinceDate,
+        },
+      },
+    }),
+  ]);
+
   const matchesPerDay = bucketByDay(matches.map((m) => m.createdAt), DAYS_OF_HISTORY);
   const agentRunsPerDay = bucketByDay(agentRuns.map((run) => run.startedAt), DAYS_OF_HISTORY);
   const outreachPerDay = bucketByDay(outreachInteractions.map((entry) => entry.createdAt), DAYS_OF_HISTORY);
@@ -97,6 +124,10 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     agentRunsPerDay,
     outreachPerDay,
     errorsByAgent,
+    successfulAgentRuns: {
+      current: successfulAgentRunsCurrent,
+      previous: successfulAgentRunsPrevious,
+    },
     totals: {
       matches: matches.length,
       agentRuns: agentRuns.length,

@@ -24,6 +24,11 @@ type HomeLink = {
     subsystem: SubsystemKey;
     allowWhenDataPresent?: boolean;
     dataCount?: number | null;
+    label?: string;
+    flow?: {
+      source: string;
+      target: string;
+    };
   };
 };
 
@@ -108,7 +113,10 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
       href: "/agents/runs",
       description: "Latest agent runs",
       stats: [{ label: "Agent runs in last 7 days", value: formatAgentRuns(metrics.agentRunsLast7d) }],
-      dependency: { subsystem: "agents" },
+      dependency: {
+        subsystem: "agents",
+        flow: { source: "Execution History", target: "Agents" },
+      },
     },
     {
       label: "Job library",
@@ -119,7 +127,13 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
         { label: "Job library", value: formatCount(metrics.totalJobs) },
         { label: "Roles with test content", value: formatCount(metrics.testContentRoles) },
       ],
-      dependency: { subsystem: "scoring", allowWhenDataPresent: true, dataCount: metrics.totalJobs },
+      dependency: {
+        subsystem: "agents",
+        allowWhenDataPresent: true,
+        dataCount: metrics.totalJobs,
+        label: "Intake Agent",
+        flow: { source: "Job Library", target: "Intake Agent" },
+      },
     },
     {
       label: "Candidate pool",
@@ -127,7 +141,12 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
       href: "/candidates",
       description: "Candidate library",
       stats: [{ label: "Candidate pool", value: formatCount(metrics.totalCandidates) }],
-      dependency: { subsystem: "scoring", allowWhenDataPresent: true, dataCount: metrics.totalCandidates },
+      dependency: {
+        subsystem: "scoring",
+        allowWhenDataPresent: true,
+        dataCount: metrics.totalCandidates,
+        flow: { source: "Candidate Pool", target: "Scoring Engine" },
+      },
     },
     {
       label: "Feature flags",
@@ -154,14 +173,14 @@ function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
       status: "enabled",
       isActive: true,
       dependencyStatus,
-      dependencyLabel: dependencyLabels[link.dependency.subsystem],
+      dependencyLabel: link.dependency.label ?? dependencyLabels[link.dependency.subsystem],
       message: dependency.detail,
     } as const;
   }
 
   const statusLabel = dependency.status ?? "unknown";
   const detail =
-    dependency.detail ?? `${dependencyLabels[link.dependency.subsystem]} subsystem ${statusLabel.toLowerCase()}`;
+    dependency.detail ?? `${link.dependency.label ?? dependencyLabels[link.dependency.subsystem]} subsystem ${statusLabel.toLowerCase()}`;
 
   if (canOpenWithData) {
     return {
@@ -169,7 +188,7 @@ function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
       isActive: true,
       message: detail,
       dependencyStatus,
-      dependencyLabel: dependencyLabels[link.dependency.subsystem],
+      dependencyLabel: link.dependency.label ?? dependencyLabels[link.dependency.subsystem],
     } as const;
   }
 
@@ -178,7 +197,7 @@ function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
     isActive: false,
     message: detail,
     dependencyStatus,
-    dependencyLabel: dependencyLabels[link.dependency.subsystem],
+    dependencyLabel: link.dependency.label ?? dependencyLabels[link.dependency.subsystem],
   } as const;
 }
 
@@ -243,18 +262,33 @@ export default async function Home() {
           </dl>
         ) : null}
         {link.dependency ? (
-          <div className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 transition group-hover:border-indigo-100 group-hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:group-hover:border-indigo-700/60 dark:group-hover:bg-indigo-900/20">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-200">Dependency</span>
-            <div
-              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-medium ${
-                dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-              <span className="text-[11px] uppercase tracking-wide">
-                {dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}
+          <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-xs transition group-hover:border-indigo-100 group-hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-950 dark:group-hover:border-indigo-700/60 dark:group-hover:bg-indigo-900/20">
+            <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <span>Dependency flow</span>
+              <div
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-semibold ${
+                  dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]
+                }`}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+                <span className="text-xs capitalize">{formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}</span>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+              <span className="rounded-lg bg-white px-3 py-1 shadow-inner dark:bg-zinc-900/80">
+                {link.dependency.flow?.source ?? link.label}
               </span>
-              <span className="text-xs capitalize">{formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}</span>
+              <span className="text-base text-zinc-400">→</span>
+              <span
+                className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1 ${
+                  dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]
+                }`}
+              >
+                <span>{link.dependency.flow?.target ?? dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}</span>
+                <span className="text-[11px] font-medium uppercase tracking-wide">
+                  {formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}
+                </span>
+              </span>
             </div>
           </div>
         ) : null}

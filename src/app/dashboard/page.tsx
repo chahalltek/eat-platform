@@ -1,4 +1,10 @@
-import { ArrowTrendingUpIcon, ChartBarIcon, ExclamationTriangleIcon, UsersIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowTrendingUpIcon,
+  ChartBarIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  UsersIcon,
+} from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { AgentsStatusPanel } from '@/components/AgentsStatusPanel';
 import { getAgentsStatus } from '@/lib/agents/statusBoard';
@@ -12,12 +18,18 @@ function StatCard({
   value,
   icon: Icon,
   accent,
+  timeframe,
+  trend,
 }: {
   label: string;
   value: string | number;
   icon: typeof ArrowTrendingUpIcon;
   accent?: string;
+  timeframe?: string;
+  trend?: number | null;
 }) {
+  const trendState = trend == null ? null : trend >= 0 ? 'positive' : 'negative';
+
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${accent ?? 'bg-indigo-50 text-indigo-700'} dark:bg-indigo-900/30 dark:text-indigo-200`}>
@@ -25,7 +37,27 @@ function StatCard({
       </div>
       <div className="flex flex-col">
         <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
-        <p className="text-3xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</p>
+        <div className="flex items-baseline gap-3">
+          <p className="text-3xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</p>
+          {timeframe ? <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{timeframe}</span> : null}
+        </div>
+        {trend !== undefined ? (
+          <div className="mt-2 inline-flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold ${
+                trendState === 'positive'
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+                  : trendState === 'negative'
+                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'
+                    : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
+              }`}
+            >
+              <span aria-hidden>{trendState === 'negative' ? '▼' : '▲'}</span>
+              <span>{trend == null ? 'New baseline' : `${Math.abs(trend).toFixed(1)}%`}</span>
+            </span>
+            <span className="text-[11px] uppercase tracking-wide">vs previous 7 days</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -121,6 +153,13 @@ function HorizontalBarList({
 export default async function DashboardPage() {
   const [metrics, agentsStatus] = await Promise.all([getDashboardMetrics(), getAgentsStatus()]);
 
+  const successfulRunsChange =
+    metrics.successfulAgentRuns.previous > 0
+      ? ((metrics.successfulAgentRuns.current - metrics.successfulAgentRuns.previous) /
+          metrics.successfulAgentRuns.previous) *
+        100
+      : null;
+
   return (
     <EATClientLayout>
       <div className="flex flex-col gap-10">
@@ -140,7 +179,15 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <StatCard
+            label="Successful agent runs"
+            value={metrics.successfulAgentRuns.current}
+            icon={CheckCircleIcon}
+            accent="bg-emerald-50 text-emerald-700"
+            timeframe="Last 7 days"
+            trend={successfulRunsChange}
+          />
           <StatCard label="Matches (7d)" value={metrics.totals.matches} icon={ArrowTrendingUpIcon} />
           <StatCard label="Agent Runs (7d)" value={metrics.totals.agentRuns} icon={UsersIcon} accent="bg-emerald-50 text-emerald-700" />
           <StatCard
