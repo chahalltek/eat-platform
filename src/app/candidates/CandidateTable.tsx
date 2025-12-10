@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import type React from "react";
 import Link from "next/link";
 
 import type { FilterFn } from "@tanstack/react-table";
@@ -146,7 +147,13 @@ export function useCandidateTable(candidates: CandidateRow[]) {
   return { columns, globalFilterFn, statusOptions, locationOptions };
 }
 
-export function CandidateTable({ candidates }: { candidates: CandidateRow[] }) {
+export function CandidateTable({
+  candidates,
+  emptyState,
+}: {
+  candidates: CandidateRow[];
+  emptyState?: React.ReactNode;
+}) {
   const { columns, globalFilterFn, statusOptions, locationOptions } = useCandidateTable(candidates);
 
   return (
@@ -176,7 +183,9 @@ export function CandidateTable({ candidates }: { candidates: CandidateRow[] }) {
             ) : null}
           </TableToolbar>
         )}
-        emptyState={<div className="py-6 text-center text-sm text-slate-500">No candidates found.</div>}
+        emptyState={
+          emptyState ?? <div className="py-6 text-center text-sm text-slate-500">No candidates found.</div>
+        }
       />
     </div>
   );

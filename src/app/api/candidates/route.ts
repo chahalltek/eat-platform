@@ -21,6 +21,52 @@ const requestSchema = z.object({
   skills: z.array(candidateSkillSchema).optional(),
 });
 
+export async function GET(req: NextRequest) {
+  const currentUser = await getCurrentUser(req);
+
+  if (!currentUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const normalizedRole = normalizeRole(currentUser.role);
+
+  if (!normalizedRole || !recruiterRoles.has(normalizedRole)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const tenantId = (await getUserTenantId(req)) ?? DEFAULT_TENANT_ID;
+
+  try {
+    const candidates = await prisma.candidate.findMany({
+      where: { tenantId },
+      include: {
+        skills: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 200,
+    });
+
+    const rows = candidates.map((candidate) => ({
+      id: candidate.id,
+      fullName: candidate.fullName,
+      currentTitle: candidate.currentTitle,
+      location: candidate.location,
+      status: candidate.status,
+      parsingConfidence: candidate.parsingConfidence,
+      updatedAt: candidate.updatedAt.toISOString(),
+    }));
+
+    return NextResponse.json({ candidates: rows }, { status: 200 });
+  } catch (error) {
+    console.error("[Candidates API] Failed to fetch candidates", error);
+    return NextResponse.json({ error: "Unable to load candidates" }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   const currentUser = await getCurrentUser(req);
 
