@@ -9,7 +9,11 @@ import {
 } from "@/lib/systemStatus";
 import { SystemStatus } from "@/components/SystemStatus";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
+<<<<<<< ours
 import { EATClientLayout } from "@/components/EATClientLayout";
+=======
+import { StatusPill, type Status } from "@/components/StatusPill";
+>>>>>>> theirs
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -166,13 +170,6 @@ function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
   } as const;
 }
 
-const dependencyStatusStyles: Record<SubsystemState, string> = {
-  healthy: "text-emerald-700 dark:text-emerald-200",
-  warning: "text-amber-700 dark:text-amber-200",
-  error: "text-rose-700 dark:text-rose-200",
-  unknown: "text-zinc-600 dark:text-zinc-400",
-};
-
 function formatDependencyStatus(status: SubsystemState) {
   switch (status) {
     case "healthy":
@@ -183,6 +180,20 @@ function formatDependencyStatus(status: SubsystemState) {
       return "Unavailable";
     default:
       return "Unknown";
+  }
+}
+
+function dependencyStatusToPill(status: SubsystemState): Status {
+  switch (status) {
+    case "healthy":
+      return "healthy";
+    case "warning":
+      return "degraded";
+    case "error":
+      return "down";
+    case "unknown":
+    default:
+      return "unknown";
   }
 }
 
@@ -287,18 +298,18 @@ export default async function Home() {
                   </dl>
                 ) : null}
                 {link.dependency ? (
-                  <div className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 transition group-hover:border-indigo-100 group-hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:group-hover:border-indigo-700/60 dark:group-hover:bg-indigo-900/20">
-                    <span className="font-semibold text-zinc-700 dark:text-zinc-200">Dependency</span>
-                    <div
-                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-medium ${
-                        dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]
-                      }`}
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                      <span className="text-[11px] uppercase tracking-wide">
-                        {dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}
-                      </span>
-                      <span className="text-xs capitalize">{formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}</span>
+                  <div className="mt-4 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 transition group-hover:border-indigo-100 group-hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-950 dark:group-hover:border-indigo-700/60 dark:group-hover:bg-indigo-900/20">
+                    <div className="flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <span className="uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Dependency</span>
+                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                          {dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}
+                        </span>
+                      </div>
+                      <StatusPill
+                        status={dependencyStatusToPill(dependencyState.dependencyStatus ?? "unknown")}
+                        label={formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}
+                      />
                     </div>
                   </div>
                 ) : null}

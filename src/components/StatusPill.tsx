@@ -1,3 +1,4 @@
+<<<<<<< ours
 import type { SubsystemState } from "@/lib/systemStatus";
 
 const statusLabels: Record<SubsystemState, string> = {
@@ -23,3 +24,37 @@ export function StatusPill({ status }: { status: SubsystemState }) {
     </span>
   );
 }
+=======
+export type Status = "healthy" | "unknown" | "degraded" | "down";
+
+const STATUS_STYLES: Record<Status, string> = {
+  healthy: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  unknown: "bg-slate-50 text-slate-600 border-slate-200",
+  degraded: "bg-amber-50 text-amber-700 border-amber-200",
+  down: "bg-rose-50 text-rose-700 border-rose-200",
+};
+
+export function StatusPill({ status, label }: { status: Status; label?: string }) {
+  const classes = STATUS_STYLES[status];
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-medium ${classes}`}
+    >
+      {label ?? labelFromStatus(status)}
+    </span>
+  );
+}
+
+function labelFromStatus(status: Status): string {
+  switch (status) {
+    case "healthy":
+      return "Healthy";
+    case "unknown":
+      return "Unknown";
+    case "degraded":
+      return "Degraded";
+    case "down":
+      return "Down";
+  }
+}
+>>>>>>> theirs

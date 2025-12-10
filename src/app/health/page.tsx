@@ -1,6 +1,11 @@
 import Link from "next/link";
 
 import { recordHealthCheck, runHealthChecks } from "@/lib/health";
+import { StatusPill, type Status } from "@/components/StatusPill";
+
+function healthStatusToPill(status: "ok" | "error"): Status {
+  return status === "ok" ? "healthy" : "down";
+}
 
 export const dynamic = "force-dynamic";
 
@@ -36,16 +41,7 @@ export default async function HealthPage() {
 
         <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-wrap items-center gap-3">
-            <span
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${
-                report.status === "ok"
-                  ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200"
-                  : "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200"
-              }`}
-            >
-              <span className="inline-block h-2 w-2 rounded-full bg-current" aria-hidden />
-              {report.status === "ok" ? "Healthy" : "Unhealthy"}
-            </span>
+            <StatusPill status={healthStatusToPill(report.status)} label={report.status === "ok" ? "Healthy" : "Unhealthy"} />
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Last checked at {new Date(report.timestamp).toLocaleString()}
             </span>
@@ -62,15 +58,7 @@ export default async function HealthPage() {
                     <p className="text-sm uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">{check.name}</p>
                     <h2 className="text-lg font-semibold capitalize">{check.name}</h2>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      check.status === "ok"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200"
-                        : "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200"
-                    }`}
-                  >
-                    {check.status === "ok" ? "Pass" : "Fail"}
-                  </span>
+                  <StatusPill status={healthStatusToPill(check.status)} label={check.status === "ok" ? "Pass" : "Fail"} />
                 </div>
                 <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">{check.message}</p>
               </div>
