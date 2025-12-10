@@ -6,6 +6,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   PlayIcon,
+  SparklesIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
 
@@ -179,6 +180,9 @@ function evaluateTest(key: TestKey, diagnostics: TenantDiagnostics): Pick<TestSt
 export function TenantTestTable({ tenantId }: { tenantId: string }) {
   const [results, setResults] = useState<Record<TestKey, TestState>>(initialState);
   const [runningAll, setRunningAll] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedMessage, setSeedMessage] = useState<string | null>(null);
+  const [seedError, setSeedError] = useState<string | null>(null);
 
   useEffect(() => {
     setResults(loadTenantResults(tenantId));
@@ -227,6 +231,42 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
     setRunningAll(false);
   };
 
+  const seedSampleData = async () => {
+    setSeeding(true);
+    setSeedMessage(null);
+    setSeedError(null);
+
+    try {
+      const response = await fetch("/api/admin/eat/seed-sample-data", { method: "POST" });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = payload?.error ? String(payload.error) : "Unable to seed sample data";
+        throw new Error(errorMessage);
+      }
+
+      const candidateCount = Array.isArray(payload?.candidateIds) ? payload.candidateIds.length : 3;
+      setSeedMessage(`Seeded a sample job and ${candidateCount} candidates for testing.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to seed sample data";
+      setSeedError(message);
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  const seedHelperText = useMemo(() => {
+    if (seedError) {
+      return { text: seedError, className: "text-rose-600" } as const;
+    }
+
+    if (seedMessage) {
+      return { text: seedMessage, className: "text-emerald-700" } as const;
+    }
+
+    return { text: "Seeds a sample job and three candidates for EAT tests.", className: "text-zinc-500" } as const;
+  }, [seedError, seedMessage]);
+
   return (
     <section className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -234,14 +274,29 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
           <h2 className="text-lg font-semibold text-zinc-900">Test &amp; diagnostics</h2>
           <p className="text-sm text-zinc-600">Run tenant checks on demand and review the latest results.</p>
         </div>
-        <button
-          type="button"
-          onClick={runAllTests}
-          disabled={runningAll}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
-        >
-          {runningAll ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <PlayIcon className="h-4 w-4" aria-hidden />} Run all tests
-        </button>
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={seedSampleData}
+              disabled={seeding || runningAll}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 disabled:cursor-not-allowed disabled:border-zinc-100 disabled:text-zinc-400"
+            >
+              {seeding ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <SparklesIcon className="h-4 w-4" aria-hidden />} Seed sample data
+            </button>
+
+            <button
+              type="button"
+              onClick={runAllTests}
+              disabled={runningAll}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
+            >
+              {runningAll ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <PlayIcon className="h-4 w-4" aria-hidden />} Run all tests
+            </button>
+          </div>
+
+          <p className={`text-xs ${seedHelperText.className}`}>{seedHelperText.text}</p>
+        </div>
       </div>
 
       <div className="mt-4 overflow-x-auto">
