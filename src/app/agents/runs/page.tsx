@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { Prisma } from "@prisma/client";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { ClientActionLink } from "@/components/ClientActionLink";
+import { EATClientLayout } from "@/components/EATClientLayout";
 import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
@@ -142,14 +143,14 @@ export default async function AgentRunsPage() {
 
   if (!agentUiEnabled) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-10">
+      <EATClientLayout maxWidthClassName="max-w-4xl">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-900">
           <h1 className="text-xl font-semibold">Agents UI unavailable</h1>
           <p className="mt-2 text-sm text-slate-700">
             Enable the agents matched UI feature flag to access agent run history.
           </p>
         </div>
-      </div>
+      </EATClientLayout>
     );
   }
 
@@ -182,21 +183,28 @@ export default async function AgentRunsPage() {
   const latestFailure = failedRuns[0];
 
   return (
+<<<<<<< ours
     <EATClientLayout>
       <div className="flex items-center justify-between gap-4">
+=======
+    <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-6">
+      <div className="flex items-center justify-between">
+>>>>>>> theirs
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Agent Runs</h1>
-          <p className="text-sm text-gray-600">Most recent runs for this tenant.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Agent Runs</h1>
+          <p className="text-sm text-slate-500">Most recent runs for this tenant.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <BackToConsoleButton />
-          <Link href="/agents/logs" className="text-blue-600 hover:text-blue-800">
-            View detailed logs
-          </Link>
+          <ClientActionLink href="/agents/logs">View detailed logs</ClientActionLink>
         </div>
       </div>
 
+<<<<<<< ours
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+=======
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+>>>>>>> theirs
         <div className="space-y-6 lg:col-span-2">
           <div className="rounded-xl border border-red-100 bg-red-50 p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">

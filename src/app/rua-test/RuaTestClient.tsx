@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-import { BackToConsoleButton } from "@/components/BackToConsoleButton";
-
 type RuaResult = {
   jobReqId: string;
   agentRunId: string;
@@ -69,6 +67,7 @@ export function RuaTestClient({ agentsEnabled }: RuaTestClientProps) {
   }
 
   return (
+<<<<<<< ours
     <div className="mx-auto flex max-w-4xl flex-col gap-6 rounded-2xl bg-white p-8 shadow-sm ring-1 ring-zinc-200">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
@@ -81,6 +80,55 @@ export function RuaTestClient({ agentsEnabled }: RuaTestClientProps) {
           {!agentsEnabled && (
             <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               Agents are disabled. Enable the Agents feature flag to run this workflow.
+=======
+    <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-zinc-200">
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">EAT-013</p>
+        <p className="text-sm text-slate-600">
+          Paste a job description below and send it through the RUA agent. The response mirrors the JSON available via curl.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <label className="block text-sm font-medium text-zinc-800" htmlFor="job-text">
+            Job description
+          </label>
+          <textarea
+            id="job-text"
+            className="h-64 w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm shadow-inner focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            value={jobText}
+            onChange={(event) => setJobText(event.target.value)}
+            placeholder="Paste job description text..."
+          />
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-zinc-800" htmlFor="source-type">
+                Source type (optional)
+              </label>
+              <input
+                id="source-type"
+                type="text"
+                value={sourceType}
+                onChange={(event) => setSourceType(event.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="e.g. manual"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-zinc-800" htmlFor="source-tag">
+                Source tag (optional)
+              </label>
+              <input
+                id="source-tag"
+                type="text"
+                value={sourceTag}
+                onChange={(event) => setSourceTag(event.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="e.g. jira-ticket-123"
+              />
+>>>>>>> theirs
             </div>
           )}
         </div>
@@ -114,6 +162,7 @@ export function RuaTestClient({ agentsEnabled }: RuaTestClientProps) {
             />
           </div>
 
+<<<<<<< ours
           <div className="space-y-1">
             <label className="block text-sm font-medium text-zinc-800" htmlFor="source-tag">
               Source tag (optional)
@@ -148,18 +197,42 @@ export function RuaTestClient({ agentsEnabled }: RuaTestClientProps) {
 
       {error && !loading && !result && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+=======
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={loading || !agentsEnabled}
+              className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "Sending to RUA…" : "Run RUA"}
+            </button>
+            <p className="text-xs text-zinc-500">Payload: &#123; recruiterId: &quot;charlie&quot;, rawJobText &#125;</p>
+          </div>
+          </form>
+
+        {error && (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+>>>>>>> theirs
           Error: {error}
         </div>
       )}
 
       {result && (
+<<<<<<< ours
         <section className="space-y-2 text-sm">
+=======
+        <section className="mt-4 space-y-2 text-sm">
+>>>>>>> theirs
           <h2 className="text-base font-semibold text-zinc-800">Response</h2>
           <pre className="overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-800">
             {JSON.stringify(result, null, 2)}
           </pre>
           <p className="text-zinc-600">
+<<<<<<< ours
             Use <code>jobReqId</code> to find the job and <code>agentRunId</code> for the agent log.
+=======
+            Use <code>jobReqId</code> to find the record and <code>agentRunId</code> for the agent log.
+>>>>>>> theirs
           </p>
         </section>
       )}

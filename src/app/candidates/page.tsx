@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { EATClientLayout } from "@/components/EATClientLayout";
 import { CandidateTable, type CandidateRow } from "./CandidateTable";
 import { EATClientLayout } from "@/components/EATClientLayout";
 
@@ -87,23 +88,28 @@ export default function CandidatesPage() {
   );
 
   return (
+<<<<<<< ours
     <EATClientLayout>
       <div className="flex items-center justify-between gap-4">
+=======
+    <EATClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-4">
+      <div className="flex items-center justify-between">
+>>>>>>> theirs
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Candidates</h1>
-          <p className="text-sm text-gray-600">Search, sort, and browse recent candidates.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Candidates</h1>
+          <p className="text-sm text-slate-500">Search, sort, and browse recent candidates.</p>
         </div>
         <BackToConsoleButton />
       </div>
 
       {isLoading ? (
-        <div className="mt-4 rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
+        <div className="rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
           Loading candidates...
         </div>
       ) : null}
 
       {errorContent ? (
-        <div className="mt-4 space-y-2 rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+        <div className="space-y-2 rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           <div className="font-semibold text-rose-800">{errorContent.title}</div>
           <div className="text-sm text-rose-700">{errorContent.description}</div>
           {errorContent.status ? (

@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { ClientActionLink } from "@/components/ClientActionLink";
+import { EATClientLayout } from "@/components/EATClientLayout";
 
 import { EATClientLayout } from "@/components/EATClientLayout";
 
@@ -6,6 +7,7 @@ const Divider = () => <div className="h-px w-full bg-zinc-200 dark:bg-zinc-800" 
 
 export default function AboutEatPage() {
   return (
+<<<<<<< ours
     <EATClientLayout>
       <div className="flex flex-col gap-10">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -37,6 +39,20 @@ export default function AboutEatPage() {
         </header>
 
         <section className="space-y-10 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+=======
+    <EATClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-10">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">About EAT</h1>
+          <p className="text-sm text-slate-500">
+            How the EDGE Agentic Toolkit powers AI-driven recruiting—from intake to shortlist.
+          </p>
+        </div>
+        <ClientActionLink href="/">Back to home</ClientActionLink>
+      </div>
+
+      <section className="space-y-10 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+>>>>>>> theirs
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">What is EAT?</h2>
             <p className="text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
@@ -243,7 +259,11 @@ export default function AboutEatPage() {
             </p>
           </div>
         </section>
+<<<<<<< ours
       </div>
     </EATClientLayout>
+=======
+      </EATClientLayout>
+>>>>>>> theirs
   );
 }

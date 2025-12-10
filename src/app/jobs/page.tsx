@@ -52,20 +52,27 @@ export default async function JobsPage() {
   }));
 
   return (
+<<<<<<< ours
     <EATClientLayout>
       <div className="flex items-center justify-between gap-4">
+=======
+    <EATClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-6">
+      <div className="flex items-center justify-between">
+>>>>>>> theirs
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Job Requisitions</h1>
-          <p className="text-sm text-gray-600">
-            Showing the 50 most recent job requisitions.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Job Requisitions</h1>
+          <p className="text-sm text-slate-500">Showing the 50 most recent job requisitions.</p>
         </div>
         <BackToConsoleButton />
       </div>
 
+<<<<<<< ours
       <div className="mt-6">
         <JobTable jobs={tableRows} />
       </div>
+=======
+      <JobTable jobs={tableRows} />
+>>>>>>> theirs
     </EATClientLayout>
   );
 }
