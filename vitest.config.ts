@@ -9,6 +9,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
 <<<<<<< ours
+<<<<<<< ours
       reporter: ["text", "json", "lcov", "html"],
       reportsDirectory: "./coverage",
       thresholds: {
@@ -18,11 +19,16 @@ export default defineConfig({
         statements: 70,
       },
 =======
+=======
+>>>>>>> theirs
       reporter: ["text", "json", "lcov"],
       lines: 70,
       functions: 70,
       branches: 60,
       statements: 70,
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     },
   },
