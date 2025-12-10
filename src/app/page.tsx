@@ -12,9 +12,13 @@ import { EATCard } from "@/components/EATCard";
 import { StatusPill } from "@/components/StatusPill";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 <<<<<<< ours
+<<<<<<< ours
 import { EATClientLayout } from "@/components/EATClientLayout";
 =======
 import { StatusPill, type Status } from "@/components/StatusPill";
+>>>>>>> theirs
+=======
+import { EATClientLayout } from "@/components/EATClientLayout";
 >>>>>>> theirs
 
 export const dynamic = "force-dynamic";
@@ -270,6 +274,7 @@ export default async function Home() {
   if (!uiEnabled) {
     return (
 <<<<<<< ours
+<<<<<<< ours
       <EATClientLayout>
         <div className="flex flex-col gap-6">
           <header className="mt-2 flex flex-col gap-3">
@@ -277,6 +282,11 @@ export default async function Home() {
       <div className="min-h-screen bg-zinc-50 text-zinc-900">
         <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 py-16 sm:px-12">
           <header className="mt-8 flex flex-col gap-3 sm:mt-12">
+>>>>>>> theirs
+=======
+      <EATClientLayout>
+        <div className="flex flex-col gap-6">
+          <header className="mt-2 flex flex-col gap-3">
 >>>>>>> theirs
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-2">
@@ -298,11 +308,16 @@ export default async function Home() {
             </Link>
           </header>
 <<<<<<< ours
+<<<<<<< ours
         </div>
       </EATClientLayout>
 =======
         </main>
       </div>
+>>>>>>> theirs
+=======
+        </div>
+      </EATClientLayout>
 >>>>>>> theirs
     );
   }
@@ -426,6 +441,7 @@ export default async function Home() {
         </section>
       </div>
     </EATClientLayout>
+<<<<<<< ours
 =======
         <div className="space-y-8">
           <section>
@@ -440,6 +456,8 @@ export default async function Home() {
         </div>
       </main>
     </div>
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   );
 }

@@ -2,6 +2,7 @@ import { JobTable, type JobTableRow } from "./JobTable";
 import { prisma } from "@/lib/prisma";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { EATClientLayout } from "@/components/EATClientLayout";
 
 function formatSource(job: { sourceType: string | null; sourceTag: string | null }) {
   if (job.sourceType && job.sourceTag) {
@@ -51,7 +52,7 @@ export default async function JobsPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <EATClientLayout>
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Job Requisitions</h1>
@@ -65,6 +66,6 @@ export default async function JobsPage() {
       <div className="mt-6">
         <JobTable jobs={tableRows} />
       </div>
-    </div>
+    </EATClientLayout>
   );
 }

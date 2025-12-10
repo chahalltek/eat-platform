@@ -5,9 +5,13 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 <<<<<<< ours
+<<<<<<< ours
 import { EATClientLayout } from "@/components/EATClientLayout";
 =======
 import { EATCard } from "@/components/EATCard";
+>>>>>>> theirs
+=======
+import { EATClientLayout } from "@/components/EATClientLayout";
 >>>>>>> theirs
 
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";

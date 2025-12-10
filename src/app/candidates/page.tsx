@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { CandidateTable, type CandidateRow } from "./CandidateTable";
+import { EATClientLayout } from "@/components/EATClientLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +87,7 @@ export default function CandidatesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <EATClientLayout>
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Candidates</h1>
@@ -122,6 +123,6 @@ export default function CandidatesPage() {
       ) : null}
 
       {!errorContent ? <CandidateTable candidates={candidates} emptyState={emptyState} /> : null}
-    </div>
+    </EATClientLayout>
   );
 }
