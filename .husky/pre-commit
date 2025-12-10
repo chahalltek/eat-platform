@@ -1,0 +1,4 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh" 2>/dev/null || true
+
+node scripts/check-merge-conflicts.js || exit 1

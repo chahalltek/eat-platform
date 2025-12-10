@@ -2,13 +2,8 @@
 
 import { useState } from "react";
 
-<<<<<<< ours
-import { StatusPill } from "@/components/StatusPill";
-import type { SubsystemKey, SystemStatusMap } from "@/lib/systemStatus";
-=======
+import { StatusPill, type StatusPillStatus } from "@/components/StatusPill";
 import type { SubsystemKey, SubsystemState, SystemStatusMap } from "@/lib/systemStatus";
-import { StatusPill, type Status } from "@/components/StatusPill";
->>>>>>> theirs
 
 const statusLabels: Record<SubsystemKey, string> = {
   agents: "Agents",
@@ -17,14 +12,13 @@ const statusLabels: Record<SubsystemKey, string> = {
   tenantConfig: "Tenant Config",
 };
 
-<<<<<<< ours
 const statusDescriptions: Record<SubsystemKey, string> = {
   agents: "Orchestration for agent workflows.",
   scoring: "Automated scoring pipeline.",
   database: "Primary datastore availability.",
   tenantConfig: "Feature flags and tenant settings.",
 };
-=======
+
 function formatStatusText(status: SubsystemState) {
   switch (status) {
     case "healthy":
@@ -38,20 +32,19 @@ function formatStatusText(status: SubsystemState) {
   }
 }
 
-function toStatusPill(status: SubsystemState): Status {
+function toStatusPill(status: SubsystemState): StatusPillStatus {
   switch (status) {
     case "healthy":
       return "healthy";
     case "warning":
-      return "degraded";
+      return "warning";
     case "error":
-      return "down";
+      return "error";
     case "unknown":
     default:
       return "unknown";
   }
 }
->>>>>>> theirs
 
 type SystemStatusProps = {
   initialStatus: SystemStatusMap;
@@ -117,11 +110,7 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
                 <p className="text-sm font-semibold text-slate-900">{statusLabels[key]}</p>
                 <p className="text-xs text-slate-500">{description}</p>
               </div>
-<<<<<<< ours
-              <StatusPill status={status} />
-=======
               <StatusPill status={toStatusPill(status)} label={formatStatusText(status)} />
->>>>>>> theirs
             </div>
           );
         })}

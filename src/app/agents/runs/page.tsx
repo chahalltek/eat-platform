@@ -7,7 +7,6 @@ import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
-import { EATClientLayout } from "@/components/EATClientLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -183,13 +182,8 @@ export default async function AgentRunsPage() {
   const latestFailure = failedRuns[0];
 
   return (
-<<<<<<< ours
-    <EATClientLayout>
-      <div className="flex items-center justify-between gap-4">
-=======
     <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-6">
       <div className="flex items-center justify-between">
->>>>>>> theirs
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Agent Runs</h1>
           <p className="text-sm text-slate-500">Most recent runs for this tenant.</p>
@@ -200,11 +194,7 @@ export default async function AgentRunsPage() {
         </div>
       </div>
 
-<<<<<<< ours
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-=======
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
->>>>>>> theirs
         <div className="space-y-6 lg:col-span-2">
           <div className="rounded-xl border border-red-100 bg-red-50 p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">

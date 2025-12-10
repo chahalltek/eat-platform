@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { EATClientLayout } from "@/components/EATClientLayout";
 import { CandidateTable, type CandidateRow } from "./CandidateTable";
-import { EATClientLayout } from "@/components/EATClientLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -97,13 +96,8 @@ export default function CandidatesPage() {
   );
 
   return (
-<<<<<<< ours
-    <EATClientLayout>
-      <div className="flex items-center justify-between gap-4">
-=======
     <EATClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-4">
       <div className="flex items-center justify-between">
->>>>>>> theirs
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Candidates</h1>
           <p className="text-sm text-slate-500">Search, sort, and browse recent candidates.</p>

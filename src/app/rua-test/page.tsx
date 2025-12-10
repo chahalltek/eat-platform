@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { EATClientLayout } from "@/components/EATClientLayout";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
-import { EATClientLayout } from "@/components/EATClientLayout";
 
 import { RuaTestClient } from "./RuaTestClient";
 
@@ -20,9 +19,7 @@ export default async function RuaTestPage() {
     <div className="flex items-center justify-between">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">RUA Test Console</h1>
-        <p className="text-sm text-slate-500">
-          Send job text through the RUA agent and view the structured response.
-        </p>
+        <p className="text-sm text-slate-500">Send job text through the RUA agent and view the structured response.</p>
       </div>
       <div className="flex items-center gap-2">
         <ClientActionLink href="/eat/about">About EAT</ClientActionLink>
@@ -33,19 +30,13 @@ export default async function RuaTestPage() {
 
   if (!uiEnabled) {
     return (
-<<<<<<< ours
-      <EATClientLayout>
-        <div className="mx-auto max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 p-8 shadow-sm">
-          <h1 className="text-2xl font-semibold text-amber-900">UI blocks are disabled</h1>
-=======
       <EATClientLayout maxWidthClassName="max-w-4xl" contentClassName="space-y-4">
         {header}
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-amber-900">UI blocks are disabled</h2>
->>>>>>> theirs
           <p className="mt-2 text-sm text-amber-800">
-            The RUA test console is hidden because UI blocks are turned off. Enable the UI Blocks flag to bring this
-            experience back.
+            The RUA test console is hidden because UI blocks are turned off. Enable the UI Blocks flag to bring this experience
+            back.
           </p>
           <div className="mt-4">
             <Link href="/" className="text-sm font-medium text-amber-900 underline">
@@ -58,9 +49,6 @@ export default async function RuaTestPage() {
   }
 
   return (
-<<<<<<< ours
-    <EATClientLayout>
-=======
     <EATClientLayout maxWidthClassName="max-w-4xl" contentClassName="space-y-6">
       {header}
 
@@ -70,7 +58,6 @@ export default async function RuaTestPage() {
         </div>
       ) : null}
 
->>>>>>> theirs
       <RuaTestClient agentsEnabled={agentsEnabled} />
     </EATClientLayout>
   );

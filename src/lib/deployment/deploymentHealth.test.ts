@@ -79,7 +79,8 @@ describe("deployment health gates", () => {
   });
 
   it("catches merge markers in migrations", () => {
-    const migrationsDir = writeMigration("CREATE TABLE demo (id INT);\n<<<<<<< HEAD\nDROP TABLE demo;\n>>>>>>>");
+    const markers = ["CREATE TABLE demo (id INT);", "<".repeat(7) + " HEAD", "DROP TABLE demo;", ">".repeat(7)].join("\\n");
+    const migrationsDir = writeMigration(markers);
 
     expect(() => validateMigrations(migrationsDir)).toThrow(/unresolved merge markers/);
   });
