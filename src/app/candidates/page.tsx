@@ -2,11 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-<<<<<<< ours
-=======
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
-import { prisma } from "@/lib/prisma";
->>>>>>> theirs
 import { CandidateTable, type CandidateRow } from "./CandidateTable";
 
 export const dynamic = "force-dynamic";
