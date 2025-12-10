@@ -1,5 +1,6 @@
 import type { FeatureFlag as FeatureFlagModel } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { cookies } from 'next/headers';
 
 import { DEFAULT_FLAG_DESCRIPTIONS, FEATURE_FLAGS, type FeatureFlagName } from './featureFlags/constants';
 import { isFeatureEnabledForPlan } from './featureFlags/planMapping';
@@ -17,6 +18,7 @@ export type FeatureFlagRecord = {
 export { FEATURE_FLAGS, type FeatureFlagName } from './featureFlags/constants';
 
 const flagCache = new Map<string, boolean>();
+const FALLBACK_COOKIE_NAME = 'feature-flag-fallbacks';
 
 function buildFallbackFlag(name: FeatureFlagName, enabled = false) {
   return {
@@ -34,6 +36,60 @@ function coerceFlagName(value: unknown): FeatureFlagName | null {
   return (candidates.find((flag) => flag === normalized) as FeatureFlagName | undefined) ?? null;
 }
 
+function readFallbackOverrides(tenantId: string) {
+  try {
+    const raw = cookies().get(FALLBACK_COOKIE_NAME)?.value;
+
+    if (!raw) return new Map<FeatureFlagName, FeatureFlagModel>();
+
+    const parsed = JSON.parse(raw) as Record<string, Record<FeatureFlagName, { enabled: boolean; updatedAt: string }>>;
+    const tenantOverrides = parsed[tenantId];
+
+    if (!tenantOverrides) return new Map<FeatureFlagName, FeatureFlagModel>();
+
+    return new Map(
+      Object.entries(tenantOverrides).map(([name, value]) => [
+        name as FeatureFlagName,
+        {
+          id: `${tenantId}:${name}`,
+          tenantId,
+          name,
+          description: DEFAULT_FLAG_DESCRIPTIONS[name as FeatureFlagName],
+          enabled: value.enabled,
+          updatedAt: new Date(value.updatedAt),
+          createdAt: new Date(value.updatedAt),
+        } satisfies FeatureFlagModel,
+      ]),
+    );
+  } catch {
+    return new Map<FeatureFlagName, FeatureFlagModel>();
+  }
+}
+
+function writeFallbackOverride(tenantId: string, name: FeatureFlagName, enabled: boolean) {
+  try {
+    const cookieStore = cookies();
+    const raw = cookieStore.get(FALLBACK_COOKIE_NAME)?.value;
+    const parsed = (raw ? JSON.parse(raw) : {}) as Record<string, Record<FeatureFlagName, { enabled: boolean; updatedAt: string }>>;
+
+    const tenantOverrides = parsed[tenantId] ?? {};
+    const updatedAt = new Date().toISOString();
+
+    tenantOverrides[name] = { enabled, updatedAt };
+    parsed[tenantId] = tenantOverrides;
+
+    cookieStore.set(FALLBACK_COOKIE_NAME, JSON.stringify(parsed), {
+      httpOnly: false,
+      sameSite: 'lax',
+      secure: true,
+      path: '/',
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+    });
+  } catch {
+    // Ignore cookie write failures in fallback mode.
+  }
+}
+
 function cacheKey(tenantId: string, name: FeatureFlagName) {
   return `${tenantId}:${name}`;
 }
@@ -47,7 +103,9 @@ function isMissingTableError(error: unknown) {
 }
 
 async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) {
-  if (!(await isTableAvailable('FeatureFlag'))) return null;
+  if (!(await isTableAvailable('FeatureFlag'))) {
+    return readFallbackOverrides(tenantId).get(name) ?? null;
+  }
 
   try {
     return await prisma.featureFlag.findFirst({ where: { tenantId, name } });
@@ -59,7 +117,7 @@ async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) 
 
 async function fetchFeatureFlagOverrides(tenantId: string) {
   if (!(await isTableAvailable('FeatureFlag'))) {
-    return new Map<FeatureFlagName, FeatureFlagModel>();
+    return readFallbackOverrides(tenantId);
   }
 
   try {
@@ -150,6 +208,7 @@ export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): P
     const fallback = buildFallbackFlag(name, enabled);
 
     flagCache.set(cacheKey(tenantId, name), fallback.enabled);
+    writeFallbackOverride(tenantId, name, enabled);
 
     return fallback;
   }
@@ -176,6 +235,7 @@ export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): P
   });
 
   flagCache.set(cacheKey(tenantId, name), flag.enabled);
+  writeFallbackOverride(tenantId, name, enabled);
 
   return {
     name: flag.name as FeatureFlagName,
