@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import type { NextRequest } from 'next/server';
 
 import { DEFAULT_TENANT_ID, TENANT_HEADER, TENANT_QUERY_PARAM } from './auth/config';
@@ -53,6 +52,11 @@ async function extractTenantIdFromHeaders() {
       return sessionTenant.trim();
     }
 
+    if (typeof window !== 'undefined') {
+      return null;
+    }
+
+    const { headers } = await import('next/headers');
     const headerList = await headers();
     const headerValue = headerList.get(TENANT_HEADER);
 

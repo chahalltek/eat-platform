@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 
 import { DEFAULT_TENANT_ID } from "./config";
@@ -37,20 +36,29 @@ function resolveRoles(role: string | null | undefined) {
   return normalized ? [normalized] : [];
 }
 
+async function readHeader(name: string) {
+  if (typeof window !== "undefined") {
+    return null;
+  }
+
+  try {
+    const { headers } = await import("next/headers");
+    const headerList = await headers();
+    return headerList.get(name);
+  } catch {
+    return null;
+  }
+}
+
 async function resolveTenantId(req: NextRequest | undefined, tenantId: string | null | undefined) {
   if (tenantId && tenantId.trim()) {
     return tenantId.trim();
   }
 
-  try {
-    const headerList = await headers();
-    const headerValue = headerList.get("x-eat-tenant-id");
+  const headerValue = req?.headers.get("x-eat-tenant-id") ?? (await readHeader("x-eat-tenant-id"));
 
-    if (headerValue && headerValue.trim()) {
-      return headerValue.trim();
-    }
-  } catch {
-    // ignore header access errors
+  if (headerValue && headerValue.trim()) {
+    return headerValue.trim();
   }
 
   return DEFAULT_TENANT_ID;

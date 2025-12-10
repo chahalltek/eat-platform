@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 
 import { DEFAULT_TENANT_ID } from "./config";
@@ -171,7 +170,12 @@ async function getTokenFromRequest(req?: NextRequest) {
     return req.cookies.get(SESSION_COOKIE_NAME)?.value;
   }
 
+  if (typeof window !== "undefined") {
+    return undefined;
+  }
+
   try {
+    const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
 
     return cookieStore.get(SESSION_COOKIE_NAME)?.value;

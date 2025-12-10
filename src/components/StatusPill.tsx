@@ -28,24 +28,6 @@ const toneStyles: Record<StatusTone, string> = {
   disabled: "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200",
 };
 
-<<<<<<< ours
-const accentPalette: Record<StatusTone, string> = {
-  success: "rgba(16, 185, 129, 0.32)",
-  warning: "rgba(245, 158, 11, 0.32)",
-  danger: "rgba(244, 63, 94, 0.32)",
-  neutral: "rgba(148, 163, 184, 0.32)",
-};
-
-const defaultLabels: Record<StatusPillStatus, string> = {
-  enabled: "Enabled",
-  healthy: "Healthy",
-  ok: "Healthy",
-  warning: "Setup required",
-  warn: "Attention needed",
-  error: "Unavailable",
-  off: "Disabled",
-  unknown: "Status unknown",
-=======
 const statusConfig: Record<StatusPillStatus, { tone: StatusTone; label: string }> = {
   enabled: { tone: "idle", label: "Idle" },
   idle: { tone: "idle", label: "Idle" },
@@ -59,7 +41,14 @@ const statusConfig: Record<StatusPillStatus, { tone: StatusTone; label: string }
   off: { tone: "disabled", label: "Disabled" },
   disabled: { tone: "disabled", label: "Disabled" },
   unknown: { tone: "disabled", label: "Unknown" },
->>>>>>> theirs
+};
+
+const accentPalette: Record<StatusTone, string> = {
+  healthy: "rgba(16, 185, 129, 0.32)",
+  idle: "rgba(59, 130, 246, 0.32)",
+  waiting: "rgba(245, 158, 11, 0.32)",
+  fault: "rgba(244, 63, 94, 0.32)",
+  disabled: "rgba(148, 163, 184, 0.32)",
 };
 
 function resolveTone(status: StatusPillStatus): StatusTone {
