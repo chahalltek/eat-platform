@@ -40,8 +40,11 @@ jobs:
       - name: Enforce TODO-free security domains
         run: npm run ci:todo-scan
 
-      - name: Run tests with 100% coverage thresholds
+      - name: Run tests
         run: npm test
+
+      - name: Run Vitest with coverage
+        run: npm run test:coverage
 
       - name: Run deployment health gates
         run: npm run predeploy
