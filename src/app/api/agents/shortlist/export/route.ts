@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
       });
 
       return [
-        jobCandidate.candidate.fullName ?? "Unknown",
+        jobCandidate.candidate.fullName ?? "Name not provided",
         jobCandidate.candidate.email ?? "",
         jobCandidate.candidate.currentTitle ?? jobCandidate.candidate.currentCompany ?? "",
         typeof jobCandidate.lastMatch?.score === "number" ? `${jobCandidate.lastMatch.score}%` : "",

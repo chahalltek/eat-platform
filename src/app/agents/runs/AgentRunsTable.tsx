@@ -38,7 +38,7 @@ const globalFilterFn: FilterFn<AgentRunTableRow> = (row, _columnId, filterValue)
 const multiSelectFilter: FilterFn<AgentRunTableRow> = (row, columnId, filterValue) => {
   const selections = Array.isArray(filterValue) ? filterValue : [];
   if (selections.length === 0) return true;
-  const value = row.getValue<string | string[] | null>(columnId) ?? "Unknown";
+  const value = row.getValue<string | string[] | null>(columnId) ?? "Status not reported";
   if (Array.isArray(value)) return value.some((entry) => selections.includes(String(entry)));
   return selections.includes(String(value));
 };
@@ -50,7 +50,7 @@ export function AgentRunsTable({ runs }: { runs: AgentRunTableRow[] }) {
   }, [runs]);
 
   const statusOptions = useMemo<TableFilterOption[]>(() => {
-    const statuses = Array.from(new Set(runs.map((run) => run.status ?? "Unknown"))).sort();
+    const statuses = Array.from(new Set(runs.map((run) => run.status ?? "Status not reported"))).sort();
     return statuses.map((status) => ({ value: status, label: status }));
   }, [runs]);
 
@@ -77,7 +77,7 @@ export function AgentRunsTable({ runs }: { runs: AgentRunTableRow[] }) {
           accessorKey: "status",
           header: "Status",
           sortable: true,
-          formatLabel: (value) => (value ? value.toString() : "Unknown"),
+          formatLabel: (value) => (value ? value.toString() : "Status not reported"),
           getVariant: (value) => STATUS_VARIANTS[value?.toLowerCase?.() ?? ""] ?? "neutral",
         }),
         enableSorting: true,

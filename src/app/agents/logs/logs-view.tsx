@@ -111,7 +111,7 @@ function LogDetail({
         <div className="space-y-2">
           <h3 className="text-lg font-semibold text-gray-900">Error</h3>
           <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
-            {log.errorMessage ?? "Unknown error"}
+            {log.errorMessage ?? "Error details unavailable"}
           </div>
         </div>
       )}

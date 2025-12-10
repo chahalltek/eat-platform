@@ -53,7 +53,7 @@ function extractCandidateId(log: { input: unknown; output: unknown }) {
 }
 
 function formatStatus(status: string | null) {
-  if (!status) return "Unknown";
+  if (!status) return "Status not reported";
   const normalized = status.toLowerCase();
 
   if (normalized === "running") return "Running";
@@ -118,7 +118,7 @@ function AgentRunHistory({ runs }: { runs: AgentRunTableRow[] }) {
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-semibold ${failed ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}
                   >
-                    {run.status ?? "Unknown"}
+                    {run.status ?? "Status not reported"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600">{new Date(run.startedAt).toLocaleString()}</p>

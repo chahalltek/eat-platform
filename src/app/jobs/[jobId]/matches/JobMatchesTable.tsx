@@ -313,7 +313,7 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
         accessorKey: "jobTitle",
         header: "Job title",
         sortable: false,
-        cell: ({ getValue }) => <span className="text-sm text-gray-800">{getValue() ?? "Unknown"}</span>,
+        cell: ({ getValue }) => <span className="text-sm text-gray-800">{getValue() ?? "Title not provided"}</span>,
       }),
       {
         ...createNumberColumn<MatchRow, "score">({
@@ -666,11 +666,11 @@ function ExplainAgentPanel({ isLoading, result, match, onClose, error, jobTitle 
               </div>
               <div>
                 <dt className="text-gray-600">Candidate title</dt>
-                <dd className="font-semibold text-gray-900">{match.currentTitle ?? "Unknown"}</dd>
+                <dd className="font-semibold text-gray-900">{match.currentTitle ?? "Title not provided"}</dd>
               </div>
               <div>
                 <dt className="text-gray-600">Location</dt>
-                <dd className="font-semibold text-gray-900">{match.candidateLocation ?? "Unknown"}</dd>
+                <dd className="font-semibold text-gray-900">{match.candidateLocation ?? "Location not provided"}</dd>
               </div>
               <div>
                 <dt className="text-gray-600">Match score</dt>

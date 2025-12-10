@@ -1,7 +1,10 @@
 "use client";
 
+<<<<<<< ours
 import { useCallback, useEffect, useRef, useState } from "react";
 
+=======
+>>>>>>> theirs
 import { StatusPill, type StatusPillStatus } from "@/components/StatusPill";
 import type { SubsystemKey, SubsystemState, SystemStatusMap } from "@/lib/systemStatus";
 
@@ -28,7 +31,7 @@ function formatStatusText(status: SubsystemState) {
     case "error":
       return "Fault";
     default:
-      return "Unknown";
+      return "Status unavailable";
   }
 }
 
@@ -47,9 +50,12 @@ function toStatusPill(status: SubsystemState): StatusPillStatus {
 }
 
 type SystemStatusProps = {
-  initialStatus: SystemStatusMap;
+  statusMap: SystemStatusMap;
+  onRefresh: () => void;
+  isRefreshing: boolean;
 };
 
+<<<<<<< ours
 export function SystemStatus({ initialStatus }: SystemStatusProps) {
   const [statusMap, setStatusMap] = useState<SystemStatusMap>(initialStatus);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -105,6 +111,9 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
     }
   }
 
+=======
+export function SystemStatus({ statusMap, onRefresh, isRefreshing }: SystemStatusProps) {
+>>>>>>> theirs
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
@@ -114,7 +123,7 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
         </div>
         <button
           type="button"
-          onClick={handleRefresh}
+          onClick={onRefresh}
           disabled={isRefreshing}
           className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
         >

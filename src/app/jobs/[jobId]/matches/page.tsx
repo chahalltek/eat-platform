@@ -79,7 +79,7 @@ export default async function JobMatchesPage({
       candidateId,
       jobId: job.id,
       jobTitle: job.title,
-      candidateName: match.candidate.fullName ?? "Unknown",
+      candidateName: match.candidate.fullName ?? "Name not provided",
       candidateEmail: match.candidate.email,
       currentTitle: match.candidate.currentTitle ?? match.candidate.currentCompany ?? null,
       score: match.score,
@@ -116,7 +116,7 @@ export default async function JobMatchesPage({
           </p>
           <p className="text-sm text-gray-600">
             {job.customer?.name ? `${job.customer.name} • ` : ""}
-            {job.location ?? "Unknown location"}
+            {job.location ?? "Location not provided"}
           </p>
         </div>
         <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:gap-3">
@@ -139,7 +139,7 @@ export default async function JobMatchesPage({
           <div className="space-y-3">
             <div>
               <div className="text-xs uppercase tracking-wide text-gray-500">Customer</div>
-              <div className="text-sm font-medium text-gray-900">{job.customer?.name ?? "Unknown customer"}</div>
+              <div className="text-sm font-medium text-gray-900">{job.customer?.name ?? "Customer not provided"}</div>
             </div>
             <div>
               <div className="text-xs uppercase tracking-wide text-gray-500">Employment Type</div>

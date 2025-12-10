@@ -76,7 +76,7 @@ export function useCandidateTable(candidates: CandidateRow[]) {
           accessorKey: "status",
           header: "Status",
           sortable: false,
-          formatLabel: (value) => (value ? String(value) : "Unknown"),
+          formatLabel: (value) => (value ? String(value) : "Status not provided"),
           getVariant: (value) => (value ? "info" : "neutral"),
         }),
         enableSorting: false,

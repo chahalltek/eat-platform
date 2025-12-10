@@ -36,7 +36,7 @@ export function SecurityEventsTable({ events }: Props) {
           {events.map((event) => (
             <tr key={event.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 font-medium text-gray-900">{event.eventType}</td>
-              <td className="px-4 py-3 text-gray-700">{event.userId ?? 'Unknown'}</td>
+              <td className="px-4 py-3 text-gray-700">{event.userId ?? 'User not recorded'}</td>
               <td className="px-4 py-3 text-gray-700">{event.tenantId}</td>
               <td className="px-4 py-3 font-mono text-xs text-gray-600 whitespace-pre-wrap">
                 {formatMetadata(event.metadata)}

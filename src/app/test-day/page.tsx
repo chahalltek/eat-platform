@@ -176,7 +176,7 @@ export default function TestDayPage() {
         <ul>
           <li>Messages are truthful.</li>
           <li>No placeholder wording.</li>
-          <li>Unknown states are clearly labeled.</li>
+          <li>Ambiguous states are clearly labeled.</li>
         </ul>
 
         <h3>✅ Test 14: Mobile Sanity</h3>

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { computeJobFreshnessScore, freshnessLabel } from "@/lib/matching/freshness";
 
 function formatTimestamp(date?: Date | null) {
-  if (!date) return "Unknown";
+  if (!date) return "No activity recorded";
   return date.toLocaleString();
 }
 

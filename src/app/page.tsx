@@ -2,12 +2,13 @@ import Link from "next/link";
 
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import {
+  getSystemExecutionState,
   getSystemStatus,
   type SubsystemKey,
   type SubsystemState,
   type SystemStatusMap,
 } from "@/lib/systemStatus";
-import { SystemStatus } from "@/components/SystemStatus";
+import { SystemHealthPanel } from "@/components/SystemHealthPanel";
 import { EATClientLayout } from "@/components/EATClientLayout";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 
@@ -32,14 +33,23 @@ type HomeLink = {
   };
 };
 
-function formatCount(value: number | null) {
-  if (value == null) return "Unknown";
+function formatJobCount(value: number | null) {
+  if (value == null || value === 0) return "No jobs ingested";
+  return value.toLocaleString();
+}
+
+function formatTestContentCount(value: number | null) {
+  if (value == null || value === 0) return "Not configured";
+  return value.toLocaleString();
+}
+
+function formatCandidateCount(value: number | null) {
+  if (value == null || value === 0) return "Awaiting resumes";
   return value.toLocaleString();
 }
 
 function formatAgentRuns(value: number | null) {
-  if (value == null) return "Unknown";
-  if (value === 0) return "No runs recorded";
+  if (value == null || value === 0) return "No agent runs";
   return `${value.toLocaleString()} runs`;
 }
 
@@ -79,7 +89,11 @@ function formatStatusText(status: BadgeState) {
       return "Fault";
     case "unknown":
     default:
+<<<<<<< ours
       return "Unknown";
+=======
+      return "Status pending";
+>>>>>>> theirs
   }
 }
 
@@ -124,8 +138,8 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
       href: "/jobs",
       description: "Roles with scoring",
       stats: [
-        { label: "Job library", value: formatCount(metrics.totalJobs) },
-        { label: "Roles with test content", value: formatCount(metrics.testContentRoles) },
+        { label: "Job library", value: formatJobCount(metrics.totalJobs) },
+        { label: "Roles with test content", value: formatTestContentCount(metrics.testContentRoles) },
       ],
       dependency: {
         subsystem: "agents",
@@ -140,6 +154,7 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
       cta: "Browse",
       href: "/candidates",
       description: "Candidate library",
+<<<<<<< ours
       stats: [{ label: "Candidate pool", value: formatCount(metrics.totalCandidates) }],
       dependency: {
         subsystem: "scoring",
@@ -147,6 +162,10 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
         dataCount: metrics.totalCandidates,
         flow: { source: "Candidate Pool", target: "Scoring Engine" },
       },
+=======
+      stats: [{ label: "Candidate pool", value: formatCandidateCount(metrics.totalCandidates) }],
+      dependency: { subsystem: "scoring", allowWhenDataPresent: true, dataCount: metrics.totalCandidates },
+>>>>>>> theirs
     },
     {
       label: "Feature flags",
@@ -210,14 +229,15 @@ function formatDependencyStatus(status: SubsystemState) {
     case "error":
       return "Fault";
     default:
-      return "Unknown";
+      return "Status unavailable";
   }
 }
 
 export default async function Home() {
-  const [uiEnabled, systemStatus, metrics] = await Promise.all([
+  const [uiEnabled, systemStatus, executionState, metrics] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
     getSystemStatus(),
+    getSystemExecutionState(),
     getHomeCardMetrics(),
   ]);
 
@@ -364,7 +384,7 @@ export default async function Home() {
         </p>
       </header>
 
-      <SystemStatus initialStatus={systemStatus} />
+      <SystemHealthPanel initialStatus={systemStatus} initialExecutionState={executionState} />
 
       <div className="space-y-8">
         <section>

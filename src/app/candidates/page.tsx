@@ -45,7 +45,7 @@ export default function CandidatesPage() {
       const rows = Array.isArray(payload.candidates) ? payload.candidates : [];
       setCandidates(rows);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      const message = err instanceof Error ? err.message : "Unexpected error";
       setError({ type: "network", message });
       setCandidates([]);
     } finally {

@@ -1,8 +1,16 @@
 import { FEATURE_FLAGS, isFeatureEnabled } from './featureFlags';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
+import { getCurrentTenantId } from './tenant';
 
 export type SubsystemKey = 'agents' | 'scoring' | 'database' | 'tenantConfig';
 export type SubsystemState = 'healthy' | 'warning' | 'error' | 'unknown';
+
+export type SystemExecutionState = {
+  state: 'operational' | 'idle' | 'degraded';
+  activeRuns: number;
+  latestRunAt: string | null;
+  latestFailureAt: string | null;
+};
 
 export type SystemStatus = { status: SubsystemState; detail?: string };
 export type SystemStatusMap = Record<SubsystemKey, SystemStatus>;
@@ -82,4 +90,51 @@ export async function getSystemStatus(): Promise<SystemStatusMap> {
   result.scoring = await checkFeatureFlagStatus(FEATURE_FLAGS.SCORING);
 
   return result;
+}
+
+export async function getSystemExecutionState(): Promise<SystemExecutionState> {
+  try {
+    const tenantId = await getCurrentTenantId();
+
+    const [activeRuns, latestRun, latestFailure] = await Promise.all([
+      prisma.agentRunLog.count({ where: { tenantId, status: 'RUNNING' } }),
+      prisma.agentRunLog.findFirst({
+        where: { tenantId },
+        orderBy: { startedAt: 'desc' },
+        select: { startedAt: true },
+      }),
+      prisma.agentRunLog.findFirst({
+        where: { tenantId, status: 'FAILED' },
+        orderBy: { startedAt: 'desc' },
+        select: { startedAt: true },
+      }),
+    ]);
+
+    const hasFailure = Boolean(latestFailure);
+    const hasRuns = Boolean(latestRun);
+
+    const state: SystemExecutionState['state'] = hasFailure
+      ? 'degraded'
+      : !hasRuns
+        ? 'idle'
+        : activeRuns === 0
+          ? 'idle'
+          : 'operational';
+
+    return {
+      state,
+      activeRuns,
+      latestRunAt: latestRun?.startedAt.toISOString() ?? null,
+      latestFailureAt: latestFailure?.startedAt.toISOString() ?? null,
+    };
+  } catch (error) {
+    console.error('[system-execution] Unable to compute execution state', error);
+
+    return {
+      state: 'degraded',
+      activeRuns: 0,
+      latestRunAt: null,
+      latestFailureAt: null,
+    };
+  }
 }

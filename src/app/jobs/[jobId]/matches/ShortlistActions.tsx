@@ -73,7 +73,7 @@ export function ShortlistActions({ jobId, matches }: Props) {
 
     const headers = ["Candidate", "Email", "Title", "Match", "Confidence", "Notes"];
     const rows = shortlisted.map((match) => [
-      match.candidateName ?? "Unknown",
+      match.candidateName ?? "Name not provided",
       match.candidateEmail ?? "—",
       match.currentTitle ?? "—",
       formatPercent(match.score),
