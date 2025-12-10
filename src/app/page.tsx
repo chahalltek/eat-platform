@@ -25,13 +25,6 @@ type HomeLink = {
   };
 };
 
-type HomeSection = {
-  id: string;
-  title: string;
-  description: string;
-  links: HomeLink[];
-};
-
 function formatCount(value: number | null) {
   if (value == null) return "Unknown";
   return value.toLocaleString();
@@ -43,7 +36,6 @@ function formatAgentRuns(value: number | null) {
   return `${value.toLocaleString()} runs`;
 }
 
-<<<<<<< ours
 const dependencyLabels: Record<SubsystemKey, string> = {
   agents: "Agents",
   scoring: "Scoring Engine",
@@ -111,63 +103,10 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
       stats: [
         { label: "Job library", value: formatCount(metrics.totalJobs) },
         { label: "Roles with test content", value: formatCount(metrics.testContentRoles) },
-=======
-function buildSections(metrics: HomeCardMetrics): HomeSection[] {
-  return [
-    {
-      id: "core-workboards",
-      title: "Core workboards",
-      description: "Primary actions for running AI intake and parsing.",
-      links: [
-        {
-          label: "Upload and parse resume",
-          href: "/rina-test",
-          requires: [FEATURE_FLAGS.AGENTS],
-          description: "RINA — Resume ingestion agent",
-        },
-        {
-          label: "Create job intake",
-          href: "/rua-test",
-          requires: [FEATURE_FLAGS.AGENTS],
-          description: "RUA — Job intake agent",
-        },
-      ],
-    },
-    {
-      id: "operations",
-      title: "Operations",
-      description: "Workspaces for managing roles, candidates, and runs.",
-      links: [
-        {
-          label: "Execution history",
-          href: "/agents/runs",
-          requires: [FEATURE_FLAGS.AGENTS],
-          description: "Latest agent runs",
-          stats: [{ label: "Agent runs in last 7 days", value: formatAgentRuns(metrics.agentRunsLast7d) }],
-        },
-        {
-          label: "Job library",
-          href: "/jobs",
-          requires: [FEATURE_FLAGS.SCORING],
-          description: "Roles with scoring",
-          stats: [
-            { label: "Job library", value: formatCount(metrics.totalJobs) },
-            { label: "Roles with test content", value: formatCount(metrics.testContentRoles) },
-          ],
-        },
-        {
-          label: "Candidate pool",
-          href: "/candidates",
-          requires: [FEATURE_FLAGS.SCORING],
-          description: "Candidate library",
-          stats: [{ label: "Candidate pool", value: formatCount(metrics.totalCandidates) }],
-        },
->>>>>>> theirs
       ],
       dependency: { subsystem: "scoring", allowWhenDataPresent: true, dataCount: metrics.totalJobs },
     },
     {
-<<<<<<< ours
       label: "Candidate pool",
       href: "/candidates",
       description: "Candidate library",
@@ -179,12 +118,6 @@ function buildSections(metrics: HomeCardMetrics): HomeSection[] {
       href: "/admin/feature-flags",
       description: "Admin feature toggles",
       dependency: { subsystem: "tenantConfig" },
-=======
-      id: "admin",
-      title: "Admin at a glance",
-      description: "Controls for feature gates and system health.",
-      links: [{ label: "System controls", href: "/admin/feature-flags", description: "Admin feature toggles" }],
->>>>>>> theirs
     },
   ];
 }
@@ -220,19 +153,7 @@ export default async function Home() {
     getHomeCardMetrics(),
   ]);
 
-<<<<<<< ours
   const links = buildLinks(metrics);
-=======
-  const featureMap: Record<string, boolean> = {
-    [FEATURE_FLAGS.UI_BLOCKS]: uiEnabled,
-    [FEATURE_FLAGS.AGENTS]: agentsEnabled,
-    [FEATURE_FLAGS.SCORING]: scoringEnabled,
-  };
-
-  const sections = buildSections(metrics);
-  const adminSection = sections.find((section) => section.id === "admin");
-  const mainSections = sections.filter((section) => section.id !== "admin");
->>>>>>> theirs
 
   if (!uiEnabled) {
     return (
@@ -264,7 +185,6 @@ export default async function Home() {
           </p>
         </header>
 
-<<<<<<< ours
         <SystemStatus initialStatus={systemStatus} />
 
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -289,9 +209,7 @@ export default async function Home() {
               >
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold">{link.label}</h2>
-                  <span
-                    className={`rounded-full border px-3 py-1 text-sm transition ${badgeStyles[badgeState]}`}
-                  >
+                  <span className={`rounded-full border px-3 py-1 text-sm transition ${badgeStyles[badgeState]}`}>
                     {formatStatusText(badgeState)}
                   </span>
                 </div>
@@ -319,119 +237,6 @@ export default async function Home() {
             );
           })}
         </section>
-=======
-        {mainSections.map((section) => (
-          <section key={section.id} className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">
-                {section.title}
-              </p>
-              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{section.description}</p>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {section.links.map((link) => {
-                const isActive = (link.requires ?? []).every((flag) => featureMap[flag]);
-
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition dark:border-zinc-800 dark:bg-zinc-900 ${
-                      isActive ? "hover:-translate-y-1 hover:shadow-lg" : "opacity-60"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-semibold">{link.label}</h2>
-                      <span
-                        className={`rounded-full border px-3 py-1 text-sm transition ${
-                          isActive
-                            ? "border-zinc-200 text-zinc-600 group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700 dark:border-zinc-700 dark:text-zinc-300 dark:group-hover:border-indigo-600/60 dark:group-hover:bg-indigo-600/10 dark:group-hover:text-indigo-300"
-                            : "border-amber-200 bg-amber-50 text-amber-700"
-                        }`}
-                      >
-                        {isActive ? "Open" : "Disabled"}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-                      {link.description ?? `${link.label} workflow`}
-                    </p>
-                    {link.stats ? (
-                      <dl className="mt-4 space-y-2">
-                        {link.stats.map((stat) => (
-                          <div key={stat.label} className="flex items-baseline justify-between">
-                            <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                              {stat.label}
-                            </dt>
-                            <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{stat.value}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    ) : null}
-                    {link.requires && link.requires.length > 0 && (
-                      <p className="mt-2 text-xs text-zinc-500">
-                        Requires: {link.requires.map((flag) => flag.replace("-", " ")).join(", ")}
-                      </p>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-
-        {adminSection ? (
-          <section className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">
-                {adminSection.title}
-              </p>
-              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{adminSection.description}</p>
-            </div>
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <SystemStatus initialStatus={systemStatus} />
-              </div>
-              <div className="lg:col-span-1">
-                {adminSection.links.map((link) => {
-                  const isActive = (link.requires ?? []).every((flag) => featureMap[flag]);
-
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`group block h-full rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition dark:border-zinc-800 dark:bg-zinc-900 ${
-                        isActive ? "hover:-translate-y-1 hover:shadow-lg" : "opacity-60"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-semibold">{link.label}</h2>
-                        <span
-                          className={`rounded-full border px-3 py-1 text-sm transition ${
-                            isActive
-                              ? "border-zinc-200 text-zinc-600 group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700 dark:border-zinc-700 dark:text-zinc-300 dark:group-hover:border-indigo-600/60 dark:group-hover:bg-indigo-600/10 dark:group-hover:text-indigo-300"
-                              : "border-amber-200 bg-amber-50 text-amber-700"
-                          }`}
-                        >
-                          {isActive ? "Open" : "Disabled"}
-                        </span>
-                      </div>
-                      <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-                        {link.description ?? `${link.label} workflow`}
-                      </p>
-                      {link.requires && link.requires.length > 0 && (
-                        <p className="mt-2 text-xs text-zinc-500">
-                          Requires: {link.requires.map((flag) => flag.replace("-", " ")).join(", ")}
-                        </p>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        ) : null}
->>>>>>> theirs
       </main>
     </div>
   );
