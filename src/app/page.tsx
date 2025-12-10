@@ -201,6 +201,72 @@ export default async function Home() {
 
   const links = buildLinks(metrics);
 
+  const coreLinks = links.slice(0, 3);
+  const dataLinks = links.slice(3);
+
+  const renderLinkCard = (link: HomeLink) => {
+    const dependencyState = getDependencyState(link, systemStatus);
+    const badgeState = dependencyState.status;
+    const isActive = dependencyState.isActive;
+
+    return (
+      <Link
+        key={link.href}
+        href={link.href}
+        className={`group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition dark:border-zinc-800 dark:bg-zinc-900 ${
+          isActive
+            ? "hover:-translate-y-1 hover:shadow-lg"
+            : "cursor-not-allowed opacity-60 pointer-events-none"
+        }`}
+        aria-disabled={!isActive}
+        tabIndex={isActive ? 0 : -1}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">{link.label}</h2>
+          <span className={`rounded-full border px-3 py-1 text-sm transition ${badgeStyles[badgeState]}`}>
+            {formatStatusText(badgeState)}
+          </span>
+        </div>
+        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+          {link.description ?? `${link.label} workflow`}
+        </p>
+        {link.stats ? (
+          <dl className="mt-4 space-y-2">
+            {link.stats.map((stat) => (
+              <div key={stat.label} className="flex items-baseline justify-between">
+                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  {stat.label}
+                </dt>
+                <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{stat.value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+        {link.dependency ? (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 transition group-hover:border-indigo-100 group-hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:group-hover:border-indigo-700/60 dark:group-hover:bg-indigo-900/20">
+            <span className="font-semibold text-zinc-700 dark:text-zinc-200">Dependency</span>
+            <div
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-medium ${
+                dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+              <span className="text-[11px] uppercase tracking-wide">
+                {dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}
+              </span>
+              <span className="text-xs capitalize">{formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}</span>
+            </div>
+          </div>
+        ) : null}
+        {dependencyState.message && (
+          <p className={`mt-2 text-xs ${messageStyles[badgeState] ?? "text-zinc-500"}`}>
+            {dependencyState.message}
+          </p>
+        )}
+      </Link>
+    );
+  };
+
   if (!uiEnabled) {
     return (
 <<<<<<< ours
@@ -264,6 +330,7 @@ export default async function Home() {
 
         <SystemStatus initialStatus={systemStatus} />
 
+<<<<<<< ours
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {links.map((link) => {
             const dependencyState = getDependencyState(link, systemStatus);
@@ -359,5 +426,20 @@ export default async function Home() {
         </section>
       </div>
     </EATClientLayout>
+=======
+        <div className="space-y-8">
+          <section>
+            <p className="mt-2 mb-3 text-xs font-semibold tracking-[0.18em] text-slate-500">CORE WORKFLOWS</p>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
+          </section>
+
+          <section>
+            <p className="mt-2 mb-3 text-xs font-semibold tracking-[0.18em] text-slate-500">DATA &amp; CONTROLS</p>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
+          </section>
+        </div>
+      </main>
+    </div>
+>>>>>>> theirs
   );
 }
