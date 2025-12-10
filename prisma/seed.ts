@@ -4,6 +4,9 @@ import { DEFAULT_TENANT_ID } from '../src/lib/auth/config';
 import { prisma } from '../src/lib/prisma';
 import { FEATURE_FLAGS, setFeatureFlag } from '../src/lib/featureFlags';
 
+const ADMIN_USER_ID = 'admin-user';
+const RECRUITER_USER_ID = 'charlie';
+
 function daysAgo(days: number) {
   const date = new Date();
   date.setHours(12, 0, 0, 0);
@@ -14,23 +17,23 @@ function daysAgo(days: number) {
 async function seedTenant() {
   return prisma.tenant.upsert({
     where: { id: DEFAULT_TENANT_ID },
-    update: { name: 'Demo Tenant', status: 'active' },
-    create: { id: DEFAULT_TENANT_ID, name: 'Demo Tenant', status: 'active' },
+    update: { name: 'Default Tenant', status: 'active' },
+    create: { id: DEFAULT_TENANT_ID, name: 'Default Tenant', status: 'active' },
   });
 }
 
 async function seedUsers() {
   const users = [
     {
-      id: 'charlie',
+      id: RECRUITER_USER_ID,
       email: 'recruiter@test.demo',
       displayName: 'Test Recruiter',
       role: 'RECRUITER',
     },
     {
-      id: 'admin',
+      id: ADMIN_USER_ID,
       email: 'admin@test.demo',
-      displayName: 'Test Admin',
+      displayName: 'Admin',
       role: 'ADMIN',
     },
   ];
@@ -42,6 +45,23 @@ async function seedUsers() {
       create: { ...user, tenantId: DEFAULT_TENANT_ID },
     });
   }
+}
+
+async function seedTenantMemberships() {
+  await prisma.tenantUser.upsert({
+    where: {
+      userId_tenantId: {
+        userId: ADMIN_USER_ID,
+        tenantId: DEFAULT_TENANT_ID,
+      },
+    },
+    update: { role: 'ADMIN' },
+    create: {
+      userId: ADMIN_USER_ID,
+      tenantId: DEFAULT_TENANT_ID,
+      role: 'ADMIN',
+    },
+  });
 }
 
 async function resetTenantData() {
@@ -407,6 +427,7 @@ async function seedMatchesAndOutreach() {
 async function main() {
   await seedTenant();
   await seedUsers();
+  await seedTenantMemberships();
   await resetTenantData();
   await seedJobs();
   await seedCandidates();

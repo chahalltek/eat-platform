@@ -1,10 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { buildTenantDiagnostics, TenantNotFoundError } from "@/lib/tenant/diagnostics";
+import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser(req);
@@ -14,9 +13,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userTenant = (user.tenantId ?? DEFAULT_TENANT_ID).trim();
+  const access = await resolveTenantAdminAccess(user, tenantId);
 
-  if (!isAdminRole(user.role) || userTenant !== tenantId.trim()) {
+  if (!access.hasAccess) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

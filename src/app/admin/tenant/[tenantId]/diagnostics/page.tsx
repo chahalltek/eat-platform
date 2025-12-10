@@ -2,11 +2,10 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { CheckCircleIcon, ExclamationTriangleIcon, XCircleIcon } from "@heroicons/react/24/solid";
 
-import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { buildTenantDiagnostics, TenantNotFoundError } from "@/lib/tenant/diagnostics";
+import { getTenantMembershipsForUser, resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { TenantTestTable } from "./TenantTestTable";
 
 export const dynamic = "force-dynamic";
@@ -55,11 +54,8 @@ function formatDate(value: string | null) {
 export default async function TenantDiagnosticsPage({ params }: { params: { tenantId?: string } }) {
   const user = await getCurrentUser();
   const requestedTenant = params.tenantId?.trim?.() ?? "";
-  const currentTenantId = (await getCurrentTenantId())?.trim?.() ?? "";
-  const userTenant = (user?.tenantId ?? DEFAULT_TENANT_ID)?.trim?.() ?? "";
-  const isAuthorized = user && isAdminRole(user.role) && userTenant === requestedTenant && currentTenantId === requestedTenant;
 
-  if (!isAuthorized) {
+  if (!user || !requestedTenant) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -76,6 +72,37 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
       </main>
     );
   }
+
+  const [currentTenantId, access] = await Promise.all([
+    getCurrentTenantId(),
+    resolveTenantAdminAccess(user, requestedTenant),
+  ]);
+
+  const normalizedCurrentTenantId = currentTenantId?.trim?.() ?? "";
+
+  if (!access.hasAccess) {
+    return (
+      <main className="mx-auto max-w-4xl px-6 py-12">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+          <h1 className="text-xl font-semibold">Admin access required</h1>
+          <p className="mt-2 text-sm text-amber-800">
+            You need to be a tenant admin for this workspace to view readiness diagnostics.
+          </p>
+          <div className="mt-4">
+            <Link href="/" className="text-sm font-medium text-amber-900 underline">
+              Return to home
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const tenantRoles = access.isGlobalAdmin
+    ? await getTenantMembershipsForUser(user.id)
+    : access.membership
+      ? [access.membership]
+      : [];
 
   try {
     const diagnostics = await buildTenantDiagnostics(requestedTenant);
@@ -190,6 +217,30 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
               </ul>
             </DiagnosticCard>
           </section>
+
+          {access.isGlobalAdmin ? (
+            <section className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Debug</p>
+                  <h2 className="text-lg font-semibold text-zinc-900">Admin context</h2>
+                </div>
+                <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">Visible to admins</span>
+              </div>
+              <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-900 px-3 py-2 text-xs text-zinc-100">
+                {JSON.stringify(
+                  {
+                    user: { id: user.id, email: user.email, role: user.role },
+                    tenantId: requestedTenant,
+                    currentTenantId: normalizedCurrentTenantId,
+                    tenantRoles,
+                  },
+                  null,
+                  2,
+                )}
+              </pre>
+            </section>
+          ) : null}
         </div>
       </main>
     );

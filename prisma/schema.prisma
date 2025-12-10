@@ -38,6 +38,7 @@ model User {
   updatedAt   DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenantMemberships TenantUser[]
 
   agentRuns     AgentRunLog[]
   jobCandidates JobCandidate[]
@@ -70,9 +71,26 @@ model Tenant {
   createdAt         DateTime           @default(now())
 
   users         User[]
+  members       TenantUser[]
   subscriptions TenantSubscription[]
 
   @@unique([name])
+}
+
+model TenantUser {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  userId   String
+  tenantId String
+  role     String // e.g. 'ADMIN', 'RECRUITER', 'VIEWER'
+
+  user   User   @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+  @@index([userId])
 }
 
 model SubscriptionPlan {

@@ -5,6 +5,7 @@ const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockGetCurrentTenantId = vi.hoisted(() => vi.fn());
 const mockBuildTenantDiagnostics = vi.hoisted(() => vi.fn());
 const MockNotFoundError = vi.hoisted(() => class extends Error {});
+const mockResolveTenantAccess = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/user", () => ({
   getCurrentUser: mockGetCurrentUser,
@@ -19,11 +20,16 @@ vi.mock("@/lib/tenant/diagnostics", () => ({
   TenantNotFoundError: MockNotFoundError,
 }));
 
+vi.mock("@/lib/tenant/access", () => ({
+  resolveTenantAdminAccess: mockResolveTenantAccess,
+}));
+
 import { GET } from "./route";
 
 describe("GET /api/tenant/diagnostics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
   });
 
   const buildRequest = () => new NextRequest("http://localhost/api/tenant/diagnostics");
@@ -35,26 +41,39 @@ describe("GET /api/tenant/diagnostics", () => {
 
     expect(response.status).toBe(401);
     expect(mockBuildTenantDiagnostics).not.toHaveBeenCalled();
+    expect(mockResolveTenantAccess).not.toHaveBeenCalled();
   });
 
   it("enforces admin access for the same tenant", async () => {
     mockGetCurrentUser.mockResolvedValue({ id: "user-1", role: "RECRUITER", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-a");
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
 
     const response = await GET(buildRequest());
 
     expect(response.status).toBe(403);
     expect(mockBuildTenantDiagnostics).not.toHaveBeenCalled();
+    expect(mockResolveTenantAccess).toHaveBeenCalledWith({
+      id: "user-1",
+      role: "RECRUITER",
+      tenantId: "tenant-a",
+    }, "tenant-a");
   });
 
   it("prevents cross-tenant admin access", async () => {
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-b");
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
 
     const response = await GET(buildRequest());
 
     expect(response.status).toBe(403);
     expect(mockBuildTenantDiagnostics).not.toHaveBeenCalled();
+    expect(mockResolveTenantAccess).toHaveBeenCalledWith({
+      id: "admin-1",
+      role: "ADMIN",
+      tenantId: "tenant-a",
+    }, "tenant-b");
   });
 
   it("returns diagnostics when authorized", async () => {
@@ -62,6 +81,7 @@ describe("GET /api/tenant/diagnostics", () => {
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-a");
     mockBuildTenantDiagnostics.mockResolvedValue(payload);
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: false, membership: { role: "ADMIN" } });
 
     const response = await GET(buildRequest());
     const body = await response.json();
@@ -75,10 +95,30 @@ describe("GET /api/tenant/diagnostics", () => {
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-a");
     mockBuildTenantDiagnostics.mockRejectedValue(new MockNotFoundError());
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: false, membership: { role: "ADMIN" } });
 
     const response = await GET(buildRequest());
 
     expect(response.status).toBe(404);
+  });
+
+  it("lets global admins bypass tenant membership", async () => {
+    const payload = { tenantId: "tenant-b", sso: { configured: true, issuerUrl: null } };
+    mockGetCurrentUser.mockResolvedValue({ id: "sysadmin", role: "ADMIN", tenantId: "tenant-a" });
+    mockGetCurrentTenantId.mockResolvedValue("tenant-b");
+    mockBuildTenantDiagnostics.mockResolvedValue(payload);
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
+
+    const response = await GET(buildRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual(payload);
+    expect(mockResolveTenantAccess).toHaveBeenCalledWith({
+      id: "sysadmin",
+      role: "ADMIN",
+      tenantId: "tenant-a",
+    }, "tenant-b");
   });
 });
 

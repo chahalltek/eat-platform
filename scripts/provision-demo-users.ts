@@ -20,8 +20,8 @@ const DEMO_USERS = [
 async function main() {
   const tenant = await prisma.tenant.upsert({
     where: { id: DEFAULT_TENANT_ID },
-    update: { name: 'Demo Tenant', status: 'active' },
-    create: { id: DEFAULT_TENANT_ID, name: 'Demo Tenant', status: 'active' },
+    update: { name: 'Default Tenant', status: 'active' },
+    create: { id: DEFAULT_TENANT_ID, name: 'Default Tenant', status: 'active' },
   });
 
   for (const user of DEMO_USERS) {
@@ -45,6 +45,17 @@ async function main() {
         provider: 'local',
         subject: record.email,
       },
+    });
+
+    await prisma.tenantUser.upsert({
+      where: {
+        userId_tenantId: {
+          userId: record.id,
+          tenantId: tenant.id,
+        },
+      },
+      update: { role: user.role },
+      create: { userId: record.id, tenantId: tenant.id, role: user.role },
     });
   }
 
