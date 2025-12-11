@@ -386,13 +386,7 @@ async function seedMatchesAndOutreach() {
 
   for (const jobCandidate of jobCandidates) {
     const record = await prisma.jobCandidate.upsert({
-      where: {
-        tenantId_jobReqId_candidateId: {
-          tenantId: DEFAULT_TENANT_ID,
-          jobReqId: jobCandidate.jobReqId,
-          candidateId: jobCandidate.candidateId,
-        },
-      },
+      where: { id: jobCandidate.id },
       update: {
         status: jobCandidate.status,
         userId: jobCandidate.userId,
