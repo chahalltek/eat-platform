@@ -12,6 +12,7 @@ import { SystemHealthPanel } from "@/components/SystemHealthPanel";
 import { EATClientLayout } from "@/components/EATClientLayout";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 import { WorkflowCard } from "@/components/home/WorkflowCard";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -77,7 +78,7 @@ const badgeStyles: Record<BadgeState, string> = {
   unknown: "border-zinc-200 bg-white text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
 };
 
-function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
+function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
   return [
     {
       label: "Upload resumes",
@@ -141,8 +142,8 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
     {
       label: "Admin",
       cta: "Configure",
-      href: "/admin/feature-flags",
-      description: "Feature Flags, Test Panel, and MVP Test Plan",
+      href: `/admin/tenant/${tenantId}/guardrails`,
+      description: "Guardrails, Feature Flags, and MVP Test Plan",
       dependency: { subsystem: "tenantConfig" },
     },
   ];
@@ -241,14 +242,15 @@ function TelemetryMetric({
 }
 
 export default async function Home() {
-  const [uiEnabled, systemStatus, executionState, metrics] = await Promise.all([
+  const [uiEnabled, systemStatus, executionState, metrics, tenantId] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
     getSystemStatus(),
     getSystemExecutionState(),
     getHomeCardMetrics(),
+    getCurrentTenantId(),
   ]);
 
-  const links = buildLinks(metrics);
+  const links = buildLinks(metrics, tenantId);
   const coreLinks = links.slice(0, 3);
   const dataLinks = links.slice(3);
   

@@ -115,6 +115,17 @@ model SubscriptionPlan {
   subscriptions TenantSubscription[]
 }
 
+model TenantConfig {
+  id        String   @id @default(cuid())
+  tenantId  String   @default("default-tenant")
+  guardrails Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId])
+  @@index([tenantId])
+}
+
 model TenantSubscription {
   id        String           @id @default(cuid())
   tenant    Tenant           @relation(fields: [tenantId], references: [id])
