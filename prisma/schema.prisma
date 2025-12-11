@@ -37,12 +37,12 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant            Tenant       @relation(fields: [tenantId], references: [id])
   tenantMemberships TenantUser[]
 
-  agentRuns     AgentRunLog[]
-  jobCandidates JobCandidate[]
-  identities    UserIdentity[]
+  agentRuns      AgentRunLog[]
+  jobCandidates  JobCandidate[]
+  identities     UserIdentity[]
   securityEvents SecurityEventLog[]
 
   @@unique([tenantId, email])
@@ -81,6 +81,10 @@ model Tenant {
 model TenantConfig {
   id        String   @id @default(cuid())
   tenantId  String   @unique
+<<<<<<< ours
+=======
+  preset    String?
+>>>>>>> theirs
   scoring   Json
   explain   Json
   safety    Json
@@ -168,13 +172,13 @@ model FeatureFlag {
 }
 
 model AgentKillSwitch {
-  id        String   @id @default(cuid())
-  agentName String   @unique
-  latched   Boolean  @default(false)
+  id        String    @id @default(cuid())
+  agentName String    @unique
+  latched   Boolean   @default(false)
   reason    String?
   latchedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model AgentPrompt {
@@ -192,8 +196,8 @@ model AgentPrompt {
 }
 
 model Candidate {
-  id                   String   @id @default(cuid())
-  tenantId             String   @default("default-tenant")
+  id                   String    @id @default(cuid())
+  tenantId             String    @default("default-tenant")
   fullName             String
   email                String?
   phone                String?
@@ -210,8 +214,8 @@ model Candidate {
   trustScore           Int?
   status               String? // "Active", "Placed", etc.
   normalizedSkills     String[]
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
   deletedAt            DateTime?
 
   skills               CandidateSkill[]
@@ -333,12 +337,12 @@ model MatchResult {
   jobCandidate   JobCandidate? @relation("JobCandidateMatchResults", fields: [jobCandidateId], references: [id])
   jobCandidateId String?
 
-  score     Int
-  reasons   Json?
-  shortlisted Boolean   @default(false)
+  score           Int
+  reasons         Json?
+  shortlisted     Boolean   @default(false)
   shortlistReason String?
-  createdAt DateTime @default(now())
-  deletedAt DateTime?
+  createdAt       DateTime  @default(now())
+  deletedAt       DateTime?
 
   skillScore               Int?
   seniorityScore           Int?
@@ -360,30 +364,30 @@ model MatchResult {
 }
 
 model Job {
-  id             String           @id @default(cuid())
-  tenantId       String           @default("default-tenant")
+  id             String   @id @default(cuid())
+  tenantId       String   @default("default-tenant")
   title          String
   description    String
   location       String?
   requiredSkills String[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   matches CandidateMatch[]
 }
 
 model CandidateMatch {
-  id          String    @id @default(cuid())
-  tenantId    String    @default("default-tenant")
-  jobId       String
-  candidateId String
-  matchScore  Int
-  confidence  Int
-  explanation Json
+  id                String   @id @default(cuid())
+  tenantId          String   @default("default-tenant")
+  jobId             String
+  candidateId       String
+  matchScore        Int
+  confidence        Int
+  explanation       Json
   confidenceReasons Json?
-  shortlisted Boolean   @default(false)
-  shortlistReason String?
-  createdAt   DateTime  @default(now())
+  shortlisted       Boolean  @default(false)
+  shortlistReason   String?
+  createdAt         DateTime @default(now())
 
   job       Job       @relation(fields: [jobId], references: [id])
   candidate Candidate @relation(fields: [candidateId], references: [id])
