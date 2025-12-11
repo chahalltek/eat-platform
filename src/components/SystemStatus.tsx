@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { StatusPill, type StatusPillStatus } from "@/components/StatusPill";
-import type { SubsystemKey, SubsystemState, SystemStatusMap } from "@/lib/systemStatus";
+import type {
+  SubsystemKey,
+  SubsystemState,
+  SystemExecutionState,
+  SystemStatusMap,
+} from "@/lib/systemStatus";
 
 const statusLabels: Record<SubsystemKey, string> = {
   agents: "Agents",
@@ -13,10 +18,10 @@ const statusLabels: Record<SubsystemKey, string> = {
 };
 
 const statusDescriptions: Record<SubsystemKey, string> = {
-  agents: "Orchestration for agent workflows.",
-  scoring: "Automated scoring pipeline.",
-  database: "Primary datastore availability.",
-  tenantConfig: "Feature flags and tenant settings.",
+  agents: "Feature-enabled automations.",
+  scoring: "Scoring engine connected.",
+  database: "Primary datastore online.",
+  tenantConfig: "Tenant configuration detected.",
 };
 
 function formatStatusText(status: SubsystemState) {
@@ -48,11 +53,18 @@ function toStatusPill(status: SubsystemState): StatusPillStatus {
 
 type SystemStatusProps = {
   statusMap: SystemStatusMap;
+  executionState: SystemExecutionState;
   onRefresh: () => void;
   isRefreshing: boolean;
 };
 
-export function SystemStatus({ statusMap, onRefresh, isRefreshing }: SystemStatusProps) {
+function formatTimestamp(iso: string | null) {
+  if (!iso) return "No runs recorded";
+
+  return new Date(iso).toLocaleString();
+}
+
+export function SystemStatus({ statusMap, executionState, onRefresh, isRefreshing }: SystemStatusProps) {
   const [shouldPulse, setShouldPulse] = useState(true);
   const pulseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -77,10 +89,10 @@ export function SystemStatus({ statusMap, onRefresh, isRefreshing }: SystemStatu
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-violet-600">SYSTEM STATUS</p>
-          <p className="text-sm text-slate-500">Live health for EAT subsystems.</p>
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600">System Status</p>
+          <p className="text-sm text-slate-600">Live telemetry across core infrastructure.</p>
         </div>
         <button
           type="button"
@@ -106,14 +118,27 @@ export function SystemStatus({ statusMap, onRefresh, isRefreshing }: SystemStatu
               }`}
               style={shouldPulse ? { animationDelay: `${index * 80}ms` } : undefined}
             >
-              <div>
+              <div className="space-y-1">
                 <p className="text-sm font-semibold text-slate-900">{statusLabels[key]}</p>
-                <p className="text-xs text-slate-500">{description}</p>
+                <p className="text-xs text-slate-600">{description}</p>
               </div>
               <StatusPill status={toStatusPill(status)} label={formatStatusText(status)} />
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-5 grid gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-3 text-sm text-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Agents executed today</p>
+            <p className="text-lg font-semibold text-slate-900">{executionState.runsToday ?? 0}</p>
+          </div>
+          <div className="space-y-1 text-right sm:text-left">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Last successful run</p>
+            <p className="text-sm font-semibold text-slate-900">{formatTimestamp(executionState.latestSuccessAt)}</p>
+          </div>
+        </div>
       </div>
 
       <style jsx>{`

@@ -87,6 +87,9 @@ export function StatusPill({ status, label }: { status: StatusPillStatus; label?
       style={{
         ["--status-accent" as string]: accentPalette[tone],
       }}
+      role="status"
+      aria-live="polite"
+      aria-label={`${displayLabel} status`}
     >
       <span className={`h-1.5 w-1.5 rounded-full bg-current ${isAnimating ? "status-dot-animate" : ""}`} aria-hidden />
       <span className="whitespace-nowrap">{displayLabel}</span>

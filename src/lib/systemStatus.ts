@@ -1,3 +1,5 @@
+import { AgentRunStatus } from '@prisma/client';
+
 import { FEATURE_FLAGS, isFeatureEnabled } from './featureFlags';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 import { getCurrentTenantId } from './tenant';
@@ -9,7 +11,9 @@ export type SystemExecutionState = {
   state: 'operational' | 'idle' | 'degraded';
   activeRuns: number;
   latestRunAt: string | null;
+  latestSuccessAt: string | null;
   latestFailureAt: string | null;
+  runsToday: number;
 };
 
 export type SystemStatus = { status: SubsystemState; detail?: string };
@@ -95,18 +99,32 @@ export async function getSystemStatus(): Promise<SystemStatusMap> {
 export async function getSystemExecutionState(): Promise<SystemExecutionState> {
   try {
     const tenantId = await getCurrentTenantId();
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
 
-    const [activeRuns, latestRun, latestFailure] = await Promise.all([
-      prisma.agentRunLog.count({ where: { tenantId, status: 'RUNNING' } }),
+    const [activeRuns, latestRun, latestFailure, latestSuccess, runsToday] = await Promise.all([
+      prisma.agentRunLog.count({ where: { tenantId, status: AgentRunStatus.RUNNING } }),
       prisma.agentRunLog.findFirst({
         where: { tenantId },
         orderBy: { startedAt: 'desc' },
         select: { startedAt: true },
       }),
       prisma.agentRunLog.findFirst({
-        where: { tenantId, status: 'FAILED' },
+        where: { tenantId, status: AgentRunStatus.FAILED },
         orderBy: { startedAt: 'desc' },
         select: { startedAt: true },
+      }),
+      prisma.agentRunLog.findFirst({
+        where: { tenantId, status: AgentRunStatus.SUCCESS },
+        orderBy: { startedAt: 'desc' },
+        select: { startedAt: true },
+      }),
+      prisma.agentRunLog.count({
+        where: {
+          tenantId,
+          status: AgentRunStatus.SUCCESS,
+          startedAt: { gte: startOfDay },
+        },
       }),
     ]);
 
@@ -125,7 +143,9 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
       state,
       activeRuns,
       latestRunAt: latestRun?.startedAt.toISOString() ?? null,
+      latestSuccessAt: latestSuccess?.startedAt.toISOString() ?? null,
       latestFailureAt: latestFailure?.startedAt.toISOString() ?? null,
+      runsToday,
     };
   } catch (error) {
     console.error('[system-execution] Unable to compute execution state', error);
@@ -134,7 +154,9 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
       state: 'degraded',
       activeRuns: 0,
       latestRunAt: null,
+      latestSuccessAt: null,
       latestFailureAt: null,
+      runsToday: 0,
     };
   }
 }

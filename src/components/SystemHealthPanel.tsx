@@ -40,7 +40,14 @@ export function SystemHealthPanel({ initialStatus, initialExecutionState }: Prop
         database: { status: "unknown" },
         tenantConfig: { status: "unknown" },
       });
-      setExecutionState({ state: "degraded", activeRuns: 0, latestRunAt: null, latestFailureAt: null });
+      setExecutionState({
+        state: "degraded",
+        activeRuns: 0,
+        latestRunAt: null,
+        latestSuccessAt: null,
+        latestFailureAt: null,
+        runsToday: 0,
+      });
     } finally {
       setIsRefreshing(false);
     }
@@ -49,7 +56,12 @@ export function SystemHealthPanel({ initialStatus, initialExecutionState }: Prop
   return (
     <div className="space-y-3">
       <SystemStateBanner executionState={executionState} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-      <SystemStatus statusMap={statusMap} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+      <SystemStatus
+        statusMap={statusMap}
+        executionState={executionState}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+      />
     </div>
   );
 }
