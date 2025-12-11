@@ -47,11 +47,11 @@ export default async function TenantDetailPage({ params }: { params: { tenantId:
             >
               View diagnostics
             </Link>
-             <Link
+            <Link
               href={`/admin/tenant/${params.tenantId}/operations-runbook`}
               className="inline-flex items-center justify-center rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:border-amber-300 hover:bg-white"
             >
-              Operations Runbook (Modes, Agents, Guardrails)
+              Operations Runbook
             </Link>
             <Link
               href="/admin/tenants"

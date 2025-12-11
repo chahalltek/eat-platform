@@ -20,7 +20,7 @@ export default async function HealthPage() {
       <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-8 px-6 py-14 sm:px-10">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">EAT</p>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">ETE Console</p>
             <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">System Health</h1>
             <p className="mt-2 text-zinc-600 dark:text-zinc-400">
               Live snapshot of infrastructure and dependency checks.

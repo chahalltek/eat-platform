@@ -304,8 +304,8 @@ export default async function Home() {
         <header className="mt-2 flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">EAT</p>
-              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">ETE Console</p>
+              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent System (MVP)</h1>
             </div>
             <Link
               href="/system-map"
@@ -338,8 +338,8 @@ export default async function Home() {
           <div className="flex flex-col gap-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-4 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
             <BrandMark withText className="text-left" />
             <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              EDGE Talent Engine console
-              <span className="block text-xs text-indigo-600 dark:text-indigo-300">Unified control plane</span>
+              ETE Console
+              <span className="block text-xs text-indigo-600 dark:text-indigo-300">EDGE Talent Engine</span>
             </p>
           </div>
         </aside>
@@ -349,7 +349,7 @@ export default async function Home() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-2">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">EDGE Talent Engine</p>
-                <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EAT – Talent System (MVP)</h1>
+                <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">ETE – Talent System (MVP)</h1>
                 <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
                   <span className="block">Real-time orchestration for intelligent hiring systems.</span>
                   <span className="block text-sm text-zinc-500 dark:text-zinc-400">Agents, data, and decisioning in one control plane.</span>

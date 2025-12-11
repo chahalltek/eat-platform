@@ -59,7 +59,7 @@ export default async function FeatureFlagsPage() {
         <EATCard className="gap-4 border-indigo-100 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-zinc-900">Test &amp; diagnostics</h2>
+              <h2 className="text-lg font-semibold text-zinc-900">Test Panel</h2>
               <p className="text-sm text-zinc-600">
                 Run quick checks on ETE agents, data, and scoring for this tenant.
               </p>
@@ -69,7 +69,7 @@ export default async function FeatureFlagsPage() {
               href={diagnosticsPath}
               className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500"
             >
-              Open test panel
+              Open Test Panel
             </Link>
           </div>
         </EATCard>
