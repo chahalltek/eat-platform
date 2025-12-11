@@ -69,13 +69,6 @@ const dependencyLabels: Record<SubsystemKey, string> = {
   tenantConfig: "Tenant Config",
 };
 
-const dependencyDotStyles: Record<SubsystemState, string> = {
-  healthy: "bg-emerald-500",
-  warning: "bg-amber-500",
-  error: "bg-red-500",
-  unknown: "bg-zinc-400",
-};
-
 const badgeStyles: Record<BadgeState, string> = {
   enabled: "border-indigo-200/80 bg-white text-indigo-700 dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200",
   healthy: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200",
@@ -270,6 +263,23 @@ export default async function Home() {
     const hasFailures = failuresLast7d > 0;
     const badgeState: BadgeState = isExecutionHistory && hasFailures ? "error" : dependencyState.status;
 
+    const statusPanel = isExecutionHistory ? (
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="font-semibold text-slate-900 dark:text-zinc-100">
+          {hasRuns
+            ? `Runs in last 7 days: ${runsLast7d.toLocaleString()}`
+            : "System idle — no executions detected in the last 7 days."}
+        </p>
+        {hasRuns ? (
+          <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">Last run: {formatExecutionTimestamp(lastRunAt)}</p>
+        ) : null}
+      </div>
+    ) : null;
+
+    const alert = hasFailures
+      ? { title: "Recent failures detected", description: "Inspect execution logs.", tone: "error" as const }
+      : undefined;
+
     return (
       <WorkflowCard
         key={link.href}
@@ -278,24 +288,10 @@ export default async function Home() {
         dependencyState={dependencyState}
         badgeStyles={badgeStyles}
         dependencyLabels={dependencyLabels}
-        dependencyDotStyles={dependencyDotStyles}
-      >
-          {isExecutionHistory && (
-          <div className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
-              {hasRuns
-                ? `Runs in last 7 days: ${runsLast7d.toLocaleString()}`
-                : "System idle — no executions detected in the last 7 days."}
-            </p>
-            {hasRuns ? (
-              <p className="text-xs text-slate-600 dark:text-zinc-400">Last run: {formatExecutionTimestamp(lastRunAt)}</p>
-            ) : null}
-            {hasFailures ? (
-              <p className="text-xs font-semibold text-rose-700 dark:text-rose-400">Recent failures detected. Inspect execution logs.</p>
-            ) : null}
-          </div>
-         )}
-      </WorkflowCard>
+        statusPanel={statusPanel}
+        statusChips={link.stats}
+        alert={alert}
+      />
     );
   };
 
@@ -388,7 +384,7 @@ export default async function Home() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Core workflows</p>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">Launch and monitor the everyday agent actions.</p>
           </div>
-          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
+          <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
         </section>
 
         <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
@@ -396,7 +392,7 @@ export default async function Home() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Data &amp; controls</p>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">Review the information that feeds the system.</p>
           </div>
-          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
+          <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
         </section>
       </div>
     </EATClientLayout>

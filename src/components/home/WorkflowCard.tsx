@@ -39,7 +39,13 @@ export type WorkflowCardProps = {
   dependencyState: WorkflowCardState;
   badgeStyles: Record<string, string>;
   dependencyLabels: Record<SubsystemKey, string>;
-  dependencyDotStyles: Record<SubsystemState, string>;
+  statusPanel?: ReactNode;
+  statusChips?: { label: string; value: string }[];
+  alert?: {
+    title: string;
+    description?: string;
+    tone?: "warning" | "error" | "info";
+  };
   children?: ReactNode;
 };
 
@@ -72,13 +78,144 @@ function formatDependencyStatus(status: SubsystemState) {
   }
 }
 
+function WorkflowAlert({
+  title,
+  description,
+  tone = "warning",
+}: {
+  title: string;
+  description?: string;
+  tone?: "warning" | "error" | "info";
+}) {
+  const toneStyles: Record<typeof tone, string> = {
+    warning: "border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-200",
+    error: "border-rose-200 bg-rose-50/70 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-200",
+    info: "border-indigo-200 bg-indigo-50/70 text-indigo-900 dark:border-indigo-900/60 dark:bg-indigo-950/50 dark:text-indigo-200",
+  };
+
+  return (
+    <div
+      className={clsx(
+        "rounded-xl border px-4 py-3 text-sm shadow-sm",
+        "flex flex-col gap-1",
+        toneStyles[tone],
+      )}
+    >
+      <p className="font-semibold">{title}</p>
+      {description ? <p className="text-xs opacity-80">{description}</p> : null}
+    </div>
+  );
+}
+
+function WorkflowStatusChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col rounded-xl border border-indigo-100/80 bg-indigo-50/50 px-3 py-2 dark:border-indigo-900/30 dark:bg-indigo-950/30">
+      <dt className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-200">{label}</dt>
+      <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{value}</dd>
+    </div>
+  );
+}
+
+function WorkflowDependencies({
+  label,
+  status,
+  message,
+  systemLink,
+  variant = "default",
+}: {
+  label: string;
+  status: SubsystemState;
+  message: string;
+  systemLink: string;
+  variant?: "default" | "strong";
+}) {
+  const pillStyles: Record<SubsystemState, string> = {
+    healthy: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-900/70",
+    warning: "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-900/70",
+    error: "bg-rose-100 text-rose-900 border-rose-200 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-900/70",
+    unknown: "bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700",
+  };
+
+  const containerStyles =
+    variant === "strong"
+      ? "border-indigo-200/80 bg-indigo-50/70 dark:border-indigo-900/60 dark:bg-indigo-950/60"
+      : "border-indigo-100/80 bg-indigo-50/60 dark:border-indigo-900/40 dark:bg-indigo-950/40";
+
+  return (
+    <div
+      className={clsx(
+        "rounded-2xl border px-4 py-4 text-sm shadow-sm",
+        "flex flex-col gap-2",
+        containerStyles,
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-3 font-semibold text-indigo-900 dark:text-indigo-50">
+        <span className="text-sm">{label}</span>
+        <span
+          className={clsx(
+            "flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-wide shadow-sm",
+            pillStyles[status],
+          )}
+        >
+          <span className="h-2 w-2 rounded-full bg-current opacity-80" aria-hidden />
+          {formatDependencyStatus(status)} dependency
+        </span>
+      </div>
+      <p className="text-xs text-indigo-700 dark:text-indigo-200/80">{message}</p>
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">
+        <span className="h-2 w-2 rounded-full bg-indigo-400 shadow-sm" aria-hidden />
+        <span>{systemLink}</span>
+        <span className="text-[10px] text-indigo-400">System link</span>
+      </div>
+    </div>
+  );
+}
+
+function WorkflowCardFooter({ cta, href, disabled }: { cta: string; href: string; disabled?: boolean }) {
+  const content = (
+    <div
+      className={clsx(
+        "inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition",
+        disabled ? "opacity-70" : "group-hover:bg-indigo-700",
+      )}
+    >
+      <span>{cta}</span>
+      <svg
+        aria-hidden
+        className="h-4 w-4 transition group-hover:translate-x-0.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M5 12h14" />
+        <path d="m13 6 6 6-6 6" />
+      </svg>
+    </div>
+  );
+
+  if (disabled) {
+    return <div className="pt-1 opacity-80">{content}</div>;
+  }
+
+  return (
+    <Link href={href} className="pt-1">
+      {content}
+    </Link>
+  );
+}
+
 export function WorkflowCard({
   link,
   badgeState,
   dependencyState,
   badgeStyles,
   dependencyLabels,
-  dependencyDotStyles,
+  statusPanel,
+  statusChips,
+  alert,
   children,
 }: WorkflowCardProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -125,100 +262,83 @@ export function WorkflowCard({
   const dependencyLabel =
     dependencyState.dependencyLabel ?? dependencyLabels[link.dependency?.subsystem ?? "agents"];
 
+  const systemLinkLabel = link.dependency?.flow?.target ?? dependencyLabel;
+  const dependencyMessage = dependencyState.message ?? `${link.label} depends on ${dependencyLabel}`;
+
   return (
-    <Link
+    <article
       key={link.href}
-      href={link.href}
       className={clsx(
-        "group relative overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm ring-1 ring-transparent backdrop-blur transition",
+        "group relative grid min-h-[440px] grid-rows-[auto,1fr,auto] content-start overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/80 px-5 pb-5 pt-4 shadow-sm ring-1 ring-transparent backdrop-blur transition",
         "dark:border-indigo-900/40 dark:bg-zinc-900/80",
         dependencyState.isActive
-          ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:ring-indigo-200 dark:hover:ring-indigo-800"
-          : "pointer-events-none cursor-not-allowed opacity-60",
+          ? "hover:-translate-y-0.5 hover:shadow-lg hover:ring-indigo-200 dark:hover:ring-indigo-800"
+          : "pointer-events-none opacity-60",
         prefersReducedMotion && "!transform-none !transition-none",
       )}
       aria-disabled={!dependencyState.isActive}
-      tabIndex={dependencyState.isActive ? 0 : -1}
     >
       <div className={topRailClassName} aria-hidden />
 
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
+      {/*
+      -------------------------------------
+      | Zone A – Header                   |
+      -------------------------------------
+      | Zone B – Status / Dependencies    |
+      |         (auto height)             |
+      -------------------------------------
+      | Zone C – CTA (anchored bottom)    |
+      -------------------------------------
+      */}
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-500 dark:text-indigo-300">Workflow</p>
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{link.label}</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{link.label}</h2>
+          </div>
           <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             {link.description ?? `${link.label} workflow`}
           </p>
         </div>
         <span
           className={clsx(
-            "rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm",
+            "mt-1 self-start rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm sm:self-center",
             badgeStyles[badgeState],
             isBadgeAnimating && "status-change-animate",
           )}
         >
           {formatStatusText(badgeState)}
         </span>
+      </header>
+
+      <div className="mt-4 flex flex-col gap-4">
+        {alert ? <WorkflowAlert title={alert.title} description={alert.description} tone={alert.tone} /> : null}
+        {statusPanel}
+
+        {statusChips?.length ? (
+          <dl className="grid gap-2 sm:grid-cols-2">
+            {statusChips.map((stat) => (
+              <WorkflowStatusChip key={stat.label} label={stat.label} value={stat.value} />
+            ))}
+          </dl>
+        ) : null}
+
+        {children}
+
+        {link.dependency ? (
+          <WorkflowDependencies
+            label={link.dependency.flow?.target ?? dependencyLabel}
+            status={dependencyStatus}
+            message={dependencyMessage}
+            systemLink={systemLinkLabel}
+            variant={dependencyStatus === "error" ? "strong" : "default"}
+          />
+        ) : null}
       </div>
 
-      {link.stats ? (
-        <dl className="mt-4 grid gap-2 sm:grid-cols-2">
-          {link.stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="flex flex-col rounded-xl border border-indigo-100/80 bg-indigo-50/40 px-3 py-2 dark:border-indigo-900/30 dark:bg-indigo-950/30"
-            >
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-200">
-                {stat.label}
-              </dt>
-              <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
-
-      {children}
-
-      {link.dependency ? (
-        <div className="mt-4 rounded-xl border border-dashed border-indigo-100 bg-indigo-50/60 px-4 py-3 text-sm dark:border-indigo-900/40 dark:bg-indigo-950/40">
-          <div className="flex items-center gap-3 font-semibold text-indigo-900 dark:text-indigo-100">
-            <span className={`h-2.5 w-2.5 rounded-full ${dependencyDotStyles[dependencyStatus]}`} aria-hidden />
-            <span>{link.dependency.flow?.target ?? dependencyLabel}</span>
-            <span className="rounded-full border border-indigo-200/60 bg-white/70 px-2 py-0.5 text-[11px] uppercase tracking-wide text-indigo-600 dark:border-indigo-800/70 dark:bg-indigo-900/60">
-              {formatDependencyStatus(dependencyStatus)} dependency
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-indigo-700 dark:text-indigo-200/80">
-            {dependencyState.message ?? `${link.label} depends on ${dependencyLabel}`}
-          </p>
-        </div>
-      ) : null}
-
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-          <span className={`h-2 w-2 rounded-full ${dependencyDotStyles[dependencyStatus]}`} aria-hidden />
-          <span className="font-medium text-zinc-700 dark:text-zinc-200">
-            {dependencyLabels[link.dependency?.subsystem ?? "agents"]}
-          </span>
-          <span className="text-[11px] uppercase tracking-wide text-zinc-400">System link</span>
-        </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition group-hover:bg-indigo-700">
-          <span>{link.cta}</span>
-          <svg
-            aria-hidden
-            className="h-4 w-4 transition group-hover:translate-x-0.5"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M5 12h14" />
-            <path d="m13 6 6 6-6 6" />
-          </svg>
-        </div>
+      <div className="mt-6 flex items-end justify-start">
+        <WorkflowCardFooter cta={link.cta} href={link.href} disabled={!dependencyState.isActive} />
       </div>
-    </Link>
+    </article>
   );
 }
