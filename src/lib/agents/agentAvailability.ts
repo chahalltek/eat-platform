@@ -1,14 +1,16 @@
-import type { AgentFlag as AgentFlagModel } from '@prisma/client';
+import { Prisma, type AgentFlag as AgentFlagModel } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { loadTenantMode } from '@/lib/modes/loadTenantMode';
-import { prisma } from '@/lib/prisma';
+import { isPrismaUnavailableError, prisma } from '@/lib/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
 
 export async function getAgentAvailability(tenantId: string) {
   const mode = await loadTenantMode(tenantId);
-  const flags = await prisma.agentFlag.findMany({ where: { tenantId } });
+  const flags = await prisma.agentFlag
+    .findMany({ where: { tenantId } })
+    .catch((error) => withAgentFlagFallback(error, () => [] as AgentFlagModel[]));
 
   const flagMap = new Map<string, boolean>(flags.map((f) => [f.agentName, f.enabled]));
 
@@ -91,6 +93,19 @@ export function parseAgentName(value: unknown): AgentName | null {
   return (candidates.find((candidate) => candidate === normalized) as AgentName | undefined) ?? null;
 }
 
+function isMissingAgentFlagTableError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021';
+}
+
+function withAgentFlagFallback<T>(error: unknown, fallback: () => T): T {
+  if (isPrismaUnavailableError(error) || isMissingAgentFlagTableError(error)) {
+    console.warn('[AgentAvailability] AgentFlag table unavailable; using defaults');
+    return fallback();
+  }
+
+  throw error;
+}
+
 export function describeAgent(agentName: AgentName) {
   switch (agentName) {
     case AGENTS.RINA:
@@ -112,7 +127,9 @@ export function describeAgent(agentName: AgentName) {
 
 export async function listAgentFlagAvailability(tenantId?: string): Promise<AgentAvailabilityRecord[]> {
   const resolvedTenantId = await resolveTenantId(tenantId);
-  const stored = await prisma.agentFlag.findMany({ where: { tenantId: resolvedTenantId } });
+  const stored = await prisma.agentFlag
+    .findMany({ where: { tenantId: resolvedTenantId } })
+    .catch((error) => withAgentFlagFallback(error, () => [] as AgentFlagModel[]));
   const storedByName = new Map(stored.map((record) => [record.agentName, record]));
 
   return allAgentNames().map((agentName) => toRecord(agentName, storedByName.get(agentName)));
@@ -120,7 +137,9 @@ export async function listAgentFlagAvailability(tenantId?: string): Promise<Agen
 
 export async function getAgentFlagAvailability(agentName: AgentName, tenantId?: string): Promise<AgentAvailabilityRecord> {
   const resolvedTenantId = await resolveTenantId(tenantId);
-  const record = await prisma.agentFlag.findUnique({ where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } } });
+  const record = await prisma.agentFlag
+    .findUnique({ where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } } })
+    .catch((error) => withAgentFlagFallback(error, () => null));
 
   return toRecord(agentName, record);
 }
@@ -131,13 +150,17 @@ export async function setAgentFlagAvailability(
   tenantId?: string,
 ): Promise<AgentAvailabilityRecord> {
   const resolvedTenantId = await resolveTenantId(tenantId);
-  const record = await prisma.agentFlag.upsert({
-    where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } },
-    update: { enabled },
-    create: { tenantId: resolvedTenantId, agentName, enabled },
-  });
+  const record = await prisma.agentFlag
+    .upsert({
+      where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } },
+      update: { enabled },
+      create: { tenantId: resolvedTenantId, agentName, enabled },
+    })
+    .catch((error) => withAgentFlagFallback(error, () => null));
 
   const parsed = toRecord(agentName, record);
+
+  if (!record) return parsed;
 
   await logKillSwitchChange({
     switchName: agentName,

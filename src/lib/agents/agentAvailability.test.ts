@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getAgentAvailability } from './agentAvailability';
@@ -10,6 +11,7 @@ const loadTenantModeMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
+  isPrismaUnavailableError: () => false,
 }));
 
 vi.mock('@/lib/modes/loadTenantMode', () => ({
@@ -96,5 +98,19 @@ describe('getAgentAvailability', () => {
     const { isEnabled } = await getAgentAvailability(tenantId);
 
     expect(isEnabled('EXPLAIN')).toBe(false);
+  });
+
+  it('defaults to enabled flags when the AgentFlag table is missing', async () => {
+    loadTenantModeMock.mockResolvedValue(modes.production);
+    prismaMock.agentFlag.findMany.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('missing table', {
+        code: 'P2021',
+        clientVersion: '5.19.0',
+      }),
+    );
+
+    const { isEnabled } = await getAgentAvailability(tenantId);
+
+    expect(isEnabled('CONFIDENCE')).toBe(true);
   });
 });

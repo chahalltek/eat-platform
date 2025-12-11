@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { Prisma } from '@prisma/client';
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { prisma } from '@/lib/prisma';
 
@@ -22,6 +23,7 @@ vi.mock('@/lib/prisma', () => ({
       upsert: vi.fn(),
     },
   },
+  isPrismaUnavailableError: () => false,
 }));
 
 vi.mock('@/lib/audit/securityEvents', () => ({
@@ -188,6 +190,20 @@ describe('agent kill switch', () => {
     expect(records).toHaveLength(Object.keys(AGENT_KILL_SWITCHES).length);
     expect(automation?.latched).toBe(true);
     expect(rua?.latched).toBe(false);
+  });
+
+  test('listAgentKillSwitches falls back when AgentFlag table is missing', async () => {
+    vi.mocked(prisma.agentFlag.findMany).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('missing table', {
+        code: 'P2021',
+        clientVersion: '5.19.0',
+      }),
+    );
+
+    const records = await listAgentKillSwitches();
+
+    expect(records).toHaveLength(Object.keys(AGENT_KILL_SWITCHES).length);
+    expect(records.every((record) => record.latched === false)).toBe(true);
   });
 
   test('describeAgentKillSwitch maps known and unknown labels', () => {
