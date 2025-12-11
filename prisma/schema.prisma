@@ -77,15 +77,8 @@ model Tenant {
   members       TenantUser[]
   subscriptions TenantSubscription[]
   config        TenantConfig?
-<<<<<<< ours
-<<<<<<< ours
-  systemMode    SystemMode?
-=======
   tenantMode    TenantMode?
->>>>>>> theirs
-=======
   systemMode    SystemMode?
->>>>>>> theirs
 
   @@unique([name])
 }
@@ -93,14 +86,8 @@ model Tenant {
 model TenantConfig {
   id        String   @id @default(cuid())
   tenantId  String   @unique
-<<<<<<< ours
-<<<<<<< ours
   preset    String?
-=======
->>>>>>> theirs
-=======
   preset    String?
->>>>>>> theirs
   scoring   Json
   explain   Json
   safety    Json
@@ -177,14 +164,9 @@ model FeatureFlag {
 }
 
 model SystemMode {
-<<<<<<< ours
-=======
 model AgentFlag {
->>>>>>> theirs
-=======
->>>>>>> theirs
   id        String   @id @default(cuid())
-  tenantId  String   @default("default-tenant")
+  tenantId  String   @unique
   mode      String
   metadata  Json?
   createdAt DateTime @default(now())
@@ -192,14 +174,9 @@ model AgentFlag {
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
-  @@unique([tenantId])
   @@index([tenantId])
 }
 
-<<<<<<< ours
-<<<<<<< ours
-=======
->>>>>>> theirs
 model AgentFlag {
   id        String   @id @default(cuid())
   tenantId  String   @default("default-tenant")
@@ -212,8 +189,6 @@ model AgentFlag {
   @@index([tenantId])
 }
 
-=======
->>>>>>> theirs
 model AgentKillSwitch {
   id        String    @id @default(cuid())
   agentName String    @unique
