@@ -40,7 +40,7 @@ export type WorkflowCardProps = {
   badgeStyles: Record<string, string>;
   dependencyLabels: Record<SubsystemKey, string>;
   dependencyDotStyles: Record<SubsystemState, string>;
-  formatStatusText: (status: string) => string;
+  formatStatusText: (status: BadgeState) => string;
   formatDependencyStatus: (status: SubsystemState) => string;
   children?: ReactNode;
 };
@@ -59,7 +59,7 @@ export function WorkflowCard({
   const prefersReducedMotion = usePrefersReducedMotion();
   const [isBadgeAnimating, setIsBadgeAnimating] = useState(false);
   const [isRailPulsing, setIsRailPulsing] = useState(false);
-  const previousBadgeState = useRef<string | null>(null);
+  const previousBadgeState = useRef<BadgeState | null>(null);
 
   const topRailClassName = useMemo(
     () =>
