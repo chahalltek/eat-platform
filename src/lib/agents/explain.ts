@@ -1,3 +1,4 @@
+import { assertAgentEnabled } from '@/lib/agents/availability';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '../prisma';
 import { callLLM } from '../llm';
@@ -60,6 +61,7 @@ function extractSummary(text: string): string {
 
 export async function runExplainForJob(input: RunExplainInput): Promise<RunExplainResult> {
   const { jobId, maxMatches = 20 } = input;
+  await assertAgentEnabled('explainEnabled', 'Explain agent is disabled in Fire Drill mode');
   const user = await getCurrentUser();
 
   if (!user) {

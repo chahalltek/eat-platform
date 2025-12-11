@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { FireDrillAgentDisabledError } from '@/lib/agents/availability';
 import { runExplainForJob } from '@/lib/agents/explain';
 
 export async function POST(
@@ -21,6 +22,16 @@ export async function POST(
 
     return NextResponse.json(result, { status: 200 });
   } catch (err) {
+    if (err instanceof FireDrillAgentDisabledError) {
+      return NextResponse.json(
+        {
+          errorCode: "FIRE_DRILL_MODE",
+          message: "Explain/Confidence agents are disabled in Fire Drill mode.",
+        },
+        { status: 503 },
+      );
+    }
+
     console.error('EXPLAIN API error:', err);
     return NextResponse.json(
       { error: 'Internal server error' },

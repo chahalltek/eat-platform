@@ -1,3 +1,8 @@
+<<<<<<< ours
+=======
+import { TS_CONFIG } from "@/config/ts";
+import { assertAgentEnabled } from "@/lib/agents/availability";
+>>>>>>> theirs
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { rankCandidates } from "@/lib/agents/ranker";
@@ -71,6 +76,7 @@ export async function runShortlist(
   retryMetadata?: AgentRetryMetadata,
 ): Promise<RunShortlistResult & { agentRunId: string }> {
   const user = await getCurrentUser();
+  await assertAgentEnabled("shortlistEnabled", "Shortlist agent is disabled in Fire Drill mode");
 
   if (!user) {
     throw new Error("Current user is required to run shortlist agent");

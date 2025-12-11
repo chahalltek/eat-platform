@@ -100,7 +100,6 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
     sourceTag: sourceTag ?? null,
     input: inputSnapshot,
     retryPayload: retryPayloadValue ?? Prisma.JsonNull,
-    rawResumeText,
     inputSnapshot,
     status: 'RUNNING',
     startedAt,

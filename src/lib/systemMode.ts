@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { Prisma } from '@prisma/client';
 
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
@@ -120,4 +121,34 @@ export async function getSystemMode(tenantId?: string): Promise<SystemModeState>
     guardrailsPreset,
     agentEnablement,
   };
+=======
+export type SystemMode = "NORMAL" | "FIRE_DRILL";
+
+function normalizeFlag(value: string | undefined | null) {
+  return value?.trim().toUpperCase() ?? "";
+}
+
+export function getSystemMode(): SystemMode {
+  const override = normalizeFlag(process.env.FIRE_DRILL_MODE);
+
+  if (override === "FIRE_DRILL" || override === "TRUE" || override === "1") {
+    return "FIRE_DRILL";
+  }
+
+  if (override === "NORMAL" || override === "FALSE" || override === "0") {
+    return "NORMAL";
+  }
+
+  // If we do not have an LLM key configured, drop into Fire Drill mode so we
+  // rely on deterministic fallbacks instead of attempting remote calls.
+  if (!process.env.OPENAI_API_KEY) {
+    return "FIRE_DRILL";
+  }
+
+  return "NORMAL";
+}
+
+export function isFireDrillMode() {
+  return getSystemMode() === "FIRE_DRILL";
+>>>>>>> theirs
 }

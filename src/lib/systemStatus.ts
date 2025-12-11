@@ -4,12 +4,14 @@ import { FEATURE_FLAGS, isFeatureEnabled } from './featureFlags';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 import { loadTenantGuardrailConfig } from './guardrails/config';
 import { getCurrentTenantId } from './tenant';
+import { getSystemMode, type SystemMode } from './systemMode';
 
 export type SubsystemKey = 'agents' | 'scoring' | 'database' | 'tenantConfig' | 'guardrails';
 export type SubsystemState = 'healthy' | 'warning' | 'error' | 'unknown';
 
 export type SystemExecutionState = {
   state: 'operational' | 'idle' | 'degraded';
+  mode: SystemMode;
   activeRuns: number;
   latestRunAt: string | null;
   latestSuccessAt: string | null;
@@ -172,6 +174,7 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
 
     return {
       state,
+      mode: getSystemMode(),
       activeRuns,
       latestRunAt: latestRun?.startedAt.toISOString() ?? null,
       latestSuccessAt: latestSuccess?.startedAt.toISOString() ?? null,
@@ -189,6 +192,7 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
 
     return {
       state: 'degraded',
+      mode: getSystemMode(),
       activeRuns: 0,
       latestRunAt: null,
       latestSuccessAt: null,

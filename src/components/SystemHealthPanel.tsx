@@ -42,6 +42,7 @@ export function SystemHealthPanel({ initialStatus, initialExecutionState }: Prop
       });
       setExecutionState({
         state: "degraded",
+        mode: "NORMAL",
         activeRuns: 0,
         latestRunAt: null,
         latestSuccessAt: null,

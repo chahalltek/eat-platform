@@ -9,6 +9,7 @@ vi.mock("@/lib/killSwitch", () => ({
 
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),
+  listAgentKillSwitches: vi.fn(async () => []),
   AGENT_KILL_SWITCHES: { MATCHER: "EAT-TS.MATCHER", RANKER: "EAT-TS.RANKER" },
 }));
 
@@ -90,6 +91,7 @@ vi.mock("@/lib/prisma", () => {
 describe("shortlist agent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.FIRE_DRILL_MODE = "normal";
   });
 
   it("ranks candidate matches and records shortlist decisions", async () => {

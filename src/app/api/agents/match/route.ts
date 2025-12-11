@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type { Prisma } from "@prisma/client";
 
+import { getAgentAvailability } from "@/lib/agents/availability";
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
@@ -32,7 +33,12 @@ async function buildMatchExplanation(
   candidateName: string,
   candidateSummary: string | null,
   deterministicBreakdown: Record<string, unknown>,
+  llmEnabled: boolean,
 ) {
+  if (!llmEnabled) {
+    return "Fire Drill mode: using deterministic scoring";
+  }
+
   const systemPrompt =
     "You are a recruiting assistant. Given a job and candidate profile, explain why the candidate matches.";
   const userPrompt = `Job: ${jobTitle}\nDescription: ${jobDescription ?? "N/A"}\nCandidate: ${candidateName}\nSummary: ${candidateSummary ?? "N/A"}\nDeterministic scores: ${JSON.stringify(
@@ -73,8 +79,15 @@ export async function POST(req: NextRequest) {
     return flagCheck;
   }
 
+<<<<<<< ours
   const tenantId = await getCurrentTenantId(req);
   const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER, tenantId);
+=======
+  const [availability, killSwitchResponse] = await Promise.all([
+    getAgentAvailability(),
+    enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER),
+  ]);
+>>>>>>> theirs
 
   if (killSwitchResponse) {
     return killSwitchResponse;
@@ -223,6 +236,7 @@ export async function POST(req: NextRequest) {
           candidate.fullName,
           candidate.summary ?? candidate.rawResumeText ?? null,
           breakdown,
+          availability.explainEnabled,
         );
 
         const existingResult = existingResultByCandidate.get(candidate.id);

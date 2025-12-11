@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { withAgentRun } from "@/lib/agents/agentRun";
+import { assertAgentEnabled } from "@/lib/agents/availability";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { prisma } from "@/lib/prisma";
@@ -24,6 +25,7 @@ export async function runConfidence({
   recruiterId,
 }: RunConfidenceInput, req?: NextRequest): Promise<RunConfidenceResult> {
   const tenantId = await getCurrentTenantId(req);
+  await assertAgentEnabled("confidenceEnabled", "Confidence agent is disabled in Fire Drill mode");
 
   const [result] = await withAgentRun<RunConfidenceResult>(
     {
