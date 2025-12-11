@@ -84,6 +84,7 @@ const dependencyDotStyles: Record<SubsystemState, string> = {
   unknown: "bg-zinc-400",
 };
 
+<<<<<<< ours
 const dependencyStatusTextStyles: Record<SubsystemState, string> = {
   healthy: "text-emerald-700 dark:text-emerald-200",
   warning: "text-amber-700 dark:text-amber-200",
@@ -97,6 +98,27 @@ const stateRailStyles: Record<BadgeState, string> = {
   warning: "from-amber-400 via-orange-300 to-amber-500 opacity-80",
   error: "from-red-500 via-rose-400 to-red-600 opacity-80",
   unknown: "from-zinc-400 via-slate-400 to-zinc-500 opacity-60",
+=======
+const heartbeatStyles: Record<
+  SystemExecutionState["state"],
+  { badge: string; dot: string; label: "LIVE" | "IDLE" | "DEGRADED" }
+> = {
+  operational: {
+    badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    dot: "bg-emerald-500",
+    label: "LIVE",
+  },
+  idle: {
+    badge: "border-zinc-200 bg-white text-zinc-700",
+    dot: "bg-zinc-400",
+    label: "IDLE",
+  },
+  degraded: {
+    badge: "border-rose-200 bg-rose-50 text-rose-700",
+    dot: "bg-rose-500",
+    label: "DEGRADED",
+  },
+>>>>>>> theirs
 };
 
 function formatStatusText(status: BadgeState) {
@@ -257,6 +279,7 @@ export default async function Home() {
   const links = buildLinks(metrics);
   const coreLinks = links.slice(0, 3);
   const dataLinks = links.slice(3);
+  const heartbeat = heartbeatStyles[executionState.state];
 
   const renderLinkCard = (link: HomeLink) => {
     const dependencyState = getDependencyState(link, systemStatus);
@@ -356,13 +379,27 @@ export default async function Home() {
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">EAT</p>
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
             </div>
-            <Link
-              href="/system-map"
-              className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg"
-            >
-              System Map
-            </Link>
+            <div className="flex items-center gap-2 self-start">
+              <div
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] shadow-sm ${heartbeat.badge}`}
+                title={`Current system state: ${heartbeat.label}`}
+                aria-label={`Current system state: ${heartbeat.label}`}
+              >
+                <span className={`h-2 w-2 rounded-full ${heartbeat.dot}`} aria-hidden />
+                <span>{heartbeat.label}</span>
+              </div>
+              <Link
+                href="/system-map"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg"
+              >
+                System Map
+              </Link>
+            </div>
           </div>
+          <p className="max-w-2xl text-base leading-relaxed text-zinc-600">
+            <span className="block">Real-time orchestration for intelligent hiring systems.</span>
+            <span className="block text-sm text-zinc-500">Agents, data, and decisioning in one control plane.</span>
+          </p>
           <p className="max-w-2xl text-lg text-zinc-600">
             UI blocks are turned off. Enable the UI Blocks flag to restore navigation and workflows.
           </p>
@@ -382,7 +419,8 @@ export default async function Home() {
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">EAT</p>
             <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EAT – Talent System (MVP)</h1>
             <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-              A calmer control plane for managing hiring agents, system health, and the data that powers them.
+              <span className="block">Real-time orchestration for intelligent hiring systems.</span>
+              <span className="block text-sm text-zinc-500 dark:text-zinc-400">Agents, data, and decisioning in one control plane.</span>
             </p>
             <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-300">
               <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Agents</span>
@@ -390,12 +428,22 @@ export default async function Home() {
               <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Data + Controls</span>
             </div>
           </div>
-          <Link
-            href="/system-map"
-            className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200 dark:hover:border-indigo-700"
-          >
-            System Map
-          </Link>
+          <div className="flex items-center gap-3 self-start">
+            <div
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] shadow-sm ${heartbeat.badge}`}
+              title={`Current system state: ${heartbeat.label}`}
+              aria-label={`Current system state: ${heartbeat.label}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${heartbeat.dot}`} aria-hidden />
+              <span>{heartbeat.label}</span>
+            </div>
+            <Link
+              href="/system-map"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200 dark:hover:border-indigo-700"
+            >
+              System Map
+            </Link>
+          </div>
         </div>
       </header>
 
