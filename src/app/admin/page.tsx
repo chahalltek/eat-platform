@@ -13,7 +13,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/user";
 import { isAdminRole } from "@/lib/auth/roles";
 import { getPlatformHealthSnapshot } from "@/lib/metrics/platformHealth";
-import { BrandMark } from "@/components/BrandMark";
+import { EteLogo } from "@/components/EteLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -125,10 +125,10 @@ export default async function AdminHealthPage() {
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-12 sm:px-10">
         <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-indigo-100 bg-white/80 p-4 shadow-sm dark:border-indigo-900/50 dark:bg-zinc-900/60">
-          <BrandMark withText />
+          <EteLogo variant="horizontal" />
           <div className="text-sm text-zinc-700 dark:text-zinc-300">
-            <p className="font-semibold text-zinc-900 dark:text-zinc-50">Admin controls</p>
-            <p className="text-xs text-indigo-700 dark:text-indigo-200">EDGE Talent Engine</p>
+            <p className="font-semibold text-zinc-900 dark:text-zinc-50">EDGE Talent Engine admin</p>
+            <p className="text-xs text-indigo-700 dark:text-indigo-200">Platform controls</p>
           </div>
         </div>
 

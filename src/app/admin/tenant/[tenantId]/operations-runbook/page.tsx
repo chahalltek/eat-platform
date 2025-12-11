@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ExclamationTriangleIcon, ShieldExclamationIcon } from "@heroicons/react/24/solid";
 import { ArrowTopRightOnSquareIcon, FireIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 
+import { EteLogo } from "@/components/EteLogo";
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
 import { requireTenantAdmin } from "@/lib/auth/tenantAdmin";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -242,12 +243,16 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
     <main className="min-h-screen bg-zinc-50 px-6 py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin</p>
-            <h1 className="text-3xl font-semibold text-zinc-900">ETE Operations Runbook</h1>
-            <p className="max-w-2xl text-sm text-zinc-600">
-              Flight manual for tenant {tenantId} covering system modes, guardrails, agent kill switches, and Fire Drill playbook.
-            </p>
+          <div className="space-y-3">
+            <EteLogo variant="horizontal" />
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin</p>
+              <h1 className="text-3xl font-semibold text-zinc-900">EDGE Talent Engine Operations Runbook</h1>
+              <p className="max-w-2xl text-sm text-zinc-600">
+                Flight manual for tenant {tenantId} covering system modes, guardrails, agent kill switches, and Fire Drill
+                playbook.
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap gap-3 text-sm">
             <Link
@@ -269,8 +274,8 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
           <div className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-zinc-900">Overview</h2>
             <p className="text-sm text-zinc-700">
-              This Operations Runbook explains how ETE behaves under different System Modes, how guardrails are applied, how agent
-              kill switches work, and how to activate Fire Drill mode during instability.
+              This Operations Runbook explains how EDGE Talent Engine behaves under different System Modes, how guardrails are
+              applied, how agent kill switches work, and how to activate Fire Drill mode during instability.
             </p>
             <div className="grid gap-3 text-sm text-zinc-700 md:grid-cols-3">
               <div className="rounded-xl bg-zinc-50 p-4">Modes determine the personality of the system.</div>
