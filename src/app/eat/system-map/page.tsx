@@ -79,7 +79,7 @@ const flowSequences = [
     label: "Guardrails",
     steps: ["Tenant Config", "Scoring engine", "Confidence / Explain"],
   },
-] as const;
+] satisfies { label: string; steps: readonly string[]; note?: string }[];
 
 const statusLegend = [
   { status: "healthy" as const, label: "Healthy" },
