@@ -8,6 +8,7 @@ import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from "@/lib/killSwitch";
 import { prisma } from "@/lib/prisma";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
+import { loadTenantConfig } from "@/lib/config/tenantConfig";
 
 export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   assertKillSwitchDisarmed(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
@@ -92,6 +93,11 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
     latestMatchActivity,
   });
 
+  const tenantConfig = await loadTenantConfig(jobReq.tenantId);
+  const matcherConfig = tenantConfig.scoring.matcher;
+  const confidenceConfig = tenantConfig.scoring.confidence;
+  const explainEnabled = tenantConfig.msa?.matcher?.explain !== false;
+
   for (const candidate of candidates) {
     const candidateSignals = computeCandidateSignalScore({
       candidate,
@@ -101,10 +107,15 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
     const matchScore = computeMatchScore(
       { candidate, jobReq },
-      { candidateSignals, jobFreshnessScore: jobFreshness.score },
+      {
+        candidateSignals,
+        jobFreshnessScore: jobFreshness.score,
+        matcherConfig,
+        explain: explainEnabled,
+      },
     );
 
-    const confidence = computeMatchConfidence({ candidate, jobReq });
+    const confidence = computeMatchConfidence({ candidate, jobReq }, confidenceConfig);
     const candidateSignalBreakdown = {
       ...(matchScore.candidateSignalBreakdown ?? {}),
       confidence,

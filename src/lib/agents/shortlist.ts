@@ -1,10 +1,10 @@
-import { TS_CONFIG } from "@/config/ts";
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { rankCandidates } from "@/lib/agents/ranker";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { setShortlistState } from "@/lib/matching/shortlist";
+import { loadTenantConfig } from "@/lib/config/tenantConfig";
 
 export type RunShortlistInput = {
   jobId: string;
@@ -71,14 +71,13 @@ export async function runShortlist(
 
   // User identity is derived from auth; recruiterId in payload is ignored.
   const clock = deps.now ?? (() => new Date());
-  const { shortlist } = TS_CONFIG;
-  const effectiveShortlistLimit = shortlistLimit ?? shortlist.topN;
+  const requestedShortlistLimit = shortlistLimit;
 
   const [result, agentRunId] = await withAgentRun<RunShortlistResult>(
     {
       agentName: AGENT_KILL_SWITCHES.RANKER,
       recruiterId: user.id,
-      inputSnapshot: { jobId, shortlistLimit: effectiveShortlistLimit },
+      inputSnapshot: { jobId, shortlistLimit: requestedShortlistLimit ?? null },
       sourceType: "agent",
       sourceTag: "shortlist",
       ...retryMetadata,
@@ -103,11 +102,18 @@ export async function runShortlist(
         return { result: { jobId, shortlisted: [], totalMatches: 0 }, outputSnapshot: { shortlisted: [], rankedOrder: [] } };
       }
 
+      const tenantConfig = await loadTenantConfig(job.tenantId);
+      const shortlistConfig = tenantConfig.shortlist;
+      const effectiveShortlistLimit = requestedShortlistLimit ?? shortlistConfig.topN;
+
       const eligibleMatches = job.matches.filter((match) => {
         const matchScore = clampScore(match.matchScore);
         const confidenceScore = clampScore(match.confidence);
 
-        return matchScore >= shortlist.minMatchScore && confidenceScore >= shortlist.minConfidence;
+        return (
+          matchScore >= shortlistConfig.minMatchScore &&
+          confidenceScore >= shortlistConfig.minConfidence
+        );
       });
 
       const now = clock();

@@ -65,6 +65,8 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 
   const startedAt = new Date();
 
+  const rawResumeText = null;
+
   const user = recruiterId != null ? await validateRecruiter(recruiterId) : null;
   const tenantId = user?.tenantId ?? DEFAULT_TENANT_ID;
 

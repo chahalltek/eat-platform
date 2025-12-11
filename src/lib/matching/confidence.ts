@@ -1,5 +1,6 @@
 import { Candidate, CandidateSkill, JobReq, JobSkill } from "@prisma/client";
 
+import { DEFAULT_TENANT_CONFIG } from "@/lib/config/tenantConfig";
 import { computeConfidenceScore, ConfidenceBreakdown } from "@/lib/confidence/scoring";
 
 export type MatchConfidenceCategory = "HIGH" | "MEDIUM" | "LOW";
@@ -16,9 +17,12 @@ type MatchConfidenceContext = {
   jobReq: JobReq & { skills: JobSkill[] };
 };
 
-const determineCategory = (score: number): MatchConfidenceCategory => {
-  if (score >= 75) return "HIGH";
-  if (score >= 50) return "MEDIUM";
+const determineCategory = (
+  score: number,
+  thresholds = DEFAULT_TENANT_CONFIG.scoring.confidence.thresholds,
+): MatchConfidenceCategory => {
+  if (score >= thresholds.high) return "HIGH";
+  if (score >= thresholds.medium) return "MEDIUM";
   return "LOW";
 };
 
@@ -64,10 +68,13 @@ const buildReasons = (
   return reasons;
 };
 
-export function computeMatchConfidence({
-  candidate,
-  jobReq,
-}: MatchConfidenceContext): MatchConfidence {
+export function computeMatchConfidence(
+  {
+    candidate,
+    jobReq,
+  }: MatchConfidenceContext,
+  config = DEFAULT_TENANT_CONFIG.scoring.confidence,
+): MatchConfidence {
   const jobSkills = jobReq.skills.map((skill) => skill.normalizedName || skill.name);
   const candidateSkills = candidate.skills.map((skill) => skill.normalizedName || skill.name);
   const hasTitle = Boolean(candidate.currentTitle?.trim());
@@ -82,7 +89,8 @@ export function computeMatchConfidence({
     createdAt,
   });
 
-  const category = determineCategory(breakdown.total);
+  const thresholds = config.thresholds ?? DEFAULT_TENANT_CONFIG.scoring.confidence.thresholds;
+  const category = determineCategory(breakdown.total >= 0 ? breakdown.total : 0, thresholds);
   const reasons = buildReasons({ candidate, jobReq }, breakdown, category);
 
   return { score: breakdown.total, category, reasons, breakdown };

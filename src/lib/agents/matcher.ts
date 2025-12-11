@@ -4,8 +4,8 @@ import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { matchJobToAllCandidates } from "@/lib/matching/batch";
 import { getCurrentUser } from "@/lib/auth";
-import { TS_CONFIG } from "@/config/ts";
 import { MatchConfidence } from "@/lib/matching/confidence";
+import { loadTenantConfig } from "@/lib/config/tenantConfig";
 
 export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
 
@@ -72,8 +72,6 @@ export async function runMatcherAgent(
 
   // User identity is derived from auth; recruiterId in payload is ignored.
   const explainMatch = deps.explainMatch ?? generateMatchExplanation;
-  const { matcher } = TS_CONFIG;
-
   return withAgentRun<MatcherAgentResult>(
     {
       agentName: MATCHER_AGENT_NAME,
@@ -85,9 +83,12 @@ export async function runMatcherAgent(
     },
     async () => {
       const matches = await matchJobToAllCandidates(jobReqId, limit);
+      const tenantId = matches[0]?.tenantId ?? null;
+      const tenantConfig = await loadTenantConfig(tenantId);
+      const minScore = tenantConfig.scoring.matcher.minScore;
       const enrichedMatches = await Promise.all(matches.map((match) => explainMatch(match)));
 
-      const filteredMatches = enrichedMatches.filter((match) => match.score >= matcher.minScore);
+      const filteredMatches = enrichedMatches.filter((match) => match.score >= minScore);
 
       const sortedMatches = [...filteredMatches].sort((a, b) => b.score - a.score);
 

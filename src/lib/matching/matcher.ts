@@ -5,6 +5,7 @@ import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { prisma } from "@/lib/prisma";
 import { normalizeWeights } from "@/lib/matching/scoringConfig";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
+import { loadTenantConfig } from "@/lib/config/tenantConfig";
 
 type PrismaJobClient = Pick<typeof prisma, "jobReq">;
 type PrismaMatchClient = Pick<typeof prisma, "matchResult">;
@@ -94,6 +95,11 @@ export async function matchCandidateToJob({
 }: MatchCandidateInput) {
   const jobCandidate = null; // this helper is stateless and does not fetch jobCandidate records
 
+  const tenantConfig = await loadTenantConfig(jobReq.tenantId);
+  const matcherConfig = tenantConfig.scoring.matcher;
+  const confidenceConfig = tenantConfig.scoring.confidence;
+  const explainEnabled = tenantConfig.msa?.matcher?.explain !== false;
+
   const candidateSignals = computeCandidateSignalScore({
     candidate,
     jobCandidate,
@@ -102,10 +108,10 @@ export async function matchCandidateToJob({
 
   const matchScore = computeMatchScore(
     { candidate, jobReq },
-    { candidateSignals },
+    { candidateSignals, matcherConfig, explain: explainEnabled },
   );
 
-  const confidence = computeMatchConfidence({ candidate, jobReq });
+  const confidence = computeMatchConfidence({ candidate, jobReq }, confidenceConfig);
 
   const candidateSignalBreakdown = {
     ...(matchScore.candidateSignalBreakdown ?? {}),

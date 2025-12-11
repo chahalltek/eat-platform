@@ -1,6 +1,6 @@
-import { TS_CONFIG } from "@/config/ts";
+import { DEFAULT_TENANT_CONFIG } from "@/lib/config/tenantConfig";
 
-export type MatchScoringWeights = typeof TS_CONFIG.matcher.weight;
+export type MatchScoringWeights = typeof DEFAULT_TENANT_CONFIG.scoring.matcher.weights;
 
 export type CandidateSignalWeights = {
   recentActivity: number;
@@ -15,7 +15,7 @@ export type CandidateConfidenceWeights = {
   unknownFields: number;
 };
 
-export const MATCH_SCORING_WEIGHTS: MatchScoringWeights = TS_CONFIG.matcher.weight;
+export const MATCH_SCORING_WEIGHTS: MatchScoringWeights = DEFAULT_TENANT_CONFIG.scoring.matcher.weights;
 
 export const CANDIDATE_SIGNAL_WEIGHTS: CandidateSignalWeights = {
   recentActivity: 0.4,

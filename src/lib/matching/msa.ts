@@ -2,7 +2,7 @@ import { Candidate, CandidateSkill, JobReq, JobSkill } from '@prisma/client';
 
 import { CandidateSignalResult } from '@/lib/matching/candidateSignals';
 import { MatchExplanation, SkillOverlap, makeDeterministicExplanation } from '@/lib/matching/explanation';
-import { MATCH_SCORING_WEIGHTS, normalizeWeights } from '@/lib/matching/scoringConfig';
+import { MATCH_SCORING_WEIGHTS, type MatchScoringWeights, normalizeWeights } from '@/lib/matching/scoringConfig';
 
 export type MatchContext = {
   candidate: Candidate & { skills: CandidateSkill[] };
@@ -21,6 +21,11 @@ export type MatchScore = {
   explanation: MatchExplanation;
 };
 
+export type MatcherScoringConfig = {
+  mode: 'simple' | 'weighted' | 'mixed';
+  weights: MatchScoringWeights;
+};
+
 const normalize = (value?: string | null): string => value?.trim().toLowerCase() ?? '';
 
 const getSkillKey = (skill: CandidateSkill | JobSkill): string => {
@@ -33,7 +38,12 @@ const getSkillKey = (skill: CandidateSkill | JobSkill): string => {
 
 export function computeMatchScore(
   ctx: MatchContext,
-  options?: { jobFreshnessScore?: number; candidateSignals?: CandidateSignalResult },
+  options?: {
+    jobFreshnessScore?: number;
+    candidateSignals?: CandidateSignalResult;
+    matcherConfig?: MatcherScoringConfig;
+    explain?: boolean;
+  },
 ): MatchScore {
   const reasons: string[] = [];
   const riskAreas: string[] = [];
@@ -153,16 +163,30 @@ export function computeMatchScore(
     riskAreas.push(reason);
   }
 
-  const normalizedWeights = normalizeWeights(MATCH_SCORING_WEIGHTS);
+  const matcherWeights = (() => {
+    if (options?.matcherConfig?.mode === 'simple') {
+      return { skills: 1, seniority: 0, location: 0, candidateSignals: 0 } as const;
+    }
+
+    if (options?.matcherConfig?.mode === 'mixed') {
+      return normalizeWeights(options.matcherConfig.weights);
+    }
+
+    if (options?.matcherConfig) {
+      return normalizeWeights(options.matcherConfig.weights);
+    }
+
+    return normalizeWeights(MATCH_SCORING_WEIGHTS);
+  })();
 
   const candidateSignals = options?.candidateSignals;
   const candidateSignalScore = candidateSignals?.score ?? 50;
 
   const baseScore = Math.round(
-    skillScore * normalizedWeights.skills +
-      seniorityScore * normalizedWeights.seniority +
-      locationScore * normalizedWeights.location +
-      candidateSignalScore * normalizedWeights.candidateSignals,
+    skillScore * matcherWeights.skills +
+      seniorityScore * matcherWeights.seniority +
+      locationScore * matcherWeights.location +
+      candidateSignalScore * matcherWeights.candidateSignals,
   );
 
   if (candidateSignals) {
@@ -203,7 +227,16 @@ export function computeMatchScore(
     ].join(' '),
   };
 
-  const explanation = makeDeterministicExplanation(rawExplanation);
+  const explanation = options?.explain === false
+    ? makeDeterministicExplanation({
+        topReasons: [],
+        allReasons: [],
+        skillOverlapMap: [],
+        riskAreas: [],
+        missingSkills: [],
+        exportableText: 'Explanation disabled by tenant configuration.',
+      })
+    : makeDeterministicExplanation(rawExplanation);
 
   return {
     score,
@@ -213,7 +246,7 @@ export function computeMatchScore(
     locationScore,
     candidateSignalScore,
     candidateSignalBreakdown: candidateSignals?.breakdown,
-    reasons: explanation.allReasons,
+    reasons: options?.explain === false ? [] : explanation.allReasons,
     explanation,
   };
 }
