@@ -146,10 +146,10 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
       },
     },
     {
-      label: "Feature flags",
+      label: "Admin",
       cta: "Configure",
       href: "/admin/feature-flags",
-      description: "Admin feature toggles",
+      description: "Feature Flags, Test Panel, and MVP Test Plan",
       dependency: { subsystem: "tenantConfig" },
     },
   ];
