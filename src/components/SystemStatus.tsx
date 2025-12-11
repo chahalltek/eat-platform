@@ -1,6 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  QuestionMarkCircleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/solid";
 
 import { StatusPill, type StatusPillStatus } from "@/components/StatusPill";
 import type {
@@ -50,6 +56,46 @@ function toStatusPill(status: SubsystemState): StatusPillStatus {
     case "unknown":
     default:
       return "unknown";
+  }
+}
+
+function statusToneClasses(status: SubsystemState) {
+  switch (status) {
+    case "healthy":
+      return {
+        container: "border-emerald-200 bg-emerald-50/80",
+        iconColor: "text-emerald-600",
+      };
+    case "warning":
+      return {
+        container: "border-amber-200 bg-amber-50/80",
+        iconColor: "text-amber-600",
+      };
+    case "error":
+      return {
+        container: "border-rose-200 bg-rose-50/80",
+        iconColor: "text-rose-600",
+      };
+    case "unknown":
+    default:
+      return {
+        container: "border-slate-200 bg-slate-50",
+        iconColor: "text-slate-500",
+      };
+  }
+}
+
+function statusIcon(status: SubsystemState) {
+  switch (status) {
+    case "healthy":
+      return CheckCircleIcon;
+    case "warning":
+      return ExclamationTriangleIcon;
+    case "error":
+      return XCircleIcon;
+    case "unknown":
+    default:
+      return QuestionMarkCircleIcon;
   }
 }
 
@@ -106,25 +152,40 @@ export function SystemStatus({ statusMap, executionState, onRefresh, isRefreshin
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         {(Object.keys(statusLabels) as SubsystemKey[]).map((key, index) => {
           const entry = statusMap[key];
           const status = entry?.status ?? "unknown";
           const description = entry?.detail ?? statusDescriptions[key];
+          const tone = statusToneClasses(status);
+          const Icon = statusIcon(status);
 
           return (
             <div
               key={key}
-              className={`flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 ${
+              className={`flex gap-3 rounded-xl border p-4 shadow-sm ${tone.container} ${
                 shouldPulse ? "telemetry-pulse" : ""
               }`}
               style={shouldPulse ? { animationDelay: `${index * 80}ms` } : undefined}
             >
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-slate-900">{statusLabels[key]}</p>
-                <p className="text-xs text-slate-600">{description}</p>
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-sm font-semibold shadow-sm ${tone.iconColor}`}
+                aria-hidden
+              >
+                <Icon className="h-5 w-5" />
               </div>
-              <StatusPill status={toStatusPill(status)} label={formatStatusText(status)} />
+
+              <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-1">
+                  <p className="text-base font-semibold text-slate-900">{statusLabels[key]}</p>
+                  <p className="text-sm text-slate-700">{description}</p>
+                </div>
+
+                <div className="flex items-center gap-3 self-start rounded-lg bg-white/80 px-3 py-2 shadow-inner md:self-center">
+                  <p className="text-sm font-semibold text-slate-800">{formatStatusText(status)}</p>
+                  <StatusPill status={toStatusPill(status)} label={formatStatusText(status)} />
+                </div>
+              </div>
             </div>
           );
         })}

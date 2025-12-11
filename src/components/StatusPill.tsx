@@ -86,7 +86,7 @@ export function StatusPill({ status, label }: { status: StatusPillStatus; label?
 
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${toneStyles[tone]} ${
+      className={`inline-flex items-center gap-2.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold ${toneStyles[tone]} ${
         isAnimating ? "status-change-animate" : ""
       }`}
       style={{
@@ -96,7 +96,7 @@ export function StatusPill({ status, label }: { status: StatusPillStatus; label?
       aria-live="polite"
       aria-label={`${displayLabel} status`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full bg-current ${isAnimating ? "status-dot-animate" : ""}`} aria-hidden />
+      <span className={`h-2 w-2 rounded-full bg-current ${isAnimating ? "status-dot-animate" : ""}`} aria-hidden />
       <span className="whitespace-nowrap">{displayLabel}</span>
     </span>
   );
