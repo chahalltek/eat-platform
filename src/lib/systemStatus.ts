@@ -160,7 +160,11 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
       failureCountLast24h: recentFailureCount,
     };
   } catch (error) {
-    console.error('[system-execution] Unable to compute execution state', error);
+    if (isPrismaUnavailableError(error)) {
+      console.error('[system-execution] Database unavailable; returning degraded execution state');
+    } else {
+      console.error('[system-execution] Unable to compute execution state', error);
+    }
 
     return {
       state: 'degraded',

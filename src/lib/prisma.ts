@@ -117,7 +117,18 @@ const prismaClient =
 const tableAvailabilityCache = new Map<string, boolean>();
 
 export function isPrismaUnavailableError(error: unknown) {
-  return error instanceof Prisma.PrismaClientInitializationError;
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    return true;
+  }
+
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === 'P1001' || error.code === 'P1002')
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 export async function isTableAvailable(tableName: string) {
