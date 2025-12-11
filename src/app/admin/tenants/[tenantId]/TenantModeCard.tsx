@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { TenantMode } from "@prisma/client";
+import type { SystemModeName } from "@/lib/modes/systemModes";
 
-const MODE_OPTIONS: { value: TenantMode; label: string; description: string; accent: string }[] = [
-  { value: "SANDBOX", label: "Sandbox", description: "Safe defaults for testing and integration", accent: "bg-blue-100 text-blue-800" },
-  { value: "PILOT", label: "Pilot", description: "Limited rollout with human review", accent: "bg-indigo-100 text-indigo-800" },
-  { value: "PRODUCTION", label: "Production", description: "Full protections and live automations", accent: "bg-emerald-100 text-emerald-800" },
+const MODE_OPTIONS: { value: SystemModeName; label: string; description: string; accent: string }[] = [
+  { value: "sandbox", label: "Sandbox", description: "Safe defaults for testing and integration", accent: "bg-blue-100 text-blue-800" },
+  { value: "pilot", label: "Pilot", description: "Limited rollout with human review", accent: "bg-indigo-100 text-indigo-800" },
+  { value: "production", label: "Production", description: "Full protections and live automations", accent: "bg-emerald-100 text-emerald-800" },
   {
-    value: "FIRE_DRILL",
+    value: "fire_drill",
     label: "Fire Drill",
     description: "Pause non-essential agents and tighten guardrails",
     accent: "bg-amber-100 text-amber-900",
@@ -17,19 +17,19 @@ const MODE_OPTIONS: { value: TenantMode; label: string; description: string; acc
 
 type TenantModeCardProps = {
   tenantId: string;
-  initialMode: TenantMode;
+  initialMode: SystemModeName;
 };
 
 export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
-  const [mode, setMode] = useState<TenantMode>(initialMode);
-  const [pendingMode, setPendingMode] = useState<TenantMode | null>(null);
+  const [mode, setMode] = useState<SystemModeName>(initialMode);
+  const [pendingMode, setPendingMode] = useState<SystemModeName | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const modeLabel = useMemo(() => MODE_OPTIONS.find((option) => option.value === mode)?.label ?? mode, [mode]);
 
-  async function persistMode(nextMode: TenantMode) {
+  async function persistMode(nextMode: SystemModeName) {
     setPendingMode(nextMode);
     setError(null);
     setSuccessMessage(null);
@@ -59,10 +59,10 @@ export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
     }
   }
 
-  function handleSelect(nextMode: TenantMode) {
+  function handleSelect(nextMode: SystemModeName) {
     if (nextMode === mode) return;
 
-    if (nextMode === "FIRE_DRILL") {
+    if (nextMode === "fire_drill") {
       setConfirming(true);
       setPendingMode(nextMode);
       return;
@@ -71,7 +71,7 @@ export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
     void persistMode(nextMode);
   }
 
-  const isFireDrill = mode === "FIRE_DRILL";
+  const isFireDrill = mode === "fire_drill";
 
   return (
     <section className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
@@ -122,7 +122,7 @@ export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
                 ) : null}
               </div>
               <p className="mt-2 text-sm text-amber-900">{option.description}</p>
-              {option.value === "FIRE_DRILL" ? (
+              {option.value === "fire_drill" ? (
                 <p className="mt-1 text-xs font-semibold text-amber-800">
                   Pauses Explain + Confidence agents and locks conservative guardrails.
                 </p>

@@ -18,8 +18,16 @@ function daysAgo(days: number) {
 async function seedTenant() {
   return prisma.tenant.upsert({
     where: { id: DEFAULT_TENANT_ID },
-    update: { name: 'Default Tenant', status: 'active', mode: 'SANDBOX' },
-    create: { id: DEFAULT_TENANT_ID, name: 'Default Tenant', status: 'active', mode: 'SANDBOX' },
+    update: { name: 'Default Tenant', status: 'active' },
+    create: { id: DEFAULT_TENANT_ID, name: 'Default Tenant', status: 'active' },
+  });
+}
+
+async function seedTenantMode() {
+  await prisma.tenantMode.upsert({
+    where: { tenantId: DEFAULT_TENANT_ID },
+    update: { mode: 'pilot' },
+    create: { tenantId: DEFAULT_TENANT_ID, mode: 'pilot' },
   });
 }
 
@@ -428,6 +436,7 @@ async function seedMatchesAndOutreach() {
 
 async function main() {
   await seedTenant();
+  await seedTenantMode();
   await seedUsers();
   await seedTenantMemberships();
   await resetTenantData();

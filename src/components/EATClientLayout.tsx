@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import { PropsWithChildren } from "react";
-import type { TenantMode } from "@prisma/client";
 
 import { AgentFailureBanner } from "@/components/AgentFailureBanner";
 import { FireDrillBanner } from "@/components/FireDrillBanner";
 import { getAgentFailureCount } from "@/lib/agents/failures";
 import { getCurrentUser } from "@/lib/auth/user";
+import type { SystemModeName } from "@/lib/modes/systemModes";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { getTenantMode } from "@/lib/tenantMode";
 
@@ -22,7 +22,7 @@ export async function EATClientLayout({
   showFireDrillBanner = true,
 }: EATClientLayoutProps) {
   let failedRuns = 0;
-  let tenantMode: TenantMode | null = null;
+  let tenantMode: SystemModeName | null = null;
 
   try {
     const user = await getCurrentUser();
@@ -37,7 +37,7 @@ export async function EATClientLayout({
     console.error("[eat-client-layout] failed to resolve failure count", error);
   }
 
-  const isFireDrill = showFireDrillBanner && tenantMode === "FIRE_DRILL";
+  const isFireDrill = showFireDrillBanner && tenantMode === "fire_drill";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">

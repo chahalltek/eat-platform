@@ -12,13 +12,6 @@ enum TenantDeletionMode {
   HARD_DELETE
 }
 
-enum TenantMode {
-  PILOT
-  PRODUCTION
-  SANDBOX
-  FIRE_DRILL
-}
-
 enum AgentRunStatus {
   RUNNING
   SUCCESS
@@ -76,7 +69,6 @@ model Tenant {
   id                String             @id @default(cuid())
   name              String
   status            String             @default("active")
-  mode              TenantMode         @default(SANDBOX)
   dataRetentionDays Int?
   deletionMode      TenantDeletionMode @default(SOFT_DELETE)
   createdAt         DateTime           @default(now())
@@ -85,7 +77,11 @@ model Tenant {
   members       TenantUser[]
   subscriptions TenantSubscription[]
   config        TenantConfig?
+<<<<<<< ours
   systemMode    SystemMode?
+=======
+  tenantMode    TenantMode?
+>>>>>>> theirs
 
   @@unique([name])
 }
@@ -93,7 +89,10 @@ model Tenant {
 model TenantConfig {
   id        String   @id @default(cuid())
   tenantId  String   @unique
+<<<<<<< ours
   preset    String?
+=======
+>>>>>>> theirs
   scoring   Json
   explain   Json
   safety    Json
@@ -169,7 +168,11 @@ model FeatureFlag {
   @@index([tenantId])
 }
 
+<<<<<<< ours
 model SystemMode {
+=======
+model AgentFlag {
+>>>>>>> theirs
   id        String   @id @default(cuid())
   tenantId  String   @default("default-tenant")
   mode      String
@@ -183,6 +186,7 @@ model SystemMode {
   @@index([tenantId])
 }
 
+<<<<<<< ours
 model AgentFlag {
   id        String   @id @default(cuid())
   tenantId  String   @default("default-tenant")
@@ -195,6 +199,8 @@ model AgentFlag {
   @@index([tenantId])
 }
 
+=======
+>>>>>>> theirs
 model AgentKillSwitch {
   id        String    @id @default(cuid())
   agentName String    @unique
@@ -203,6 +209,16 @@ model AgentKillSwitch {
   latchedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+model TenantMode {
+  id        String   @id @default(cuid())
+  tenantId  String   @unique
+  mode      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 }
 
 model AgentPrompt {

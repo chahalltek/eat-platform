@@ -1,29 +1,22 @@
-import { TenantMode } from "@prisma/client";
-
-import { isPrismaUnavailableError, prisma } from "@/lib/prisma";
+import { loadTenantMode } from "@/lib/modes/loadTenantMode";
+import { type SystemModeName } from "@/lib/modes/systemModes";
+import { prisma } from "@/lib/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
 
-export async function getTenantMode(tenantId?: string): Promise<TenantMode | null> {
-  try {
-    const resolvedTenantId = tenantId ?? (await getCurrentTenantId());
-    const tenant = await prisma.tenant.findUnique({ where: { id: resolvedTenantId }, select: { mode: true } });
+export async function getTenantMode(tenantId?: string): Promise<SystemModeName> {
+  const resolvedTenantId = tenantId ?? (await getCurrentTenantId());
+  const loaded = await loadTenantMode(resolvedTenantId);
 
-    return tenant?.mode ?? null;
-  } catch (error) {
-    if (!isPrismaUnavailableError(error)) {
-      console.error("[tenant-mode] failed to load tenant mode", error);
-    }
-
-    return null;
-  }
+  return loaded.mode;
 }
 
-export async function updateTenantMode(tenantId: string, mode: TenantMode) {
-  const updated = await prisma.tenant.update({
-    where: { id: tenantId },
-    data: { mode },
-    select: { id: true, mode: true, name: true },
+export async function updateTenantMode(tenantId: string, mode: SystemModeName) {
+  const updated = await prisma.tenantMode.upsert({
+    where: { tenantId },
+    update: { mode },
+    create: { tenantId, mode },
+    include: { tenant: true },
   });
 
-  return updated;
+  return { id: updated.tenant.id, mode: updated.mode, name: updated.tenant.name };
 }

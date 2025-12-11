@@ -2,7 +2,8 @@
 
 import type React from "react";
 import { useState } from "react";
-import type { TenantMode } from "@prisma/client";
+
+import type { SystemModeName } from "@/lib/modes/systemModes";
 
 type PlanOption = { id: string; name: string };
 
@@ -10,7 +11,7 @@ type TenantPlanEditorProps = {
   tenantId: string;
   tenantName: string;
   status: string;
-  mode: TenantMode;
+  mode: SystemModeName;
   currentPlanId: string | null;
   currentPlanName: string | null;
   isTrial: boolean;

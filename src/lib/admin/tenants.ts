@@ -1,4 +1,6 @@
-import type { SubscriptionPlan, Tenant, TenantMode, TenantSubscription } from "@prisma/client";
+import type { SubscriptionPlan, Tenant, TenantSubscription } from "@prisma/client";
+
+import type { SystemModeName } from "@/lib/modes/systemModes";
 
 import { prisma } from "@/lib/prisma";
 
@@ -20,7 +22,7 @@ export type TenantPlanSummary = {
   id: string;
   name: string;
   status: string;
-  mode: TenantMode;
+  mode: SystemModeName;
   createdAt: Date;
   plan: { id: string; name: string } | null;
   isTrial: boolean;
@@ -32,7 +34,10 @@ export type TenantPlanDetail = {
   plans: SubscriptionPlan[];
 };
 
-type TenantWithSubscription = Tenant & { subscriptions: (TenantSubscription & { plan: SubscriptionPlan })[] };
+type TenantWithSubscription = Tenant & {
+  tenantMode: { mode: string } | null;
+  subscriptions: (TenantSubscription & { plan: SubscriptionPlan })[];
+};
 
 function mapTenantSummary(tenant: TenantWithSubscription): TenantPlanSummary {
   const active = tenant.subscriptions[0];
@@ -41,7 +46,7 @@ function mapTenantSummary(tenant: TenantWithSubscription): TenantPlanSummary {
     id: tenant.id,
     name: tenant.name,
     status: tenant.status,
-    mode: tenant.mode,
+    mode: (tenant.tenantMode?.mode as SystemModeName | undefined) ?? "pilot",
     createdAt: tenant.createdAt,
     plan: active ? { id: active.plan.id, name: active.plan.name } : null,
     isTrial: active?.isTrial ?? false,
@@ -62,6 +67,7 @@ export async function listTenantsWithPlans(): Promise<TenantPlanSummary[]> {
   const tenants = await prisma.tenant.findMany({
     orderBy: { createdAt: "desc" },
     include: {
+      tenantMode: true,
       subscriptions: {
         where: activeSubscriptionWhere(now),
         orderBy: { startAt: "desc" },
@@ -80,6 +86,7 @@ export async function getTenantPlanDetail(tenantId: string): Promise<TenantPlanD
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
     include: {
+      tenantMode: true,
       subscriptions: {
         where: activeSubscriptionWhere(now),
         orderBy: { startAt: "desc" },
@@ -112,6 +119,7 @@ export async function updateTenantPlan(
     prisma.tenant.findUnique({
       where: { id: tenantId },
       include: {
+        tenantMode: true,
         subscriptions: {
           where: activeSubscriptionWhere(now),
           orderBy: { startAt: "desc" },

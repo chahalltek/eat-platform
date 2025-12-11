@@ -1,18 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { TenantMode } from "@prisma/client";
 
 import { canManageTenants } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
+import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
 import { prisma } from "@/lib/prisma";
 import { getTenantMode, updateTenantMode } from "@/lib/tenantMode";
 
 export const dynamic = "force-dynamic";
 
-function parseMode(raw: unknown): TenantMode | null {
+const VALID_MODES = Object.keys(SYSTEM_MODES) as SystemModeName[];
+
+function parseMode(raw: unknown): SystemModeName | null {
   if (typeof raw !== "string") return null;
 
-  const normalized = raw.toUpperCase();
-  return (Object.values(TenantMode) as string[]).includes(normalized) ? (normalized as TenantMode) : null;
+  const normalized = raw.trim().toLowerCase();
+  return VALID_MODES.includes(normalized as SystemModeName)
+    ? (normalized as SystemModeName)
+    : null;
 }
 
 export async function GET(
@@ -26,15 +30,13 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const mode = await getTenantMode(tenantId);
+  const tenantExists = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
 
-  if (!mode) {
-    const tenantExists = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
-
-    if (!tenantExists) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
+  if (!tenantExists) {
+    return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
+
+  const mode = await getTenantMode(tenantId);
 
   return NextResponse.json({ tenantId, mode });
 }

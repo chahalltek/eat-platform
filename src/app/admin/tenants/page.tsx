@@ -40,7 +40,7 @@ export function TenantsTable({
               <td className="px-6 py-4 text-sm">
                 <span
                   className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                    tenant.mode === "FIRE_DRILL"
+                    tenant.mode === "fire_drill"
                       ? "bg-amber-100 text-amber-800 ring-1 ring-amber-500/40"
                       : "bg-blue-50 text-blue-700 ring-1 ring-blue-600/20"
                   }`}

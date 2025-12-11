@@ -5,6 +5,7 @@ import { ArrowTopRightOnSquareIcon, FireIcon, WrenchScrewdriverIcon } from "@her
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
 import { requireTenantAdmin } from "@/lib/auth/tenantAdmin";
 import { getCurrentUser } from "@/lib/auth/user";
+import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 
 export const dynamic = "force-dynamic";
 
@@ -150,11 +151,9 @@ type GuardrailSnapshot =
   | (typeof GUARDRAIL_PRESETS)[keyof typeof GUARDRAIL_PRESETS] & { source: GuardrailSource };
 
 async function getTenantMode(tenantId: string): Promise<RunbookMode> {
-  const normalized = tenantId.toLowerCase();
+  const resolved = await loadTenantMode(tenantId);
 
-  if (normalized.includes("sandbox")) return "sandbox";
-  if (normalized.includes("pilot")) return "pilot";
-  return "production";
+  return resolved.mode;
 }
 
 function resolveGuardrails(mode: RunbookMode): GuardrailSnapshot {
