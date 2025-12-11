@@ -17,6 +17,7 @@ type AgentRunInput = {
   sourceTag?: string | null;
   retryCount?: number;
   retryOfId?: string;
+  retryPayload?: Prisma.InputJsonValue | Prisma.JsonNullValueInput;
 };
 
 export type AgentRetryMetadata = Pick<AgentRunInput, 'retryCount' | 'retryOfId'>;
@@ -53,6 +54,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
     sourceTag,
     retryCount,
     retryOfId,
+    retryPayload,
   }: AgentRunInput,
   fn: () => Promise<AgentRunResult<T>>,
 ): Promise<[T, string]> {
@@ -66,12 +68,35 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 
   await assertTenantWithinLimits(tenantId, 'createAgentRun');
 
+  const retryPayloadValue: Prisma.InputJsonValue | Prisma.JsonNullValueInput | null = (() => {
+    const payload = retryPayload === undefined ? inputSnapshot : retryPayload;
+
+    if (payload === undefined || payload === null) return null;
+    if (payload === Prisma.JsonNull || payload === Prisma.DbNull) return payload;
+    return payload as Prisma.InputJsonValue;
+  })();
+
+  const rawResumeText = (() => {
+    if (
+      retryPayloadValue &&
+      retryPayloadValue !== Prisma.DbNull &&
+      typeof retryPayloadValue === 'object' &&
+      'rawResumeText' in retryPayloadValue
+    ) {
+      const value = (retryPayloadValue as Record<string, unknown>).rawResumeText;
+      return typeof value === 'string' ? value : null;
+    }
+    return null;
+  })();
+
   const agentRun = await createAgentRunLog(prisma, {
     agentName,
     tenantId,
     sourceType: sourceType ?? null,
     sourceTag: sourceTag ?? null,
     input: inputSnapshot,
+    retryPayload: retryPayloadValue ?? Prisma.JsonNull,
+    rawResumeText,
     inputSnapshot,
     status: 'RUNNING',
     startedAt,

@@ -23,6 +23,7 @@ export async function runRina(
   llmAdapter?: OpenAIAdapter,
 ): Promise<{ candidateId: string; agentRunId: string }> {
   const { rawResumeText, sourceType, sourceTag } = input;
+  const normalizedRawResumeText = rawResumeText.trim();
   const user = await getCurrentUser();
 
   if (!user) {
@@ -40,17 +41,22 @@ export async function runRina(
       agentName: 'EAT-TS.RINA',
       recruiterId: user.id,
       inputSnapshot: {
-        rawResumeText: rawResumeText.slice(0, 4000),
+        rawResumeText: normalizedRawResumeText.slice(0, 4000),
         sourceType,
         sourceTag,
         promptVersion: promptContract.version,
       },
       sourceType,
       sourceTag,
+      retryPayload: {
+        rawResumeText: normalizedRawResumeText,
+        sourceType,
+        sourceTag,
+      },
       ...retryMetadata,
     },
     async () => {
-      const userPrompt = `Resume:\n"""\n${rawResumeText}\n"""`;
+      const userPrompt = `Resume:\n"""\n${normalizedRawResumeText}\n"""`;
 
       const llmRaw = await callLLM({
         systemPrompt: promptContract.prompt,
@@ -79,7 +85,7 @@ export async function runRina(
           totalExperienceYears: parsed.totalExperienceYears ?? null,
           seniorityLevel: parsed.seniorityLevel ?? null,
           summary: parsed.summary ?? null,
-          rawResumeText,
+          rawResumeText: normalizedRawResumeText,
           sourceType: sourceType ?? null,
           sourceTag: sourceTag ?? null,
           parsingConfidence: parsed.parsingConfidence ?? null,

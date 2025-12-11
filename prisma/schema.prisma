@@ -377,6 +377,8 @@ model AgentRunLog {
   sourceType       String?
   sourceTag        String?
   input            Json
+  retryPayload     Json?
+  rawResumeText    String?
   output           Json?
   status           AgentRunStatus @default(RUNNING)
   errorMessage     String?

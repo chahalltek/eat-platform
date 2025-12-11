@@ -26,11 +26,15 @@ function LogDetail({
   onRetry,
   retrying,
   retryError,
+  retryNotice,
+  disableRetry,
 }: {
   log: SerializableLog | undefined;
   onRetry?: (log: SerializableLog) => void;
   retrying: boolean;
   retryError: string | null;
+  retryNotice: string | null;
+  disableRetry: boolean;
 }) {
   if (!log) {
     return (
@@ -51,7 +55,7 @@ function LogDetail({
               type="button"
               className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
               onClick={() => log && onRetry(log)}
-              disabled={retrying || log.status === "RUNNING"}
+              disabled={retrying || log.status === "RUNNING" || disableRetry}
             >
               {retrying ? "Retrying..." : "Retry run"}
             </button>
@@ -120,6 +124,10 @@ function LogDetail({
       {retryError ? (
         <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">{retryError}</div>
       ) : null}
+
+      {retryNotice ? (
+        <div className="rounded-lg bg-green-50 p-4 text-sm text-green-800">{retryNotice}</div>
+      ) : null}
     </div>
   );
 }
@@ -174,6 +182,8 @@ export default function AgentRunLogsView({
   const [selectedId, setSelectedId] = useState<string | undefined>(defaultSelectedId);
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [retryNotice, setRetryNotice] = useState<string | null>(null);
+  const [nonRetryableIds, setNonRetryableIds] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   const initialColumnFilters = useMemo<ColumnFiltersState>(() => {
@@ -185,21 +195,38 @@ export default function AgentRunLogsView({
 
   useEffect(() => {
     setRetryError(null);
+    setRetryNotice(null);
   }, [selectedId]);
 
   const handleRetry = useCallback(
     async (log: SerializableLog) => {
       setRetryError(null);
+      setRetryNotice(null);
       setRetryingId(log.id);
 
       try {
         const response = await fetch(`/api/agents/runs/${log.id}/retry`, { method: "POST" });
+        const payload = (await response.json().catch(() => ({}))) as { error?: string; errorCode?: string; message?: string };
 
         if (!response.ok) {
-          const payload = (await response.json().catch(() => ({}))) as { error?: string };
-          throw new Error(payload?.error || "Failed to retry run");
+          if (payload?.errorCode === "MISSING_RETRY_INPUT") {
+            const friendlyMessage =
+              "This run cannot be retried because the original resume text is missing. New runs will store this data for retry.";
+            setNonRetryableIds((prev) => {
+              const next = new Set(prev);
+              next.add(log.id);
+              return next;
+            });
+
+            throw new Error(
+              payload?.message ? `${payload.message} New runs will store this data for retry.` : friendlyMessage,
+            );
+          }
+
+          throw new Error(payload?.message || payload?.error || "Failed to retry run");
         }
 
+        setRetryNotice("Retry started – a new run has been created.");
         router.refresh();
       } catch (err) {
         setRetryError(err instanceof Error ? err.message : "Failed to retry run");
@@ -226,6 +253,8 @@ export default function AgentRunLogsView({
           onRetry={handleRetry}
           retrying={retryingId === selectedLog?.id}
           retryError={retryError}
+          retryNotice={retryNotice}
+          disableRetry={selectedLog ? nonRetryableIds.has(selectedLog.id) : false}
         />
       </div>
     </div>

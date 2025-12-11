@@ -40,6 +40,8 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       id: true,
       agentName: true,
       inputSnapshot: true,
+      retryPayload: true,
+      rawResumeText: true,
       retryOfId: true,
     },
   });
@@ -60,18 +62,25 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
   switch (run.agentName) {
     case 'EAT-TS.RINA': {
-      const input = run.inputSnapshot as Record<string, unknown> | null;
-      const rawResumeText = asString(input?.rawResumeText);
+      const retryPayload = (run.retryPayload ?? run.inputSnapshot) as Record<string, unknown> | null;
+      const rawResumeText = asString(run.rawResumeText) ?? asString(retryPayload?.rawResumeText);
 
       if (!rawResumeText) {
-        return NextResponse.json({ error: 'Missing rawResumeText for retry' }, { status: 400 });
+        console.warn('RINA retry failed: missing rawResumeText', { runId: run.id });
+        return NextResponse.json(
+          {
+            errorCode: 'MISSING_RETRY_INPUT',
+            message: 'This run cannot be retried because the original resume text is missing. New runs will store this data for retry.',
+          },
+          { status: 422 },
+        );
       }
 
       const result = await runRina(
         {
           rawResumeText,
-          sourceType: asString(input?.sourceType),
-          sourceTag: asString(input?.sourceTag),
+          sourceType: asString(retryPayload?.sourceType),
+          sourceTag: asString(retryPayload?.sourceTag),
         },
         retryMetadata,
       );
