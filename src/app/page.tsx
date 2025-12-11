@@ -334,17 +334,7 @@ export default async function Home() {
 
   return (
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="flex flex-col gap-10 pb-12">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <aside className="lg:w-72">
-          <div className="flex flex-col gap-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-4 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-            <BrandMark withText className="text-left" />
-            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              ETE Console
-              <span className="block text-xs text-indigo-600 dark:text-indigo-300">EDGE Talent Engine</span>
-            </p>
-          </div>
-        </aside>
-
+      <div className="flex flex-col gap-6">
         <div className="flex flex-1 flex-col gap-6">
           <header className="mt-2 overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
