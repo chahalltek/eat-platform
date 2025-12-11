@@ -16,9 +16,13 @@ export class TenantNotFoundError extends Error {
   }
 }
 
+export type GuardrailsPreset = "conservative" | "balanced" | "aggressive" | "custom" | null;
+
 export type TenantDiagnostics = {
   tenantId: string;
   sso: { configured: boolean; issuerUrl: string | null };
+  guardrailsPreset: GuardrailsPreset;
+  guardrailsRecommendation: string | null;
   plan: {
     id: string | null;
     name: string | null;
@@ -117,6 +121,33 @@ async function countAuditEvents(tenantId: string) {
   }
 }
 
+function normalizeGuardrailsPreset(plan: Awaited<ReturnType<typeof getTenantPlan>> | null): GuardrailsPreset {
+  const allowedPresets: Exclude<GuardrailsPreset, null>[] = ["conservative", "balanced", "aggressive", "custom"];
+  const preset = (plan?.plan?.limits as { guardrailsPreset?: unknown } | null)?.guardrailsPreset;
+
+  if (typeof preset !== "string") return null;
+
+  const normalized = preset.toLowerCase();
+
+  if (allowedPresets.includes(normalized as GuardrailsPreset)) {
+    return normalized as GuardrailsPreset;
+  }
+
+  return "custom";
+}
+
+function buildGuardrailsRecommendation(preset: GuardrailsPreset) {
+  if (!preset) {
+    return "Consider using a preset (balanced) to simplify tuning.";
+  }
+
+  if (preset === "custom") {
+    return 'Use a preset and treat "custom" as explicit overrides.';
+  }
+
+  return "Guardrails customized from default values.";
+}
+
 export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDiagnostics> {
   const [config, plan, tenant, auditEventCount, flags, guardrails] = await Promise.all([
     getAppConfig(),
@@ -131,9 +162,13 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     throw new TenantNotFoundError(tenantId);
   }
 
+  const guardrailsPreset = normalizeGuardrailsPreset(plan);
+
   return {
     tenantId,
     sso: { configured: isSsoConfigured(config), issuerUrl: config.SSO_ISSUER_URL ?? null },
+    guardrailsPreset,
+    guardrailsRecommendation: buildGuardrailsRecommendation(guardrailsPreset),
     plan: mapPlan(plan),
     auditLogging: { enabled: auditEventCount > 0, eventsRecorded: auditEventCount },
     dataExport: { enabled: true },

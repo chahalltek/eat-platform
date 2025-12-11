@@ -70,7 +70,11 @@ describe("buildTenantDiagnostics", () => {
       SSO_CLIENT_SECRET: "secret",
     });
     mockGetTenantPlan.mockResolvedValue({
-      plan: { id: "plan-basic", name: "Basic", limits: { rateLimits: { api: { dailyLimit: 200 } } } },
+      plan: {
+        id: "plan-basic",
+        name: "Basic",
+        limits: { rateLimits: { api: { dailyLimit: 200 } }, guardrailsPreset: "balanced" },
+      },
       subscription: { isTrial: true, endAt: new Date("2024-02-01T00:00:00.000Z") },
     });
   });
@@ -79,12 +83,14 @@ describe("buildTenantDiagnostics", () => {
     const diagnostics = await buildTenantDiagnostics("tenant-a");
 
     expect(diagnostics.sso.configured).toBe(true);
+    expect(diagnostics.guardrailsPreset).toBe("balanced");
+    expect(diagnostics.guardrailsRecommendation).toBe("Guardrails customized from default values.");
     expect(diagnostics.plan).toEqual({
       id: "plan-basic",
       name: "Basic",
       isTrial: true,
       trialEndsAt: "2024-02-01T00:00:00.000Z",
-      limits: { rateLimits: { api: { dailyLimit: 200 } } },
+      limits: { rateLimits: { api: { dailyLimit: 200 } }, guardrailsPreset: "balanced" },
     });
     expect(diagnostics.auditLogging).toEqual({ enabled: true, eventsRecorded: 5 });
     expect(diagnostics.dataExport.enabled).toBe(true);
@@ -135,6 +141,8 @@ describe("buildTenantDiagnostics", () => {
     const diagnostics = await buildTenantDiagnostics("tenant-b");
 
     expect(diagnostics.sso.configured).toBe(false);
+    expect(diagnostics.guardrailsPreset).toBeNull();
+    expect(diagnostics.guardrailsRecommendation).toBe("Consider using a preset (balanced) to simplify tuning.");
     expect(diagnostics.plan).toEqual({ id: null, name: null, isTrial: false, trialEndsAt: null, limits: null });
     expect(diagnostics.auditLogging).toEqual({ enabled: false, eventsRecorded: 0 });
     expect(diagnostics.retention).toEqual({ configured: false, days: null, mode: null });

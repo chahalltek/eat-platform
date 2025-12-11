@@ -5,7 +5,11 @@ import { CheckCircleIcon, ExclamationTriangleIcon, XCircleIcon } from "@heroicon
 
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
-import { buildTenantDiagnostics, TenantNotFoundError } from "@/lib/tenant/diagnostics";
+import {
+  buildTenantDiagnostics,
+  TenantNotFoundError,
+  type TenantDiagnostics,
+} from "@/lib/tenant/diagnostics";
 import { getTenantMembershipsForUser, resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { EATCard } from "@/components/EATCard";
@@ -62,6 +66,11 @@ function formatDate(value: string | null) {
   if (!value) return "—";
   const date = new Date(value);
   return new Intl.DateTimeFormat("en", { month: "short", day: "2-digit", year: "numeric" }).format(date);
+}
+
+function formatGuardrailsPreset(preset: TenantDiagnostics["guardrailsPreset"]) {
+  if (!preset) return "Custom (no preset selected)";
+  return preset[0].toUpperCase() + preset.slice(1);
 }
 
 export default async function TenantDiagnosticsPage({ params }: { params: { tenantId?: string } }) {
@@ -152,6 +161,21 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
                   ? `Issuer: ${diagnostics.sso.issuerUrl}`
                   : "SSO client ID, secret, or issuer URL missing."}
               </p>
+            </DiagnosticCard>
+
+            <DiagnosticCard
+              title="Guardrails"
+              status={diagnostics.guardrailsPreset ? "ok" : "warn"}
+              description="Active safety preset and recommendation for agent behavior."
+            >
+              <div className="space-y-1">
+                <p>Preset: {formatGuardrailsPreset(diagnostics.guardrailsPreset)}</p>
+                {diagnostics.guardrailsRecommendation ? (
+                  <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                    Recommendation: {diagnostics.guardrailsRecommendation}
+                  </p>
+                ) : null}
+              </div>
             </DiagnosticCard>
 
             <DiagnosticCard
