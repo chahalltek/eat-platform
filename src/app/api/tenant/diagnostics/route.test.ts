@@ -87,14 +87,9 @@ describe("GET /api/tenant/diagnostics", () => {
   it("returns diagnostics when authorized", async () => {
     const payload = {
       tenantId: "tenant-a",
-<<<<<<< ours
       mode: "pilot",
-      fireDrill: { enabled: false, fireDrillImpact: [] },
       sso: { configured: true, issuerUrl: "https://sso" },
-=======
-      sso: { configured: true, issuerUrl: "https://sso" },
-      fireDrill: { suggested: false, enabled: false, reason: null, windowMinutes: 30 },
->>>>>>> theirs
+      fireDrill: { enabled: false, fireDrillImpact: [], suggested: false, reason: null, windowMinutes: 30 },
     };
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-a");

@@ -304,23 +304,8 @@ export default async function Home() {
         <header className="mt-2 flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-2">
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">ETE Console</p>
-              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent System (MVP)</h1>
-=======
               <BrandMark withText />
-              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent Engine (MVP)</h1>
->>>>>>> theirs
-=======
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">ETE</p>
-              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent System (MVP)</h1>
->>>>>>> theirs
-=======
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">EDGE</p>
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EDGE Talent Engine</h1>
->>>>>>> theirs
             </div>
             <Link
               href="/system-map"
@@ -362,29 +347,15 @@ export default async function Home() {
         <div className="flex flex-1 flex-col gap-6">
           <header className="mt-2 overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-<<<<<<< ours
-              <div className="flex flex-col gap-2">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">EDGE Talent Engine</p>
-<<<<<<< ours
-                <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">ETE – Talent System (MVP)</h1>
-=======
-                <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EDGE Talent Engine</h1>
->>>>>>> theirs
-                <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-                  <span className="block">Real-time orchestration for intelligent hiring systems.</span>
-                  <span className="block text-sm text-zinc-500 dark:text-zinc-400">Agents, data, and decisioning in one control plane.</span>
-                </p>
-=======
               <div className="flex flex-col gap-3">
                 <BrandMark withText />
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">ETE – Talent Engine (MVP)</h1>
+                  <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EDGE Talent Engine</h1>
                   <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
                     <span className="block">Real-time orchestration for intelligent hiring systems.</span>
                     <span className="block text-sm text-zinc-500 dark:text-zinc-400">Agents, data, and decisioning in one control plane.</span>
                   </p>
                 </div>
->>>>>>> theirs
                 <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-300">
                   <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Agents</span>
                   <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Workflows</span>

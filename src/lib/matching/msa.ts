@@ -40,16 +40,13 @@ type MatchGuardrailOptions = { requireMustHaveSkills?: boolean };
 
 export function computeMatchScore(
   ctx: MatchContext,
-<<<<<<< ours
   options?: {
     jobFreshnessScore?: number;
     candidateSignals?: CandidateSignalResult;
     matcherConfig?: MatcherScoringConfig;
     explain?: boolean;
+    guardrails?: MatchGuardrailOptions;
   },
-=======
-  options?: { jobFreshnessScore?: number; candidateSignals?: CandidateSignalResult; guardrails?: MatchGuardrailOptions },
->>>>>>> theirs
 ): MatchScore {
   const reasons: string[] = [];
   const riskAreas: string[] = [];

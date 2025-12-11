@@ -23,19 +23,16 @@ export type GuardrailsPreset = "conservative" | "balanced" | "aggressive" | "cus
 export type TenantDiagnostics = {
   tenantId: string;
   mode: SystemMode;
-  fireDrill: { enabled: boolean; fireDrillImpact: string[] };
-  sso: { configured: boolean; issuerUrl: string | null };
-<<<<<<< ours
-  guardrailsPreset: GuardrailsPreset;
-  guardrailsRecommendation: string | null;
-=======
   fireDrill: {
     enabled: boolean;
+    fireDrillImpact: string[];
     suggested: boolean;
     reason: string | null;
     windowMinutes: number;
   };
->>>>>>> theirs
+  sso: { configured: boolean; issuerUrl: string | null };
+  guardrailsPreset: GuardrailsPreset;
+  guardrailsRecommendation: string | null;
   plan: {
     id: string | null;
     name: string | null;
@@ -261,44 +258,33 @@ function buildGuardrailsRecommendation(preset: GuardrailsPreset) {
 }
 
 export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDiagnostics> {
-<<<<<<< ours
-  const [config, plan, tenant, auditEventCount, flags, guardrails] = await Promise.all([
-=======
-  const [config, plan, tenant, auditEventCount, flags, fireDrill] = await Promise.all([
->>>>>>> theirs
+  const [config, plan, tenant, auditEventCount, flags, guardrails, fireDrill] = await Promise.all([
     getAppConfig(),
     getTenantPlan(tenantId),
     prisma.tenant.findUnique({ where: { id: tenantId } }),
     countAuditEvents(tenantId),
     resolveEnabledFlags(tenantId),
-<<<<<<< ours
     loadTenantGuardrailConfig(tenantId),
-=======
     evaluateFireDrillStatus(tenantId),
->>>>>>> theirs
   ]);
 
   if (!tenant) {
     throw new TenantNotFoundError(tenantId);
   }
 
-<<<<<<< ours
-  const guardrailsPreset = normalizeGuardrailsPreset(plan);
-=======
   const systemMode = getSystemMode(config);
->>>>>>> theirs
+  const guardrailsPreset = normalizeGuardrailsPreset(plan);
 
   return {
     tenantId,
     mode: systemMode.mode,
-    fireDrill: systemMode.fireDrill,
+    fireDrill: {
+      ...systemMode.fireDrill,
+      ...fireDrill,
+    },
     sso: { configured: isSsoConfigured(config), issuerUrl: config.SSO_ISSUER_URL ?? null },
-<<<<<<< ours
     guardrailsPreset,
     guardrailsRecommendation: buildGuardrailsRecommendation(guardrailsPreset),
-=======
-    fireDrill,
->>>>>>> theirs
     plan: mapPlan(plan),
     auditLogging: { enabled: auditEventCount > 0, eventsRecorded: auditEventCount },
     dataExport: { enabled: true },

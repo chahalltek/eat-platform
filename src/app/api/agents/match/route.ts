@@ -79,15 +79,10 @@ export async function POST(req: NextRequest) {
     return flagCheck;
   }
 
-<<<<<<< ours
-  const tenantId = await getCurrentTenantId(req);
-  const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER, tenantId);
-=======
   const [availability, killSwitchResponse] = await Promise.all([
     getAgentAvailability(),
     enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER),
   ]);
->>>>>>> theirs
 
   if (killSwitchResponse) {
     return killSwitchResponse;

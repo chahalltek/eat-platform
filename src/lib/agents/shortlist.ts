@@ -1,15 +1,12 @@
-<<<<<<< ours
-=======
 import { TS_CONFIG } from "@/config/ts";
 import { assertAgentEnabled } from "@/lib/agents/availability";
->>>>>>> theirs
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { rankCandidates } from "@/lib/agents/ranker";
 import { getCurrentUser } from "@/lib/auth";
+import { loadTenantConfig } from "@/lib/config/tenantConfig";
 import { prisma } from "@/lib/prisma";
 import { setShortlistState } from "@/lib/matching/shortlist";
-import { loadTenantConfig } from "@/lib/config/tenantConfig";
 
 export type RunShortlistInput = {
   jobId: string;
@@ -57,9 +54,7 @@ function computeRoleAlignment(jobSkills: string[], candidateSkills: string[]) {
     return 50;
   }
 
-  const overlapCount = normalizedJobSkills.filter((skill) =>
-    normalizedCandidateSkills.has(skill),
-  ).length;
+  const overlapCount = normalizedJobSkills.filter((skill) => normalizedCandidateSkills.has(skill)).length;
   const coverage = overlapCount / normalizedJobSkills.length;
 
   return clampScore(coverage * 100);
@@ -84,20 +79,13 @@ export async function runShortlist(
 
   // User identity is derived from auth; recruiterId in payload is ignored.
   const clock = deps.now ?? (() => new Date());
-<<<<<<< ours
-  const requestedShortlistLimit = shortlistLimit;
-=======
-  const { shortlist } = TS_CONFIG;
-  const effectiveShortlistLimit = guardrails?.shortlistMaxCandidates ?? shortlistLimit ?? shortlist.topN;
-  const minMatchScore = guardrails?.shortlistMinScore ?? shortlist.minMatchScore;
-  const minConfidence = guardrails?.shortlistMinConfidence ?? shortlist.minConfidence;
->>>>>>> theirs
+  const requestedShortlistLimit = shortlistLimit ?? null;
 
   const [result, agentRunId] = await withAgentRun<RunShortlistResult>(
     {
       agentName: AGENT_KILL_SWITCHES.RANKER,
       recruiterId: user.id,
-      inputSnapshot: { jobId, shortlistLimit: requestedShortlistLimit ?? null },
+      inputSnapshot: { jobId, shortlistLimit: requestedShortlistLimit },
       sourceType: "agent",
       sourceTag: "shortlist",
       ...retryMetadata,
@@ -118,26 +106,29 @@ export async function runShortlist(
         throw new Error(`Job ${jobId} not found for shortlist agent`);
       }
 
+      const tenantConfig = await loadTenantConfig(job.tenantId);
+      const shortlistConfig = tenantConfig.shortlist ?? TS_CONFIG.shortlist;
+
+      const effectiveShortlistLimit =
+        guardrails?.shortlistMaxCandidates ??
+        requestedShortlistLimit ??
+        shortlistConfig.topN ??
+        TS_CONFIG.shortlist.topN;
+
+      const minMatchScore =
+        guardrails?.shortlistMinScore ?? shortlistConfig.minMatchScore ?? TS_CONFIG.shortlist.minMatchScore;
+      const minConfidence =
+        guardrails?.shortlistMinConfidence ?? shortlistConfig.minConfidence ?? TS_CONFIG.shortlist.minConfidence;
+
       if (job.matches.length === 0) {
         return { result: { jobId, shortlisted: [], totalMatches: 0 }, outputSnapshot: { shortlisted: [], rankedOrder: [] } };
       }
-
-      const tenantConfig = await loadTenantConfig(job.tenantId);
-      const shortlistConfig = tenantConfig.shortlist;
-      const effectiveShortlistLimit = requestedShortlistLimit ?? shortlistConfig.topN;
 
       const eligibleMatches = job.matches.filter((match) => {
         const matchScore = clampScore(match.matchScore);
         const confidenceScore = clampScore(match.confidence);
 
-<<<<<<< ours
-        return (
-          matchScore >= shortlistConfig.minMatchScore &&
-          confidenceScore >= shortlistConfig.minConfidence
-        );
-=======
         return matchScore >= minMatchScore && confidenceScore >= minConfidence;
->>>>>>> theirs
       });
 
       const now = clock();
@@ -147,10 +138,7 @@ export async function runShortlist(
         matchScore: clampScore(match.matchScore),
         confidenceScore: clampScore(match.confidence),
         recencyDays: computeRecencyDays(now, match.candidate.updatedAt, match.candidate.createdAt),
-        roleAlignment: computeRoleAlignment(
-          job.requiredSkills ?? [],
-          match.candidate.normalizedSkills ?? [],
-        ),
+        roleAlignment: computeRoleAlignment(job.requiredSkills ?? [], match.candidate.normalizedSkills ?? []),
       }));
 
       const ranked = rankCandidates(rankerInputs);
@@ -160,11 +148,7 @@ export async function runShortlist(
       const shortlisted = shortlistResults.map((candidate, index) => {
         const match = matchesById.get(candidate.id)!;
         const rank = index + 1;
-        const shortlistReason = buildShortlistReason(
-          candidate.priorityScore,
-          candidate.recencyScore,
-          rank,
-        );
+        const shortlistReason = buildShortlistReason(candidate.priorityScore, candidate.recencyScore, rank);
 
         return {
           matchId: match.id,
@@ -180,13 +164,10 @@ export async function runShortlist(
       await prisma.$transaction(async (tx) => {
         for (const match of job.matches) {
           const shortlistEntry = shortlistedByMatchId.get(match.id);
-          await setShortlistState(
-            job.id,
-            match.candidateId,
-            Boolean(shortlistEntry),
-            shortlistEntry?.shortlistReason,
-            { db: tx, tenantId: job.tenantId },
-          );
+          await setShortlistState(job.id, match.candidateId, Boolean(shortlistEntry), shortlistEntry?.shortlistReason, {
+            db: tx,
+            tenantId: job.tenantId,
+          });
         }
       });
 
