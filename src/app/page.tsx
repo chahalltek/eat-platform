@@ -84,6 +84,21 @@ const dependencyDotStyles: Record<SubsystemState, string> = {
   unknown: "bg-zinc-400",
 };
 
+const dependencyStatusTextStyles: Record<SubsystemState, string> = {
+  healthy: "text-emerald-700 dark:text-emerald-200",
+  warning: "text-amber-700 dark:text-amber-200",
+  error: "text-red-700 dark:text-red-200",
+  unknown: "text-zinc-600 dark:text-zinc-400",
+};
+
+const stateRailStyles: Record<BadgeState, string> = {
+  enabled: "from-indigo-400 via-blue-400 to-emerald-400 opacity-70",
+  healthy: "from-emerald-400 via-emerald-300 to-green-400 opacity-80",
+  warning: "from-amber-400 via-orange-300 to-amber-500 opacity-80",
+  error: "from-red-500 via-rose-400 to-red-600 opacity-80",
+  unknown: "from-zinc-400 via-slate-400 to-zinc-500 opacity-60",
+};
+
 function formatStatusText(status: BadgeState) {
   switch (status) {
     case "enabled":
@@ -247,6 +262,11 @@ export default async function Home() {
     const dependencyState = getDependencyState(link, systemStatus);
     const badgeState = dependencyState.status;
     const isActive = dependencyState.isActive;
+    const dependencyMessage =
+      dependencyState.message ?? `${link.label} depends on ${dependencyLabels[link.dependency?.subsystem ?? "agents"]}`;
+    const railState = (link.dependency
+      ? dependencyState.dependencyStatus ?? "unknown"
+      : badgeState) as BadgeState;
 
     return (
       <Link
@@ -260,7 +280,10 @@ export default async function Home() {
         aria-disabled={!isActive}
         tabIndex={isActive ? 0 : -1}
       >
-        <div className="absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r from-indigo-400 via-blue-400 to-emerald-400 opacity-70" aria-hidden />
+        <div
+          className={`absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r ${stateRailStyles[railState]}`}
+          aria-hidden
+        />
 
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
@@ -286,27 +309,23 @@ export default async function Home() {
           </dl>
         ) : null}
 
-        {link.dependency ? (
-          <div className="mt-4 rounded-xl border border-dashed border-indigo-100 bg-indigo-50/60 px-4 py-3 text-sm dark:border-indigo-900/40 dark:bg-indigo-950/40">
-            <div className="flex items-center gap-3 font-semibold text-indigo-900 dark:text-indigo-100">
-              <span className={`h-2.5 w-2.5 rounded-full ${dependencyDotStyles[dependencyState.dependencyStatus ?? "unknown"]}`} aria-hidden />
-              <span>{link.dependency.flow?.target ?? dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}</span>
-              <span className="rounded-full border border-indigo-200/60 bg-white/70 px-2 py-0.5 text-[11px] uppercase tracking-wide text-indigo-600 dark:border-indigo-800/70 dark:bg-indigo-900/60">
-                {formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")} dependency
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-indigo-700 dark:text-indigo-200/80">
-              {dependencyState.message ?? `${link.label} depends on ${dependencyLabels[link.dependency.subsystem]}`}
-            </p>
-          </div>
-        ) : null}
-
         <div className="mt-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <span className={`h-2 w-2 rounded-full ${dependencyDotStyles[dependencyState.dependencyStatus ?? "unknown"]}`} aria-hidden />
-            <span className="font-medium text-zinc-700 dark:text-zinc-200">{dependencyLabels[link.dependency?.subsystem ?? "agents"]}</span>
-            <span className="text-[11px] uppercase tracking-wide text-zinc-400">System link</span>
-          </div>
+          {link.dependency ? (
+            <div className={`inline-flex flex-col gap-1 rounded-2xl border px-3 py-2 text-sm shadow-sm ${dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]}`}>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-200">LINKED SUBSYSTEM</span>
+              <div className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-zinc-100">
+                <span className={`h-2.5 w-2.5 rounded-full ${dependencyDotStyles[dependencyState.dependencyStatus ?? "unknown"]}`} aria-hidden />
+                <span>{dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}</span>
+                <span className={`text-xs font-semibold ${dependencyStatusTextStyles[dependencyState.dependencyStatus ?? "unknown"]}`}>
+                  · {formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}
+                </span>
+              </div>
+              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-200/80">{dependencyMessage}</p>
+            </div>
+          ) : (
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">LINKED SUBSYSTEM</div>
+          )}
+
           <div className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition group-hover:bg-indigo-700">
             <span>{link.cta}</span>
             <svg
