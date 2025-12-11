@@ -57,11 +57,23 @@ const systemNodes = [
 const flowSequences = [
   {
     label: "Role flow",
-    steps: ["Intake", "RUA", "Scoring engine", "Confidence / Explain", "Database"],
+    steps: ["Intake", "RUA", "Database"],
+    note: "Role is stored and later used by matching and scoring agents.",
   },
   {
     label: "Resume flow",
     steps: ["Intake", "RINA", "Database", "Scoring engine", "Confidence / Explain"],
+  },
+  {
+    label: "Scoring flow",
+    steps: [
+      "Role + Candidates",
+      "MATCH",
+      "Scoring engine",
+      "Confidence / Explain",
+      "Database (results)",
+    ],
+    note: "Uses roles from RUA and candidates from RINA / PROFILE to rank matches.",
   },
   {
     label: "Guardrails",
@@ -103,19 +115,23 @@ export default function SystemMapPage() {
           <div className="space-y-4 rounded-2xl border border-indigo-100/60 bg-gradient-to-b from-white to-indigo-50/60 p-4 dark:border-indigo-800/50 dark:from-zinc-900 dark:to-indigo-950/30">
             <div className="space-y-3">
               {flowSequences.map((sequence) => (
-                <div
-                  key={sequence.label}
-                  className="flex flex-wrap items-center justify-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 backdrop-blur dark:bg-zinc-900/70 dark:text-indigo-100 dark:ring-indigo-800/60"
-                >
-                  <span className="mr-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
-                    {sequence.label}
-                  </span>
-                  {sequence.steps.map((step, index) => (
-                    <div key={step} className="flex items-center gap-2">
-                      <FlowPill label={step} />
-                      {index < sequence.steps.length - 1 ? <FlowArrow /> : null}
-                    </div>
-                  ))}
+                <div key={sequence.label} className="space-y-1">
+                  <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 backdrop-blur dark:bg-zinc-900/70 dark:text-indigo-100 dark:ring-indigo-800/60">
+                    <span className="mr-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
+                      {sequence.label}
+                    </span>
+                    {sequence.steps.map((step, index) => (
+                      <div key={step} className="flex items-center gap-2">
+                        <FlowPill label={step} />
+                        {index < sequence.steps.length - 1 ? <FlowArrow /> : null}
+                      </div>
+                    ))}
+                  </div>
+                  {sequence.note ? (
+                    <p className="text-center text-xs font-medium text-indigo-800/80 dark:text-indigo-100/80">
+                      {sequence.note}
+                    </p>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -200,9 +216,9 @@ export default function SystemMapPage() {
 
 function FlowPill({ label }: { label: string }) {
   return (
-    <span className="flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-[13px] font-semibold text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/60 dark:text-indigo-100 dark:ring-indigo-700/60">
-      <span className="h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
-      {label}
+    <span className="flex items-start gap-2 rounded-full bg-indigo-50 px-3 py-1 text-left text-[13px] font-semibold leading-snug text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/60 dark:text-indigo-100 dark:ring-indigo-700/60">
+      <span className="mt-1 h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
+      <span className="whitespace-normal">{label}</span>
     </span>
   );
 }
