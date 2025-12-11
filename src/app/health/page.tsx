@@ -27,9 +27,13 @@ export default async function HealthPage() {
 <<<<<<< ours
           <div>
 <<<<<<< ours
+<<<<<<< ours
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">ETE Console</p>
 =======
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">ETE</p>
+>>>>>>> theirs
+=======
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">EDGE</p>
 >>>>>>> theirs
             <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">System Health</h1>
             <p className="mt-2 text-zinc-600 dark:text-zinc-400">

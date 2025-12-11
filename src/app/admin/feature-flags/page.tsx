@@ -77,9 +77,9 @@ export default async function FeatureFlagsPage() {
         <ETECard className="gap-4 border-emerald-100 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-zinc-900">ETE – Talent System (MVP) Test Plan</h2>
+              <h2 className="text-lg font-semibold text-zinc-900">EDGE Talent Engine Test Plan</h2>
               <p className="text-sm text-zinc-600">
-                Interactive checklist for validating the ETE MVP before release. Track charter items and detailed coverage.
+                Interactive checklist for validating the EDGE Talent Engine before release. Track charter items and detailed coverage.
               </p>
             </div>
 

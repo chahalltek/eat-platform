@@ -306,6 +306,7 @@ export default async function Home() {
             <div className="flex flex-col gap-2">
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">ETE Console</p>
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent System (MVP)</h1>
 =======
@@ -315,6 +316,10 @@ export default async function Home() {
 =======
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">ETE</p>
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent System (MVP)</h1>
+>>>>>>> theirs
+=======
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">EDGE</p>
+              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EDGE Talent Engine</h1>
 >>>>>>> theirs
             </div>
             <Link
@@ -360,7 +365,11 @@ export default async function Home() {
 <<<<<<< ours
               <div className="flex flex-col gap-2">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">EDGE Talent Engine</p>
+<<<<<<< ours
                 <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">ETE – Talent System (MVP)</h1>
+=======
+                <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EDGE Talent Engine</h1>
+>>>>>>> theirs
                 <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
                   <span className="block">Real-time orchestration for intelligent hiring systems.</span>
                   <span className="block text-sm text-zinc-500 dark:text-zinc-400">Agents, data, and decisioning in one control plane.</span>
