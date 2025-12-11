@@ -16,7 +16,7 @@ export default async function EatTestPlanPage() {
 
   if (!canManageFeatureFlags(user)) {
     return (
-      <EATClientLayout>
+      <EATClientLayout showFireDrillBanner={false}>
         <div className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
           <h1 className="text-xl font-semibold">Admins only</h1>
           <p className="mt-2 text-sm text-amber-800">
@@ -41,7 +41,7 @@ export default async function EatTestPlanPage() {
   );
 
   return (
-    <EATClientLayout>
+    <EATClientLayout showFireDrillBanner={false}>
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-4 rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/60 dark:from-indigo-950/50 dark:via-zinc-950 dark:to-emerald-950/40">
           <div className="flex flex-col gap-2">

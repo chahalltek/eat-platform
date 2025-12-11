@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
+import type { TenantMode } from "@prisma/client";
 
 type PlanOption = { id: string; name: string };
 
@@ -9,6 +10,7 @@ type TenantPlanEditorProps = {
   tenantId: string;
   tenantName: string;
   status: string;
+  mode: TenantMode;
   currentPlanId: string | null;
   currentPlanName: string | null;
   isTrial: boolean;
@@ -20,6 +22,7 @@ export function TenantPlanEditor({
   tenantId,
   tenantName,
   status,
+  mode,
   currentPlanId,
   currentPlanName,
   isTrial,
@@ -80,6 +83,7 @@ export function TenantPlanEditor({
             <p className="mt-2 text-sm text-gray-700">
               Current plan: <span className="font-semibold">{displayPlan}</span>
             </p>
+            <p className="text-sm text-gray-700">Operating mode: {mode.replace("_", " ")}</p>
             <p className="text-sm text-gray-700">
               Trial: {displayTrial ? "Yes" : "No"}
               {displayTrialEnd ? ` (ends ${new Date(displayTrialEnd).toLocaleDateString()})` : ""}

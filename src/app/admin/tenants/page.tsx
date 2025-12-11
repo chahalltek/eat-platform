@@ -26,6 +26,7 @@ export function TenantsTable({
           <tr>
             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Tenant</th>
             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Plan</th>
+            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Mode</th>
             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Status</th>
             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Created</th>
             <th className="px-6 py-3" />
@@ -36,6 +37,17 @@ export function TenantsTable({
             <tr key={tenant.id} className="hover:bg-gray-50">
               <td className="px-6 py-4 text-sm font-medium text-gray-900">{tenant.name}</td>
               <td className="px-6 py-4 text-sm text-gray-700">{tenant.plan?.name ?? "No plan"}</td>
+              <td className="px-6 py-4 text-sm">
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                    tenant.mode === "FIRE_DRILL"
+                      ? "bg-amber-100 text-amber-800 ring-1 ring-amber-500/40"
+                      : "bg-blue-50 text-blue-700 ring-1 ring-blue-600/20"
+                  }`}
+                >
+                  {tenant.mode.replace("_", " ")}
+                </span>
+              </td>
               <td className="px-6 py-4 text-sm">
                 <span
                   className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${

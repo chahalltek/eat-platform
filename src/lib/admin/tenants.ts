@@ -1,4 +1,4 @@
-import type { SubscriptionPlan, Tenant, TenantSubscription } from "@prisma/client";
+import type { SubscriptionPlan, Tenant, TenantMode, TenantSubscription } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
@@ -20,6 +20,7 @@ export type TenantPlanSummary = {
   id: string;
   name: string;
   status: string;
+  mode: TenantMode;
   createdAt: Date;
   plan: { id: string; name: string } | null;
   isTrial: boolean;
@@ -40,6 +41,7 @@ function mapTenantSummary(tenant: TenantWithSubscription): TenantPlanSummary {
     id: tenant.id,
     name: tenant.name,
     status: tenant.status,
+    mode: tenant.mode,
     createdAt: tenant.createdAt,
     plan: active ? { id: active.plan.id, name: active.plan.name } : null,
     isTrial: active?.isTrial ?? false,

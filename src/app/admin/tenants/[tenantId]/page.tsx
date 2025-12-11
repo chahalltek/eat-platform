@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { TenantPlanEditor } from "./TenantPlanEditor";
+import { TenantModeCard } from "./TenantModeCard";
 import { getCurrentUser } from "@/lib/auth/user";
 import { canManageTenants } from "@/lib/auth/permissions";
 import { getTenantPlanDetail } from "@/lib/admin/tenants";
@@ -55,10 +56,13 @@ export default async function TenantDetailPage({ params }: { params: { tenantId:
           </div>
         </header>
 
+        <TenantModeCard tenantId={detail.tenant.id} initialMode={detail.tenant.mode} />
+
         <TenantPlanEditor
           tenantId={detail.tenant.id}
           tenantName={detail.tenant.name}
           status={detail.tenant.status}
+          mode={detail.tenant.mode}
           currentPlanId={detail.tenant.plan?.id ?? null}
           currentPlanName={detail.tenant.plan?.name ?? null}
           isTrial={detail.tenant.isTrial}

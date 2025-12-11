@@ -16,7 +16,7 @@ export default async function FeatureFlagsPage() {
 
   if (!canManageFeatureFlags(user)) {
     return (
-      <EATClientLayout>
+      <EATClientLayout showFireDrillBanner={false}>
         <div className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
           <h1 className="text-xl font-semibold">Admin access required</h1>
           <p className="mt-2 text-sm text-amber-800">
@@ -37,7 +37,7 @@ export default async function FeatureFlagsPage() {
   const diagnosticsPath = `/admin/tenant/${tenantId}/diagnostics`;
 
   return (
-    <EATClientLayout>
+    <EATClientLayout showFireDrillBanner={false}>
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>

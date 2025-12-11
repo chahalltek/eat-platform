@@ -18,8 +18,8 @@ function daysAgo(days: number) {
 async function seedTenant() {
   return prisma.tenant.upsert({
     where: { id: DEFAULT_TENANT_ID },
-    update: { name: 'Default Tenant', status: 'active' },
-    create: { id: DEFAULT_TENANT_ID, name: 'Default Tenant', status: 'active' },
+    update: { name: 'Default Tenant', status: 'active', mode: 'SANDBOX' },
+    create: { id: DEFAULT_TENANT_ID, name: 'Default Tenant', status: 'active', mode: 'SANDBOX' },
   });
 }
 

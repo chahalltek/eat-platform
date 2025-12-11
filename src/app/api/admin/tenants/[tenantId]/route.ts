@@ -27,14 +27,15 @@ export async function GET(
   try {
     const detail = await getTenantPlanDetail(tenantId);
 
-    return NextResponse.json({
-      tenant: {
-        ...detail.tenant,
-        createdAt: detail.tenant.createdAt.toISOString(),
-        trialEndsAt: detail.tenant.trialEndsAt ? detail.tenant.trialEndsAt.toISOString() : null,
-      },
-      plans: detail.plans,
-    });
+      return NextResponse.json({
+        tenant: {
+          ...detail.tenant,
+          createdAt: detail.tenant.createdAt.toISOString(),
+          trialEndsAt: detail.tenant.trialEndsAt ? detail.tenant.trialEndsAt.toISOString() : null,
+          mode: detail.tenant.mode,
+        },
+        plans: detail.plans,
+      });
   } catch (error) {
     if (error instanceof NotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 });
@@ -68,13 +69,14 @@ export async function PATCH(
       trialEndsAt: parseTrialEndDate(body?.trialEndsAt),
     });
 
-    return NextResponse.json({
-      tenant: {
-        ...summary,
-        createdAt: summary.createdAt.toISOString(),
-        trialEndsAt: summary.trialEndsAt ? summary.trialEndsAt.toISOString() : null,
-      },
-    });
+      return NextResponse.json({
+        tenant: {
+          ...summary,
+          createdAt: summary.createdAt.toISOString(),
+          trialEndsAt: summary.trialEndsAt ? summary.trialEndsAt.toISOString() : null,
+          mode: summary.mode,
+        },
+      });
   } catch (error) {
     if (error instanceof NotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 });

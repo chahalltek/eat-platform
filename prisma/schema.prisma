@@ -12,6 +12,13 @@ enum TenantDeletionMode {
   HARD_DELETE
 }
 
+enum TenantMode {
+  PILOT
+  PRODUCTION
+  SANDBOX
+  FIRE_DRILL
+}
+
 enum AgentRunStatus {
   RUNNING
   SUCCESS
@@ -66,6 +73,7 @@ model Tenant {
   id                String             @id @default(cuid())
   name              String
   status            String             @default("active")
+  mode              TenantMode         @default(SANDBOX)
   dataRetentionDays Int?
   deletionMode      TenantDeletionMode @default(SOFT_DELETE)
   createdAt         DateTime           @default(now())

@@ -22,6 +22,7 @@ describe("admin tenant UI", () => {
             id: "tenant-1",
             name: "Tenant One",
             status: "active",
+            mode: "SANDBOX",
             createdAt: new Date("2024-01-01T00:00:00.000Z"),
             plan: { id: "plan-1", name: "Starter" },
             isTrial: false,
@@ -44,6 +45,7 @@ describe("admin tenant UI", () => {
             id: "tenant-1",
             name: "Tenant One",
             status: "active",
+            mode: "SANDBOX",
             createdAt: new Date("2024-01-01T00:00:00.000Z"),
             plan: { id: "plan-2", name: "Pro" },
             isTrial: true,
@@ -61,6 +63,7 @@ describe("admin tenant UI", () => {
         tenantId="tenant-1"
         tenantName="Tenant One"
         status="active"
+        mode="SANDBOX"
         currentPlanId="plan-1"
         currentPlanName="Starter"
         isTrial={false}
@@ -103,6 +106,7 @@ describe("admin tenant UI", () => {
         tenantId="tenant-2"
         tenantName="Tenant Two"
         status="active"
+        mode="SANDBOX"
         currentPlanId={"plan-1"}
         currentPlanName="Starter"
         isTrial={false}
