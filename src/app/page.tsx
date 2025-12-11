@@ -127,21 +127,21 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
   return [
     {
       label: "Upload resumes",
-      cta: "Upload now",
+      cta: "Ingest resumes",
       href: "/rina-test",
       description: "RINA — Resume ingestion agent",
       dependency: { subsystem: "agents" },
     },
     {
       label: "Create intake",
-      cta: "Add job",
+      cta: "Launch intake",
       href: "/rua-test",
       description: "RUA — Job intake agent",
       dependency: { subsystem: "agents" },
     },
     {
       label: "Execution history",
-      cta: "Investigate",
+      cta: "Trace executions",
       href: "/agents/runs",
       description: "Latest agent runs",
       stats: [{ label: "Agent runs in last 7 days", value: formatAgentRuns(metrics.agentRunsLast7d) }],
