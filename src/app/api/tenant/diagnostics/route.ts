@@ -4,16 +4,18 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { buildTenantDiagnostics, TenantNotFoundError } from "@/lib/tenant/diagnostics";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser(req);
   const tenantId = await getCurrentTenantId(req);
+  const headerRole = getTenantRoleFromHeaders(req.headers);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const access = await resolveTenantAdminAccess(user, tenantId);
+  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole });
 
   if (!access.hasAccess) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

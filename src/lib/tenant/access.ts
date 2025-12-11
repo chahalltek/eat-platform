@@ -1,12 +1,13 @@
 import type { IdentityUser } from "@/lib/auth/identityProvider";
 import { isAdminRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/prisma";
+import { normalizeTenantRole, TENANT_ROLES, type TenantRole } from "./roles";
 
-function isTenantAdminRole(role: string | null | undefined) {
-  return (role ?? "").trim().toUpperCase() === "ADMIN";
-}
-
-export async function resolveTenantAdminAccess(user: IdentityUser | null, tenantId: string) {
+export async function resolveTenantAdminAccess(
+  user: IdentityUser | null,
+  tenantId: string,
+  options?: { roleHint?: TenantRole | null },
+) {
   const normalizedTenantId = tenantId.trim();
 
   if (!user || !user.id || !normalizedTenantId) {
@@ -25,7 +26,17 @@ export async function resolveTenantAdminAccess(user: IdentityUser | null, tenant
     },
   });
 
-  const hasAccess = isTenantAdminRole(membership?.role);
+  const membershipRole = normalizeTenantRole(membership?.role);
+  const hasAccess = isGlobalAdmin || membershipRole === TENANT_ROLES.Admin;
+
+  console.log("diagnostics access check", {
+    tenantId: normalizedTenantId,
+    userId: user.id,
+    headerRole: options?.roleHint ?? null,
+    membershipRole: membershipRole ?? null,
+    isGlobalAdmin,
+    hasAccess,
+  });
 
   return { hasAccess, isGlobalAdmin, membership } as const;
 }

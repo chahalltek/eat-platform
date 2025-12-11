@@ -53,11 +53,15 @@ describe("GET /api/tenant/diagnostics", () => {
 
     expect(response.status).toBe(403);
     expect(mockBuildTenantDiagnostics).not.toHaveBeenCalled();
-    expect(mockResolveTenantAccess).toHaveBeenCalledWith({
-      id: "user-1",
-      role: "RECRUITER",
-      tenantId: "tenant-a",
-    }, "tenant-a");
+    expect(mockResolveTenantAccess).toHaveBeenCalledWith(
+      {
+        id: "user-1",
+        role: "RECRUITER",
+        tenantId: "tenant-a",
+      },
+      "tenant-a",
+      { roleHint: null },
+    );
   });
 
   it("prevents cross-tenant admin access", async () => {
@@ -69,11 +73,15 @@ describe("GET /api/tenant/diagnostics", () => {
 
     expect(response.status).toBe(403);
     expect(mockBuildTenantDiagnostics).not.toHaveBeenCalled();
-    expect(mockResolveTenantAccess).toHaveBeenCalledWith({
-      id: "admin-1",
-      role: "ADMIN",
-      tenantId: "tenant-a",
-    }, "tenant-b");
+    expect(mockResolveTenantAccess).toHaveBeenCalledWith(
+      {
+        id: "admin-1",
+        role: "ADMIN",
+        tenantId: "tenant-a",
+      },
+      "tenant-b",
+      { roleHint: null },
+    );
   });
 
   it("returns diagnostics when authorized", async () => {
@@ -114,11 +122,15 @@ describe("GET /api/tenant/diagnostics", () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual(payload);
-    expect(mockResolveTenantAccess).toHaveBeenCalledWith({
-      id: "sysadmin",
-      role: "ADMIN",
-      tenantId: "tenant-a",
-    }, "tenant-b");
+    expect(mockResolveTenantAccess).toHaveBeenCalledWith(
+      {
+        id: "sysadmin",
+        role: "ADMIN",
+        tenantId: "tenant-a",
+      },
+      "tenant-b",
+      { roleHint: null },
+    );
   });
 });
 

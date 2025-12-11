@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { CheckCircleIcon, ExclamationTriangleIcon, XCircleIcon } from "@heroicons/react/24/solid";
 
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { buildTenantDiagnostics, TenantNotFoundError } from "@/lib/tenant/diagnostics";
 import { getTenantMembershipsForUser, resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { EATCard } from "@/components/EATCard";
 import { StatusPill } from "@/components/StatusPill";
 import { TenantTestTable } from "./TenantTestTable";
@@ -65,6 +67,7 @@ function formatDate(value: string | null) {
 export default async function TenantDiagnosticsPage({ params }: { params: { tenantId?: string } }) {
   const user = await getCurrentUser();
   const requestedTenant = params.tenantId?.trim?.() ?? "";
+  const headerRole = getTenantRoleFromHeaders(headers());
 
   if (!user || !requestedTenant) {
     return (
@@ -86,7 +89,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
   const [currentTenantId, access] = await Promise.all([
     getCurrentTenantId(),
-    resolveTenantAdminAccess(user, requestedTenant),
+    resolveTenantAdminAccess(user, requestedTenant, { roleHint: headerRole }),
   ]);
 
   const normalizedCurrentTenantId = currentTenantId?.trim?.() ?? "";
