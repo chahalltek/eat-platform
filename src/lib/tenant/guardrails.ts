@@ -34,6 +34,12 @@ export const guardrailsSchema = z
 
 export type TenantGuardrails = z.infer<typeof guardrailsSchema>;
 
+type PartialTenantGuardrails = {
+  scoring?: Partial<TenantGuardrails["scoring"]>;
+  explain?: Partial<TenantGuardrails["explain"]>;
+  safety?: Partial<TenantGuardrails["safety"]>;
+};
+
 export const defaultTenantGuardrails: TenantGuardrails = {
   scoring: {
     strategy: "weighted",
@@ -59,7 +65,9 @@ export const defaultTenantGuardrails: TenantGuardrails = {
   },
 };
 
-function mergeGuardrails(override: Partial<TenantGuardrails> | null | undefined): TenantGuardrails {
+function mergeGuardrails(
+  override: PartialTenantGuardrails | null | undefined,
+): TenantGuardrails {
   return guardrailsSchema.parse({
     scoring: {
       strategy: override?.scoring?.strategy ?? defaultTenantGuardrails.scoring.strategy,
@@ -104,7 +112,7 @@ export async function loadTenantGuardrails(tenantId: string): Promise<TenantGuar
 
   const storedGuardrails =
     ((record as { guardrails?: unknown } | null | undefined)?.guardrails as
-      | Partial<TenantGuardrails>
+      | PartialTenantGuardrails
       | null
       | undefined) ?? null;
 
@@ -112,9 +120,9 @@ export async function loadTenantGuardrails(tenantId: string): Promise<TenantGuar
     storedGuardrails ??
     (record
       ? {
-          scoring: record.scoring as Partial<TenantGuardrails["scoring"]>,
-          explain: record.explain as Partial<TenantGuardrails["explain"]>,
-          safety: record.safety as Partial<TenantGuardrails["safety"]>,
+          scoring: record.scoring as Partial<TenantGuardrails["scoring"]> | undefined,
+          explain: record.explain as Partial<TenantGuardrails["explain"]> | undefined,
+          safety: record.safety as Partial<TenantGuardrails["safety"]> | undefined,
         }
       : null);
   try {
