@@ -2,48 +2,70 @@ import { ClientActionLink } from "@/components/ClientActionLink";
 import { EATClientLayout } from "@/components/EATClientLayout";
 import { StatusPill } from "@/components/StatusPill";
 
-const flowStages = [
+const systemNodes = [
   {
+    id: "intake",
     name: "Intake",
-    agent: "RUA / INTAKE",
-    responsibility: "Normalize the role into structured requirements.",
-    inputs: "Job description",
-    outputs: "Role profile with skills, seniority, and constraints",
+    type: "Entry",
+    summary: "Jobs and resumes enter the system before any automation runs.",
+    tags: ["Hiring manager inputs", "Resume uploads"],
   },
   {
-    name: "Profile",
-    agent: "RINA / PROFILE",
-    responsibility: "Standardize candidate data into comparable profiles.",
-    inputs: "Resumes, parsed histories",
-    outputs: "Structured candidate profile with normalized titles and skills",
+    id: "rua",
+    name: "RUA",
+    type: "Agent",
+    summary: "Converts job descriptions into structured role profiles.",
+    tags: ["Role normalization", "Guardrails applied"],
   },
   {
-    name: "Match",
-    agent: "MATCHER",
-    responsibility: "Score candidates against the role profile.",
-    inputs: "Role profile + candidate profiles",
-    outputs: "Ranked candidate matches",
+    id: "rina",
+    name: "RINA",
+    type: "Agent",
+    summary: "Standardizes resumes into candidate profiles with comparable fields.",
+    tags: ["Resume parsing", "Title normalization"],
   },
   {
-    name: "Confidence",
-    agent: "CONFIDENCE",
-    responsibility: "Validate data quality and surface risks before decisions.",
-    inputs: "Match results + profile health signals",
-    outputs: "Quality flags and confidence score",
+    id: "scoring",
+    name: "Scoring engine",
+    type: "Engine",
+    summary: "Ranks candidates against the role using job library context and weights.",
+    tags: ["Matcher", "Job library"],
   },
   {
-    name: "Explain",
-    agent: "EXPLAIN",
-    responsibility: "Turn scores and evidence into clear reasoning.",
-    inputs: "Matches + confidence findings",
-    outputs: "Human-readable rationales for each candidate",
+    id: "confidence",
+    name: "Confidence / Explain",
+    type: "Reasoning",
+    summary: "Checks data quality, then produces rationales that cite evidence.",
+    tags: ["Quality gates", "Narratives"],
   },
   {
-    name: "Shortlist",
-    agent: "SHORTLIST",
-    responsibility: "Select the candidates to move forward.",
-    inputs: "Explain output + confidence gates",
-    outputs: "Submit-ready shortlist with justification",
+    id: "database",
+    name: "Database",
+    type: "Data",
+    summary: "System of record for profiles, scores, and audit logs.",
+    tags: ["Job library", "Run history"],
+  },
+  {
+    id: "tenant",
+    name: "Tenant Config",
+    type: "Config",
+    summary: "Feature flags, thresholds, and experience toggles per tenant.",
+    tags: ["Feature flags", "Weights"],
+  },
+] as const;
+
+const flowSequences = [
+  {
+    label: "Role flow",
+    steps: ["Intake", "RUA", "Scoring engine", "Confidence / Explain", "Database"],
+  },
+  {
+    label: "Resume flow",
+    steps: ["Intake", "RINA", "Database", "Scoring engine", "Confidence / Explain"],
+  },
+  {
+    label: "Guardrails",
+    steps: ["Tenant Config", "Scoring engine", "Confidence / Explain"],
   },
 ] as const;
 
@@ -58,49 +80,65 @@ const statusLegend = [
 export default function SystemMapPage() {
   return (
     <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-indigo-600 dark:text-indigo-400">SYSTEM MAP</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">EAT Data Flow</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            Concrete view of how agents hand off structured data from intake to shortlist. No marketing, just the pipeline and
-            its boundaries.
-          </p>
+      <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Map</p>
+            <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EAT data flow blueprint</h1>
+            <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+              How agents, scoring, and configuration hand off work. Open this when you need the blueprint for dependencies, not just a link.
+            </p>
+          </div>
+          <ClientActionLink href="/">Back to dashboard</ClientActionLink>
         </div>
-        <ClientActionLink href="/">Back to home</ClientActionLink>
-      </div>
+      </section>
 
-      <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Agent pipeline</h2>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Blueprint</p>
+            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Nodes and directional flows</h2>
+          </div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Diagram</p>
         </div>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex min-w-max items-stretch gap-4 pr-4">
-            {flowStages.map((stage, index) => (
-              <div key={stage.name} className="flex items-center gap-3">
-                <div className="w-64 space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-950">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{stage.name}</p>
-                    <span className="rounded-full bg-zinc-200 px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                      {stage.agent}
-                    </span>
+
+        <div className="space-y-4 rounded-2xl border border-indigo-100/60 bg-gradient-to-b from-white to-indigo-50/60 p-4 dark:border-indigo-800/50 dark:from-zinc-900 dark:to-indigo-950/30">
+          <div className="space-y-3">
+            {flowSequences.map((sequence) => (
+              <div key={sequence.label} className="flex flex-wrap items-center justify-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 backdrop-blur dark:bg-zinc-900/70 dark:text-indigo-100 dark:ring-indigo-800/60">
+                <span className="mr-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
+                  {sequence.label}
+                </span>
+                {sequence.steps.map((step, index) => (
+                  <div key={step} className="flex items-center gap-2">
+                    <FlowPill label={step} />
+                    {index < sequence.steps.length - 1 ? <FlowArrow /> : null}
                   </div>
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300">{stage.responsibility}</p>
-                  <div className="space-y-1 rounded-lg bg-white p-3 text-xs text-zinc-600 shadow-sm dark:bg-black/40 dark:text-zinc-300">
-                    <p>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-100">Input:</span> {stage.inputs}
-                    </p>
-                    <p>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-100">Output:</span> {stage.outputs}
-                    </p>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {systemNodes.map((node) => (
+              <div key={node.id} className="space-y-3 rounded-2xl border border-indigo-100 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900/80">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">{node.type}</p>
+                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{node.name}</h3>
                   </div>
+                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/50 dark:text-indigo-200 dark:ring-indigo-700/50">
+                    Node
+                  </span>
                 </div>
-                {index < flowStages.length - 1 ? (
-                  <div className="flex h-full items-center">
-                    <span className="text-lg font-semibold text-zinc-500">→</span>
-                  </div>
-                ) : null}
+                <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{node.summary}</p>
+                <div className="flex flex-wrap gap-2">
+                  {node.tags.map((tag) => (
+                    <span key={tag} className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-200 dark:ring-indigo-800/60">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -108,23 +146,23 @@ export default function SystemMapPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 lg:col-span-2">
-          <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Data flow</h3>
+        <div className="space-y-3 rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70 lg:col-span-2">
+          <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Data flow highlights</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-            <li>Job descriptions enter through RUA and become role profiles before any matching is allowed.</li>
-            <li>Candidate resumes are normalized by RINA; downstream agents consume the normalized profile, not the raw file.</li>
-            <li>MATCHER only runs when both role and candidate profiles exist; results are immutable inputs to Confidence.</li>
-            <li>Confidence gates prevent Explain and Shortlist from using stale or low-quality matches.</li>
-            <li>Shortlist output is the only place candidates advance; it always cites the Explain reasoning that led to it.</li>
+            <li>Job descriptions land in Intake and flow through RUA before any scoring is permitted.</li>
+            <li>Resumes move Intake → RINA → Database (Job Library) → Scoring engine; downstream agents only touch normalized profiles.</li>
+            <li>Scoring engine requires both role and candidate profiles; outputs are immutable inputs to Confidence / Explain.</li>
+            <li>Confidence / Explain block bad data and record rationales alongside scores for auditability.</li>
+            <li>Tenant Config injects feature flags and weighting rules; if disabled, dependent steps halt instead of falling back.</li>
           </ul>
         </div>
 
-        <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="space-y-3 rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Status grammar</h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-300">Colors communicate state without relying on labels.</p>
           <div className="space-y-2">
             {statusLegend.map((item) => (
-              <div key={item.status} className="flex items-center justify-between rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
+              <div key={item.status} className="flex items-center justify-between rounded-lg border border-indigo-100 bg-white/80 px-3 py-2 dark:border-indigo-800 dark:bg-zinc-950/60">
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100">{item.label}</span>
                 <StatusPill status={item.status} label={item.label} />
               </div>
@@ -134,26 +172,43 @@ export default function SystemMapPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="space-y-3 rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Dependencies</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-            <li>Database is the source of truth for roles, candidates, and run logs; if unavailable, matching halts.</li>
-            <li>Feature flags control access to Agents and Scoring; a disabled flag blocks the dependent agent call.</li>
+            <li>Database / Job Library is the source of truth for roles, candidates, and scoring history; if unavailable, matching halts.</li>
+            <li>Feature flags from Tenant Config control access to agents and scoring; a disabled flag blocks the dependent agent call.</li>
             <li>Scoring pipeline expects structured profiles; malformed data fails fast rather than auto-correcting.</li>
-            <li>Tenant configuration determines which subsystems appear on the home grid and in the status panel.</li>
+            <li>Blueprint view mirrors the dashboard header style to reinforce that this is part of the core control plane.</li>
           </ul>
         </div>
 
-        <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="space-y-3 rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Ownership boundaries</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
             <li>UI collects inputs and surfaces results; it never rewrites agent outputs.</li>
-            <li>Agents own interpretation: RUA/RINA create profiles, MATCHER scores, CONFIDENCE gates quality, EXPLAIN justifies, SHORTLIST decides.</li>
-            <li>Data correctness checks live in Confidence; Explain and Shortlist consume its signals instead of revalidating.</li>
-            <li>System Status reflects real subsystem health (agents, scoring, database, tenant config) pulled at request time.</li>
+            <li>Agents own interpretation: RUA shapes roles, RINA normalizes resumes, Scoring engine ranks, Confidence / Explain gate quality.</li>
+            <li>Data correctness checks live in Confidence / Explain; downstream consumers reuse those signals instead of revalidating.</li>
+            <li>System Status pulls live subsystem health (agents, scoring, database, tenant config) and aligns with this blueprint.</li>
           </ul>
         </div>
       </section>
     </EATClientLayout>
+  );
+}
+
+function FlowPill({ label }: { label: string }) {
+  return (
+    <span className="flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-[13px] font-semibold text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/60 dark:text-indigo-100 dark:ring-indigo-700/60">
+      <span className="h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+function FlowArrow() {
+  return (
+    <span className="text-base font-semibold text-indigo-500 dark:text-indigo-200" aria-hidden>
+      →
+    </span>
   );
 }

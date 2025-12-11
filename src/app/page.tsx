@@ -379,6 +379,7 @@ export default async function Home() {
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">EAT</p>
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
             </div>
+<<<<<<< ours
             <div className="flex items-center gap-2 self-start">
               <div
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] shadow-sm ${heartbeat.badge}`}
@@ -395,6 +396,16 @@ export default async function Home() {
                 System Map
               </Link>
             </div>
+=======
+            <Link
+              href="/system-map"
+              title="View agents, data flows, and dependencies"
+              className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white/90 px-4 py-2 text-sm font-semibold text-indigo-700 shadow-md transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg"
+            >
+              <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" aria-hidden />
+              System Map
+            </Link>
+>>>>>>> theirs
           </div>
           <p className="max-w-2xl text-base leading-relaxed text-zinc-600">
             <span className="block">Real-time orchestration for intelligent hiring systems.</span>
@@ -428,6 +439,7 @@ export default async function Home() {
               <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Data + Controls</span>
             </div>
           </div>
+<<<<<<< ours
           <div className="flex items-center gap-3 self-start">
             <div
               className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] shadow-sm ${heartbeat.badge}`}
@@ -444,6 +456,16 @@ export default async function Home() {
               System Map
             </Link>
           </div>
+=======
+          <Link
+            href="/system-map"
+            title="View agents, data flows, and dependencies"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white/90 px-5 py-2 text-sm font-semibold text-indigo-700 shadow-md transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200 dark:hover:border-indigo-700"
+          >
+            <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" aria-hidden />
+            <span className="text-[13px] uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">System Map</span>
+          </Link>
+>>>>>>> theirs
         </div>
       </header>
 
