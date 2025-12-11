@@ -1,6 +1,12 @@
 "use client";
 
+<<<<<<< ours
 import Link from "next/link";
+=======
+import type { SystemExecutionState } from "@/lib/systemStatus";
+import { useEffect, useRef, useState } from "react";
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
+>>>>>>> theirs
 
 import type { SystemExecutionState } from "@/lib/systemStatus";
 
@@ -18,12 +24,49 @@ type SystemStateBannerProps = {
 };
 
 export function SystemStateBanner({ executionState, onRefresh, isRefreshing }: SystemStateBannerProps) {
+<<<<<<< ours
+=======
+  const [isEntering, setIsEntering] = useState(false);
+  const previousState = useRef<SystemExecutionState["state"] | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  const styles = bannerStyles[executionState.state];
+  const latestRunTime = formatTimestamp(executionState.latestRunAt);
+>>>>>>> theirs
   const latestFailureTime = formatTimestamp(executionState.latestFailureAt);
   const showBanner = executionState.state === "degraded";
 
+<<<<<<< ours
   if (!showBanner) {
     return null;
   }
+=======
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setIsEntering(false);
+      previousState.current = executionState.state;
+      return;
+    }
+
+    if (executionState.state === "degraded" && previousState.current !== executionState.state) {
+      setIsEntering(true);
+      previousState.current = executionState.state;
+
+      const timeout = setTimeout(() => setIsEntering(false), 240);
+
+      return () => clearTimeout(timeout);
+    }
+
+    previousState.current = executionState.state;
+  }, [executionState.state, prefersReducedMotion]);
+
+  const caption = (() => {
+    if (executionState.state === "degraded") {
+      return latestFailureTime
+        ? `Latest failure surfaced ${latestFailureTime}`
+        : "Investigate recent agent activity to restore health.";
+    }
+>>>>>>> theirs
 
   const incidentCountText =
     executionState.failureCountLast24h > 1
@@ -40,7 +83,13 @@ export function SystemStateBanner({ executionState, onRefresh, isRefreshing }: S
 
   return (
     <div
+<<<<<<< ours
       className="flex items-center justify-between gap-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 shadow-sm"
+=======
+      className={`flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 shadow-sm ${styles.border} ${styles.bg} ${
+        isEntering ? "banner-slide-in" : ""
+      }`}
+>>>>>>> theirs
     >
       <div className="flex items-center gap-3">
         <span className="text-xl" aria-hidden>

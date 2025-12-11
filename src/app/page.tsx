@@ -11,6 +11,7 @@ import {
 import { SystemHealthPanel } from "@/components/SystemHealthPanel";
 import { EATClientLayout } from "@/components/EATClientLayout";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
+import { WorkflowCard } from "@/components/home/WorkflowCard";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -85,13 +86,6 @@ const cardStateStyles: Record<CardState, { rail: string; chip: string }> = {
     rail: "bg-gradient-to-r from-zinc-300 via-zinc-400 to-zinc-300",
     chip: "border-zinc-200/80 bg-zinc-50 text-zinc-700",
   },
-};
-
-const dependencyStatusStyles: Record<SubsystemState, string> = {
-  healthy: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  warning: "bg-amber-50 text-amber-700 border-amber-200",
-  error: "bg-red-50 text-red-700 border-red-200",
-  unknown: "bg-zinc-50 text-zinc-600 border-zinc-200",
 };
 
 const dependencyDotStyles: Record<SubsystemState, string> = {
@@ -380,6 +374,7 @@ export default async function Home() {
 <<<<<<< ours
 <<<<<<< ours
     const badgeState = dependencyState.status;
+<<<<<<< ours
 =======
     const isExecutionHistory = link.label === "Execution history";
     const runsLast7d = link.executionSummary?.runsLast7d ?? 0;
@@ -407,10 +402,13 @@ export default async function Home() {
           ? "Recent execution activity from the last week."
           : "System idle — no executions detected in the last 7 days."
       : link.description ?? `${link.label} workflow`;
+=======
+>>>>>>> theirs
 
     return (
-      <Link
+      <WorkflowCard
         key={link.href}
+<<<<<<< ours
         href={link.href}
         className={`group relative overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm ring-1 ring-transparent transition backdrop-blur dark:border-indigo-900/40 dark:bg-zinc-900/80 ${
           isActive
@@ -510,6 +508,17 @@ export default async function Home() {
           </div>
         </div>
       </Link>
+=======
+        link={link}
+        badgeState={badgeState}
+        dependencyState={dependencyState}
+        badgeStyles={badgeStyles}
+        dependencyLabels={dependencyLabels}
+        dependencyDotStyles={dependencyDotStyles}
+        formatStatusText={formatStatusText}
+        formatDependencyStatus={formatDependencyStatus}
+      />
+>>>>>>> theirs
     );
   };
 

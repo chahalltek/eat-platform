@@ -1,6 +1,10 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import type { CellContext, ColumnDef } from "@tanstack/react-table";
+
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 export type EATTableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
 
@@ -104,10 +108,32 @@ function renderStatusBadge<TValue>(
   const label = formatLabel ? formatLabel(value) : defaultTextCell(value);
 
   return (
+    <StatusBadge label={label} variant={variant} />
+  );
+}
+
+function StatusBadge({ label, variant }: { label: React.ReactNode; variant: StatusVariant }) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setIsAnimating(false);
+      return;
+    }
+
+    setIsAnimating(true);
+    const timeout = setTimeout(() => setIsAnimating(false), 200);
+
+    return () => clearTimeout(timeout);
+  }, [label, variant, prefersReducedMotion]);
+
+  return (
     <span
       className={clsx(
         "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize",
         STATUS_VARIANT_CLASSES[variant],
+        isAnimating && "status-change-animate",
       )}
     >
       {label}

@@ -27,8 +27,7 @@ body {
 
 .status-change-animate {
   position: relative;
-  animation: status-fade-shift 420ms ease;
-  box-shadow: 0 0 0 0 var(--status-accent, rgba(59, 130, 246, 0.28));
+  animation: status-scale-fade 180ms ease;
 }
 
 .status-change-animate::after {
@@ -36,53 +35,91 @@ body {
   position: absolute;
   inset: -4px;
   border-radius: 999px;
+  opacity: 0.4;
   box-shadow: 0 0 0 0 var(--status-accent, rgba(59, 130, 246, 0.28));
-  animation: status-soft-glow 900ms ease;
+  animation: status-soft-glow 220ms ease;
   pointer-events: none;
 }
 
 .status-dot-animate {
-  animation: status-pulse 900ms ease;
+  animation: status-dot-scale 180ms ease;
+}
+
+.banner-slide-in {
+  animation: banner-slide-in 220ms ease;
+}
+
+.workflow-rail-pulse {
+  animation: workflow-rail-pulse 260ms ease;
+}
+
+@keyframes status-scale-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes status-soft-glow {
   0% {
+    opacity: 0;
+    transform: scale(0.95);
     box-shadow: 0 0 0 0 var(--status-accent, rgba(59, 130, 246, 0.28));
   }
-  55% {
-    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  65% {
+    opacity: 0.2;
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(0, 0, 0, 0);
   }
   100% {
+    opacity: 0;
+    transform: scale(1);
     box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }
 
-@keyframes status-fade-shift {
+@keyframes status-dot-scale {
   0% {
-    opacity: 0.92;
-    transform: translateY(0);
-  }
-  45% {
-    opacity: 1;
-    transform: translateY(-1px);
+    transform: scale(0.9);
+    opacity: 0.8;
   }
   100% {
-    opacity: 0.95;
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes banner-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 1;
     transform: translateY(0);
   }
 }
 
-@keyframes status-pulse {
+@keyframes workflow-rail-pulse {
   0% {
-    transform: scale(1);
-    opacity: 0.9;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 1;
+    opacity: 0.45;
+    transform: scaleX(0.98);
   }
   100% {
-    transform: scale(1);
-    opacity: 0.95;
+    opacity: 0.85;
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-change-animate,
+  .status-dot-animate,
+  .banner-slide-in,
+  .workflow-rail-pulse {
+    animation: none !important;
   }
 }

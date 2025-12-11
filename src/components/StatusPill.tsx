@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
+
 export type StatusPillStatus =
   | "enabled"
   | "healthy"
@@ -58,26 +60,29 @@ function resolveTone(status: StatusPillStatus): StatusTone {
 export function StatusPill({ status, label }: { status: StatusPillStatus; label?: string }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const previousStatus = useRef<StatusPillStatus | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const tone = resolveTone(status);
   const displayLabel = label ?? statusConfig[status]?.label ?? "Status";
 
   useEffect(() => {
-    if (previousStatus.current && previousStatus.current !== status) {
+    if (prefersReducedMotion) {
+      previousStatus.current = status;
       setIsAnimating(false);
-      const raf = requestAnimationFrame(() => setIsAnimating(true));
-      const timeout = setTimeout(() => setIsAnimating(false), 900);
+      return;
+    }
 
+    if (!previousStatus.current || previousStatus.current !== status) {
+      setIsAnimating(true);
       previousStatus.current = status;
 
-      return () => {
-        cancelAnimationFrame(raf);
-        clearTimeout(timeout);
-      };
+      const timeout = setTimeout(() => setIsAnimating(false), 200);
+
+      return () => clearTimeout(timeout);
     }
 
     previousStatus.current = status;
-  }, [status]);
+  }, [status, prefersReducedMotion]);
 
   return (
     <span
