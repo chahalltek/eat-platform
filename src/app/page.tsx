@@ -60,14 +60,25 @@ const dependencyLabels: Record<SubsystemKey, string> = {
   tenantConfig: "Tenant Config",
 };
 
-type BadgeState = "enabled" | SubsystemState;
+type CardState = "idle" | "running" | "degraded" | "disabled";
 
-const badgeStyles: Record<BadgeState, string> = {
-  enabled: "border-blue-200/80 bg-blue-50 text-blue-800",
-  healthy: "border-emerald-200/80 bg-emerald-50 text-emerald-800",
-  warning: "border-amber-200/80 bg-amber-50 text-amber-800",
-  error: "border-red-200/80 bg-red-50 text-red-800",
-  unknown: "border-zinc-200/80 bg-zinc-50 text-zinc-700",
+const cardStateStyles: Record<CardState, { rail: string; chip: string }> = {
+  idle: {
+    rail: "bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500",
+    chip: "border-blue-200/80 bg-blue-50 text-blue-800",
+  },
+  running: {
+    rail: "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400",
+    chip: "border-emerald-200/80 bg-emerald-50 text-emerald-800",
+  },
+  degraded: {
+    rail: "bg-gradient-to-r from-red-400 via-rose-500 to-red-500",
+    chip: "border-red-200/80 bg-red-50 text-red-800",
+  },
+  disabled: {
+    rail: "bg-gradient-to-r from-zinc-300 via-zinc-400 to-zinc-300",
+    chip: "border-zinc-200/80 bg-zinc-50 text-zinc-700",
+  },
 };
 
 const dependencyStatusStyles: Record<SubsystemState, string> = {
@@ -84,6 +95,7 @@ const dependencyDotStyles: Record<SubsystemState, string> = {
   unknown: "bg-zinc-400",
 };
 
+<<<<<<< ours
 <<<<<<< ours
 const dependencyStatusTextStyles: Record<SubsystemState, string> = {
   healthy: "text-emerald-700 dark:text-emerald-200",
@@ -122,28 +134,40 @@ const heartbeatStyles: Record<
 };
 
 function formatStatusText(status: BadgeState) {
-  switch (status) {
-    case "enabled":
-      return "Idle";
-    case "healthy":
-      return "Healthy";
-    case "warning":
-      return "Waiting";
-    case "error":
-      return "Fault";
-    case "unknown":
-    default:
-      return "Status pending";
+=======
+function getCardState(
+  dependencyState: ReturnType<typeof getDependencyState>,
+  executionState: SystemExecutionState,
+): CardState {
+  if (!dependencyState.isActive) {
+    return "disabled";
   }
+
+  if (["warning", "error", "unknown"].includes(dependencyState.status)) {
+    return "degraded";
+  }
+
+  if (executionState.state === "operational") {
+    return "running";
+  }
+
+  return "idle";
 }
 
-const messageStyles: Record<string, string> = {
-  warning: "text-amber-700 dark:text-amber-200",
-  error: "text-red-700 dark:text-red-200",
-  unknown: "text-zinc-600 dark:text-zinc-400",
-  enabled: "text-blue-700 dark:text-blue-200",
-  healthy: "text-emerald-700 dark:text-emerald-200",
-};
+function formatStatusText(status: CardState) {
+>>>>>>> theirs
+  switch (status) {
+    case "running":
+      return "Running";
+    case "degraded":
+      return "Degraded";
+    case "disabled":
+      return "Disabled";
+    case "idle":
+    default:
+      return "Idle";
+  }
+}
 
 function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
   return [
@@ -283,6 +307,7 @@ export default async function Home() {
 
   const renderLinkCard = (link: HomeLink) => {
     const dependencyState = getDependencyState(link, systemStatus);
+<<<<<<< ours
     const badgeState = dependencyState.status;
     const isActive = dependencyState.isActive;
     const dependencyMessage =
@@ -290,6 +315,10 @@ export default async function Home() {
     const railState = (link.dependency
       ? dependencyState.dependencyStatus ?? "unknown"
       : badgeState) as BadgeState;
+=======
+    const cardState = getCardState(dependencyState, executionState);
+    const isActive = cardState !== "disabled";
+>>>>>>> theirs
 
     return (
       <Link
@@ -304,7 +333,11 @@ export default async function Home() {
         tabIndex={isActive ? 0 : -1}
       >
         <div
+<<<<<<< ours
           className={`absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r ${stateRailStyles[railState]}`}
+=======
+          className={`absolute inset-x-6 top-0 h-1 rounded-full opacity-80 ${cardStateStyles[cardState].rail}`}
+>>>>>>> theirs
           aria-hidden
         />
 
@@ -316,8 +349,8 @@ export default async function Home() {
               {link.description ?? `${link.label} workflow`}
             </p>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm ${badgeStyles[badgeState]}`}>
-            {formatStatusText(badgeState)}
+          <span className={`rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm ${cardStateStyles[cardState].chip}`}>
+            {formatStatusText(cardState)}
           </span>
         </div>
 
