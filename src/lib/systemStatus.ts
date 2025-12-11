@@ -172,9 +172,11 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
           ? 'idle'
           : 'operational';
 
+    const mode = await getSystemMode();
+
     return {
       state,
-      mode: getSystemMode(),
+      mode,
       activeRuns,
       latestRunAt: latestRun?.startedAt.toISOString() ?? null,
       latestSuccessAt: latestSuccess?.startedAt.toISOString() ?? null,
@@ -190,9 +192,11 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
       console.error('[system-execution] Unable to compute execution state', error);
     }
 
+    const mode = await getSystemMode();
+
     return {
       state: 'degraded',
-      mode: getSystemMode(),
+      mode,
       activeRuns: 0,
       latestRunAt: null,
       latestSuccessAt: null,

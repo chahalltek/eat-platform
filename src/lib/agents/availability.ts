@@ -16,18 +16,7 @@ export class FireDrillAgentDisabledError extends Error {
 }
 
 export async function getAgentAvailability(): Promise<AgentAvailability> {
-  const mode = getSystemMode();
-
-  // In Fire Drill we intentionally hard-disable anything that relies on LLMs
-  // or non-essential scoring.
-  if (mode === "FIRE_DRILL") {
-    return {
-      mode,
-      confidenceEnabled: false,
-      explainEnabled: false,
-      shortlistEnabled: false,
-    } satisfies AgentAvailability;
-  }
+  const systemMode = await getSystemMode();
 
   const killSwitches = await listAgentKillSwitches();
   const hasLatchedKillSwitch = killSwitches.some((entry) => entry.latched);
@@ -36,7 +25,7 @@ export async function getAgentAvailability(): Promise<AgentAvailability> {
   // non-essential agents so we fail safely.
   if (hasLatchedKillSwitch) {
     return {
-      mode,
+      mode: systemMode,
       confidenceEnabled: false,
       explainEnabled: false,
       shortlistEnabled: false,
@@ -44,10 +33,10 @@ export async function getAgentAvailability(): Promise<AgentAvailability> {
   }
 
   return {
-    mode,
-    confidenceEnabled: true,
-    explainEnabled: true,
-    shortlistEnabled: true,
+    mode: systemMode,
+    confidenceEnabled: systemMode.agentEnablement.basic,
+    explainEnabled: systemMode.agentEnablement.basic,
+    shortlistEnabled: systemMode.agentEnablement.shortlist,
   } satisfies AgentAvailability;
 }
 

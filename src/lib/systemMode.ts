@@ -1,5 +1,3 @@
-<<<<<<< ours
-<<<<<<< ours
 import { Prisma } from '@prisma/client';
 
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
@@ -30,6 +28,8 @@ export type SystemModeState = {
   guardrailsPreset: string;
   agentEnablement: AgentEnablement;
 };
+
+export type SystemMode = SystemModeState;
 
 const DEFAULT_MODE: SystemModeName = SYSTEM_MODES.PILOT;
 const DEFAULT_GUARDRAILS_PRESET = 'human-vetted';
@@ -82,7 +82,7 @@ export async function getSystemMode(tenantId?: string): Promise<SystemModeState>
       metadata: {},
       guardrailsPreset: presetFallback.guardrailsPreset,
       agentEnablement: presetFallback.agentEnablement,
-    };
+    } satisfies SystemModeState;
   }
 
   const systemModeModel = prisma.systemMode as typeof prisma.systemMode | undefined;
@@ -93,7 +93,7 @@ export async function getSystemMode(tenantId?: string): Promise<SystemModeState>
       metadata: {},
       guardrailsPreset: presetFallback.guardrailsPreset,
       agentEnablement: presetFallback.agentEnablement,
-    };
+    } satisfies SystemModeState;
   }
 
   const record = await systemModeModel
@@ -121,83 +121,5 @@ export async function getSystemMode(tenantId?: string): Promise<SystemModeState>
     metadata,
     guardrailsPreset,
     agentEnablement,
-  };
-=======
-export type SystemMode = "NORMAL" | "FIRE_DRILL";
-
-function normalizeFlag(value: string | undefined | null) {
-  return value?.trim().toUpperCase() ?? "";
-}
-
-export function getSystemMode(): SystemMode {
-  const override = normalizeFlag(process.env.FIRE_DRILL_MODE);
-
-  if (override === "FIRE_DRILL" || override === "TRUE" || override === "1") {
-    return "FIRE_DRILL";
-  }
-
-  if (override === "NORMAL" || override === "FALSE" || override === "0") {
-    return "NORMAL";
-  }
-
-  // If we do not have an LLM key configured, drop into Fire Drill mode so we
-  // rely on deterministic fallbacks instead of attempting remote calls.
-  if (!process.env.OPENAI_API_KEY) {
-    return "FIRE_DRILL";
-  }
-
-  return "NORMAL";
-}
-
-export function isFireDrillMode() {
-  return getSystemMode() === "FIRE_DRILL";
->>>>>>> theirs
-=======
-import { z } from "zod";
-
-import type { AppConfig } from "@/lib/config/configValidator";
-import { getAppConfig } from "@/lib/config/configValidator";
-
-export const SYSTEM_MODES = ["pilot", "production", "sandbox", "fire_drill"] as const;
-export type SystemMode = (typeof SYSTEM_MODES)[number];
-
-const FireDrillImpactSchema = z.union([z.array(z.string()), z.string()]).optional();
-
-function normalizeImpact(value?: string | string[] | null): string[] {
-  if (!value) return [];
-
-  const parsed = FireDrillImpactSchema.parse(value);
-
-  if (Array.isArray(parsed)) {
-    return parsed.map((entry) => entry.trim()).filter(Boolean);
-  }
-
-  try {
-    const asJson = JSON.parse(parsed);
-    if (Array.isArray(asJson)) {
-      return asJson.map((entry) => String(entry).trim()).filter(Boolean);
-    }
-  } catch {
-    // Fall back to treating the string as a delimiter-separated list.
-  }
-
-  return parsed
-    .split(/[,\n]/)
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-}
-
-export function getSystemMode(config: AppConfig = getAppConfig()) {
-  const mode: SystemMode = config.SYSTEM_MODE;
-  const fireDrillImpact = normalizeImpact(config.FIRE_DRILL_IMPACT);
-  const isFireDrill = mode === "fire_drill";
-
-  return {
-    mode,
-    fireDrill: {
-      enabled: isFireDrill,
-      fireDrillImpact: isFireDrill ? fireDrillImpact : [],
-    },
-  } as const;
->>>>>>> theirs
+  } satisfies SystemModeState;
 }
