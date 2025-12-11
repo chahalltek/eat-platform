@@ -15,6 +15,8 @@ import {
   setAgentKillSwitch,
 } from './killSwitch';
 
+const isTableAvailableMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     agentFlag: {
@@ -24,6 +26,7 @@ vi.mock('@/lib/prisma', () => ({
     },
   },
   isPrismaUnavailableError: () => false,
+  isTableAvailable: isTableAvailableMock,
 }));
 
 vi.mock('@/lib/audit/securityEvents', () => ({
@@ -33,6 +36,7 @@ vi.mock('@/lib/audit/securityEvents', () => ({
 
 afterEach(() => {
   vi.resetAllMocks();
+  isTableAvailableMock.mockResolvedValue(true);
 });
 
 describe('agent kill switch', () => {

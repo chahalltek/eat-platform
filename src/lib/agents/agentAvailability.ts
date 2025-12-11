@@ -3,14 +3,17 @@ import { NextResponse } from 'next/server';
 
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { loadTenantMode } from '@/lib/modes/loadTenantMode';
-import { isPrismaUnavailableError, prisma } from '@/lib/prisma';
+import { isPrismaUnavailableError, isTableAvailable, prisma } from '@/lib/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
 
 export async function getAgentAvailability(tenantId: string) {
   const mode = await loadTenantMode(tenantId);
-  const flags = await prisma.agentFlag
-    .findMany({ where: { tenantId } })
-    .catch((error) => withAgentFlagFallback(error, () => [] as AgentFlagModel[]));
+  const agentFlagModel = await getAgentFlagModel();
+  const flags = agentFlagModel
+    ? await agentFlagModel
+        .findMany({ where: { tenantId } })
+        .catch((error) => withAgentFlagFallback(error, () => [] as AgentFlagModel[]))
+    : ([] as AgentFlagModel[]);
 
   const flagMap = new Map<string, boolean>(flags.map((f) => [f.agentName, f.enabled]));
 
@@ -106,6 +109,17 @@ function withAgentFlagFallback<T>(error: unknown, fallback: () => T): T {
   throw error;
 }
 
+async function getAgentFlagModel() {
+  const available = await isTableAvailable('AgentFlag');
+  if (!available) {
+    return null;
+  }
+
+  const model = prisma.agentFlag as typeof prisma.agentFlag | undefined;
+
+  return model ?? null;
+}
+
 export function describeAgent(agentName: AgentName) {
   switch (agentName) {
     case AGENTS.RINA:
@@ -127,9 +141,12 @@ export function describeAgent(agentName: AgentName) {
 
 export async function listAgentFlagAvailability(tenantId?: string): Promise<AgentAvailabilityRecord[]> {
   const resolvedTenantId = await resolveTenantId(tenantId);
-  const stored = await prisma.agentFlag
-    .findMany({ where: { tenantId: resolvedTenantId } })
-    .catch((error) => withAgentFlagFallback(error, () => [] as AgentFlagModel[]));
+  const agentFlagModel = await getAgentFlagModel();
+  const stored = agentFlagModel
+    ? await agentFlagModel
+        .findMany({ where: { tenantId: resolvedTenantId } })
+        .catch((error) => withAgentFlagFallback(error, () => [] as AgentFlagModel[]))
+    : ([] as AgentFlagModel[]);
   const storedByName = new Map(stored.map((record) => [record.agentName, record]));
 
   return allAgentNames().map((agentName) => toRecord(agentName, storedByName.get(agentName)));
@@ -137,9 +154,12 @@ export async function listAgentFlagAvailability(tenantId?: string): Promise<Agen
 
 export async function getAgentFlagAvailability(agentName: AgentName, tenantId?: string): Promise<AgentAvailabilityRecord> {
   const resolvedTenantId = await resolveTenantId(tenantId);
-  const record = await prisma.agentFlag
-    .findUnique({ where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } } })
-    .catch((error) => withAgentFlagFallback(error, () => null));
+  const agentFlagModel = await getAgentFlagModel();
+  const record = agentFlagModel
+    ? await agentFlagModel
+        .findUnique({ where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } } })
+        .catch((error) => withAgentFlagFallback(error, () => null))
+    : null;
 
   return toRecord(agentName, record);
 }
@@ -150,13 +170,16 @@ export async function setAgentFlagAvailability(
   tenantId?: string,
 ): Promise<AgentAvailabilityRecord> {
   const resolvedTenantId = await resolveTenantId(tenantId);
-  const record = await prisma.agentFlag
-    .upsert({
-      where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } },
-      update: { enabled },
-      create: { tenantId: resolvedTenantId, agentName, enabled },
-    })
-    .catch((error) => withAgentFlagFallback(error, () => null));
+  const agentFlagModel = await getAgentFlagModel();
+  const record = agentFlagModel
+    ? await agentFlagModel
+        .upsert({
+          where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } },
+          update: { enabled },
+          create: { tenantId: resolvedTenantId, agentName, enabled },
+        })
+        .catch((error) => withAgentFlagFallback(error, () => null))
+    : null;
 
   const parsed = toRecord(agentName, record);
 
