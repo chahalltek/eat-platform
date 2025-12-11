@@ -45,6 +45,8 @@ function isStructuredResult<T extends Prisma.InputJsonValue>(
   return typeof value === 'object' && value !== null && 'result' in value;
 }
 
+const isDbNull = (value: unknown): value is Prisma.NullTypes.DbNull => value === Prisma.DbNull;
+
 export async function withAgentRun<T extends Prisma.InputJsonValue>(
   {
     agentName,
@@ -68,26 +70,18 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 
   await assertTenantWithinLimits(tenantId, 'createAgentRun');
 
-  const retryPayloadValue: Prisma.InputJsonValue | Prisma.JsonNullValueInput | null = (() => {
-    const payload = retryPayload === undefined ? inputSnapshot : retryPayload;
+   const retryPayloadValue: Prisma.InputJsonValue | Prisma.JsonNullValueInput | Prisma.NullTypes.DbNull | null =
+    (() => {
+      const payload:
+        | Prisma.InputJsonValue
+        | Prisma.JsonNullValueInput
+        | Prisma.NullTypes.DbNull
+        | undefined = retryPayload === undefined ? inputSnapshot : retryPayload;
 
-    if (payload === undefined || payload === null) return null;
-    if (payload === Prisma.JsonNull || payload === Prisma.DbNull) return payload;
-    return payload as Prisma.InputJsonValue;
-  })();
-
-  const rawResumeText = (() => {
-    if (
-      retryPayloadValue &&
-      retryPayloadValue !== Prisma.DbNull &&
-      typeof retryPayloadValue === 'object' &&
-      'rawResumeText' in retryPayloadValue
-    ) {
-      const value = (retryPayloadValue as Record<string, unknown>).rawResumeText;
-      return typeof value === 'string' ? value : null;
-    }
-    return null;
-  })();
+      if (payload === undefined || payload === null) return null;
+      if (payload === Prisma.JsonNull || isDbNull(payload)) return payload;
+      return payload as Prisma.InputJsonValue;
+    })();
 
   const agentRun = await createAgentRunLog(prisma, {
     agentName,
