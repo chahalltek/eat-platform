@@ -7,7 +7,7 @@ const DEFAULT_MODE: SystemModeName = "pilot";
 const DEFAULT_DEFINITION = SYSTEM_MODES[DEFAULT_MODE];
 
 function isMissingTableError(error: unknown) {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  return Boolean(error && typeof error === "object" && (error as { code?: unknown }).code === "P2021");
 }
 
 function buildFallbackMode() {
@@ -19,31 +19,33 @@ function buildFallbackMode() {
 }
 
 export async function loadTenantMode(tenantId: string) {
-  const tenantModeAvailable = await isTableAvailable("TenantMode");
-  if (!tenantModeAvailable) {
-    return buildFallbackMode();
-  }
+  try {
+    const tenantModeAvailable = await isTableAvailable("TenantMode");
+    if (!tenantModeAvailable) {
+      return buildFallbackMode();
+    }
 
-  const tenantModeModel = prisma.tenantMode as typeof prisma.tenantMode | undefined;
+    const tenantModeModel = prisma.tenantMode as typeof prisma.tenantMode | undefined;
 
-  if (!tenantModeModel?.findUnique) {
-    return buildFallbackMode();
-  }
+    if (!tenantModeModel?.findUnique) {
+      return buildFallbackMode();
+    }
 
-  const record = await tenantModeModel.findUnique({ where: { tenantId } }).catch((error) => {
+    const record = await tenantModeModel.findUnique({ where: { tenantId } });
+
+    const mode: SystemModeName = (record?.mode as SystemModeName) ?? DEFAULT_MODE;
+    const definition = SYSTEM_MODES[mode] ?? DEFAULT_DEFINITION;
+
+    return {
+      mode,
+      guardrailsPreset: definition.guardrailsPreset,
+      agentsEnabled: definition.agentsEnabled,
+    };
+  } catch (error) {
     if (isPrismaUnavailableError(error) || isMissingTableError(error)) {
-      return null;
+      return buildFallbackMode();
     }
 
     throw error;
-  });
-
-  const mode: SystemModeName = (record?.mode as SystemModeName) ?? DEFAULT_MODE;
-  const definition = SYSTEM_MODES[mode] ?? DEFAULT_DEFINITION;
-
-  return {
-    mode,
-    guardrailsPreset: definition.guardrailsPreset,
-    agentsEnabled: definition.agentsEnabled,
-  };
+  }
 }

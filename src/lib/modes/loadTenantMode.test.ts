@@ -44,4 +44,15 @@ describe('loadTenantMode', () => {
       agentsEnabled: ['RUA', 'RINA', 'MATCH', 'CONFIDENCE', 'EXPLAIN', 'SHORTLIST'],
     });
   });
+
+  it('falls back to the pilot defaults when Prisma reports a missing table', async () => {
+    isTableAvailableMock.mockResolvedValue(true);
+    prismaMock.tenantMode.findUnique.mockRejectedValue({ code: 'P2021' });
+
+    await expect(loadTenantMode(tenantId)).resolves.toEqual({
+      mode: 'pilot',
+      guardrailsPreset: 'conservative',
+      agentsEnabled: ['RUA', 'RINA', 'MATCH', 'SHORTLIST'],
+    });
+  });
 });
