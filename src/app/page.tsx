@@ -10,6 +10,7 @@ import {
 } from "@/lib/systemStatus";
 import { SystemHealthPanel } from "@/components/SystemHealthPanel";
 import { EATClientLayout } from "@/components/EATClientLayout";
+import { BrandMark } from "@/components/BrandMark";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 import { WorkflowCard } from "@/components/home/WorkflowCard";
 import { getCurrentTenantId } from "@/lib/tenant";
@@ -332,70 +333,84 @@ export default async function Home() {
 
   return (
     <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="flex flex-col gap-10 pb-12">
-      <header className="mt-2 overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">EAT</p>
-            <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EAT – Talent System (MVP)</h1>
-            <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-              <span className="block">Real-time orchestration for intelligent hiring systems.</span>
-              <span className="block text-sm text-zinc-500 dark:text-zinc-400">Agents, data, and decisioning in one control plane.</span>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <aside className="lg:w-72">
+          <div className="flex flex-col gap-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-4 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+            <BrandMark withText className="text-left" />
+            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              EDGE Talent Engine console
+              <span className="block text-xs text-indigo-600 dark:text-indigo-300">Unified control plane</span>
             </p>
-            <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-300">
-              <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Agents</span>
-              <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Workflows</span>
-              <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Data + Controls</span>
+          </div>
+        </aside>
+
+        <div className="flex flex-1 flex-col gap-6">
+          <header className="mt-2 overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">EDGE Talent Engine</p>
+                <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EAT – Talent System (MVP)</h1>
+                <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+                  <span className="block">Real-time orchestration for intelligent hiring systems.</span>
+                  <span className="block text-sm text-zinc-500 dark:text-zinc-400">Agents, data, and decisioning in one control plane.</span>
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-300">
+                  <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Agents</span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Workflows</span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Data + Controls</span>
+                </div>
+              </div>
+              <Link
+                href="/system-map"
+                title="View agents, data flows, and dependencies"
+                className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white/90 px-5 py-2 text-sm font-semibold text-indigo-700 shadow-md transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200 dark:hover:border-indigo-700"
+              >
+                <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" aria-hidden />
+                <span className="text-[13px] uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">System Map</span>
+              </Link>
             </div>
+          </header>
+
+          <section className="rounded-2xl border border-indigo-100/70 bg-white/70 p-4 shadow-sm dark:border-indigo-900/50 dark:bg-zinc-900/70">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex flex-col">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+                  Telemetry
+                </span>
+                <span className="text-xs text-zinc-600 dark:text-zinc-400">Live activity snapshot</span>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <TelemetryMetric label="Agents online" value={metrics.telemetry.agentsOnline} />
+              <TelemetryMetric label="Agents executed today" value={metrics.telemetry.agentsExecutedToday} />
+              <TelemetryMetric
+                label="Incidents in last 24h"
+                value={metrics.telemetry.incidentsLast24h}
+                href="/agents/runs?status=failed&range=24h"
+              />
+            </div>
+          </section>
+
+          <SystemHealthPanel initialStatus={systemStatus} initialExecutionState={executionState} />
+
+          <div className="space-y-6">
+            <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+              <div className="flex flex-col gap-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Core workflows</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">Launch and monitor the everyday agent actions.</p>
+              </div>
+              <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
+            </section>
+
+            <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+              <div className="flex flex-col gap-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Data &amp; controls</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">Review the information that feeds the system.</p>
+              </div>
+              <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
+            </section>
           </div>
-          <Link
-            href="/system-map"
-            title="View agents, data flows, and dependencies"
-            className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white/90 px-5 py-2 text-sm font-semibold text-indigo-700 shadow-md transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200 dark:hover:border-indigo-700"
-          >
-            <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" aria-hidden />
-            <span className="text-[13px] uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">System Map</span>
-          </Link>
         </div>
-      </header>
-
-      <section className="rounded-2xl border border-indigo-100/70 bg-white/70 p-4 shadow-sm dark:border-indigo-900/50 dark:bg-zinc-900/70">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="flex flex-col">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
-              Telemetry
-            </span>
-            <span className="text-xs text-zinc-600 dark:text-zinc-400">Live activity snapshot</span>
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <TelemetryMetric label="Agents online" value={metrics.telemetry.agentsOnline} />
-          <TelemetryMetric label="Agents executed today" value={metrics.telemetry.agentsExecutedToday} />
-          <TelemetryMetric
-            label="Incidents in last 24h"
-            value={metrics.telemetry.incidentsLast24h}
-            href="/agents/runs?status=failed&range=24h"
-          />
-        </div>
-      </section>
-
-      <SystemHealthPanel initialStatus={systemStatus} initialExecutionState={executionState} />
-
-      <div className="space-y-6">
-        <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-          <div className="flex flex-col gap-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Core workflows</p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Launch and monitor the everyday agent actions.</p>
-          </div>
-          <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
-        </section>
-
-        <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-          <div className="flex flex-col gap-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Data &amp; controls</p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Review the information that feeds the system.</p>
-          </div>
-          <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
-        </section>
       </div>
     </EATClientLayout>
   );
