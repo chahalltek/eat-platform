@@ -63,11 +63,11 @@ const dependencyLabels: Record<SubsystemKey, string> = {
 type BadgeState = "enabled" | SubsystemState;
 
 const badgeStyles: Record<BadgeState, string> = {
-  enabled: "border-blue-200 bg-blue-50 text-blue-700",
-  healthy: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  warning: "border-amber-200 bg-amber-50 text-amber-700",
-  error: "border-red-200 bg-red-50 text-red-700",
-  unknown: "border-zinc-200 bg-zinc-50 text-zinc-600",
+  enabled: "border-blue-200/80 bg-blue-50 text-blue-800",
+  healthy: "border-emerald-200/80 bg-emerald-50 text-emerald-800",
+  warning: "border-amber-200/80 bg-amber-50 text-amber-800",
+  error: "border-red-200/80 bg-red-50 text-red-800",
+  unknown: "border-zinc-200/80 bg-zinc-50 text-zinc-700",
 };
 
 const dependencyStatusStyles: Record<SubsystemState, string> = {
@@ -75,6 +75,13 @@ const dependencyStatusStyles: Record<SubsystemState, string> = {
   warning: "bg-amber-50 text-amber-700 border-amber-200",
   error: "bg-red-50 text-red-700 border-red-200",
   unknown: "bg-zinc-50 text-zinc-600 border-zinc-200",
+};
+
+const dependencyDotStyles: Record<SubsystemState, string> = {
+  healthy: "bg-emerald-500",
+  warning: "bg-amber-500",
+  error: "bg-red-500",
+  unknown: "bg-zinc-400",
 };
 
 function formatStatusText(status: BadgeState) {
@@ -245,84 +252,77 @@ export default async function Home() {
       <Link
         key={link.href}
         href={link.href}
-        className={`group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition dark:border-zinc-800 dark:bg-zinc-900 ${
+        className={`group relative overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm ring-1 ring-transparent transition backdrop-blur dark:border-indigo-900/40 dark:bg-zinc-900/80 ${
           isActive
-            ? "cursor-pointer hover:-translate-y-1 hover:shadow-lg"
+            ? "cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:ring-indigo-200 dark:hover:ring-indigo-800"
             : "cursor-not-allowed pointer-events-none opacity-60"
         }`}
         aria-disabled={!isActive}
         tabIndex={isActive ? 0 : -1}
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">{link.label}</h2>
-          <span className={`rounded-full border px-3 py-1 text-sm transition ${badgeStyles[badgeState]}`}>
+        <div className="absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r from-indigo-400 via-blue-400 to-emerald-400 opacity-70" aria-hidden />
+
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-500 dark:text-indigo-300">Workflow</p>
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{link.label}</h2>
+            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              {link.description ?? `${link.label} workflow`}
+            </p>
+          </div>
+          <span className={`rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm ${badgeStyles[badgeState]}`}>
             {formatStatusText(badgeState)}
           </span>
         </div>
-        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-          {link.description ?? `${link.label} workflow`}
-        </p>
+
         {link.stats ? (
-          <dl className="mt-4 space-y-2">
+          <dl className="mt-4 grid gap-2 sm:grid-cols-2">
             {link.stats.map((stat) => (
-              <div key={stat.label} className="flex items-baseline justify-between">
-                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{stat.label}</dt>
+              <div key={stat.label} className="flex flex-col rounded-xl border border-indigo-100/80 bg-indigo-50/40 px-3 py-2 dark:border-indigo-900/30 dark:bg-indigo-950/30">
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-200">{stat.label}</dt>
                 <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{stat.value}</dd>
               </div>
             ))}
           </dl>
         ) : null}
+
         {link.dependency ? (
-          <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-xs transition group-hover:border-indigo-100 group-hover:bg-indigo-50 dark:border-zinc-800 dark:bg-zinc-950 dark:group-hover:border-indigo-700/60 dark:group-hover:bg-indigo-900/20">
-            <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              <span>Dependency flow</span>
-              <div
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-semibold ${
-                  dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]
-                }`}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                <span className="text-xs capitalize">{formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}</span>
-              </div>
-            </div>
-            <div className="mt-3 flex items-center gap-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-              <span className="rounded-lg bg-white px-3 py-1 shadow-inner dark:bg-zinc-900/80">
-                {link.dependency.flow?.source ?? link.label}
-              </span>
-              <span className="text-base text-zinc-400">→</span>
-              <span
-                className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1 ${
-                  dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]
-                }`}
-              >
-                <span>{link.dependency.flow?.target ?? dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}</span>
-                <span className="text-[11px] font-medium uppercase tracking-wide">
-                  {formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}
-                </span>
+          <div className="mt-4 rounded-xl border border-dashed border-indigo-100 bg-indigo-50/60 px-4 py-3 text-sm dark:border-indigo-900/40 dark:bg-indigo-950/40">
+            <div className="flex items-center gap-3 font-semibold text-indigo-900 dark:text-indigo-100">
+              <span className={`h-2.5 w-2.5 rounded-full ${dependencyDotStyles[dependencyState.dependencyStatus ?? "unknown"]}`} aria-hidden />
+              <span>{link.dependency.flow?.target ?? dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}</span>
+              <span className="rounded-full border border-indigo-200/60 bg-white/70 px-2 py-0.5 text-[11px] uppercase tracking-wide text-indigo-600 dark:border-indigo-800/70 dark:bg-indigo-900/60">
+                {formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")} dependency
               </span>
             </div>
+            <p className="mt-1 text-xs text-indigo-700 dark:text-indigo-200/80">
+              {dependencyState.message ?? `${link.label} depends on ${dependencyLabels[link.dependency.subsystem]}`}
+            </p>
           </div>
         ) : null}
-        {dependencyState.message && (
-          <p className={`mt-2 text-xs ${messageStyles[badgeState] ?? "text-zinc-500"}`}>
-            {dependencyState.message}
-          </p>
-        )}
-        <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 transition group-hover:text-indigo-800 dark:text-indigo-300 dark:group-hover:text-indigo-200">
-          <span>{link.cta}</span>
-          <svg
-            aria-hidden
-            className="h-3.5 w-3.5 translate-y-px transition group-hover:translate-x-0.5"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M5 12h14" />
-            <path d="m13 6 6 6-6 6" />
-          </svg>
+
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <span className={`h-2 w-2 rounded-full ${dependencyDotStyles[dependencyState.dependencyStatus ?? "unknown"]}`} aria-hidden />
+            <span className="font-medium text-zinc-700 dark:text-zinc-200">{dependencyLabels[link.dependency?.subsystem ?? "agents"]}</span>
+            <span className="text-[11px] uppercase tracking-wide text-zinc-400">System link</span>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition group-hover:bg-indigo-700">
+            <span>{link.cta}</span>
+            <svg
+              aria-hidden
+              className="h-4 w-4 transition group-hover:translate-x-0.5"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path d="M5 12h14" />
+              <path d="m13 6 6 6-6 6" />
+            </svg>
+          </div>
         </div>
       </Link>
     );
@@ -356,36 +356,47 @@ export default async function Home() {
   }
 
   return (
-    <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="flex flex-col gap-12">
-      <header className="mt-2 flex flex-col gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="flex flex-col gap-10 pb-12">
+      <header className="mt-2 overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">EAT</p>
-            <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">EAT</p>
+            <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EAT – Talent System (MVP)</h1>
+            <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+              A calmer control plane for managing hiring agents, system health, and the data that powers them.
+            </p>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-300">
+              <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Agents</span>
+              <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Workflows</span>
+              <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Data + Controls</span>
+            </div>
           </div>
           <Link
             href="/system-map"
-            className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-indigo-700/60"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200 dark:hover:border-indigo-700"
           >
             System Map
           </Link>
         </div>
-        <p className="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-          A real-time control plane for intelligent hiring systems.
-        </p>
       </header>
 
       <SystemHealthPanel initialStatus={systemStatus} initialExecutionState={executionState} />
 
-      <div className="space-y-8">
-        <section>
-          <p className="mt-2 mb-3 text-xs font-semibold tracking-[0.18em] text-slate-500">CORE WORKFLOWS</p>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
+      <div className="space-y-6">
+        <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Core workflows</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Launch and monitor the everyday agent actions.</p>
+          </div>
+          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
         </section>
 
-        <section>
-          <p className="mt-2 mb-3 text-xs font-semibold tracking-[0.18em] text-slate-500">DATA &amp; CONTROLS</p>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
+        <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Data &amp; controls</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Review the information that feeds the system.</p>
+          </div>
+          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
         </section>
       </div>
     </EATClientLayout>
