@@ -10,7 +10,7 @@ vi.mock("@/lib/killSwitch", () => ({
 
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),
-  AGENT_KILL_SWITCHES: { MATCHER: "EAT-TS.MATCHER" },
+  AGENT_KILL_SWITCHES: { MATCHER: "ETE-TS.MATCHER" },
 }));
 
 vi.mock("@/lib/auth/user", () => ({

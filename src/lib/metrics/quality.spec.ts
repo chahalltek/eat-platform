@@ -44,10 +44,10 @@ describe('getQualityMetrics', () => {
     );
 
     const mockAgentRuns = [
-      { startedAt: new Date('2025-02-15T02:00:00.000Z'), status: AgentRunStatus.SUCCESS, agentName: 'EAT-TS.RINA' },
-      { startedAt: new Date('2025-02-14T08:00:00.000Z'), status: AgentRunStatus.FAILED, agentName: 'EAT-TS.RINA' },
-      { startedAt: new Date('2025-02-13T10:00:00.000Z'), status: AgentRunStatus.FAILED, agentName: 'EAT-TS.RUA' },
-      { startedAt: new Date('2025-02-12T09:00:00.000Z'), status: AgentRunStatus.SUCCESS, agentName: 'EAT-TS.RUA' },
+      { startedAt: new Date('2025-02-15T02:00:00.000Z'), status: AgentRunStatus.SUCCESS, agentName: 'ETE-TS.RINA' },
+      { startedAt: new Date('2025-02-14T08:00:00.000Z'), status: AgentRunStatus.FAILED, agentName: 'ETE-TS.RINA' },
+      { startedAt: new Date('2025-02-13T10:00:00.000Z'), status: AgentRunStatus.FAILED, agentName: 'ETE-TS.RUA' },
+      { startedAt: new Date('2025-02-12T09:00:00.000Z'), status: AgentRunStatus.SUCCESS, agentName: 'ETE-TS.RUA' },
     ];
 
     const mockCoverageHistory = [
@@ -87,8 +87,8 @@ describe('getQualityMetrics', () => {
     expect(metrics.errors.failureRate).toBe(50);
 
     expect(metrics.errors.byAgent).toEqual([
-      { agentName: 'EAT-TS.RINA', failureRate: 50, failedRuns: 1, totalRuns: 2 },
-      { agentName: 'EAT-TS.RUA', failureRate: 50, failedRuns: 1, totalRuns: 2 },
+      { agentName: 'ETE-TS.RINA', failureRate: 50, failedRuns: 1, totalRuns: 2 },
+      { agentName: 'ETE-TS.RUA', failureRate: 50, failedRuns: 1, totalRuns: 2 },
     ]);
 
     expect(metrics.coverage.sections).toEqual([

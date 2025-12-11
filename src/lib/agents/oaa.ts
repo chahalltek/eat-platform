@@ -205,7 +205,7 @@ export async function runOutreachAutomation(
     disposition: string;
   }>(
     {
-      agentName: 'EAT-TS.OUTREACH_AUTOMATION',
+      agentName: 'ETE-TS.OUTREACH_AUTOMATION',
       recruiterId,
       inputSnapshot: { recruiterId: recruiterId ?? null, candidateId, jobReqId, matchId },
       ...retryMetadata,

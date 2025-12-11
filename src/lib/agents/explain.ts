@@ -93,7 +93,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
   const runInput = { jobId, toProcess: toProcess.length };
 
   const agentRun = await createAgentRunLog(prisma, {
-    agentName: 'EAT-TS.EXPLAIN',
+    agentName: 'ETE-TS.EXPLAIN',
     input: runInput,
     inputSnapshot: runInput,
     status: 'RUNNING',

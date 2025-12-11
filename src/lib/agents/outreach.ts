@@ -99,7 +99,7 @@ export async function runOutreach(
 
   const [result, agentRunId] = await withAgentRun<{ message: string }>(
     {
-      agentName: 'EAT-TS.OUTREACH',
+      agentName: 'ETE-TS.OUTREACH',
       recruiterId,
       inputSnapshot: { recruiterId: recruiterId ?? null, candidateId, jobReqId },
       ...retryMetadata,

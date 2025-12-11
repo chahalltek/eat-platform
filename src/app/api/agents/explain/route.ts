@@ -20,7 +20,7 @@ const requestSchema = z
     message: "Provide either matchId or candidateMatchId, not both",
   });
 
-const AGENT_NAME = "EAT-TS.EXPLAIN";
+const AGENT_NAME = "ETE-TS.EXPLAIN";
 
 function truncate(value: string | null | undefined, max = 2000) {
   if (!value) return null;

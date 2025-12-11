@@ -7,8 +7,8 @@ import { prisma } from '@/lib/prisma';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 export const AGENT_PROMPTS = {
-  RINA_SYSTEM: 'EAT-TS.RINA',
-  RUA_SYSTEM: 'EAT-TS.RUA',
+  RINA_SYSTEM: 'ETE-TS.RINA',
+  RUA_SYSTEM: 'ETE-TS.RUA',
 } as const;
 
 export type AgentPromptName = (typeof AGENT_PROMPTS)[keyof typeof AGENT_PROMPTS];

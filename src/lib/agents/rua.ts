@@ -32,7 +32,7 @@ export async function runRua(
 
   const [result, agentRunId] = await withAgentRun<{ jobReqId: string }>(
     {
-      agentName: 'EAT-TS.RUA',
+      agentName: 'ETE-TS.RUA',
       recruiterId,
       inputSnapshot: {
         recruiterId: recruiterId ?? null,

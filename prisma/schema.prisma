@@ -441,7 +441,7 @@ model CandidateMatch {
 model AgentRunLog {
   id               String         @id @default(cuid())
   tenantId         String         @default("default-tenant")
-  agentName        String // "EAT-TS.RINA", etc.
+  agentName        String // "ETE-TS.RINA", etc.
   user             User?          @relation(fields: [userId], references: [id])
   userId           String?
   sourceType       String?

@@ -38,7 +38,7 @@ export async function runRina(
 
   const [result, agentRunId] = await withAgentRun<{ candidateId: string }>(
     {
-      agentName: 'EAT-TS.RINA',
+      agentName: 'ETE-TS.RINA',
       recruiterId: user.id,
       inputSnapshot: {
         rawResumeText: normalizedRawResumeText.slice(0, 4000),

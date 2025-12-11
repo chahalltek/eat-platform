@@ -108,19 +108,19 @@ const AGENTS = [
     key: "RUA",
     description: "Role intake",
     modeAllows: (mode: RunbookMode) => mode !== "fire_drill",
-    killSwitchName: "EAT-TS.RUA",
+    killSwitchName: "ETE-TS.RUA",
   },
   {
     key: "RINA",
     description: "Resume ingestion",
     modeAllows: (mode: RunbookMode) => mode !== "fire_drill",
-    killSwitchName: "EAT-TS.RINA",
+    killSwitchName: "ETE-TS.RINA",
   },
   {
     key: "MATCH",
     description: "Scoring engine",
     modeAllows: (_mode: RunbookMode) => true,
-    killSwitchName: "EAT-TS.MATCHER",
+    killSwitchName: "ETE-TS.MATCHER",
   },
   {
     key: "CONFIDENCE",
@@ -136,7 +136,7 @@ const AGENTS = [
     key: "SHORTLIST",
     description: "Shortlist generator",
     modeAllows: (_mode: RunbookMode) => true,
-    killSwitchName: "EAT-TS.RANKER",
+    killSwitchName: "ETE-TS.RANKER",
   },
 ] as const;
 

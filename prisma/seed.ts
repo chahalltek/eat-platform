@@ -259,7 +259,7 @@ async function seedAgentRuns() {
   const runs = [
     {
       id: 'run-jordan-match',
-      agentName: 'EAT-TS.RINA',
+      agentName: 'ETE-TS.RINA',
       status: AgentRunStatus.SUCCESS,
       userId: 'charlie',
       sourceType: 'Matching',
@@ -271,7 +271,7 @@ async function seedAgentRuns() {
     },
     {
       id: 'run-priya-match',
-      agentName: 'EAT-TS.RINA',
+      agentName: 'ETE-TS.RINA',
       status: AgentRunStatus.SUCCESS,
       userId: 'charlie',
       sourceType: 'Matching',
@@ -283,7 +283,7 @@ async function seedAgentRuns() {
     },
     {
       id: 'run-marcus-outreach',
-      agentName: 'EAT-TS.RINA',
+      agentName: 'ETE-TS.RINA',
       status: AgentRunStatus.FAILED,
       userId: 'charlie',
       sourceType: 'Outreach',

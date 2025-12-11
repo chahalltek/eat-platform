@@ -4,7 +4,7 @@ import { evaluateWatchdog, type WatchdogRunSnapshot } from '@/lib/agents/watchdo
 
 describe('TS-A7 Watchdog', () => {
   const baseRuns: WatchdogRunSnapshot[] = Array.from({ length: 12 }).map((_, index) => ({
-    agentName: 'EAT-TS.RINA',
+    agentName: 'ETE-TS.RINA',
     status: index % 3 === 0 ? 'FAILED' : 'SUCCESS',
     durationMs: 1200 + index * 10,
     outputComplete: index % 3 !== 0,
@@ -45,16 +45,16 @@ describe('TS-A7 Watchdog', () => {
 
   it('filters out noisy signals until thresholds are sustainably breached', () => {
     const noisySmallSample: WatchdogRunSnapshot[] = [
-      { agentName: 'EAT-TS.RUA', status: 'FAILED', durationMs: 900, outputComplete: true },
-      { agentName: 'EAT-TS.RUA', status: 'SUCCESS', durationMs: 950, outputComplete: true },
-      { agentName: 'EAT-TS.RUA', status: 'SUCCESS', durationMs: 910, outputComplete: true },
+      { agentName: 'ETE-TS.RUA', status: 'FAILED', durationMs: 900, outputComplete: true },
+      { agentName: 'ETE-TS.RUA', status: 'SUCCESS', durationMs: 950, outputComplete: true },
+      { agentName: 'ETE-TS.RUA', status: 'SUCCESS', durationMs: 910, outputComplete: true },
     ];
 
     const smallSampleReport = evaluateWatchdog(noisySmallSample, { minWindow: 5 });
     expect(smallSampleReport.alerts).toHaveLength(0);
 
     const barelyOverThreshold = Array.from({ length: 8 }).map<WatchdogRunSnapshot>((_, index) => ({
-      agentName: 'EAT-TS.RUA',
+      agentName: 'ETE-TS.RUA',
       status: index < 2 ? 'FAILED' : 'SUCCESS',
       durationMs: 1200,
       outputComplete: true,

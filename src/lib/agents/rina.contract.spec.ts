@@ -12,7 +12,7 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(async () => null),
       upsert: vi.fn(async () => ({
         id: 'prompt-rina',
-        agentName: 'EAT-TS.RINA',
+        agentName: 'ETE-TS.RINA',
         version: RINA_PROMPT_VERSION,
         prompt: RINA_SYSTEM_PROMPT,
         active: true,

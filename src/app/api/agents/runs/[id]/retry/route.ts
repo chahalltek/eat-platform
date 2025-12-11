@@ -61,7 +61,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
   const retryMetadata = await buildRetryMetadata(run.id, tenantId, run.retryOfId ?? undefined);
 
   switch (run.agentName) {
-    case 'EAT-TS.RINA': {
+    case 'ETE-TS.RINA': {
       const retryPayload = (run.retryPayload ?? run.inputSnapshot) as Record<string, unknown> | null;
       const rawResumeText = asString(run.rawResumeText) ?? asString(retryPayload?.rawResumeText);
 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
       return NextResponse.json({ agentRunId: result.agentRunId, retryCount: retryMetadata.retryCount });
     }
-    case 'EAT-TS.RUA': {
+    case 'ETE-TS.RUA': {
       const input = run.inputSnapshot as Record<string, unknown> | null;
       const rawJobText = asString(input?.rawJobText);
 
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
       return NextResponse.json({ agentRunId: result.agentRunId, retryCount: retryMetadata.retryCount });
     }
-    case 'EAT-TS.OUTREACH': {
+    case 'ETE-TS.OUTREACH': {
       const input = run.inputSnapshot as Record<string, unknown> | null;
       const candidateId = asString(input?.candidateId);
       const jobReqId = asString(input?.jobReqId);

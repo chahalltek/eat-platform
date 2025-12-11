@@ -53,7 +53,7 @@ vi.mock("@/lib/subscription/usageLimits", () => ({
 }));
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),
-  AGENT_KILL_SWITCHES: { MATCHER: "EAT-TS.MATCHER" },
+  AGENT_KILL_SWITCHES: { MATCHER: "ETE-TS.MATCHER" },
 }));
 
 const buildCandidate = (id: string, skills: { name: string; normalizedName: string }[]) => ({
