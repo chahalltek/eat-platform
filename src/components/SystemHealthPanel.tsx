@@ -44,15 +44,12 @@ export function SystemHealthPanel({ initialStatus, initialExecutionState }: Prop
         state: "degraded",
         activeRuns: 0,
         latestRunAt: null,
-<<<<<<< ours
         latestSuccessAt: null,
         latestFailureAt: null,
         runsToday: 0,
-=======
         latestFailureAt: null,
         latestFailureAgentName: null,
         failureCountLast24h: 0,
->>>>>>> theirs
       });
     } finally {
       setIsRefreshing(false);

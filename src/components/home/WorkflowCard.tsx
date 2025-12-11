@@ -42,6 +42,7 @@ export type WorkflowCardProps = {
   dependencyDotStyles: Record<SubsystemState, string>;
   formatStatusText: (status: string) => string;
   formatDependencyStatus: (status: SubsystemState) => string;
+  children?: ReactNode;
 };
 
 export function WorkflowCard({
@@ -53,6 +54,7 @@ export function WorkflowCard({
   dependencyDotStyles,
   formatStatusText,
   formatDependencyStatus,
+  children,
 }: WorkflowCardProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [isBadgeAnimating, setIsBadgeAnimating] = useState(false);
@@ -149,6 +151,8 @@ export function WorkflowCard({
           ))}
         </dl>
       ) : null}
+
+      {children}
 
       {link.dependency ? (
         <div className="mt-4 rounded-xl border border-dashed border-indigo-100 bg-indigo-50/60 px-4 py-3 text-sm dark:border-indigo-900/40 dark:bg-indigo-950/40">
