@@ -284,12 +284,14 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
   const systemMode = await getSystemMode(tenantId);
   const guardrailsPreset = normalizeGuardrailsPreset(plan);
 
+  const fireDrillImpact = fireDrill?.fireDrillImpact ?? [];
+
   return {
     tenantId,
     mode: systemMode.mode,
     fireDrill: {
-      fireDrillImpact: fireDrill.fireDrillImpact ?? [],
       ...fireDrill,
+      fireDrillImpact,
     },
     sso: { configured: isSsoConfigured(config), issuerUrl: config.SSO_ISSUER_URL ?? null },
     guardrailsPreset,
