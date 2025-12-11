@@ -215,9 +215,17 @@ async function upsertCandidate(tenantId: string, candidate: SampleCandidate, job
     },
   });
 
+  const jobCandidateId = `${jobReqId}-${candidateId}`;
+
   await prisma.jobCandidate.upsert({
-    where: { tenantId_jobReqId_candidateId: { tenantId, jobReqId, candidateId } },
-    create: { tenantId, jobReqId, candidateId, status: JobCandidateStatus.POTENTIAL },
+    where: { id: jobCandidateId },
+    create: {
+      id: jobCandidateId,
+      tenantId,
+      jobReqId,
+      candidateId,
+      status: JobCandidateStatus.POTENTIAL,
+    },
     update: { status: JobCandidateStatus.POTENTIAL },
   });
 
