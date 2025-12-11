@@ -68,6 +68,7 @@ const dependencyLabels: Record<SubsystemKey, string> = {
   agents: "Agents",
   scoring: "Scoring Engine",
   database: "Database",
+  guardrails: "Guardrails",
   tenantConfig: "Tenant Config",
 };
 

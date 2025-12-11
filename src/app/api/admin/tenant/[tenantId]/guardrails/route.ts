@@ -53,7 +53,7 @@ export async function PUT(
     return NextResponse.json({ guardrails: saved });
   } catch (error) {
     if (error instanceof ZodError) {
-      const message = error.errors.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
+      const message = error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
       return NextResponse.json({ error: message }, { status: 400 });
     }
 

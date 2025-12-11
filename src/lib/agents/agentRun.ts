@@ -3,7 +3,8 @@ import { Prisma } from '@prisma/client';
 
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 import { createAgentRunLog } from '@/lib/agents/agentRunLog';
-import { assertAgentKillSwitchDisarmed, type AgentName } from '@/lib/agents/killSwitch';
+import { assertAgentKillSwitchDisarmed } from '@/lib/agents/killSwitch';
+import type { AgentName } from '@/lib/agents/agentAvailability';
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from '@/lib/killSwitch';
 import { prisma } from '@/lib/prisma';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';

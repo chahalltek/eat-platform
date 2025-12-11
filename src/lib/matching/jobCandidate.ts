@@ -12,10 +12,21 @@ export async function upsertJobCandidateForMatch(
 ) {
   const resolvedTenantId = tenantId ?? (await getCurrentTenantId());
 
-  await db.jobCandidate.upsert({
-    where: { tenantId_jobReqId_candidateId: { tenantId: resolvedTenantId, jobReqId, candidateId } },
-    update: { lastMatchResultId: matchResultId },
-    create: {
+  const existing = await db.jobCandidate.findFirst({
+    where: { tenantId: resolvedTenantId, jobReqId, candidateId },
+  });
+
+  if (existing) {
+    await db.jobCandidate.update({
+      where: { id: existing.id },
+      data: { lastMatchResultId: matchResultId },
+    });
+
+    return;
+  }
+
+  await db.jobCandidate.create({
+    data: {
       jobReqId,
       candidateId,
       tenantId: resolvedTenantId,

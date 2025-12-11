@@ -38,11 +38,12 @@ export function SystemHealthPanel({ initialStatus, initialExecutionState }: Prop
         agents: { status: "unknown" },
         scoring: { status: "unknown" },
         database: { status: "unknown" },
+        guardrails: { status: "unknown" },
         tenantConfig: { status: "unknown" },
       });
-      setExecutionState({
+      setExecutionState((current) => ({
+        ...current,
         state: "degraded",
-        mode: "NORMAL",
         activeRuns: 0,
         latestRunAt: null,
         latestSuccessAt: null,
@@ -50,7 +51,7 @@ export function SystemHealthPanel({ initialStatus, initialExecutionState }: Prop
         runsToday: 0,
         latestFailureAgentName: null,
         failureCountLast24h: 0,
-      });
+      }));
     } finally {
       setIsRefreshing(false);
     }

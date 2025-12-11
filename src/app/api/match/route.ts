@@ -102,8 +102,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "JobReq not found" }, { status: 404 });
   }
 
-  const jobCandidate = await prisma.jobCandidate.findUnique({
-    where: { tenantId_jobReqId_candidateId: { tenantId, jobReqId, candidateId } },
+  const jobCandidate = await prisma.jobCandidate.findFirst({
+    where: { tenantId, jobReqId, candidateId },
   });
 
   const outreachInteractions = await prisma.outreachInteraction.count({

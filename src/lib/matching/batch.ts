@@ -96,7 +96,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   const tenantConfig = await loadTenantConfig(jobReq.tenantId);
   const matcherConfig = tenantConfig.scoring.matcher;
   const confidenceConfig = tenantConfig.scoring.confidence;
-  const explainEnabled = tenantConfig.msa?.matcher?.explain !== false;
+  const explainEnabled = tenantConfig.msa?.matcher?.explain ?? true;
 
   for (const candidate of candidates) {
     const candidateSignals = computeCandidateSignalScore({

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { JobCandidateStatus } from "@prisma/client";
+
 import { JobMatchesTable, type MatchRow } from "./JobMatchesTable";
 import { RunMatcherButton } from "./RunMatcherButton";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
@@ -101,8 +103,8 @@ export default async function JobMatchesPage({
       confidenceScore: confidence.score,
       confidenceCategory: confidenceCategory ?? undefined,
       confidenceReasons,
-      shortlisted: match.shortlisted ?? false,
-      shortlistReason: match.shortlistReason,
+      shortlisted: jobCandidate?.status === JobCandidateStatus.SHORTLISTED,
+      shortlistReason: jobCandidate?.notes ?? null,
     };
   });
 

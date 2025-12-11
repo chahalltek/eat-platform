@@ -14,6 +14,7 @@ const statusLabels: Record<SubsystemKey, string> = {
   agents: "Agents",
   scoring: "Scoring Engine",
   database: "Database",
+  guardrails: "Guardrails",
   tenantConfig: "Tenant Config",
 };
 
@@ -21,6 +22,7 @@ const statusDescriptions: Record<SubsystemKey, string> = {
   agents: "Feature-enabled automations.",
   scoring: "Scoring engine connected.",
   database: "Primary datastore online.",
+  guardrails: "Guardrail configuration loaded.",
   tenantConfig: "Tenant configuration detected.",
 };
 

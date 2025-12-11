@@ -98,7 +98,7 @@ export async function matchCandidateToJob({
   const tenantConfig = await loadTenantConfig(jobReq.tenantId);
   const matcherConfig = tenantConfig.scoring.matcher;
   const confidenceConfig = tenantConfig.scoring.confidence;
-  const explainEnabled = tenantConfig.msa?.matcher?.explain !== false;
+  const explainEnabled = tenantConfig.msa?.matcher?.explain ?? true;
 
   const candidateSignals = computeCandidateSignalScore({
     candidate,

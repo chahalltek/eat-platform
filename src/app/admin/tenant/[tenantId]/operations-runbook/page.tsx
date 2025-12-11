@@ -4,6 +4,7 @@ import { ArrowTopRightOnSquareIcon, FireIcon, WrenchScrewdriverIcon } from "@her
 
 import { EteLogo } from "@/components/EteLogo";
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
+import type { AgentName } from "@/lib/agents/agentAvailability";
 import { requireTenantAdmin } from "@/lib/auth/tenantAdmin";
 import { getCurrentUser } from "@/lib/auth/user";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
@@ -105,7 +106,14 @@ const GUARDRAIL_PRESETS = {
   },
 } as const;
 
-const AGENTS = [
+type AgentConfig = {
+  key: string;
+  description: string;
+  modeAllows: (mode: RunbookMode) => boolean;
+  killSwitchName?: AgentName;
+};
+
+const AGENTS: AgentConfig[] = [
   {
     key: "RUA",
     description: "Role intake",
@@ -140,7 +148,7 @@ const AGENTS = [
     modeAllows: (_mode: RunbookMode) => true,
     killSwitchName: "ETE-TS.RANKER",
   },
-] as const;
+];
 
 type RunbookMode = keyof typeof MODE_DEFINITIONS;
 

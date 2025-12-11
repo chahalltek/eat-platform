@@ -149,6 +149,26 @@ type CoverageSummaryFile = {
   [filePath: string]: { lines: { total: number; covered: number } };
 };
 
+type CoverageReport = {
+  id: string;
+  branch: string;
+  commitSha: string | null;
+  createdAt: Date;
+  coveragePercent: number;
+};
+
+type CoverageReportModel = {
+  findFirst: (args: unknown) => Promise<CoverageReport | null>;
+  findMany: (args: unknown) => Promise<CoverageReport[]>;
+  create: (args: unknown) => Promise<CoverageReport>;
+};
+
+function getCoverageReportModel(): CoverageReportModel | null {
+  const model = (prisma as unknown as { coverageReport?: CoverageReportModel }).coverageReport;
+
+  return model ?? null;
+}
+
 function extractCoverageSection(summaryPath: string, matcher: (filePath: string) => boolean, label: string, targetPath: string) {
   if (!fs.existsSync(summaryPath)) {
     return { label, path: targetPath, percent: null } satisfies CoverageSection;
@@ -188,18 +208,20 @@ export async function getQualityMetrics(
   sinceDate.setHours(0, 0, 0, 0);
   sinceDate.setDate(sinceDate.getDate() - (windowDays - 1));
 
+  const coverageModel = getCoverageReportModel();
+
   const [agentRuns, latestCoverage, coverageHistory] = await Promise.all([
     prisma.agentRunLog.findMany({
       where: { startedAt: { gte: sinceDate } },
       select: { startedAt: true, status: true, agentName: true },
     }),
-    prisma.coverageReport.findFirst({
+    coverageModel?.findFirst({
       orderBy: { createdAt: 'desc' },
-    }),
-    prisma.coverageReport.findMany({
+    }) ?? null,
+    coverageModel?.findMany({
       where: { createdAt: { gte: sinceDate } },
       orderBy: { createdAt: 'asc' },
-    }),
+    }) ?? [],
   ]);
 
   const runsPerDay = bucketRunsByDay(agentRuns.map((run) => run.startedAt), windowDays);
@@ -248,7 +270,13 @@ export async function recordCoverageReport({
     throw new Error('coveragePercent must be a non-negative number');
   }
 
-  return prisma.coverageReport.create({
+  const coverageModel = getCoverageReportModel();
+
+  if (!coverageModel) {
+    throw new Error('Coverage reporting is not configured');
+  }
+
+  return coverageModel.create({
     data: {
       coveragePercent,
       branch,

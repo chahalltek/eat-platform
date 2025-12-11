@@ -21,8 +21,10 @@ export const dynamic = "force-dynamic";
 
 type Status = "ok" | "warn" | "off";
 
-function formatMode(mode: string) {
-  return mode.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+function formatMode(mode: TenantDiagnostics["mode"] | string) {
+  const value = typeof mode === "string" ? mode : mode.mode;
+
+  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function StatusIcon({ status }: { status: Status }) {
@@ -81,7 +83,7 @@ function formatGuardrailsPreset(preset: TenantDiagnostics["guardrailsPreset"]) {
 export default async function TenantDiagnosticsPage({ params }: { params: { tenantId?: string } }) {
   const user = await getCurrentUser();
   const requestedTenant = params.tenantId?.trim?.() ?? "";
-  const headerRole = getTenantRoleFromHeaders(headers());
+  const headerRole = getTenantRoleFromHeaders(await headers());
 
   if (!user || !requestedTenant) {
     return (

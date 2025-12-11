@@ -1,6 +1,7 @@
 import type { Tenant } from '@prisma/client';
 
-import { AGENT_KILL_SWITCHES, type AgentName } from '@/lib/agents/killSwitch';
+import { AGENT_KILL_SWITCHES } from '@/lib/agents/killSwitch';
+import type { AgentName } from '@/lib/agents/agentAvailability';
 
 export type GuardrailsSettings = {
   preset: string;
@@ -79,7 +80,7 @@ function resolveAgentKillSwitches(
     }
 
     return acc;
-  }, {});
+  }, {} as Record<AgentName, boolean>);
 }
 
 function resolveGuardrailsSettings(guardrails: GuardrailsSettings | null | undefined, preset: GuardrailsSettings) {

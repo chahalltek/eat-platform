@@ -231,15 +231,22 @@ async function countAuditEvents(tenantId: string) {
 }
 
 function normalizeGuardrailsPreset(plan: Awaited<ReturnType<typeof getTenantPlan>> | null): GuardrailsPreset {
-  const allowedPresets: Exclude<GuardrailsPreset, null>[] = ["conservative", "balanced", "aggressive", "custom"];
+  const allowedPresets: Array<Exclude<GuardrailsPreset, null>> = [
+    "conservative",
+    "balanced",
+    "aggressive",
+    "custom",
+  ];
   const preset = (plan?.plan?.limits as { guardrailsPreset?: unknown } | null)?.guardrailsPreset;
 
   if (typeof preset !== "string") return null;
 
   const normalized = preset.toLowerCase();
 
-  if (allowedPresets.includes(normalized as GuardrailsPreset)) {
-    return normalized as GuardrailsPreset;
+  const matchedPreset = allowedPresets.find((value) => value === normalized);
+
+  if (matchedPreset) {
+    return matchedPreset;
   }
 
   return "custom";
@@ -272,14 +279,14 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     throw new TenantNotFoundError(tenantId);
   }
 
-  const systemMode = getSystemMode(config);
+  const systemMode = await getSystemMode(tenantId);
   const guardrailsPreset = normalizeGuardrailsPreset(plan);
 
   return {
     tenantId,
-    mode: systemMode.mode,
+    mode: systemMode,
     fireDrill: {
-      ...systemMode.fireDrill,
+      fireDrillImpact: fireDrill.fireDrillImpact ?? [],
       ...fireDrill,
     },
     sso: { configured: isSsoConfigured(config), issuerUrl: config.SSO_ISSUER_URL ?? null },

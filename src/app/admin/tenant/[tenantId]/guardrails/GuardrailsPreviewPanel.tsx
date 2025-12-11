@@ -12,7 +12,19 @@ import {
 
 import type { GuardrailPreviewCandidate, GuardrailPreviewScenario } from "@/lib/guardrails/previewSamples";
 
-const PRESET_CONFIG = {
+type GuardrailPresetConfig = {
+  label: string;
+  matchCutoff: number;
+  minConfidence: number;
+  signalWeight: number;
+  shortlistLimit: number;
+  respectFlags: boolean;
+  helper: string;
+};
+
+type GuardrailPresetKey = "conservative" | "balanced" | "aggressive";
+
+const PRESET_CONFIG: Record<GuardrailPresetKey, GuardrailPresetConfig> = {
   conservative: {
     label: "Conservative",
     matchCutoff: 82,
@@ -40,7 +52,7 @@ const PRESET_CONFIG = {
     respectFlags: false,
     helper: "Looser filters. Expands shortlist and allows flagged records for review.",
   },
-} as const;
+};
 
 const clampScore = (value: number) => Math.max(0, Math.min(100, value));
 
@@ -188,8 +200,8 @@ export function GuardrailsPreviewPanel({ tenantId }: { tenantId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshIndex, setRefreshIndex] = useState(0);
-  const [preset, setPreset] = useState<keyof typeof PRESET_CONFIG>("balanced");
-  const [config, setConfig] = useState({ ...PRESET_CONFIG.balanced });
+  const [preset, setPreset] = useState<GuardrailPresetKey>("balanced");
+  const [config, setConfig] = useState<GuardrailPresetConfig>({ ...PRESET_CONFIG.balanced });
 
   useEffect(() => {
     async function loadScenario() {

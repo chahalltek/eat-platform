@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { defaultTenantGuardrails } from "./defaultTenantConfig";
 
+function coerceGuardrailSection(value: unknown) {
+  return value && typeof value === "object" ? value : {};
+}
+
 export async function loadTenantConfig(tenantId: string) {
   const existing = await prisma.tenantConfig.findUnique({
     where: { tenantId },
@@ -14,9 +18,9 @@ export async function loadTenantConfig(tenantId: string) {
   }
 
   return {
-    scoring: { ...defaultTenantGuardrails.scoring, ...existing.scoring },
-    explain: { ...defaultTenantGuardrails.explain, ...existing.explain },
-    safety: { ...defaultTenantGuardrails.safety, ...existing.safety },
+    scoring: { ...defaultTenantGuardrails.scoring, ...coerceGuardrailSection(existing.scoring) },
+    explain: { ...defaultTenantGuardrails.explain, ...coerceGuardrailSection(existing.explain) },
+    safety: { ...defaultTenantGuardrails.safety, ...coerceGuardrailSection(existing.safety) },
     _source: "db" as const,
   };
 }

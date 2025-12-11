@@ -38,7 +38,7 @@ export async function loadTenantGuardrailConfig(
       return { ...DEFAULT_GUARDRAILS, source: "default" };
     }
 
-    const merged = { ...DEFAULT_GUARDRAILS, ...record, source: "database" };
+    const merged: GuardrailConfig = { ...DEFAULT_GUARDRAILS, ...record, source: "database" };
     delete (merged as Partial<GuardrailConfigRecord>).tenantId;
 
     return merged;

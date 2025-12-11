@@ -121,7 +121,7 @@ export async function findExpiredRecords(
       .findMany({ where: { tenantId, createdAt: { lt: cutoff }, deletedAt: null }, select: { id: true } })
       .then(mapIds),
     prisma.matchResult
-      .findMany({ where: { tenantId, createdAt: { lt: cutoff }, deletedAt: null }, select: { id: true } })
+      .findMany({ where: { tenantId, createdAt: { lt: cutoff } }, select: { id: true } })
       .then(mapIds),
     prisma.candidate
       .findMany({ where: { tenantId, updatedAt: { lt: cutoff }, deletedAt: null }, select: { id: true } })
@@ -200,7 +200,7 @@ export async function softDeleteExpiredRecords(
     expired.matchResultIds.length
       ? prisma.matchResult.updateMany({
           where: { tenantId, id: { in: expired.matchResultIds } },
-          data: { deletedAt: deletionTimestamp, reasons: Prisma.JsonNull },
+          data: { reasons: Prisma.JsonNull },
         })
       : { count: 0 },
     expired.candidateIds.length

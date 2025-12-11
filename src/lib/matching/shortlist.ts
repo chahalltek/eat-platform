@@ -55,10 +55,8 @@ export async function setShortlistState(
     data: { shortlisted, shortlistReason: reason },
   });
 
-  const existingJobCandidate = await client.jobCandidate.findUnique({
-    where: {
-      tenantId_jobReqId_candidateId: { tenantId, jobReqId, candidateId },
-    },
+  const existingJobCandidate = await client.jobCandidate.findFirst({
+    where: { tenantId, jobReqId, candidateId },
   });
 
   const nextStatus = resolvePipelineStatus(existingJobCandidate?.status ?? null, shortlisted);

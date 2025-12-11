@@ -34,7 +34,7 @@ function AccessDenied() {
 export default async function GuardrailsPage({ params }: { params: { tenantId?: string } }) {
   const user = await getCurrentUser();
   const tenantId = params.tenantId?.trim?.() ?? "";
-  const headerRole = getTenantRoleFromHeaders(headers());
+  const headerRole = getTenantRoleFromHeaders(await headers());
 
   if (!user || !tenantId) {
     return <AccessDenied />;

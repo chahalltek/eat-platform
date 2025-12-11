@@ -42,7 +42,7 @@ export async function setShortlistState(
 
   const normalizedReason = reason?.toString().trim() ?? null;
 
-  return prisma.matchResult.update({
+  const updated = await prisma.matchResult.update({
     where: { id: matchId },
     data: {
       shortlisted,
@@ -56,4 +56,12 @@ export async function setShortlistState(
       jobReqId: true,
     },
   });
+
+  return {
+    id: updated.id,
+    shortlisted: updated.shortlisted,
+    shortlistReason: updated.shortlistReason,
+    candidateId: updated.candidateId,
+    jobReqId: updated.jobReqId,
+  } satisfies SetShortlistStateResult;
 }
