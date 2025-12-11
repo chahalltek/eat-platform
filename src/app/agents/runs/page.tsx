@@ -175,7 +175,7 @@ export default async function AgentRunsPage({
     whereClauses.push(Prisma.sql`"startedAt" >= ${startedAfter}`);
   }
 
-  const whereClause = Prisma.join(whereClauses, Prisma.sql` AND `);
+  const whereClause = Prisma.join(whereClauses, " AND ");
 
   const runs = await prisma.$queryRaw<AgentRunRecord[]>(Prisma.sql`
     SELECT
