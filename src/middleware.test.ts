@@ -2,19 +2,11 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { USER_HEADER, ROLE_HEADER, TENANT_HEADER } from './lib/auth/config';
+import { clearSessionCookie, getValidatedSession } from './lib/auth/session';
 import { middleware } from './middleware';
 
 vi.mock('./lib/auth/session', () => ({
-  getValidatedSession: vi.fn(async () => ({
-    session: {
-      userId: 'charlie',
-      tenantId: 'default-tenant',
-      role: 'RECRUITER',
-      exp: Math.floor(Date.now() / 1000) + 60,
-      iat: Math.floor(Date.now() / 1000),
-    },
-    error: null,
-  })),
+  getValidatedSession: vi.fn(),
   clearSessionCookie: vi.fn(() => ({ name: 'ete_session', value: '', maxAge: 0 })),
 }));
 
@@ -36,6 +28,16 @@ function createRequest(path: string) {
 describe('middleware role enforcement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getValidatedSession).mockResolvedValue({
+      session: {
+        userId: 'charlie',
+        tenantId: 'default-tenant',
+        role: 'RECRUITER',
+        exp: Math.floor(Date.now() / 1000) + 60,
+        iat: Math.floor(Date.now() / 1000),
+      },
+      error: null,
+    });
   });
 
   it('allows public health endpoints without auth checks', async () => {
@@ -65,5 +67,23 @@ describe('middleware role enforcement', () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe('https://example.com/');
+  });
+
+  it('redirects unauthenticated users to login for app routes with next param', async () => {
+    vi.mocked(getValidatedSession).mockResolvedValue({ session: null, error: null });
+
+    const response = await middleware(createRequest('/dashboard?tab=overview'));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe('https://example.com/login?next=%2Fdashboard%3Ftab%3Doverview');
+  });
+
+  it('returns json unauthorized for api routes without a session', async () => {
+    vi.mocked(getValidatedSession).mockResolvedValue({ session: null, error: null });
+
+    const response = await middleware(createRequest('/api/jobs'));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get('content-type')).toContain('application/json');
   });
 });

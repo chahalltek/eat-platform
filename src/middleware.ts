@@ -41,6 +41,16 @@ const RECRUITER_ROLES = new Set<UserRole>([
   USER_ROLES.SYSTEM_ADMIN,
 ]);
 
+function buildLoginRedirect(request: NextRequest) {
+  const loginUrl = request.nextUrl.clone();
+  loginUrl.pathname = '/login';
+  loginUrl.search = '';
+  loginUrl.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  loginUrl.search = loginUrl.searchParams.toString();
+
+  return loginUrl;
+}
+
 export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   const { session, error: sessionError } = await getValidatedSession(request);
@@ -61,20 +71,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (sessionError === 'invalid') {
-    const response = NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    response.cookies.set(clearSessionCookie());
-    return response;
-  }
+  if (sessionError === 'invalid' || sessionError === 'expired') {
+    const errorMessage = sessionError === 'expired' ? 'Session expired' : 'Invalid session';
+    const response = requestPath.startsWith('/api')
+      ? NextResponse.json({ error: errorMessage }, { status: 401 })
+      : NextResponse.redirect(buildLoginRedirect(request));
 
-  if (sessionError === 'expired') {
-    const response = NextResponse.json({ error: 'Session expired' }, { status: 401 });
     response.cookies.set(clearSessionCookie());
     return response;
   }
 
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (requestPath.startsWith('/api')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    return NextResponse.redirect(buildLoginRedirect(request));
   }
 
   const queryUserId = searchParams.get(USER_QUERY_PARAM)?.trim();
