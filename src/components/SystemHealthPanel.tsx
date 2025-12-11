@@ -47,7 +47,6 @@ export function SystemHealthPanel({ initialStatus, initialExecutionState }: Prop
         latestSuccessAt: null,
         latestFailureAt: null,
         runsToday: 0,
-        latestFailureAt: null,
         latestFailureAgentName: null,
         failureCountLast24h: 0,
       });
