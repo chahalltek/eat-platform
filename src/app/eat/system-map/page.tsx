@@ -78,8 +78,16 @@ const flowSequences = [
   {
     label: "Guardrails",
     steps: ["Tenant Config", "Scoring engine", "Confidence / Explain"],
+    subtitles: ["rules", "calculations", "interpretation"],
+    arrowVariant: "dashed",
   },
-] satisfies { label: string; steps: readonly string[]; note?: string }[];
+] satisfies {
+  label: string;
+  steps: readonly string[];
+  subtitles?: readonly string[];
+  arrowVariant?: "solid" | "dashed";
+  note?: string;
+  }[];
 
 const statusLegend = [
   { status: "healthy" as const, label: "Healthy" },
@@ -122,8 +130,10 @@ export default function SystemMapPage() {
                     </span>
                     {sequence.steps.map((step, index) => (
                       <div key={step} className="flex items-center gap-2">
-                        <FlowPill label={step} />
-                        {index < sequence.steps.length - 1 ? <FlowArrow /> : null}
+                        <FlowPill label={step} subtitle={sequence.subtitles?.[index]} />
+                        {index < sequence.steps.length - 1 ? (
+                          <FlowArrow variant={sequence.arrowVariant} />
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -214,19 +224,27 @@ export default function SystemMapPage() {
   );
 }
 
-function FlowPill({ label }: { label: string }) {
+function FlowPill({ label, subtitle }: { label: string; subtitle?: string }) {
   return (
     <span className="flex items-start gap-2 rounded-full bg-indigo-50 px-3 py-1 text-left text-[13px] font-semibold leading-snug text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/60 dark:text-indigo-100 dark:ring-indigo-700/60">
       <span className="mt-1 h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
-      <span className="whitespace-normal">{label}</span>
+      <span className="flex flex-col whitespace-normal leading-tight">
+        <span>{label}</span>
+        {subtitle ? (
+          <span className="text-[11px] font-medium text-indigo-700/80 dark:text-indigo-200/80">{subtitle}</span>
+        ) : null}
+      </span>
     </span>
   );
 }
 
-function FlowArrow() {
+function FlowArrow({ variant = "solid" }: { variant?: "solid" | "dashed" }) {
   return (
-    <span className="text-base font-semibold text-indigo-500 dark:text-indigo-200" aria-hidden>
-      →
+    <span className="flex items-center gap-1 text-base font-semibold text-indigo-500 dark:text-indigo-200" aria-hidden>
+      {variant === "dashed" ? (
+        <span className="h-px w-8 border-b border-dashed border-indigo-400/80 dark:border-indigo-300/80" />
+      ) : null}
+      <span>→</span>
     </span>
   );
 }
