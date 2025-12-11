@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { EATClientLayout } from "@/components/EATClientLayout";
 import { StatusPill } from "@/components/StatusPill";
@@ -89,7 +91,7 @@ export default function SystemMapPage() {
               How agents, scoring, and configuration hand off work. Open this when you need the blueprint for dependencies, not just a link.
             </p>
           </div>
-          <ClientActionLink href="/">Back to dashboard</ClientActionLink>
+          <ClientActionLink href="/">Back to Console</ClientActionLink>
         </div>
       </section>
 
@@ -102,45 +104,71 @@ export default function SystemMapPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Diagram</p>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-indigo-100/60 bg-gradient-to-b from-white to-indigo-50/60 p-4 dark:border-indigo-800/50 dark:from-zinc-900 dark:to-indigo-950/30">
-          <div className="space-y-3">
-            {flowSequences.map((sequence) => (
-              <div key={sequence.label} className="flex flex-wrap items-center justify-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 backdrop-blur dark:bg-zinc-900/70 dark:text-indigo-100 dark:ring-indigo-800/60">
-                <span className="mr-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
-                  {sequence.label}
-                </span>
-                {sequence.steps.map((step, index) => (
-                  <div key={step} className="flex items-center gap-2">
-                    <FlowPill label={step} />
-                    {index < sequence.steps.length - 1 ? <FlowArrow /> : null}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {systemNodes.map((node) => (
-              <div key={node.id} className="space-y-3 rounded-2xl border border-indigo-100 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900/80">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">{node.type}</p>
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{node.name}</h3>
-                  </div>
-                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/50 dark:text-indigo-200 dark:ring-indigo-700/50">
-                    Node
+        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="space-y-4 rounded-2xl border border-indigo-100/60 bg-gradient-to-b from-white to-indigo-50/60 p-4 dark:border-indigo-800/50 dark:from-zinc-900 dark:to-indigo-950/30">
+            <div className="space-y-3">
+              {flowSequences.map((sequence) => (
+                <div
+                  key={sequence.label}
+                  className="flex flex-wrap items-center justify-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 backdrop-blur dark:bg-zinc-900/70 dark:text-indigo-100 dark:ring-indigo-800/60"
+                >
+                  <span className="mr-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
+                    {sequence.label}
                   </span>
-                </div>
-                <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{node.summary}</p>
-                <div className="flex flex-wrap gap-2">
-                  {node.tags.map((tag) => (
-                    <span key={tag} className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-200 dark:ring-indigo-800/60">
-                      {tag}
-                    </span>
+                  {sequence.steps.map((step, index) => (
+                    <div key={step} className="flex items-center gap-2">
+                      <FlowPill label={step} />
+                      {index < sequence.steps.length - 1 ? <FlowArrow /> : null}
+                    </div>
                   ))}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {systemNodes.map((node) => (
+                <div key={node.id} className="space-y-3 rounded-2xl border border-indigo-100 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900/80">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">{node.type}</p>
+                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{node.name}</h3>
+                    </div>
+                    <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/50 dark:text-indigo-200 dark:ring-indigo-700/50">
+                      Node
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{node.summary}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {node.tags.map((tag) => (
+                      <span key={tag} className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-200 dark:ring-indigo-800/60">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-2xl border border-indigo-100/70 bg-white/90 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">Diagram frame</p>
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/50 dark:text-indigo-200 dark:ring-indigo-700/50">
+                Fits to card
+              </span>
+            </div>
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50/40 ring-1 ring-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:ring-indigo-900/70">
+              <Image
+                src="/system-map-diagram.svg"
+                alt="EAT data flow diagram showing intake, normalization, matching, and confidence steps"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              Diagram scales within the card without clipping; use the zoom controls in your browser if you need a closer look.
+            </p>
           </div>
         </div>
       </section>
