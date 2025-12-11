@@ -7,6 +7,7 @@ import {
   getFeatureFlag,
   isFeatureEnabledForTenant,
   isEnabled,
+  parseFeatureFlagName,
   resetFeatureFlagCache,
 } from './featureFlags';
 import { configurePlanFeatureFlags, resetPlanFeatureFlags } from './featureFlags/planMapping';
@@ -124,5 +125,11 @@ describe('isFeatureEnabledForTenant', () => {
     expect(prismaMock.featureFlag.findFirst).toHaveBeenCalledWith({
       where: { tenantId: 'tenant-4', name: FEATURE_FLAGS.AGENTS_MATCHED_UI_V1 },
     });
+  });
+
+  it('maps legacy confidence flag names to the canonical key', () => {
+    const parsed = parseFeatureFlagName('eat_confidence_enabled');
+
+    expect(parsed).toBe(FEATURE_FLAGS.CONFIDENCE_ENABLED);
   });
 });

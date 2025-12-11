@@ -2,7 +2,12 @@ import type { FeatureFlag as FeatureFlagModel } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { cookies } from 'next/headers';
 
-import { DEFAULT_FLAG_DESCRIPTIONS, FEATURE_FLAGS, type FeatureFlagName } from './featureFlags/constants';
+import {
+  DEFAULT_FLAG_DESCRIPTIONS,
+  FEATURE_FLAG_ALIASES,
+  FEATURE_FLAGS,
+  type FeatureFlagName,
+} from './featureFlags/constants';
 import { isFeatureEnabledForPlan } from './featureFlags/planMapping';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 import { getTenantPlan } from './subscriptionPlans';
@@ -32,8 +37,9 @@ function buildFallbackFlag(name: FeatureFlagName, enabled = false) {
 function coerceFlagName(value: unknown): FeatureFlagName | null {
   const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
   const candidates = Object.values(FEATURE_FLAGS) as FeatureFlagName[];
+  const canonical = FEATURE_FLAG_ALIASES[normalized] ?? normalized;
 
-  return (candidates.find((flag) => flag === normalized) as FeatureFlagName | undefined) ?? null;
+  return (candidates.find((flag) => flag === canonical) as FeatureFlagName | undefined) ?? null;
 }
 
 async function readFallbackOverrides(tenantId: string) {
