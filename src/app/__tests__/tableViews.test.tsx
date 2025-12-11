@@ -5,8 +5,19 @@
 import "@testing-library/jest-dom/vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, beforeAll } from "vitest";
 import { useState } from "react";
+
+vi.mock("@prisma/client", () => ({
+  JobCandidateStatus: {
+    POTENTIAL: "POTENTIAL",
+    SHORTLISTED: "SHORTLISTED",
+    SUBMITTED: "SUBMITTED",
+    INTERVIEWING: "INTERVIEWING",
+    HIRED: "HIRED",
+    REJECTED: "REJECTED",
+  },
+}));
 
 import { JobCandidateStatus } from "@prisma/client";
 
@@ -34,6 +45,18 @@ vi.mock("next/navigation", () => ({
     refresh: () => refreshCallback?.(),
   }),
 }));
+
+beforeAll(() => {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }),
+  });
+});
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
