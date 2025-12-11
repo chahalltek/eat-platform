@@ -1,10 +1,7 @@
 "use client";
 
-<<<<<<< ours
 import { useCallback, useEffect, useRef, useState } from "react";
 
-=======
->>>>>>> theirs
 import { StatusPill, type StatusPillStatus } from "@/components/StatusPill";
 import type { SubsystemKey, SubsystemState, SystemStatusMap } from "@/lib/systemStatus";
 
@@ -55,13 +52,9 @@ type SystemStatusProps = {
   isRefreshing: boolean;
 };
 
-<<<<<<< ours
-export function SystemStatus({ initialStatus }: SystemStatusProps) {
-  const [statusMap, setStatusMap] = useState<SystemStatusMap>(initialStatus);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+export function SystemStatus({ statusMap, onRefresh, isRefreshing }: SystemStatusProps) {
   const [shouldPulse, setShouldPulse] = useState(true);
   const pulseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const refreshRequestedRef = useRef(false);
 
   const triggerPulse = useCallback(() => {
     if (pulseTimeoutRef.current) {
@@ -82,38 +75,8 @@ export function SystemStatus({ initialStatus }: SystemStatusProps) {
     };
   }, [triggerPulse]);
 
-  async function handleRefresh() {
-    try {
-      setIsRefreshing(true);
-      refreshRequestedRef.current = true;
-      const response = await fetch("/api/system-status", { cache: "no-store" });
+ )
 
-      if (!response.ok) {
-        throw new Error("Failed to refresh status");
-      }
-
-      const data = (await response.json()) as SystemStatusMap;
-      setStatusMap(data);
-    } catch (error) {
-      console.error("[system-status] refresh failed", error);
-      setStatusMap({
-        agents: { status: "unknown" },
-        scoring: { status: "unknown" },
-        database: { status: "unknown" },
-        tenantConfig: { status: "unknown" },
-      });
-    } finally {
-      setIsRefreshing(false);
-      if (refreshRequestedRef.current) {
-        triggerPulse();
-      }
-      refreshRequestedRef.current = false;
-    }
-  }
-
-=======
-export function SystemStatus({ statusMap, onRefresh, isRefreshing }: SystemStatusProps) {
->>>>>>> theirs
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
