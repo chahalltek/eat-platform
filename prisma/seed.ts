@@ -7,6 +7,17 @@ const prisma = new PrismaClient();
 
 const ADMIN_USER_ID = 'admin-user';
 const RECRUITER_USER_ID = 'charlie';
+const DEFAULT_AGENT_FLAGS = [
+  'EAT-SOURCER',
+  'EAT-TS.RUA',
+  'EAT-TS.RINA',
+  'EAT-TS.MATCH',
+  'EAT-TS.MATCHER',
+  'EAT-TS.SHORTLIST',
+  'EAT-TS.CONFIDENCE',
+  'EAT-TS.EXPLAIN',
+  'EAT-TS.SHORTLISTS',
+];
 
 function daysAgo(days: number) {
   const date = new Date();
@@ -85,6 +96,22 @@ async function resetTenantData() {
   await prisma.candidate.deleteMany({ where: { tenantId: DEFAULT_TENANT_ID } });
   await prisma.jobReq.deleteMany({ where: { tenantId: DEFAULT_TENANT_ID } });
   await prisma.customer.deleteMany({ where: { tenantId: DEFAULT_TENANT_ID } });
+}
+
+async function seedAgentFlags() {
+  for (const agentName of DEFAULT_AGENT_FLAGS) {
+    await prisma.agentFlag.upsert({
+      where: {
+        tenantId_agentName: { tenantId: DEFAULT_TENANT_ID, agentName },
+      },
+      update: {},
+      create: {
+        tenantId: DEFAULT_TENANT_ID,
+        agentName,
+        enabled: true,
+      },
+    });
+  }
 }
 
 async function seedJobs() {
@@ -442,6 +469,7 @@ async function main() {
   await resetTenantData();
   await seedJobs();
   await seedCandidates();
+  await seedAgentFlags();
   await seedAgentRuns();
   await seedMatchesAndOutreach();
 

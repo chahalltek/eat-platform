@@ -78,9 +78,13 @@ model Tenant {
   subscriptions TenantSubscription[]
   config        TenantConfig?
 <<<<<<< ours
+<<<<<<< ours
   systemMode    SystemMode?
 =======
   tenantMode    TenantMode?
+>>>>>>> theirs
+=======
+  systemMode    SystemMode?
 >>>>>>> theirs
 
   @@unique([name])
@@ -90,8 +94,12 @@ model TenantConfig {
   id        String   @id @default(cuid())
   tenantId  String   @unique
 <<<<<<< ours
+<<<<<<< ours
   preset    String?
 =======
+>>>>>>> theirs
+=======
+  preset    String?
 >>>>>>> theirs
   scoring   Json
   explain   Json
@@ -168,10 +176,12 @@ model FeatureFlag {
   @@index([tenantId])
 }
 
-<<<<<<< ours
 model SystemMode {
+<<<<<<< ours
 =======
 model AgentFlag {
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   id        String   @id @default(cuid())
   tenantId  String   @default("default-tenant")
@@ -187,6 +197,9 @@ model AgentFlag {
 }
 
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 model AgentFlag {
   id        String   @id @default(cuid())
   tenantId  String   @default("default-tenant")
