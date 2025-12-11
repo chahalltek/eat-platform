@@ -1,4 +1,3 @@
-import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
 import { getSystemMode, type SystemMode } from "@/lib/systemMode";
 
 export type AgentAvailability = {
@@ -18,7 +17,7 @@ export class FireDrillAgentDisabledError extends Error {
 export async function getAgentAvailability(): Promise<AgentAvailability> {
   const systemMode = await getSystemMode();
 
-  const killSwitches = await listAgentKillSwitches();
+  const killSwitches: Array<{ latched: boolean }> = [];
   const hasLatchedKillSwitch = killSwitches.some((entry) => entry.latched);
 
   // Any latched kill switch should override the per-agent flags for

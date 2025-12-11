@@ -6,6 +6,7 @@ import { matchJobToAllCandidates } from "@/lib/matching/batch";
 import { getCurrentUser } from "@/lib/auth";
 import { MatchConfidence } from "@/lib/matching/confidence";
 import { loadTenantConfig } from "@/lib/config/tenantConfig";
+import { TS_CONFIG } from "@/config/ts";
 
 export const MATCHER_AGENT_NAME = AGENT_KILL_SWITCHES.MATCHER;
 
@@ -85,7 +86,10 @@ export async function runMatcherAgent(
       const matches = await matchJobToAllCandidates(jobReqId, limit);
       const tenantId = matches[0]?.tenantId ?? null;
       const tenantConfig = await loadTenantConfig(tenantId);
-      const minScore = tenantConfig.scoring.matcher.minScore;
+      const minScore =
+        tenantConfig.scoring?.matcher?.minScore ??
+        tenantConfig.matcher?.minScore ??
+        TS_CONFIG.scoring.matcher.minScore;
       const enrichedMatches = await Promise.all(matches.map((match) => explainMatch(match)));
 
       const filteredMatches = enrichedMatches.filter((match) => match.score >= minScore);

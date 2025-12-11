@@ -114,10 +114,14 @@ function scoreSkillCoverage(candidate: CandidateProfile): SkillCoverageResult {
   const coveragePortion = Math.min(recordedSkills, 8) / 8; // encourage a healthy breadth without over-weighting extremes
   const depthPortion = skillsWithDepth / recordedSkills;
 
-  const score = clampScore(coveragePortion * 70 + depthPortion * 30);
+  const baseScore = coveragePortion * 70 + depthPortion * 30;
+  const depthBonus = recordedSkills >= 4 && skillsWithDepth / recordedSkills >= 0.75 ? 10 : 0;
+  const score = clampScore(baseScore + depthBonus);
   const reason =
     `Skills coverage includes ${recordedSkills} skill${recordedSkills === 1 ? "" : "s"}` +
-    (skillsWithDepth ? ` with depth on ${skillsWithDepth}.` : "; add proficiency or experience for more confidence.");
+    (skillsWithDepth
+      ? ` with depth on ${skillsWithDepth}${depthBonus ? "; strong coverage boosts confidence" : ""}.`
+      : "; add proficiency or experience for more confidence.");
 
   return { score, recordedSkills, skillsWithDepth, reason };
 }

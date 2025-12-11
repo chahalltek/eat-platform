@@ -1,5 +1,9 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 
+if (process.env.NODE_ENV === 'test' && !process.env.PRISMA_CLIENT_ENGINE_TYPE) {
+  process.env.PRISMA_CLIENT_ENGINE_TYPE = 'wasm';
+}
+
 const FALLBACK_DATABASE_URL = 'postgresql://placeholder.invalid:5432/placeholder';
 
 if (!process.env.DATABASE_URL) {
