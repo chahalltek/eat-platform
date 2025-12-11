@@ -84,22 +84,6 @@ const badgeStyles: Record<BadgeState, string> = {
   unknown: "border-zinc-200 bg-white text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
 };
 
-function formatStatusText(status: BadgeState) {
-  switch (status) {
-    case "healthy":
-      return "Healthy";
-    case "warning":
-      return "Waiting";
-    case "error":
-      return "Fault";
-    case "unknown":
-      return "Status unavailable";
-    case "enabled":
-    default:
-      return "Enabled";
-  }
-}
-
 function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
   return [
     {
@@ -214,19 +198,6 @@ function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
   } as const;
 }
 
-function formatDependencyStatus(status: SubsystemState) {
-  switch (status) {
-    case "healthy":
-      return "Healthy";
-    case "warning":
-      return "Waiting";
-    case "error":
-      return "Fault";
-    default:
-      return "Status unavailable";
-  }
-}
-
 function TelemetryMetric({
   label,
   value,
@@ -308,8 +279,6 @@ export default async function Home() {
         badgeStyles={badgeStyles}
         dependencyLabels={dependencyLabels}
         dependencyDotStyles={dependencyDotStyles}
-        formatStatusText={formatStatusText}
-        formatDependencyStatus={formatDependencyStatus}
       >
           {isExecutionHistory && (
           <div className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">

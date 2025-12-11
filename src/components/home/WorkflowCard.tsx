@@ -40,10 +40,37 @@ export type WorkflowCardProps = {
   badgeStyles: Record<string, string>;
   dependencyLabels: Record<SubsystemKey, string>;
   dependencyDotStyles: Record<SubsystemState, string>;
-  formatStatusText: (status: BadgeState) => string;
-  formatDependencyStatus: (status: SubsystemState) => string;
   children?: ReactNode;
 };
+
+function formatStatusText(status: BadgeState) {
+  switch (status) {
+    case "healthy":
+      return "Healthy";
+    case "warning":
+      return "Waiting";
+    case "error":
+      return "Fault";
+    case "unknown":
+      return "Status unavailable";
+    case "enabled":
+    default:
+      return "Enabled";
+  }
+}
+
+function formatDependencyStatus(status: SubsystemState) {
+  switch (status) {
+    case "healthy":
+      return "Healthy";
+    case "warning":
+      return "Waiting";
+    case "error":
+      return "Fault";
+    default:
+      return "Status unavailable";
+  }
+}
 
 export function WorkflowCard({
   link,
@@ -52,8 +79,6 @@ export function WorkflowCard({
   badgeStyles,
   dependencyLabels,
   dependencyDotStyles,
-  formatStatusText,
-  formatDependencyStatus,
   children,
 }: WorkflowCardProps) {
   const prefersReducedMotion = usePrefersReducedMotion();

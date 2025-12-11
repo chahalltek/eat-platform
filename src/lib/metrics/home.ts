@@ -1,4 +1,4 @@
-import { AgentRunStatus } from "@prisma/client";
+import { AgentRunStatus, Prisma } from "@prisma/client";
 
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
 import { prisma } from "@/lib/prisma";
@@ -19,6 +19,19 @@ export type HomeCardMetrics = {
   lastAgentRunAt: string | null;
   failedAgentRunsLast7d: number | null;
 };
+
+async function getTestContentRolesCount(tenantId: string) {
+  try {
+    return await prisma.jobReq.count({ where: { tenantId, sourceType: "Test Content" } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
+      console.warn("[Home] jobReq.sourceType column missing; skipping test content count");
+      return null;
+    }
+
+    throw error;
+  }
+}
 
 export async function getHomeCardMetrics(): Promise<HomeCardMetrics> {
   const tenantId = await getCurrentTenantId();
@@ -47,7 +60,7 @@ export async function getHomeCardMetrics(): Promise<HomeCardMetrics> {
     ] = await Promise.all([
       prisma.jobReq.count({ where: { tenantId } }),
       prisma.candidate.count({ where: { tenantId } }),
-      prisma.jobReq.count({ where: { tenantId, sourceType: "Test Content" } }),
+      getTestContentRolesCount(tenantId),
       prisma.agentRunLog.count({ where: { tenantId, startedAt: { gte: oneWeekAgo } } }),
       prisma.agentRunLog.count({ where: { tenantId, startedAt: { gte: startOfToday } } }),
       prisma.agentRunLog.count({
