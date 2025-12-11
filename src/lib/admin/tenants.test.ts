@@ -25,8 +25,11 @@ const prismaMock = vi.hoisted(() => ({
   },
 }));
 
+const isTableAvailableMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: prismaMock,
+  isTableAvailable: isTableAvailableMock,
 }));
 
 const baseTenant: Tenant = {

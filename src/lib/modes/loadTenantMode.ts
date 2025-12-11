@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 
-import { isPrismaUnavailableError, prisma } from "@/lib/prisma";
+import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/lib/prisma";
 import { SYSTEM_MODES, type SystemModeName } from "./systemModes";
 
 const DEFAULT_MODE: SystemModeName = "pilot";
@@ -19,6 +19,11 @@ function buildFallbackMode() {
 }
 
 export async function loadTenantMode(tenantId: string) {
+  const tenantModeAvailable = await isTableAvailable("TenantMode");
+  if (!tenantModeAvailable) {
+    return buildFallbackMode();
+  }
+
   const tenantModeModel = prisma.tenantMode as typeof prisma.tenantMode | undefined;
 
   if (!tenantModeModel?.findUnique) {

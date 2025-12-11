@@ -2,7 +2,7 @@ import type { SubscriptionPlan, Tenant, TenantSubscription } from "@prisma/clien
 
 import type { SystemModeName } from "@/lib/modes/systemModes";
 
-import { prisma } from "@/lib/prisma";
+import { isTableAvailable, prisma } from "@/lib/prisma";
 
 export class NotFoundError extends Error {
   constructor(message: string) {
@@ -63,11 +63,12 @@ function activeSubscriptionWhere(now: Date) {
 
 export async function listTenantsWithPlans(): Promise<TenantPlanSummary[]> {
   const now = new Date();
+  const includeTenantMode = await isTableAvailable("TenantMode");
 
   const tenants = await prisma.tenant.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      tenantMode: true,
+      ...(includeTenantMode ? { tenantMode: true } : {}),
       subscriptions: {
         where: activeSubscriptionWhere(now),
         orderBy: { startAt: "desc" },
@@ -82,11 +83,12 @@ export async function listTenantsWithPlans(): Promise<TenantPlanSummary[]> {
 
 export async function getTenantPlanDetail(tenantId: string): Promise<TenantPlanDetail> {
   const now = new Date();
+  const includeTenantMode = await isTableAvailable("TenantMode");
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
     include: {
-      tenantMode: true,
+      ...(includeTenantMode ? { tenantMode: true } : {}),
       subscriptions: {
         where: activeSubscriptionWhere(now),
         orderBy: { startAt: "desc" },
@@ -114,12 +116,13 @@ export async function updateTenantPlan(
   options: { isTrial?: boolean; trialEndsAt?: Date | null },
 ): Promise<TenantPlanSummary> {
   const now = new Date();
+  const includeTenantMode = await isTableAvailable("TenantMode");
 
   const [tenant, plan] = await Promise.all([
     prisma.tenant.findUnique({
       where: { id: tenantId },
       include: {
-        tenantMode: true,
+        ...(includeTenantMode ? { tenantMode: true } : {}),
         subscriptions: {
           where: activeSubscriptionWhere(now),
           orderBy: { startAt: "desc" },
