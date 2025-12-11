@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
-import { listTestPlanStatuses, parseTestPlanStatus, upsertTestPlanStatus } from "@/lib/eat/testPlanStatus";
-import { isValidTestPlanItemId } from "@/lib/eat/testPlanRegistry";
+import { listTestPlanStatuses, parseTestPlanStatus, upsertTestPlanStatus } from "@/lib/ete/testPlanStatus";
+import { isValidTestPlanItemId } from "@/lib/ete/testPlanRegistry";
 
 async function resolveAdmin(request: NextRequest) {
   const user = await getCurrentUser(request);

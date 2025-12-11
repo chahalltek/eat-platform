@@ -5,7 +5,7 @@ import type { FilterFn } from "@tanstack/react-table";
 
 import { StandardTable } from "@/components/table/StandardTable";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
-import type { EATTableColumn } from "@/components/table/tableTypes";
+import type { ETETableColumn } from "@/components/table/tableTypes";
 import { createStatusBadgeColumn, createTextColumn } from "@/components/table/tableTypes";
 import type { EnvEntry } from "@/lib/admin/env";
 
@@ -17,7 +17,7 @@ const globalFilterFn: FilterFn<EnvEntry> = (row, _columnId, filterValue) => {
 };
 
 export function EnvTable({ entries }: { entries: EnvEntry[] }) {
-  const columns = useMemo<EATTableColumn<EnvEntry>[]>(
+  const columns = useMemo<ETETableColumn<EnvEntry>[]>(
     () => [
       createTextColumn<EnvEntry, "key">({
         accessorKey: "key",

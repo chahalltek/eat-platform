@@ -313,18 +313,18 @@ function isEdgeRuntime() {
 
 const globalRateLimiter = (() => {
   const globalObj = globalThis as typeof globalThis & {
-    __EAT_RATE_LIMITER?: RateLimiter;
+    __ETE_RATE_LIMITER?: RateLimiter;
   };
 
-  if (!globalObj.__EAT_RATE_LIMITER) {
+  if (!globalObj.__ETE_RATE_LIMITER) {
     const edgeRuntime = isEdgeRuntime();
     const planResolver = edgeRuntime ? async () => null : defaultPlanResolver;
     const securityLogger = edgeRuntime ? () => {} : defaultSecurityLogger;
 
-    globalObj.__EAT_RATE_LIMITER = new RateLimiter(DEFAULT_CONFIG, planResolver, securityLogger);
+    globalObj.__ETE_RATE_LIMITER = new RateLimiter(DEFAULT_CONFIG, planResolver, securityLogger);
   }
 
-  return globalObj.__EAT_RATE_LIMITER;
+  return globalObj.__ETE_RATE_LIMITER;
 })();
 
 export async function consumeRateLimit(context: RateLimitContext) {

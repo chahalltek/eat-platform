@@ -22,7 +22,7 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
 =======
 import { headers } from "next/headers";
 
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
@@ -34,7 +34,7 @@ export const dynamic = "force-dynamic";
 
 function AccessDenied() {
   return (
-    <EATClientLayout>
+    <ETEClientLayout>
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
           <h1 className="text-xl font-semibold">Admin access required</h1>
@@ -104,7 +104,7 @@ function AccessDenied() {
       </div>
     </main>
 =======
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }
 
@@ -129,7 +129,7 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   const normalizedTenantId = tenantId || currentTenantId || "";
 
   return (
-    <EATClientLayout>
+    <ETEClientLayout>
       <main className="min-h-screen bg-zinc-50 px-6 py-10">
         <div className="mx-auto flex max-w-5xl flex-col gap-8">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -153,7 +153,7 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
           <GuardrailsPreviewPanel tenantId={normalizedTenantId} />
         </div>
       </main>
-    </EATClientLayout>
+    </ETEClientLayout>
 >>>>>>> theirs
   );
 }

@@ -3,8 +3,8 @@ import { render } from "@testing-library/react";
 import type { Table } from "@tanstack/react-table";
 import type { FilterFn } from "@tanstack/table-core";
 
-import { EATTable } from "../EATTable";
-import type { EATTableColumn } from "../tableTypes";
+import { ETETable } from "../ETETable";
+import type { ETETableColumn } from "../tableTypes";
 import { createNumberColumn, createStatusBadgeColumn, createTextColumn } from "../tableTypes";
 
 export type MockTableRow = {
@@ -51,7 +51,7 @@ export const globalTextFilter: FilterFn<MockTableRow> = (row, _columnId, filterV
   return row.original.name.toLowerCase().includes(query);
 };
 
-export function createMockColumns({ enableSorting = true, includeFilters = false } = {}): EATTableColumn<MockTableRow>[] {
+export function createMockColumns({ enableSorting = true, includeFilters = false } = {}): ETETableColumn<MockTableRow>[] {
   return [
     createTextColumn({ accessorKey: "name", header: "Name", sortable: enableSorting }),
     createNumberColumn({ accessorKey: "age", header: "Age", sortable: enableSorting }),
@@ -75,7 +75,7 @@ type HarnessInstance = {
 
 type RenderHarnessOptions = {
   data?: MockTableRow[];
-  columns?: EATTableColumn<MockTableRow>[];
+  columns?: ETETableColumn<MockTableRow>[];
   enableFiltering?: boolean;
 };
 
@@ -84,7 +84,7 @@ export function renderTableHarness(options: RenderHarnessOptions = {}): HarnessI
   const tableRef: { table?: Table<MockTableRow> } = {};
 
   render(
-    <EATTable
+    <ETETable
       data={data}
       columns={columns}
       filtering={
@@ -112,7 +112,7 @@ export function renderTableHarness(options: RenderHarnessOptions = {}): HarnessI
           </div>
         );
       }}
-    </EATTable>,
+    </ETETable>,
   );
 
   if (!tableRef.table) throw new Error("Table was not initialized");

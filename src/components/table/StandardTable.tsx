@@ -2,11 +2,11 @@
 
 import clsx from "clsx";
 import type { Row, Table } from "@tanstack/react-table";
-import { EATTable, type EATTableFiltering, type EATTableSorting, flexRender } from "./EATTable";
+import { ETETable, type ETETableFiltering, type ETETableSorting, flexRender } from "./ETETable";
 import { TableToolbar } from "./TableToolbar";
 import { getTableCellClasses, getTableClassNames, getTableRowClasses } from "./tableStyles";
 import type { TableStyleVariant } from "./tableStyles";
-import type { EATTableColumn } from "./tableTypes";
+import type { ETETableColumn } from "./tableTypes";
 
 type RowOptions<TData> = {
   className?: string;
@@ -16,9 +16,9 @@ type RowOptions<TData> = {
 
 type StandardTableProps<TData> = {
   data: TData[];
-  columns: EATTableColumn<TData, any>[];
-  sorting?: EATTableSorting;
-  filtering?: EATTableFiltering<TData>;
+  columns: ETETableColumn<TData, any>[];
+  sorting?: ETETableSorting;
+  filtering?: ETETableFiltering<TData>;
   variant?: TableStyleVariant;
   renderToolbar?: (table: Table<TData>) => React.ReactNode;
   emptyState?: React.ReactNode;
@@ -36,7 +36,7 @@ export function StandardTable<TData>({
   getRowOptions,
 }: StandardTableProps<TData>) {
   return (
-    <EATTable data={data} columns={columns} sorting={sorting} filtering={filtering} variant={variant}>
+    <ETETable data={data} columns={columns} sorting={sorting} filtering={filtering} variant={variant}>
       {({ headerGroups, rows, styles, table }) => {
         const classNames = getTableClassNames(styles);
 
@@ -126,6 +126,6 @@ export function StandardTable<TData>({
           </div>
         );
       }}
-    </EATTable>
+    </ETETable>
   );
 }

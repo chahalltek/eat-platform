@@ -17,7 +17,7 @@ export type SessionValidationResult = {
   error: "invalid" | "expired" | null;
 };
 
-const SESSION_COOKIE_NAME = "eat_session";
+const SESSION_COOKIE_NAME = "ete_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 const encoder = new TextEncoder();

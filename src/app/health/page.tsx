@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { EATCard } from "@/components/EATCard";
+import { ETECard } from "@/components/ETECard";
 import { StatusPill } from "@/components/StatusPill";
 import { recordHealthCheck, runHealthChecks } from "@/lib/health";
 
@@ -20,7 +20,11 @@ export default async function HealthPage() {
       <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-8 px-6 py-14 sm:px-10">
         <div className="flex items-center justify-between gap-4">
           <div>
+<<<<<<< ours
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">ETE Console</p>
+=======
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">ETE</p>
+>>>>>>> theirs
             <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">System Health</h1>
             <p className="mt-2 text-zinc-600 dark:text-zinc-400">
               Live snapshot of infrastructure and dependency checks.
@@ -34,7 +38,7 @@ export default async function HealthPage() {
           </Link>
         </div>
 
-        <EATCard className="gap-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <ETECard className="gap-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <StatusPill status={report.status === "ok" ? "ok" : "error"} label={report.status === "ok" ? "Healthy" : "Unhealthy"} />
@@ -46,7 +50,7 @@ export default async function HealthPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             {report.checks.map((check) => (
-              <EATCard
+              <ETECard
                 key={check.name}
                 className="gap-3 border-zinc-100 bg-zinc-50 transition-none hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
               >
@@ -61,10 +65,10 @@ export default async function HealthPage() {
                   />
                 </div>
                 <p className="text-sm text-zinc-700 dark:text-zinc-300">{check.message}</p>
-              </EATCard>
+              </ETECard>
             ))}
           </div>
-        </EATCard>
+        </ETECard>
       </main>
     </div>
   );

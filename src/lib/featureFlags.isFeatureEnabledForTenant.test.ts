@@ -128,7 +128,7 @@ describe('isFeatureEnabledForTenant', () => {
   });
 
   it('maps legacy confidence flag names to the canonical key', () => {
-    const parsed = parseFeatureFlagName('eat_confidence_enabled');
+    const parsed = parseFeatureFlagName('ete_confidence_enabled');
 
     expect(parsed).toBe(FEATURE_FLAGS.CONFIDENCE_ENABLED);
   });

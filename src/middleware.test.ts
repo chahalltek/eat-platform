@@ -15,7 +15,7 @@ vi.mock('./lib/auth/session', () => ({
     },
     error: null,
   })),
-  clearSessionCookie: vi.fn(() => ({ name: 'eat_session', value: '', maxAge: 0 })),
+  clearSessionCookie: vi.fn(() => ({ name: 'ete_session', value: '', maxAge: 0 })),
 }));
 
 vi.mock('./lib/rateLimiting/rateLimiter', () => ({

@@ -12,7 +12,7 @@ import {
 } from "@/lib/tenant/diagnostics";
 import { getTenantMembershipsForUser, resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-import { EATCard } from "@/components/EATCard";
+import { ETECard } from "@/components/ETECard";
 import { StatusPill } from "@/components/StatusPill";
 import { TenantTestTable } from "./TenantTestTable";
 import { TenantFireDrillCallout } from "./TenantFireDrillCallout";
@@ -49,7 +49,7 @@ function DiagnosticCard({
     status === "warn" ? "Action needed" : status === "off" ? "Disabled" : "Enabled";
 
   return (
-    <EATCard className="gap-3">
+    <ETECard className="gap-3">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <StatusIcon status={status} />
@@ -63,7 +63,7 @@ function DiagnosticCard({
       <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-100">
         {children}
       </div>
-    </EATCard>
+    </ETECard>
   );
 }
 

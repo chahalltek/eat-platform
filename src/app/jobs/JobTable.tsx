@@ -6,7 +6,7 @@ import type { FilterFn } from "@tanstack/react-table";
 
 import { StandardTable } from "@/components/table/StandardTable";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
-import type { EATTableColumn } from "@/components/table/tableTypes";
+import type { ETETableColumn } from "@/components/table/tableTypes";
 import { createTextColumn } from "@/components/table/tableTypes";
 import { FreshnessIndicator } from "./FreshnessIndicator";
 
@@ -29,7 +29,7 @@ const globalFilterFn: FilterFn<JobTableRow> = (row, _columnId, filterValue) => {
 };
 
 export function JobTable({ jobs }: { jobs: JobTableRow[] }) {
-  const columns = useMemo<EATTableColumn<JobTableRow>[]>(
+  const columns = useMemo<ETETableColumn<JobTableRow>[]>(
     () => [
       {
         ...createTextColumn<JobTableRow, "title">({

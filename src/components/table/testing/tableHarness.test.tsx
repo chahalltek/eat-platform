@@ -6,11 +6,11 @@ import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { EATTable } from "../EATTable";
+import { ETETable } from "../ETETable";
 import { TableFilterDropdown } from "../TableFilterDropdown";
 import { TableSearchInput } from "../TableSearchInput";
 import { TableToolbar } from "../TableToolbar";
-import type { EATTableColumn } from "../tableTypes";
+import type { ETETableColumn } from "../tableTypes";
 import {
   MockTableRow,
   createMockColumns,
@@ -54,10 +54,10 @@ describe("table test harness", () => {
   });
 
   it("supports filtering assertions via column and global filters", () => {
-    const columns: EATTableColumn<MockTableRow>[] = createMockColumns({ includeFilters: true });
+    const columns: ETETableColumn<MockTableRow>[] = createMockColumns({ includeFilters: true });
 
     render(
-      <EATTable
+      <ETETable
         data={createMockTableData()}
         columns={columns}
         filtering={{
@@ -88,7 +88,7 @@ describe("table test harness", () => {
             {rows.length === 0 && <p>No results</p>}
           </div>
         )}
-      </EATTable>,
+      </ETETable>,
     );
 
     expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(["Alpha", "Beta", "Gamma"]);

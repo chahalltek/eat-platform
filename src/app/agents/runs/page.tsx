@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { ClientActionLink } from "@/components/ClientActionLink";
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
@@ -154,14 +154,14 @@ export default async function AgentRunsPage({
 
   if (!agentUiEnabled) {
     return (
-      <EATClientLayout maxWidthClassName="max-w-4xl">
+      <ETEClientLayout maxWidthClassName="max-w-4xl">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-900">
           <h1 className="text-xl font-semibold">Agents UI unavailable</h1>
           <p className="mt-2 text-sm text-slate-700">
             Enable the agents matched UI feature flag to access agent run history.
           </p>
         </div>
-      </EATClientLayout>
+      </ETEClientLayout>
     );
   }
 
@@ -206,7 +206,7 @@ export default async function AgentRunsPage({
   const latestFailure = failedRuns[0];
 
   return (
-    <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-6">
+    <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Agent Runs</h1>
@@ -276,6 +276,6 @@ export default async function AgentRunsPage({
           <AgentRunHistory runs={tableRuns} />
         </div>
       </div>
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }

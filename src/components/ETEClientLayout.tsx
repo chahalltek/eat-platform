@@ -9,18 +9,18 @@ import type { SystemModeName } from "@/lib/modes/systemModes";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { getTenantMode } from "@/lib/tenantMode";
 
-type EATClientLayoutProps = PropsWithChildren<{
+type ETEClientLayoutProps = PropsWithChildren<{
   maxWidthClassName?: string;
   contentClassName?: string;
   showFireDrillBanner?: boolean;
 }>;
 
-export async function EATClientLayout({
+export async function ETEClientLayout({
   children,
   maxWidthClassName = "max-w-6xl",
   contentClassName,
   showFireDrillBanner = true,
-}: EATClientLayoutProps) {
+}: ETEClientLayoutProps) {
   let failedRuns = 0;
   let tenantMode: SystemModeName | null = null;
 
@@ -34,7 +34,7 @@ export async function EATClientLayout({
       failedRuns = await getAgentFailureCount(tenantId);
     }
   } catch (error) {
-    console.error("[eat-client-layout] failed to resolve failure count", error);
+    console.error("[ete-client-layout] failed to resolve failure count", error);
   }
 
   const isFireDrill = showFireDrillBanner && tenantMode === "fire_drill";

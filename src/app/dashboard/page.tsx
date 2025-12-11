@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { AgentsStatusPanel } from '@/components/AgentsStatusPanel';
 import { getAgentsStatus } from '@/lib/agents/statusBoard';
 import { getDashboardMetrics } from '@/lib/metrics/dashboard';
-import { EATClientLayout } from '@/components/EATClientLayout';
+import { ETEClientLayout } from '@/components/ETEClientLayout';
 
 export const dynamic = 'force-dynamic';
 
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
       : null;
 
   return (
-    <EATClientLayout>
+    <ETEClientLayout>
       <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
@@ -242,6 +242,6 @@ export default async function DashboardPage() {
           </div>
         </section>
       </div>
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }

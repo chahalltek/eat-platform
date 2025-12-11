@@ -7,7 +7,7 @@ import { StandardTable } from "@/components/table/StandardTable";
 import { TableFilterDropdown, type TableFilterOption } from "@/components/table/TableFilterDropdown";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
 import {
-  EATTableColumn,
+  ETETableColumn,
   createNumberColumn,
   createStatusBadgeColumn,
   createTextColumn,
@@ -122,7 +122,7 @@ export function AgentRunLogsTable({
     return agentNames.map((name) => ({ value: name, label: name }));
   }, [logs]);
 
-  const columns = useMemo<EATTableColumn<AgentRunLogTableRow>[]>(
+  const columns = useMemo<ETETableColumn<AgentRunLogTableRow>[]>(
     () => [
       createTextColumn<AgentRunLogTableRow, "startedAt">({
         accessorKey: "startedAt",

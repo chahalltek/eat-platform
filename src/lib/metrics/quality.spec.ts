@@ -38,7 +38,7 @@ describe('getQualityMetrics', () => {
       coverageSummaryPath,
       JSON.stringify({
         total: { lines: { total: 10, covered: 8 } },
-        'src/components/table/EATTable.tsx': { lines: { total: 4, covered: 3 } },
+        'src/components/table/ETETable.tsx': { lines: { total: 4, covered: 3 } },
       }),
       'utf8',
     );

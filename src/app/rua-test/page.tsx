@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { ClientActionLink } from "@/components/ClientActionLink";
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
 import { RuaTestClient } from "./RuaTestClient";
@@ -30,7 +30,7 @@ export default async function RuaTestPage() {
 
   if (!uiEnabled) {
     return (
-      <EATClientLayout maxWidthClassName="max-w-4xl" contentClassName="space-y-4">
+      <ETEClientLayout maxWidthClassName="max-w-4xl" contentClassName="space-y-4">
         {header}
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-amber-900">UI blocks are disabled</h2>
@@ -44,12 +44,12 @@ export default async function RuaTestPage() {
             </Link>
           </div>
         </div>
-      </EATClientLayout>
+      </ETEClientLayout>
     );
   }
 
   return (
-    <EATClientLayout maxWidthClassName="max-w-4xl" contentClassName="space-y-6">
+    <ETEClientLayout maxWidthClassName="max-w-4xl" contentClassName="space-y-6">
       {header}
 
       {!agentsEnabled ? (
@@ -59,6 +59,6 @@ export default async function RuaTestPage() {
       ) : null}
 
       <RuaTestClient agentsEnabled={agentsEnabled} />
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }

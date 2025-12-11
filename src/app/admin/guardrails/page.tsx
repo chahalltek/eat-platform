@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { EATCard } from "@/components/EATCard";
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETECard } from "@/components/ETECard";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 
@@ -26,8 +26,8 @@ export default async function GuardrailsAdminPage() {
 
   if (!canManageFeatureFlags(user)) {
     return (
-      <EATClientLayout>
-        <EATCard className="mx-auto max-w-4xl border-amber-200 bg-amber-50 text-amber-900">
+      <ETEClientLayout>
+        <ETECard className="mx-auto max-w-4xl border-amber-200 bg-amber-50 text-amber-900">
           <h1 className="text-xl font-semibold">Admin access required</h1>
           <p className="mt-2 text-sm">
             You need an admin role to manage guardrails presets. Switch to an admin user to continue.
@@ -37,13 +37,13 @@ export default async function GuardrailsAdminPage() {
               Return to home
             </Link>
           </div>
-        </EATCard>
-      </EATClientLayout>
+        </ETECard>
+      </ETEClientLayout>
     );
   }
 
   return (
-    <EATClientLayout>
+    <ETEClientLayout>
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -64,6 +64,6 @@ export default async function GuardrailsAdminPage() {
 
         <GuardrailsPresetPanel initialConfig={DEFAULT_GUARDRAIL_CONFIG} />
       </div>
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }

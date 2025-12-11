@@ -9,7 +9,7 @@ import {
   type TestPlanItem,
   type TestPlanSection,
   type TestPlanStatusValue,
-} from "@/lib/eat/testPlanRegistry";
+} from "@/lib/ete/testPlanRegistry";
 
 export type TestPlanChecklistProps = {
   sections: { section: TestPlanSection; items: TestPlanItem[] }[];

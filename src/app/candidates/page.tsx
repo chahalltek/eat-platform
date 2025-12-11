@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { CandidateTable, type CandidateRow } from "./CandidateTable";
 
 export const dynamic = "force-dynamic";
@@ -96,7 +96,7 @@ export default function CandidatesPage() {
   );
 
   return (
-    <EATClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-4">
+    <ETEClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Candidates</h1>
@@ -132,6 +132,6 @@ export default function CandidatesPage() {
       ) : null}
 
       {!errorContent ? <CandidateTable candidates={candidates} emptyState={emptyState} /> : null}
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }

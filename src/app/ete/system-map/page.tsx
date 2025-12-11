@@ -1,5 +1,5 @@
 import { ClientActionLink } from "@/components/ClientActionLink";
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { StatusPill } from "@/components/StatusPill";
 
 const systemNodes = [
@@ -99,7 +99,7 @@ const statusLegend = [
 
 export default function SystemMapPage() {
   return (
-    <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-10">
+    <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-10">
       <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
@@ -220,7 +220,7 @@ export default function SystemMapPage() {
           </ul>
         </div>
       </section>
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }
 

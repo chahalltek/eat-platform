@@ -139,7 +139,7 @@ describe('RateLimiter', () => {
   it('avoids plan resolution in edge runtime', async () => {
     vi.resetModules();
     (globalThis as unknown as { EdgeRuntime?: string }).EdgeRuntime = 'edge';
-    (globalThis as { __EAT_RATE_LIMITER?: unknown }).__EAT_RATE_LIMITER = undefined;
+    (globalThis as { __ETE_RATE_LIMITER?: unknown }).__ETE_RATE_LIMITER = undefined;
 
     const rateLimiterModule = await import('./rateLimiter');
     const subscriptionsModule = await import('@/lib/subscriptionPlans');

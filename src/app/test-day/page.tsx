@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 
 export default function TestDayPage() {
   return (
-    <EATClientLayout contentClassName="space-y-8">
+    <ETEClientLayout contentClassName="space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">EAT Test Day</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">ETE Test Day</h1>
           <p className="text-sm text-slate-500">One-day validation checklist for MVP readiness</p>
         </div>
         <Link
@@ -20,7 +20,7 @@ export default function TestDayPage() {
 
       <div className="prose prose-slate max-w-none">
         <h2>Objective</h2>
-        <p>In one day, validate that EAT works end-to-end for a single tenant:</p>
+        <p>In one day, validate that ETE works end-to-end for a single tenant:</p>
         <ul>
           <li>Tenant access &amp; diagnostics</li>
           <li>Resume ingestion (RINA)</li>
@@ -54,7 +54,7 @@ export default function TestDayPage() {
         <ul>
           <li>Pipeline displayed: INTAKE → PROFILE → MATCH → CONFIDENCE → EXPLAIN → SHORTLIST</li>
           <li>Each agent responsibility is stated plainly.</li>
-          <li>Page uses EAT header layout.</li>
+          <li>Page uses ETE header layout.</li>
           <li>Back to home works.</li>
         </ul>
 
@@ -198,6 +198,6 @@ export default function TestDayPage() {
           <li>No UI suggests fake errors.</li>
         </ul>
       </div>
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }

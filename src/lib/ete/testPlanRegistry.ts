@@ -30,7 +30,7 @@ export const TEST_PLAN_SECTIONS: TestPlanSection[] = [
     subtitle: "Why this test plan exists",
     readOnly: true,
     body: [
-      "Document the acceptance gates for the EAT MVP so we can ship with confidence.",
+      "Document the acceptance gates for the ETE MVP so we can ship with confidence.",
       "Give admins a single place to record results, capture edge cases, and revisit quality over time.",
     ],
   },
@@ -102,7 +102,7 @@ export const TEST_PLAN_ITEMS: TestPlanItem[] = [
     id: "scope.inScopeValidated",
     sectionId: "2-scope",
     label: "In-scope items validated",
-    description: "Core EAT agents, matching, diagnostics, and system controls are included in the MVP runlist.",
+    description: "Core ETE agents, matching, diagnostics, and system controls are included in the MVP runlist.",
   },
   {
     id: "scope.outOfScopeDocumented",

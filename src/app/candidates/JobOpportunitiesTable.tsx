@@ -6,7 +6,7 @@ import type { FilterFn } from "@tanstack/react-table";
 
 import { StandardTable } from "@/components/table/StandardTable";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
-import type { EATTableColumn } from "@/components/table/tableTypes";
+import type { ETETableColumn } from "@/components/table/tableTypes";
 import { createNumberColumn, createStatusBadgeColumn, createTextColumn } from "@/components/table/tableTypes";
 
 export type JobOpportunityRow = {
@@ -35,7 +35,7 @@ const globalFilterFn: FilterFn<JobOpportunityRow> = (row, _columnId, filterValue
 };
 
 export function JobOpportunitiesTable({ jobs }: { jobs: JobOpportunityRow[] }) {
-  const columns = useMemo<EATTableColumn<JobOpportunityRow>[]>(
+  const columns = useMemo<ETETableColumn<JobOpportunityRow>[]>(
     () => [
       {
         ...createTextColumn<JobOpportunityRow, "title">({

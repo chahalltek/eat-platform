@@ -8,7 +8,7 @@ import {
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 
-import { EATCard } from "@/components/EATCard";
+import { ETECard } from "@/components/ETECard";
 
 const PRESET_CONFIGS = {
   Conservative: {
@@ -161,7 +161,7 @@ export function GuardrailsPresetPanel({ initialConfig }: GuardrailsPresetPanelPr
   const offlineNoticeActive = showOfflineWarning && (!config.modelId || !config.scoringEndpoint);
 
   return (
-    <EATCard className="gap-6">
+    <ETECard className="gap-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Guardrails</p>
@@ -400,6 +400,6 @@ export function GuardrailsPresetPanel({ initialConfig }: GuardrailsPresetPanelPr
         </div>
       ) : null}
 
-    </EATCard>
+    </ETECard>
   );
 }

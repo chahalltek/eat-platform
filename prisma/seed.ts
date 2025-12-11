@@ -8,15 +8,15 @@ const prisma = new PrismaClient();
 const ADMIN_USER_ID = 'admin-user';
 const RECRUITER_USER_ID = 'charlie';
 const DEFAULT_AGENT_FLAGS = [
-  'EAT-SOURCER',
-  'EAT-TS.RUA',
-  'EAT-TS.RINA',
-  'EAT-TS.MATCH',
-  'EAT-TS.MATCHER',
-  'EAT-TS.SHORTLIST',
-  'EAT-TS.CONFIDENCE',
-  'EAT-TS.EXPLAIN',
-  'EAT-TS.SHORTLISTS',
+  'ETE-SOURCER',
+  'ETE-TS.RUA',
+  'ETE-TS.RINA',
+  'ETE-TS.MATCH',
+  'ETE-TS.MATCHER',
+  'ETE-TS.SHORTLIST',
+  'ETE-TS.CONFIDENCE',
+  'ETE-TS.EXPLAIN',
+  'ETE-TS.SHORTLISTS',
 ];
 
 function daysAgo(days: number) {

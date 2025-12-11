@@ -5,16 +5,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, renderHook, screen, act } from "@testing-library/react";
 import { flexRender } from "@tanstack/react-table";
-import { EATTable, useEATTable } from "./EATTable";
+import { ETETable, useETETable } from "./ETETable";
 import { MockTableRow, createMockColumns, createMockTableData } from "./testing/tableHarness";
 
-describe("EATTable", () => {
+describe("ETETable", () => {
   const people = createMockTableData({ count: 3 });
   const columns = createMockColumns({ enableSorting: true });
 
   it("creates a table instance with provided columns and data", () => {
     render(
-      <EATTable data={people} columns={columns}>
+      <ETETable data={people} columns={columns}>
         {({ headerGroups, rows }) => (
           <table>
             <thead>
@@ -43,7 +43,7 @@ describe("EATTable", () => {
             </tbody>
           </table>
         )}
-      </EATTable>,
+      </ETETable>,
     );
 
     expect(screen.getByRole("columnheader", { name: "Name" })).toBeTruthy();
@@ -55,7 +55,7 @@ describe("EATTable", () => {
   it("updates sorting state and invokes callbacks when sorting changes", () => {
     const onSortingChange = vi.fn();
     const { result } = renderHook(() =>
-      useEATTable<MockTableRow>({
+      useETETable<MockTableRow>({
         data: people,
         columns,
         sorting: { initialState: [], onChange: onSortingChange },
@@ -80,7 +80,7 @@ describe("EATTable", () => {
   it("updates pagination state and invokes callbacks when pagination changes", () => {
     const onPaginationChange = vi.fn();
     const { result } = renderHook(() =>
-      useEATTable<MockTableRow>({
+      useETETable<MockTableRow>({
         data: people,
         columns,
         pagination: { initialState: { pageIndex: 0, pageSize: 1 }, onChange: onPaginationChange, pageCount: 10 },
@@ -105,7 +105,7 @@ describe("EATTable", () => {
 
   it("exposes style presets based on the provided variant", () => {
     const { result, rerender } = renderHook(
-      (props: Parameters<typeof useEATTable<MockTableRow>>[0]) => useEATTable<MockTableRow>(props),
+      (props: Parameters<typeof useETETable<MockTableRow>>[0]) => useETETable<MockTableRow>(props),
       {
         initialProps: { data: people, columns, variant: "comfortable" },
       },

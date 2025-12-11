@@ -16,28 +16,28 @@ import {
 } from "@tanstack/react-table";
 import { TableStylePreset, TableStyleVariant, getTableStyles } from "./tableStyles";
 
-export type EATTableSorting = {
+export type ETETableSorting = {
   initialState?: SortingState;
   onChange?: (sorting: SortingState) => void;
 };
 
-export type EATTablePagination = {
+export type ETETablePagination = {
   initialState?: PaginationState;
   onChange?: (pagination: PaginationState) => void;
   pageCount?: number;
 };
 
-export type EATTableProps<TData> = {
+export type ETETableProps<TData> = {
   data: TData[];
   columns: ColumnDef<TData, any>[];
-  sorting?: EATTableSorting;
-  pagination?: EATTablePagination;
-  filtering?: EATTableFiltering<TData>;
+  sorting?: ETETableSorting;
+  pagination?: ETETablePagination;
+  filtering?: ETETableFiltering<TData>;
   variant?: TableStyleVariant;
-  children: (context: EATTableRenderProps<TData>) => React.ReactNode;
+  children: (context: ETETableRenderProps<TData>) => React.ReactNode;
 };
 
-export type EATTableRenderProps<TData> = {
+export type ETETableRenderProps<TData> = {
   table: Table<TData>;
   headerGroups: ReturnType<Table<TData>["getHeaderGroups"]>;
   rows: ReturnType<Table<TData>["getRowModel"]>["rows"];
@@ -48,7 +48,7 @@ export type EATTableRenderProps<TData> = {
   styles: TableStylePreset;
 };
 
-export type EATTableFiltering<TData> = {
+export type ETETableFiltering<TData> = {
   columnFilters?: {
     initialState?: ColumnFiltersState;
     onChange?: (filters: ColumnFiltersState) => void;
@@ -66,14 +66,14 @@ function resolveUpdaterValue<T>(updater: Updater<T>, previous: T): T {
   return typeof updater === "function" ? (updater as (old: T) => T)(previous) : updater;
 }
 
-export function useEATTable<TData>({
+export function useETETable<TData>({
   data,
   columns,
   sorting,
   pagination,
   filtering,
   variant = "comfortable",
-}: Omit<EATTableProps<TData>, "children">): EATTableRenderProps<TData> {
+}: Omit<ETETableProps<TData>, "children">): ETETableRenderProps<TData> {
   const [sortingState, setSortingState] = useState<SortingState>(sorting?.initialState ?? []);
   const [paginationState, setPaginationState] = useState<PaginationState>(
     pagination?.initialState ?? { pageIndex: 0, pageSize: pagination?.initialState?.pageSize ?? 10 },
@@ -145,8 +145,8 @@ export function useEATTable<TData>({
   };
 }
 
-export function EATTable<TData>({ children, ...props }: EATTableProps<TData>) {
-  const tableContext = useEATTable(props);
+export function ETETable<TData>({ children, ...props }: ETETableProps<TData>) {
+  const tableContext = useETETable(props);
   return <>{children(tableContext)}</>;
 }
 

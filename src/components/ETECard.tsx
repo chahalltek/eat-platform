@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import clsx from "clsx";
 
-export function EATCard({ children, className }: { children: ReactNode; className?: string }) {
+export function ETECard({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
       className={clsx(

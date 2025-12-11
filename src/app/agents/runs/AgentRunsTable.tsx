@@ -7,7 +7,7 @@ import type { FilterFn } from "@tanstack/react-table";
 import { StandardTable } from "@/components/table/StandardTable";
 import { TableFilterDropdown, type TableFilterOption } from "@/components/table/TableFilterDropdown";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
-import type { EATTableColumn } from "@/components/table/tableTypes";
+import type { ETETableColumn } from "@/components/table/tableTypes";
 import { createStatusBadgeColumn, createTextColumn } from "@/components/table/tableTypes";
 
 export type AgentRunTableRow = {
@@ -54,7 +54,7 @@ export function AgentRunsTable({ runs }: { runs: AgentRunTableRow[] }) {
     return statuses.map((status) => ({ value: status, label: status }));
   }, [runs]);
 
-  const columns = useMemo<EATTableColumn<AgentRunTableRow>[]>(
+  const columns = useMemo<ETETableColumn<AgentRunTableRow>[]>(
     () => [
       {
         ...createTextColumn<AgentRunTableRow, "startedAt">({

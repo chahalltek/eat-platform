@@ -9,7 +9,7 @@ import {
   type SystemStatusMap,
 } from "@/lib/systemStatus";
 import { SystemHealthPanel } from "@/components/SystemHealthPanel";
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { BrandMark } from "@/components/BrandMark";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 import { WorkflowCard } from "@/components/home/WorkflowCard";
@@ -300,16 +300,21 @@ export default async function Home() {
 
   if (!uiEnabled) {
     return (
-      <EATClientLayout contentClassName="flex flex-col gap-6" maxWidthClassName="max-w-6xl">
+      <ETEClientLayout contentClassName="flex flex-col gap-6" maxWidthClassName="max-w-6xl">
         <header className="mt-2 flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-2">
+<<<<<<< ours
 <<<<<<< ours
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">ETE Console</p>
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent System (MVP)</h1>
 =======
               <BrandMark withText />
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent Engine (MVP)</h1>
+>>>>>>> theirs
+=======
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">ETE</p>
+              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">ETE – Talent System (MVP)</h1>
 >>>>>>> theirs
             </div>
             <Link
@@ -332,12 +337,12 @@ export default async function Home() {
             Go to Feature Flags
           </Link>
         </header>
-      </EATClientLayout>
+      </ETEClientLayout>
     );
   }
 
   return (
-    <EATClientLayout maxWidthClassName="max-w-6xl" contentClassName="flex flex-col gap-10 pb-12">
+    <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="flex flex-col gap-10 pb-12">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <aside className="lg:w-72">
           <div className="flex flex-col gap-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-4 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
@@ -429,6 +434,6 @@ export default async function Home() {
           </div>
         </div>
       </div>
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }

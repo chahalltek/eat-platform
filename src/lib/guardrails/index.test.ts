@@ -41,8 +41,8 @@ describe('guardrails loader', () => {
 
   it('merges environment and tenant agent kill switches', () => {
     const env = {
-      AGENT_KILL_SWITCH_EAT_TS_RINA: 'true',
-      AGENT_KILL_SWITCH_EAT_TS_OUTREACH: 'false',
+      AGENT_KILL_SWITCH_ETE_TS_RINA: 'true',
+      AGENT_KILL_SWITCH_ETE_TS_OUTREACH: 'false',
     } as NodeJS.ProcessEnv;
 
     const tenantKillSwitches = {
@@ -68,9 +68,9 @@ describe('guardrails loader', () => {
 describe('environment kill switch parsing', () => {
   it('parses booleans from env with sanitization', () => {
     const env = {
-      AGENT_KILL_SWITCH_EAT_TS_RUA: 'TrUe',
-      AGENT_KILL_SWITCH_EAT_TS_RANKER: '0',
-      AGENT_KILL_SWITCH_EAT_TS_INTAKE: 'yes',
+      AGENT_KILL_SWITCH_ETE_TS_RUA: 'TrUe',
+      AGENT_KILL_SWITCH_ETE_TS_RANKER: '0',
+      AGENT_KILL_SWITCH_ETE_TS_INTAKE: 'yes',
     } as NodeJS.ProcessEnv;
 
     const parsed = loadAgentKillSwitchesFromEnv(env);

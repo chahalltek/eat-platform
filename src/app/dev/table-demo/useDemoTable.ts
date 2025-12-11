@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import type { FilterFn } from "@tanstack/react-table";
-import type { EATTableColumn } from "@/components/table/tableTypes";
+import type { ETETableColumn } from "@/components/table/tableTypes";
 import { createNumberColumn, createTextColumn } from "@/components/table/tableTypes";
 
 export type DemoCandidate = {
@@ -25,7 +25,7 @@ export const demoData: DemoCandidate[] = [
 ];
 
 export function useDemoTable() {
-  const columns = useMemo<EATTableColumn<DemoCandidate>[]>(
+  const columns = useMemo<ETETableColumn<DemoCandidate>[]>(
     () => [
       createTextColumn<DemoCandidate, "name">({
         accessorKey: "name",

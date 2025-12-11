@@ -7,7 +7,7 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { EATTable } from "./EATTable";
+import { ETETable } from "./ETETable";
 import { TableFilterDropdown } from "./TableFilterDropdown";
 import { TableSearchInput } from "./TableSearchInput";
 import { TableToolbar } from "./TableToolbar";
@@ -19,7 +19,7 @@ function TestTable() {
   const columns = createMockColumns({ enableSorting: false, includeFilters: true });
 
   return (
-    <EATTable
+    <ETETable
       data={createMockTableData()}
       columns={columns}
       filtering={{ columnFilters: { initialState: [] }, globalFilter: { initialState: "" }, globalFilterFn: globalTextFilter }}
@@ -55,7 +55,7 @@ function TestTable() {
           {rows.length === 0 && <p>No results</p>}
         </div>
       )}
-    </EATTable>
+    </ETETable>
   );
 }
 

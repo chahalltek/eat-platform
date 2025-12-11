@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 
-import { EATCard } from "@/components/EATCard";
+import { ETECard } from "@/components/ETECard";
 
 export type FeatureFlagListItem = {
   name: string;
@@ -74,7 +74,7 @@ export function FeatureFlagsPanel({ initialFlags }: FeatureFlagsPanelProps) {
   }, []);
 
   return (
-    <EATCard className="space-y-4">
+    <ETECard className="space-y-4">
       <div className="space-y-1">
         <h2 className="text-xl font-semibold text-zinc-900">Feature Flags</h2>
         <p className="text-sm text-zinc-600">
@@ -115,6 +115,6 @@ export function FeatureFlagsPanel({ initialFlags }: FeatureFlagsPanelProps) {
           );
         })}
       </div>
-    </EATCard>
+    </ETECard>
   );
 }

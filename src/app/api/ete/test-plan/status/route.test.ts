@@ -16,13 +16,13 @@ vi.mock("@/lib/auth/permissions", () => ({
   canManageFeatureFlags: mockCanManageFeatureFlags,
 }));
 
-vi.mock("@/lib/eat/testPlanStatus", () => ({
+vi.mock("@/lib/ete/testPlanStatus", () => ({
   listTestPlanStatuses: mockListTestPlanStatuses,
   parseTestPlanStatus: mockParseTestPlanStatus,
   upsertTestPlanStatus: mockUpsertTestPlanStatus,
 }));
 
-vi.mock("@/lib/eat/testPlanRegistry", () => ({
+vi.mock("@/lib/ete/testPlanRegistry", () => ({
   isValidTestPlanItemId: mockIsValidTestPlanItemId,
 }));
 

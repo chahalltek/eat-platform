@@ -6,7 +6,7 @@ import type { CellContext, ColumnDef } from "@tanstack/react-table";
 
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
-export type EATTableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
+export type ETETableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
 
 export type TableAccessorKey<TData> = Extract<keyof TData, string>;
 
@@ -47,13 +47,13 @@ export function createTextColumn<TData, TKey extends TableAccessorKey<TData>>({
   header,
   sortable = true,
   cell,
-}: TextColumnOptions<TData, TKey>): EATTableColumn<TData, TData[TKey]> {
+}: TextColumnOptions<TData, TKey>): ETETableColumn<TData, TData[TKey]> {
   return {
     accessorKey,
     header,
     enableSorting: sortable,
     cell: cell ?? ((context) => defaultTextCell(context.getValue())),
-  } satisfies EATTableColumn<TData, TData[TKey]>;
+  } satisfies ETETableColumn<TData, TData[TKey]>;
 }
 
 export function createNumberColumn<TData, TKey extends TableAccessorKey<TData>>({
@@ -61,13 +61,13 @@ export function createNumberColumn<TData, TKey extends TableAccessorKey<TData>>(
   header,
   sortable = true,
   formatValue,
-}: NumberColumnOptions<TData, TKey>): EATTableColumn<TData, number> {
+}: NumberColumnOptions<TData, TKey>): ETETableColumn<TData, number> {
   return {
     accessorKey,
     header,
     enableSorting: sortable,
     cell: ({ getValue }) => defaultNumberCell(getValue(), formatValue),
-  } satisfies EATTableColumn<TData, number>;
+  } satisfies ETETableColumn<TData, number>;
 }
 
 export function createStatusBadgeColumn<TData, TKey extends TableAccessorKey<TData>>({
@@ -76,14 +76,14 @@ export function createStatusBadgeColumn<TData, TKey extends TableAccessorKey<TDa
   sortable = false,
   formatLabel,
   getVariant,
-}: StatusBadgeColumnOptions<TData, TKey>): EATTableColumn<TData, TData[TKey]> {
+}: StatusBadgeColumnOptions<TData, TKey>): ETETableColumn<TData, TData[TKey]> {
   return {
     accessorKey,
     header,
     enableSorting: sortable,
     cell: ({ getValue }) =>
       renderStatusBadge<TData[TKey]>(getValue() as TData[TKey], formatLabel, getVariant),
-  } satisfies EATTableColumn<TData, TData[TKey]>;
+  } satisfies ETETableColumn<TData, TData[TKey]>;
 }
 
 function defaultTextCell(value: unknown) {

@@ -10,7 +10,7 @@ import { StandardTable } from "@/components/table/StandardTable";
 import { TableFilterDropdown } from "@/components/table/TableFilterDropdown";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
 import { TableToolbar } from "@/components/table/TableToolbar";
-import { EATTableColumn, createNumberColumn, createStatusBadgeColumn, createTextColumn } from "@/components/table/tableTypes";
+import { ETETableColumn, createNumberColumn, createStatusBadgeColumn, createTextColumn } from "@/components/table/tableTypes";
 
 export type CandidateRow = {
   id: string;
@@ -37,7 +37,7 @@ function normalizeConfidence(value: number | null) {
 }
 
 export function useCandidateTable(candidates: CandidateRow[]) {
-  const columns = useMemo<EATTableColumn<CandidateRow>[]>(
+  const columns = useMemo<ETETableColumn<CandidateRow>[]>(
     () => [
       createTextColumn({
         accessorKey: "fullName",

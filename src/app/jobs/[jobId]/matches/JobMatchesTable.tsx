@@ -5,7 +5,7 @@ import type { FilterFn } from "@tanstack/react-table";
 
 import { StandardTable } from "@/components/table/StandardTable";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
-import type { EATTableColumn } from "@/components/table/tableTypes";
+import type { ETETableColumn } from "@/components/table/tableTypes";
 import { createNumberColumn, createTextColumn } from "@/components/table/tableTypes";
 import { JobCandidateStatus } from "@prisma/client";
 
@@ -235,7 +235,7 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
     return scopedMatches;
   }, [hideLowConfidence, matchesWithShortlist, showShortlistedOnly]);
 
-  const columns = useMemo<EATTableColumn<MatchRow>[]>(
+  const columns = useMemo<ETETableColumn<MatchRow>[]>(
     () => [
       {
         id: "shortlist",

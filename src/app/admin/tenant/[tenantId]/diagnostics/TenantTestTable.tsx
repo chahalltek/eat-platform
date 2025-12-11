@@ -16,7 +16,7 @@ const TESTS = [
   {
     key: "databaseConnectivity" as const,
     name: "Database connectivity",
-    description: "Checks EAT database connection for this tenant.",
+    description: "Checks ETE database connection for this tenant.",
   },
   {
     key: "tenantConfig" as const,

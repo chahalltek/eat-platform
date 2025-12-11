@@ -4,8 +4,8 @@ import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
-import { EATClientLayout } from "@/components/EATClientLayout";
-import { EATCard } from "@/components/EATCard";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
+import { ETECard } from "@/components/ETECard";
 
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 
@@ -16,7 +16,7 @@ export default async function FeatureFlagsPage() {
 
   if (!canManageFeatureFlags(user)) {
     return (
-      <EATClientLayout showFireDrillBanner={false}>
+      <ETEClientLayout showFireDrillBanner={false}>
         <div className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
           <h1 className="text-xl font-semibold">Admin access required</h1>
           <p className="mt-2 text-sm text-amber-800">
@@ -28,7 +28,7 @@ export default async function FeatureFlagsPage() {
             </Link>
           </div>
         </div>
-      </EATClientLayout>
+      </ETEClientLayout>
     );
   }
 
@@ -37,7 +37,7 @@ export default async function FeatureFlagsPage() {
   const diagnosticsPath = `/admin/tenant/${tenantId}/diagnostics`;
 
   return (
-    <EATClientLayout showFireDrillBanner={false}>
+    <ETEClientLayout showFireDrillBanner={false}>
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -56,7 +56,7 @@ export default async function FeatureFlagsPage() {
           </Link>
         </header>
 
-        <EATCard className="gap-4 border-indigo-100 shadow-sm">
+        <ETECard className="gap-4 border-indigo-100 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-zinc-900">Test Panel</h2>
@@ -72,9 +72,9 @@ export default async function FeatureFlagsPage() {
               Open Test Panel
             </Link>
           </div>
-        </EATCard>
+        </ETECard>
 
-        <EATCard className="gap-4 border-emerald-100 shadow-sm">
+        <ETECard className="gap-4 border-emerald-100 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-zinc-900">ETE – Talent System (MVP) Test Plan</h2>
@@ -90,7 +90,7 @@ export default async function FeatureFlagsPage() {
               Open MVP test plan
             </Link>
           </div>
-        </EATCard>
+        </ETECard>
 
         <FeatureFlagsPanel
           initialFlags={flags.map((flag) => ({
@@ -99,6 +99,6 @@ export default async function FeatureFlagsPage() {
           }))}
         />
       </div>
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }

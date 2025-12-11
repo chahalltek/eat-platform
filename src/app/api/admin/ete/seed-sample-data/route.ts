@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const result = await seedEatSampleData(normalizedTenant);
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    console.error("Failed to seed EAT sample data", error);
+    console.error("Failed to seed ETE sample data", error);
     return NextResponse.json({ error: "Unable to seed sample data" }, { status: 500 });
   }
 }

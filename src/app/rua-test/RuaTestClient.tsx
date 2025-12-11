@@ -66,7 +66,7 @@ export function RuaTestClient({ agentsEnabled }: RuaTestClientProps) {
   return (
     <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-zinc-200">
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">EAT-013</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">ETE-013</p>
         <p className="text-sm text-slate-600">
           Paste a job description below and send it through the RUA agent. The response mirrors the JSON available via curl.
         </p>

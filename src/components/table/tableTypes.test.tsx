@@ -1,7 +1,7 @@
 import { describe, expect, it, expectTypeOf } from "vitest";
 import React from "react";
 import { MockTableRow } from "./testing/tableHarness";
-import { EATTableColumn, StatusVariant, createNumberColumn, createStatusBadgeColumn, createTextColumn } from "./tableTypes";
+import { ETETableColumn, StatusVariant, createNumberColumn, createStatusBadgeColumn, createTextColumn } from "./tableTypes";
 
 const numberFormatter = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -11,7 +11,7 @@ describe("tableTypes helpers", () => {
 
     expect(column.accessorKey).toBe("name");
     expect(column.enableSorting).toBe(true);
-    expectTypeOf(column).toMatchTypeOf<EATTableColumn<MockTableRow>>();
+    expectTypeOf(column).toMatchTypeOf<ETETableColumn<MockTableRow>>();
 
     const rendered = column.cell?.({ getValue: () => "Alice" } as any);
 

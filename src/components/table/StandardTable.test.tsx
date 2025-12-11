@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
 import { StandardTable } from "./StandardTable";
-import type { EATTableColumn } from "./tableTypes";
+import type { ETETableColumn } from "./tableTypes";
 import { createTextColumn } from "./tableTypes";
 import { TableSearchInput } from "./TableSearchInput";
 
@@ -23,7 +23,7 @@ describe("StandardTable", () => {
     { id: 2, name: "Bob", city: "Boston" },
   ];
 
-  const columns: EATTableColumn<RowData>[] = [
+  const columns: ETETableColumn<RowData>[] = [
     createTextColumn<RowData, "name">({ accessorKey: "name", header: "Name" }),
     createTextColumn<RowData, "city">({ accessorKey: "city", header: "City", sortable: false }),
   ];

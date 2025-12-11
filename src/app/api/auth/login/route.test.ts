@@ -65,7 +65,7 @@ describe("POST /api/auth/login", () => {
       role: "RECRUITER",
       expiresAt: expect.any(String),
     });
-    expect(response.cookies.get("eat_session")?.value).toBeTruthy();
+    expect(response.cookies.get("ete_session")?.value).toBeTruthy();
   });
 
   it("falls back to a default password when none is configured", async () => {

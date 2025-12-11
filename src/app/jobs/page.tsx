@@ -2,7 +2,7 @@ import { JobTable, type JobTableRow } from "./JobTable";
 import { prisma } from "@/lib/prisma";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
-import { EATClientLayout } from "@/components/EATClientLayout";
+import { ETEClientLayout } from "@/components/ETEClientLayout";
 
 function formatSource(job: { sourceType: string | null; sourceTag: string | null }) {
   if (job.sourceType && job.sourceTag) {
@@ -52,7 +52,7 @@ export default async function JobsPage() {
   }));
 
   return (
-    <EATClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-6">
+    <ETEClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Job Requisitions</h1>
@@ -62,6 +62,6 @@ export default async function JobsPage() {
       </div>
 
       <JobTable jobs={tableRows} />
-    </EATClientLayout>
+    </ETEClientLayout>
   );
 }
