@@ -4,7 +4,7 @@ import { getAppConfig } from "@/lib/config/configValidator";
 import { FEATURE_FLAGS, type FeatureFlagName } from "@/lib/featureFlags/constants";
 import { isFeatureEnabledForTenant } from "@/lib/featureFlags";
 import { getRateLimitDefaults, getRateLimitPlanOverrides, type RateLimitConfig, type RateLimitPlanOverrides } from "@/lib/rateLimiting/rateLimiter";
-import type { SystemMode } from "@/lib/systemMode";
+import type { SystemModeName } from "@/lib/systemMode";
 import { getSystemMode } from "@/lib/systemMode";
 import { getTenantPlan } from "@/lib/subscriptionPlans";
 import { prisma } from "@/lib/prisma";
@@ -22,7 +22,7 @@ export type GuardrailsPreset = "conservative" | "balanced" | "aggressive" | "cus
 
 export type TenantDiagnostics = {
   tenantId: string;
-  mode: SystemMode;
+  mode: SystemModeName;
   fireDrill: {
     enabled: boolean;
     fireDrillImpact: string[];
@@ -126,6 +126,7 @@ const INCIDENT_WINDOW_MINUTES = 30;
 const EXPLAIN_FAILURE_THRESHOLD = 0.3;
 const LLM_FAILURE_THRESHOLD = 0.25;
 const MATCH_FAILURE_THRESHOLD = 0.25;
+const FIRE_DRILL_IMPACT = ["Agent dispatch paused", "Guardrails forced to conservative"] as const;
 
 async function evaluateFireDrillStatus(tenantId: string) {
   const since = new Date(Date.now() - INCIDENT_WINDOW_MINUTES * 60 * 1000);
@@ -215,6 +216,7 @@ async function evaluateFireDrillStatus(tenantId: string) {
 
   return {
     enabled: fireDrillEnabled,
+    fireDrillImpact: fireDrillEnabled ? [...FIRE_DRILL_IMPACT] : [],
     suggested,
     windowMinutes: INCIDENT_WINDOW_MINUTES,
     reason: suggested ? `Consider enabling Fire Drill mode: ${reasons[0]}.` : null,
@@ -284,7 +286,7 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
 
   return {
     tenantId,
-    mode: systemMode,
+    mode: systemMode.mode,
     fireDrill: {
       fireDrillImpact: fireDrill.fireDrillImpact ?? [],
       ...fireDrill,
