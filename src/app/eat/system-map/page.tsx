@@ -76,7 +76,7 @@ export default function SystemMapPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Diagram</p>
         </div>
         <div className="overflow-x-auto pb-2">
-          <div className="flex min-w-max items-stretch gap-4">
+          <div className="flex min-w-max items-stretch gap-4 pr-4">
             {flowStages.map((stage, index) => (
               <div key={stage.name} className="flex items-center gap-3">
                 <div className="w-64 space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-950">
