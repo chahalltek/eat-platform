@@ -7,6 +7,7 @@ import { getRateLimitDefaults, getRateLimitPlanOverrides, type RateLimitConfig, 
 import { getTenantPlan } from "@/lib/subscriptionPlans";
 import { prisma } from "@/lib/prisma";
 import { resolveRetentionPolicy } from "@/lib/retention";
+import { loadTenantGuardrailConfig } from "@/lib/guardrails/config";
 
 export class TenantNotFoundError extends Error {
   constructor(tenantId: string) {
@@ -34,6 +35,15 @@ export type TenantDiagnostics = {
     override: RateLimitPlanOverrides | null;
   }>;
   featureFlags: { enabled: boolean; enabledFlags: FeatureFlagName[] };
+  guardrails: {
+    source: string;
+    matcherMinScore: number;
+    shortlistMinScore: number;
+    shortlistMaxCandidates: number;
+    requireMustHaveSkills: boolean;
+    explainLevel: string;
+    confidencePassingScore: number;
+  };
 };
 
 function isSsoConfigured(config: ReturnType<typeof getAppConfig>) {
@@ -108,12 +118,13 @@ async function countAuditEvents(tenantId: string) {
 }
 
 export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDiagnostics> {
-  const [config, plan, tenant, auditEventCount, flags] = await Promise.all([
+  const [config, plan, tenant, auditEventCount, flags, guardrails] = await Promise.all([
     getAppConfig(),
     getTenantPlan(tenantId),
     prisma.tenant.findUnique({ where: { id: tenantId } }),
     countAuditEvents(tenantId),
     resolveEnabledFlags(tenantId),
+    loadTenantGuardrailConfig(tenantId),
   ]);
 
   if (!tenant) {
@@ -129,5 +140,14 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     retention: mapRetention(tenant),
     rateLimits: mapRateLimits(plan?.plan ?? null),
     featureFlags: flags,
+    guardrails: {
+      source: guardrails.source,
+      matcherMinScore: guardrails.matcherMinScore,
+      shortlistMinScore: guardrails.shortlistMinScore,
+      shortlistMaxCandidates: guardrails.shortlistMaxCandidates,
+      requireMustHaveSkills: guardrails.requireMustHaveSkills,
+      explainLevel: guardrails.explainLevel,
+      confidencePassingScore: guardrails.confidencePassingScore,
+    },
   } satisfies TenantDiagnostics;
 }

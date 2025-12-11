@@ -119,4 +119,33 @@ describe("computeMatchScore", () => {
     expect(result.reasons).toContain("Missing required skill: GraphQL");
     expect(result.explanation.missingSkills).toContain("GraphQL");
   });
+
+  it("enforces guardrails when must-have skills are missing", () => {
+    const result = computeMatchScore(
+      {
+        candidate: { ...baseCandidate, skills: [baseCandidate.skills[0]!] },
+        jobReq: {
+          ...baseJob,
+          skills: [
+            baseJob.skills[0]!,
+            baseJob.skills[1]!,
+            {
+              id: "job-skill-3",
+              jobReqId: "job-1",
+              name: "GraphQL",
+              normalizedName: "graphql",
+              required: true,
+              weight: 1,
+              tenantId: "tenant-1",
+            },
+          ],
+        },
+      },
+      { guardrails: { requireMustHaveSkills: true } },
+    );
+
+    expect(result.score).toBe(0);
+    expect(result.reasons[0]).toContain("Guardrail");
+    expect(result.explanation.riskAreas).toContain("Guardrail: candidate missing required skills");
+  });
 });

@@ -36,14 +36,20 @@ const getSkillKey = (skill: CandidateSkill | JobSkill): string => {
   return normalize(skill.name);
 };
 
+type MatchGuardrailOptions = { requireMustHaveSkills?: boolean };
+
 export function computeMatchScore(
   ctx: MatchContext,
+<<<<<<< ours
   options?: {
     jobFreshnessScore?: number;
     candidateSignals?: CandidateSignalResult;
     matcherConfig?: MatcherScoringConfig;
     explain?: boolean;
   },
+=======
+  options?: { jobFreshnessScore?: number; candidateSignals?: CandidateSignalResult; guardrails?: MatchGuardrailOptions },
+>>>>>>> theirs
 ): MatchScore {
   const reasons: string[] = [];
   const riskAreas: string[] = [];
@@ -68,6 +74,8 @@ export function computeMatchScore(
   let requiredMatched = 0;
   let preferredTotal = 0;
   let preferredMatched = 0;
+
+  const guardrails = options?.guardrails;
 
   ctx.jobReq.skills
     .slice()
@@ -126,6 +134,12 @@ export function computeMatchScore(
     });
 
   const skillScore = totalSkillWeight > 0 ? Math.round((matchedSkillWeight / totalSkillWeight) * 100) : 0;
+
+  if (guardrails?.requireMustHaveSkills && requiredMatched < requiredTotal) {
+    const reason = "Guardrail: candidate missing required skills";
+    reasons.unshift(reason);
+    riskAreas.unshift(reason);
+  }
 
   const candidateSeniority = normalize(ctx.candidate.seniorityLevel);
   const jobSeniority = normalize(ctx.jobReq.seniorityLevel);
@@ -189,6 +203,11 @@ export function computeMatchScore(
       candidateSignalScore * matcherWeights.candidateSignals,
   );
 
+  let scoreGuarded = baseScore;
+  if (guardrails?.requireMustHaveSkills && requiredMatched < requiredTotal) {
+    scoreGuarded = 0;
+  }
+
   if (candidateSignals) {
     reasons.push(...candidateSignals.reasons);
   } else {
@@ -197,12 +216,12 @@ export function computeMatchScore(
 
   const jobFreshnessScore = Math.round(options?.jobFreshnessScore ?? 100);
 
-  let score = baseScore;
+  let score = scoreGuarded;
   if (options?.jobFreshnessScore !== undefined) {
     if (jobFreshnessScore < 100) {
       reasons.push(`Job freshness adjustment applied (${jobFreshnessScore}/100).`);
     }
-    score = Math.round(baseScore * 0.85 + jobFreshnessScore * 0.15);
+    score = Math.round(scoreGuarded * 0.85 + jobFreshnessScore * 0.15);
   }
 
   const topReasons = reasons.slice(0, 5);

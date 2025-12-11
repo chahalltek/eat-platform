@@ -72,6 +72,8 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
 
   await assertTenantWithinLimits(tenantId, 'createAgentRun');
 
+  const rawResumeText = null;
+
    const retryPayloadValue: Prisma.InputJsonValue | Prisma.JsonNullValueInput | Prisma.NullTypes.DbNull | null =
     (() => {
       const payload:

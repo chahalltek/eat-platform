@@ -2,9 +2,10 @@ import { AgentRunStatus } from '@prisma/client';
 
 import { FEATURE_FLAGS, isFeatureEnabled } from './featureFlags';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
+import { loadTenantGuardrailConfig } from './guardrails/config';
 import { getCurrentTenantId } from './tenant';
 
-export type SubsystemKey = 'agents' | 'scoring' | 'database' | 'tenantConfig';
+export type SubsystemKey = 'agents' | 'scoring' | 'database' | 'tenantConfig' | 'guardrails';
 export type SubsystemState = 'healthy' | 'warning' | 'error' | 'unknown';
 
 export type SystemExecutionState = {
@@ -58,6 +59,24 @@ async function checkTenantConfig(): Promise<SystemStatus> {
   }
 }
 
+async function checkGuardrails(): Promise<SystemStatus> {
+  try {
+    const guardrails = await loadTenantGuardrailConfig('default-tenant');
+
+    if (guardrails.source === 'database') {
+      return { status: 'healthy', detail: 'Guardrails enabled' };
+    }
+
+    return { status: 'warning', detail: 'Using guardrail defaults' };
+  } catch (error) {
+    if (isPrismaUnavailableError(error)) {
+      return { status: 'error', detail: 'Guardrail config unavailable' };
+    }
+
+    return { status: 'unknown' };
+  }
+}
+
 async function checkFeatureFlagStatus(
   flag: (typeof FEATURE_FLAGS)[keyof typeof FEATURE_FLAGS],
 ): Promise<SystemStatus> {
@@ -82,6 +101,7 @@ export async function getSystemStatus(): Promise<SystemStatusMap> {
     scoring: { status: 'unknown' },
     database: { status: 'unknown' },
     tenantConfig: { status: 'unknown' },
+    guardrails: { status: 'unknown' },
   };
 
   const databaseStatus = await checkDatabase();
@@ -92,6 +112,7 @@ export async function getSystemStatus(): Promise<SystemStatusMap> {
   }
 
   result.tenantConfig = await checkTenantConfig();
+  result.guardrails = await checkGuardrails();
   result.agents = await checkFeatureFlagStatus(FEATURE_FLAGS.AGENTS);
   result.scoring = await checkFeatureFlagStatus(FEATURE_FLAGS.SCORING);
 

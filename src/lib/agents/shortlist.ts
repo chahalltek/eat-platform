@@ -28,6 +28,12 @@ type ShortlistDependencies = {
   now?: () => Date;
 };
 
+type ShortlistGuardrails = {
+  shortlistMinScore?: number;
+  shortlistMinConfidence?: number;
+  shortlistMaxCandidates?: number;
+};
+
 const clampScore = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 
 function computeRecencyDays(now: Date, updatedAt: Date, createdAt: Date) {
@@ -61,6 +67,7 @@ function buildShortlistReason(priorityScore: number, recencyScore: number, rank:
 export async function runShortlist(
   { jobId, recruiterId: _recruiterId, shortlistLimit }: RunShortlistInput,
   deps: ShortlistDependencies = {},
+  guardrails?: ShortlistGuardrails,
   retryMetadata?: AgentRetryMetadata,
 ): Promise<RunShortlistResult & { agentRunId: string }> {
   const user = await getCurrentUser();
@@ -71,7 +78,14 @@ export async function runShortlist(
 
   // User identity is derived from auth; recruiterId in payload is ignored.
   const clock = deps.now ?? (() => new Date());
+<<<<<<< ours
   const requestedShortlistLimit = shortlistLimit;
+=======
+  const { shortlist } = TS_CONFIG;
+  const effectiveShortlistLimit = guardrails?.shortlistMaxCandidates ?? shortlistLimit ?? shortlist.topN;
+  const minMatchScore = guardrails?.shortlistMinScore ?? shortlist.minMatchScore;
+  const minConfidence = guardrails?.shortlistMinConfidence ?? shortlist.minConfidence;
+>>>>>>> theirs
 
   const [result, agentRunId] = await withAgentRun<RunShortlistResult>(
     {
@@ -110,10 +124,14 @@ export async function runShortlist(
         const matchScore = clampScore(match.matchScore);
         const confidenceScore = clampScore(match.confidence);
 
+<<<<<<< ours
         return (
           matchScore >= shortlistConfig.minMatchScore &&
           confidenceScore >= shortlistConfig.minConfidence
         );
+=======
+        return matchScore >= minMatchScore && confidenceScore >= minConfidence;
+>>>>>>> theirs
       });
 
       const now = clock();

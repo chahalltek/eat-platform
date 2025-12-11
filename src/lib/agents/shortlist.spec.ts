@@ -205,4 +205,59 @@ describe("shortlist agent", () => {
     );
     expect(mockCandidateMatchUpdateMany).not.toHaveBeenCalled();
   });
+
+  it("applies guardrail thresholds when ranking", async () => {
+    mockJobFindUnique.mockResolvedValue({
+      id: "job-1",
+      tenantId: "tenant-1",
+      requiredSkills: ["TypeScript", "SQL", "AWS"],
+      matches: [
+        {
+          id: "match-1",
+          jobId: "job-1",
+          candidateId: "cand-1",
+          matchScore: 92,
+          confidence: 75,
+          explanation: {},
+          confidenceReasons: null,
+          createdAt: new Date("2024-04-01T00:00:00Z"),
+          candidate: {
+            id: "cand-1",
+            normalizedSkills: ["typescript", "aws", "docker"],
+            createdAt: new Date("2024-01-01T00:00:00Z"),
+            updatedAt: new Date("2024-04-10T00:00:00Z"),
+          },
+        },
+        {
+          id: "match-2",
+          jobId: "job-1",
+          candidateId: "cand-2",
+          matchScore: 88,
+          confidence: 90,
+          explanation: {},
+          confidenceReasons: null,
+          createdAt: new Date("2024-04-02T00:00:00Z"),
+          candidate: {
+            id: "cand-2",
+            normalizedSkills: ["typescript", "sql", "graphql"],
+            createdAt: new Date("2024-01-15T00:00:00Z"),
+            updatedAt: new Date("2024-04-28T00:00:00Z"),
+          },
+        },
+      ],
+    });
+
+    const result = await runShortlist(
+      { jobId: "job-1" },
+      {},
+      { shortlistMinScore: 90, shortlistMaxCandidates: 1 },
+    );
+
+    expect(result.shortlisted).toHaveLength(1);
+    expect(result.shortlisted[0]?.matchId).toBe("match-1");
+    expect(mockCandidateMatchUpdateMany).toHaveBeenCalledWith({
+      where: { jobId: "job-1", candidateId: "cand-2" },
+      data: { shortlisted: false, shortlistReason: null },
+    });
+  });
 });

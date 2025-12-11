@@ -10,6 +10,7 @@ const mockGetTenantPlan = vi.hoisted(() => vi.fn());
 const mockGetRateLimitDefaults = vi.hoisted(() => vi.fn());
 const mockGetRateLimitOverrides = vi.hoisted(() => vi.fn());
 const mockIsFeatureEnabledForTenant = vi.hoisted(() => vi.fn());
+const mockLoadGuardrails = vi.hoisted(() => vi.fn());
 const prismaMock = vi.hoisted(() => ({
   tenant: { findUnique: vi.fn() },
   securityEventLog: { count: vi.fn() },
@@ -36,6 +37,10 @@ vi.mock("@/lib/prisma", () => ({
   prisma: prismaMock,
 }));
 
+vi.mock("@/lib/guardrails/config", () => ({
+  loadTenantGuardrailConfig: mockLoadGuardrails,
+}));
+
 describe("buildTenantDiagnostics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -44,6 +49,15 @@ describe("buildTenantDiagnostics", () => {
     });
     mockGetRateLimitOverrides.mockReturnValue({ api: { dailyLimit: 200 } });
     mockIsFeatureEnabledForTenant.mockResolvedValue(true);
+    mockLoadGuardrails.mockResolvedValue({
+      matcherMinScore: 70,
+      shortlistMinScore: 65,
+      shortlistMaxCandidates: 3,
+      requireMustHaveSkills: true,
+      explainLevel: "compact",
+      confidencePassingScore: 70,
+      source: "database",
+    });
     prismaMock.securityEventLog.count.mockResolvedValue(5);
     prismaMock.tenant.findUnique.mockResolvedValue({
       id: "tenant-a",
@@ -82,6 +96,15 @@ describe("buildTenantDiagnostics", () => {
         override: { dailyLimit: 200 },
       },
     ]);
+    expect(diagnostics.guardrails).toEqual({
+      matcherMinScore: 70,
+      shortlistMinScore: 65,
+      shortlistMaxCandidates: 3,
+      requireMustHaveSkills: true,
+      explainLevel: "compact",
+      confidencePassingScore: 70,
+      source: "database",
+    });
     const expectedFlags = Object.values(FEATURE_FLAGS);
 
     expect(diagnostics.featureFlags.enabled).toBe(true);
@@ -93,6 +116,15 @@ describe("buildTenantDiagnostics", () => {
     mockGetTenantPlan.mockResolvedValue(null);
     mockGetRateLimitOverrides.mockReturnValue(null);
     mockIsFeatureEnabledForTenant.mockResolvedValue(false);
+    mockLoadGuardrails.mockResolvedValue({
+      matcherMinScore: 60,
+      shortlistMinScore: 60,
+      shortlistMaxCandidates: 5,
+      requireMustHaveSkills: false,
+      explainLevel: "detailed",
+      confidencePassingScore: 60,
+      source: "default",
+    });
     prismaMock.securityEventLog.count.mockResolvedValue(0);
     prismaMock.tenant.findUnique.mockResolvedValue({
       id: "tenant-b",
@@ -108,6 +140,7 @@ describe("buildTenantDiagnostics", () => {
     expect(diagnostics.retention).toEqual({ configured: false, days: null, mode: null });
     expect(diagnostics.featureFlags).toEqual({ enabled: false, enabledFlags: [] });
     expect(diagnostics.rateLimits[0].override).toBeNull();
+    expect(diagnostics.guardrails.source).toBe("default");
   });
 
   it("treats audit logging as disabled when counting fails", async () => {
