@@ -30,3 +30,9 @@ npm run predeploy
 ```
 
 If any check fails, CI will block the merge until the issue is resolved.
+
+## TenantUser backfill and seeding
+
+- The `TenantUser` join table was created in migration `20270630120000_add_tenant_user_memberships`, but no data was inserted by that migration.
+- Local seed data (`npm run seed`) creates an admin membership for the default tenant only; this seed is **not** run in production deployments.
+- Migration `20270715120000_backfill_tenant_user_memberships` now backfills membership rows by pairing every existing `User.tenantId` with the matching `Tenant`. The insertion is idempotent and uses the existing user `role` so it can be safely applied to production and any fresh environment via `prisma migrate deploy`.
