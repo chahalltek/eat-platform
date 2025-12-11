@@ -15,6 +15,7 @@ import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 const requestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId is required"),
@@ -72,7 +73,8 @@ export async function POST(req: NextRequest) {
     return flagCheck;
   }
 
-  const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER);
+  const tenantId = await getCurrentTenantId(req);
+  const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER, tenantId);
 
   if (killSwitchResponse) {
     return killSwitchResponse;

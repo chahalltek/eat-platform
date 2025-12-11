@@ -6,16 +6,15 @@ export type AgentKillSwitchRow = {
   agentName: string;
   agentLabel: string;
   latched: boolean;
-  reason: string | null;
   latchedAt: string | null;
   updatedAt: string;
 };
 
-async function toggleKillSwitch(agentName: string, latched: boolean, reason?: string | null) {
+async function toggleKillSwitch(agentName: string, latched: boolean) {
   const response = await fetch("/api/admin/agents/kill-switch", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ agentName, latched, reason }),
+    body: JSON.stringify({ agentName, latched }),
   });
 
   if (!response.ok) {
@@ -41,18 +40,17 @@ export function KillSwitchTable({ initialRows }: { initialRows: AgentKillSwitchR
     setError(null);
 
     const nextLatched = !row.latched;
-    const reason = nextLatched ? window.prompt("Reason for disabling?", row.reason ?? "") ?? "" : null;
 
     setRows((prev) =>
       prev.map((item) =>
         item.agentName === row.agentName
-          ? { ...item, latched: nextLatched, reason: reason ?? null, latchedAt: nextLatched ? new Date().toISOString() : null }
+          ? { ...item, latched: nextLatched, latchedAt: nextLatched ? new Date().toISOString() : null }
           : item,
       ),
     );
 
     try {
-      const updated = await toggleKillSwitch(row.agentName, nextLatched, reason);
+      const updated = await toggleKillSwitch(row.agentName, nextLatched);
 
       setRows((prev) =>
         prev.map((item) => (item.agentName === updated.agentName ? { ...item, ...updated } : item)),
@@ -81,7 +79,6 @@ export function KillSwitchTable({ initialRows }: { initialRows: AgentKillSwitchR
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">Agent</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">Reason</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600">Last updated</th>
               <th className="px-4 py-3" />
             </tr>
@@ -105,7 +102,6 @@ export function KillSwitchTable({ initialRows }: { initialRows: AgentKillSwitchR
                       {statusLabel}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-zinc-700">{row.reason ?? '—'}</td>
                   <td className="px-4 py-3 text-sm text-zinc-700">
                     {row.updatedAt ? new Date(row.updatedAt).toLocaleString() : '—'}
                   </td>

@@ -175,7 +175,23 @@ model FeatureFlag {
   @@index([tenantId])
 }
 
+<<<<<<< ours
 model SystemMode {
+=======
+model AgentFlag {
+  id        String   @id @default(cuid())
+  tenantId  String   @default("default-tenant")
+  agentName String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, agentName])
+  @@index([tenantId])
+}
+
+model AgentKillSwitch {
+>>>>>>> theirs
   id        String   @id @default(cuid())
   tenantId  String   @default("default-tenant")
   mode      String

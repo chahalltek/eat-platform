@@ -16,7 +16,7 @@ import {
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    agentKillSwitch: {
+    agentFlag: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
       upsert: vi.fn(),
@@ -41,12 +41,11 @@ describe('agent kill switch', () => {
   });
 
   test('assertion throws when agent is latched', async () => {
-    vi.mocked(prisma.agentKillSwitch.findUnique).mockResolvedValue({
-      id: 'aks-1',
+    vi.mocked(prisma.agentFlag.findUnique).mockResolvedValue({
+      id: 'af-1',
       agentName: AGENT_KILL_SWITCHES.RUA,
-      latched: true,
-      reason: 'panic',
-      latchedAt: new Date('2024-01-01T00:00:00Z'),
+      enabled: false,
+      tenantId: 'default-tenant',
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-01T00:00:00Z'),
     } as any);
@@ -56,29 +55,12 @@ describe('agent kill switch', () => {
     );
   });
 
-  test('assertion uses default reason when missing', async () => {
-    vi.mocked(prisma.agentKillSwitch.findUnique).mockResolvedValue({
-      id: 'aks-10',
-      agentName: AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION,
-      latched: true,
-      reason: null,
-      latchedAt: null,
-      createdAt: new Date('2024-01-01T00:00:00Z'),
-      updatedAt: new Date('2024-01-02T00:00:00Z'),
-    } as any);
-
-    await expect(assertAgentKillSwitchDisarmed(AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION)).rejects.toThrow(
-      /Disabled by admin/,
-    );
-  });
-
   test('enforce returns null when agent is available', async () => {
-    vi.mocked(prisma.agentKillSwitch.findUnique).mockResolvedValue({
-      id: 'aks-2',
+    vi.mocked(prisma.agentFlag.findUnique).mockResolvedValue({
+      id: 'af-2',
       agentName: AGENT_KILL_SWITCHES.RINA,
-      latched: false,
-      reason: null,
-      latchedAt: null,
+      enabled: true,
+      tenantId: 'default-tenant',
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-02T00:00:00Z'),
     } as any);
@@ -89,12 +71,11 @@ describe('agent kill switch', () => {
   });
 
   test('assertion is silent when agent is not latched', async () => {
-    vi.mocked(prisma.agentKillSwitch.findUnique).mockResolvedValue({
-      id: 'aks-7',
+    vi.mocked(prisma.agentFlag.findUnique).mockResolvedValue({
+      id: 'af-7',
       agentName: AGENT_KILL_SWITCHES.RUA,
-      latched: false,
-      reason: null,
-      latchedAt: null,
+      enabled: true,
+      tenantId: 'default-tenant',
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-02T00:00:00Z'),
     } as any);
@@ -103,12 +84,11 @@ describe('agent kill switch', () => {
   });
 
   test('enforce short-circuits when agent is disabled', async () => {
-    vi.mocked(prisma.agentKillSwitch.findUnique).mockResolvedValue({
-      id: 'aks-3',
+    vi.mocked(prisma.agentFlag.findUnique).mockResolvedValue({
+      id: 'af-3',
       agentName: AGENT_KILL_SWITCHES.OUTREACH,
-      latched: true,
-      reason: 'safety pause',
-      latchedAt: new Date('2024-01-01T00:00:00Z'),
+      enabled: false,
+      tenantId: 'default-tenant',
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-02T00:00:00Z'),
     } as any);
@@ -118,11 +98,11 @@ describe('agent kill switch', () => {
     expect(response?.status).toBe(503);
 
     const payload = await response?.json();
-    expect(payload).toMatchObject({ reason: 'safety pause' });
+    expect(payload).toMatchObject({ reason: 'Disabled by admin' });
     expect(logKillSwitchBlock).toHaveBeenCalledWith(
       expect.objectContaining({
         switchName: AGENT_KILL_SWITCHES.OUTREACH,
-        reason: 'safety pause',
+        reason: null,
         scope: 'agent',
       }),
     );
@@ -130,23 +110,22 @@ describe('agent kill switch', () => {
 
   test('setAgentKillSwitch persists state', async () => {
     const expectedRecord = {
-      id: 'aks-4',
+      id: 'af-4',
       agentName: AGENT_KILL_SWITCHES.RINA,
-      latched: true,
-      reason: 'manual disable',
-      latchedAt: new Date('2024-01-01T00:00:00Z'),
+      enabled: false,
+      tenantId: 'default-tenant',
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-02T00:00:00Z'),
     };
 
-    vi.mocked(prisma.agentKillSwitch.upsert).mockResolvedValue(expectedRecord as any);
+    vi.mocked(prisma.agentFlag.upsert).mockResolvedValue(expectedRecord as any);
 
     const record = await setAgentKillSwitch(AGENT_KILL_SWITCHES.RINA, true, 'manual disable');
 
-    expect(prisma.agentKillSwitch.upsert).toHaveBeenCalledWith(
+    expect(prisma.agentFlag.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        create: expect.objectContaining({ reason: 'manual disable' }),
-        update: expect.objectContaining({ latched: true }),
+        create: expect.objectContaining({ enabled: false }),
+        update: expect.objectContaining({ enabled: false }),
       }),
     );
     expect(record.agentName).toBe(AGENT_KILL_SWITCHES.RINA);
@@ -155,40 +134,18 @@ describe('agent kill switch', () => {
       expect.objectContaining({
         switchName: AGENT_KILL_SWITCHES.RINA,
         latched: true,
-        reason: 'manual disable',
+        reason: null,
         scope: 'agent',
       }),
     );
   });
 
-  test('setAgentKillSwitch falls back to default reason', async () => {
-    vi.mocked(prisma.agentKillSwitch.upsert).mockResolvedValue({
-      id: 'aks-6',
-      agentName: AGENT_KILL_SWITCHES.OUTREACH,
-      latched: true,
-      reason: 'Disabled by admin',
-      latchedAt: new Date('2024-01-01T00:00:00Z'),
-      createdAt: new Date('2024-01-01T00:00:00Z'),
-      updatedAt: new Date('2024-01-02T00:00:00Z'),
-    } as any);
-
-    await setAgentKillSwitch(AGENT_KILL_SWITCHES.OUTREACH, true, '   ');
-
-    expect(prisma.agentKillSwitch.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        create: expect.objectContaining({ reason: 'Disabled by admin' }),
-        update: expect.objectContaining({ reason: 'Disabled by admin' }),
-      }),
-    );
-  });
-
   test('setAgentKillSwitch clears latched state', async () => {
-    vi.mocked(prisma.agentKillSwitch.upsert).mockResolvedValue({
-      id: 'aks-9',
+    vi.mocked(prisma.agentFlag.upsert).mockResolvedValue({
+      id: 'af-9',
       agentName: AGENT_KILL_SWITCHES.RINA,
-      latched: false,
-      reason: null,
-      latchedAt: null,
+      enabled: true,
+      tenantId: 'default-tenant',
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-02T00:00:00Z'),
     } as any);
@@ -196,10 +153,10 @@ describe('agent kill switch', () => {
     const record = await setAgentKillSwitch(AGENT_KILL_SWITCHES.RINA, false, 'ignored');
 
     expect(record.latched).toBe(false);
-    expect(prisma.agentKillSwitch.upsert).toHaveBeenCalledWith(
+    expect(prisma.agentFlag.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        create: expect.objectContaining({ latchedAt: null, reason: null }),
-        update: expect.objectContaining({ latchedAt: null, reason: null }),
+        create: expect.objectContaining({ enabled: true }),
+        update: expect.objectContaining({ enabled: true }),
       }),
     );
     expect(logKillSwitchChange).toHaveBeenCalledWith(
@@ -213,13 +170,12 @@ describe('agent kill switch', () => {
   });
 
   test('listAgentKillSwitches returns defaults for missing records', async () => {
-    vi.mocked(prisma.agentKillSwitch.findMany).mockResolvedValue([
+    vi.mocked(prisma.agentFlag.findMany).mockResolvedValue([
       {
-        id: 'aks-5',
+        id: 'af-5',
         agentName: AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION,
-        latched: true,
-        reason: 'ops pause',
-        latchedAt: new Date('2024-01-01T00:00:00Z'),
+        enabled: false,
+        tenantId: 'default-tenant',
         createdAt: new Date('2024-01-01T00:00:00Z'),
         updatedAt: new Date('2024-01-02T00:00:00Z'),
       } as any,
@@ -246,12 +202,11 @@ describe('agent kill switch', () => {
   });
 
   test('enforceAgentKillSwitch supplies default reason when missing', async () => {
-    vi.mocked(prisma.agentKillSwitch.findUnique).mockResolvedValue({
-      id: 'aks-8',
+    vi.mocked(prisma.agentFlag.findUnique).mockResolvedValue({
+      id: 'af-8',
       agentName: AGENT_KILL_SWITCHES.OUTREACH,
-      latched: true,
-      reason: null,
-      latchedAt: null,
+      enabled: false,
+      tenantId: 'default-tenant',
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-02T00:00:00Z'),
     } as any);

@@ -30,7 +30,7 @@ export default async function AgentKillSwitchPage() {
   }
 
   const killSwitches = await listAgentKillSwitches();
-  const rows: AgentKillSwitchRow[] = killSwitches.map((killSwitch) => ({
+  const rows: AgentKillSwitchRow[] = killSwitches.map(({ reason: _reason, ...killSwitch }) => ({
     ...killSwitch,
     agentLabel: describeAgentKillSwitch(killSwitch.agentName),
     latchedAt: killSwitch.latchedAt ? killSwitch.latchedAt.toISOString() : null,

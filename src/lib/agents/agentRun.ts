@@ -60,16 +60,22 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
   }: AgentRunInput,
   fn: () => Promise<AgentRunResult<T>>,
 ): Promise<[T, string]> {
+  const user = recruiterId != null ? await validateRecruiter(recruiterId) : null;
+  const tenantId = user?.tenantId ?? DEFAULT_TENANT_ID;
+
   assertKillSwitchDisarmed(KILL_SWITCHES.AGENTS, { componentName: agentName });
-  await assertAgentKillSwitchDisarmed(agentName);
+  await assertAgentKillSwitchDisarmed(agentName, tenantId);
 
   const startedAt = new Date();
 
+<<<<<<< ours
   const rawResumeText = null;
 
   const user = recruiterId != null ? await validateRecruiter(recruiterId) : null;
   const tenantId = user?.tenantId ?? DEFAULT_TENANT_ID;
 
+=======
+>>>>>>> theirs
   await assertTenantWithinLimits(tenantId, 'createAgentRun');
 
   const rawResumeText = null;

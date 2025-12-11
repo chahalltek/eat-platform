@@ -7,6 +7,7 @@ import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
 import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { validateRecruiterId } from '../recruiterValidation';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +23,8 @@ export async function POST(req: NextRequest) {
       return flagCheck;
     }
 
-    const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.RUA);
+    const tenantId = await getCurrentTenantId(req);
+    const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.RUA, tenantId);
 
     if (killSwitchResponse) {
       return killSwitchResponse;

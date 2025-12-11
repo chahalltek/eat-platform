@@ -9,6 +9,7 @@ import { validateRecruiterId } from '../recruiterValidation';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
 import { requireRole } from '@/lib/auth/requireRole';
 import { USER_ROLES } from '@/lib/auth/roles';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
       return flagCheck;
     }
 
-    const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.RINA);
+    const tenantId = await getCurrentTenantId(req);
+    const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.RINA, tenantId);
 
     if (killSwitchResponse) {
       return killSwitchResponse;

@@ -8,6 +8,7 @@ import {
 } from "@/lib/agents/killSwitch";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 async function requireAdmin(request: NextRequest) {
   const user = await getCurrentUser(request);
@@ -26,7 +27,8 @@ export async function GET(request: NextRequest) {
     return guardResponse;
   }
 
-  const killSwitches = await listAgentKillSwitches();
+  const tenantId = await getCurrentTenantId(request);
+  const killSwitches = await listAgentKillSwitches(tenantId);
 
   return NextResponse.json(killSwitches);
 }
@@ -58,7 +60,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "agentName and latched are required" }, { status: 400 });
   }
 
-  const updated = await setAgentKillSwitch(parsedName, latched, typeof reason === "string" ? reason : null);
+  const tenantId = await getCurrentTenantId(request);
+  const updated = await setAgentKillSwitch(parsedName, latched, typeof reason === "string" ? reason : null, tenantId);
 
   return NextResponse.json({
     ...updated,

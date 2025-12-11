@@ -1,20 +1,18 @@
-import type { AgentKillSwitch as AgentKillSwitchModel } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
-import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
-import { prisma } from '@/lib/prisma';
+import {
+  AGENT_KILL_SWITCHES,
+  AgentDisabledError,
+  type AgentName,
+  describeAgent,
+  enforceAgentAvailability,
+  getAgentAvailability,
+  listAgentAvailability,
+  parseAgentName,
+  setAgentAvailability,
+} from './agentAvailability';
 
-export const AGENT_KILL_SWITCHES = {
-  MATCHER: 'EAT-TS.MATCHER',
-  RANKER: 'EAT-TS.RANKER',
-  INTAKE: 'EAT-TS.INTAKE',
-  RINA: 'EAT-TS.RINA',
-  RUA: 'EAT-TS.RUA',
-  OUTREACH: 'EAT-TS.OUTREACH',
-  OUTREACH_AUTOMATION: 'EAT-TS.OUTREACH_AUTOMATION',
-} as const;
-
-export type AgentName = (typeof AGENT_KILL_SWITCHES)[keyof typeof AGENT_KILL_SWITCHES];
+export { AGENT_KILL_SWITCHES, parseAgentName };
 
 export type AgentKillSwitchRecord = {
   agentName: AgentName;
@@ -26,141 +24,65 @@ export type AgentKillSwitchRecord = {
 
 const DEFAULT_REASON = 'Disabled by admin';
 
-function normalizeReason(reason?: string | null) {
-  const trimmed = reason?.trim();
-
-  if (trimmed && trimmed.length > 0) {
-    return trimmed;
-  }
-
-  return DEFAULT_REASON;
-}
-
-function allAgentNames() {
-  return Object.values(AGENT_KILL_SWITCHES) as AgentName[];
-}
-
-function buildFallbackRecord(agentName: AgentName): AgentKillSwitchRecord {
+function toKillSwitchRecord(record: { agentName: AgentName; enabled: boolean; updatedAt: Date }): AgentKillSwitchRecord {
   return {
-    agentName,
-    latched: false,
-    reason: null,
-    latchedAt: null,
-    updatedAt: new Date(0),
+    agentName: record.agentName,
+    latched: !record.enabled,
+    reason: record.enabled ? null : DEFAULT_REASON,
+    latchedAt: record.enabled ? null : record.updatedAt,
+    updatedAt: record.updatedAt,
   } satisfies AgentKillSwitchRecord;
-}
-
-function toRecord(agentName: AgentName, model?: AgentKillSwitchModel | null): AgentKillSwitchRecord {
-  if (!model) return buildFallbackRecord(agentName);
-
-  return {
-    agentName,
-    latched: model.latched,
-    reason: model.reason ?? null,
-    latchedAt: model.latchedAt ?? null,
-    updatedAt: model.updatedAt,
-  } satisfies AgentKillSwitchRecord;
-}
-
-export function parseAgentName(value: unknown): AgentName | null {
-  const normalized = typeof value === 'string' ? value.trim() : '';
-  const candidates = allAgentNames();
-
-  return (candidates.find((candidate) => candidate === normalized) as AgentName | undefined) ?? null;
 }
 
 export function describeAgentKillSwitch(name: AgentName) {
-  switch (name) {
-    case AGENT_KILL_SWITCHES.RINA:
-      return 'Resume parser (RINA)';
-    case AGENT_KILL_SWITCHES.RUA:
-      return 'Job parser (RUA)';
-    case AGENT_KILL_SWITCHES.INTAKE:
-      return 'Job intake parser';
-    case AGENT_KILL_SWITCHES.OUTREACH:
-      return 'Outreach writer';
-    case AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION:
-      return 'Outreach automation';
-    case AGENT_KILL_SWITCHES.RANKER:
-      return 'Shortlist ranker';
-    default:
-      return name;
-  }
+  return describeAgent(name);
 }
 
-export async function listAgentKillSwitches(): Promise<AgentKillSwitchRecord[]> {
-  const stored = await prisma.agentKillSwitch.findMany();
-  const storedByName = new Map(stored.map((record) => [record.agentName, record]));
+export async function listAgentKillSwitches(tenantId?: string): Promise<AgentKillSwitchRecord[]> {
+  const flags = await listAgentAvailability(tenantId);
 
-  return allAgentNames().map((agentName) => toRecord(agentName, storedByName.get(agentName)));
+  return flags.map(toKillSwitchRecord);
 }
 
-export async function getAgentKillSwitchState(agentName: AgentName): Promise<AgentKillSwitchRecord> {
-  const state = await prisma.agentKillSwitch.findUnique({ where: { agentName } });
+export async function getAgentKillSwitchState(agentName: AgentName, tenantId?: string): Promise<AgentKillSwitchRecord> {
+  const record = await getAgentAvailability(agentName, tenantId);
 
-  return toRecord(agentName, state);
+  return toKillSwitchRecord(record);
 }
 
-export class AgentKillSwitchEngagedError extends Error {
-  constructor(agentName: AgentName, reason: string) {
-    super(`${agentName} is disabled via kill switch: ${reason}`);
-    this.name = 'AgentKillSwitchEngagedError';
-  }
-}
+export class AgentKillSwitchEngagedError extends AgentDisabledError {}
 
-export async function assertAgentKillSwitchDisarmed(agentName: AgentName) {
-  const state = await getAgentKillSwitchState(agentName);
+export async function assertAgentKillSwitchDisarmed(agentName: AgentName, tenantId?: string) {
+  const state = await getAgentKillSwitchState(agentName, tenantId);
 
   if (state.latched) {
-    throw new AgentKillSwitchEngagedError(agentName, state.reason ?? DEFAULT_REASON);
+    throw new AgentKillSwitchEngagedError(agentName);
   }
 }
 
 export async function setAgentKillSwitch(
   agentName: AgentName,
   latched: boolean,
-  reason?: string | null,
+  _reason?: string | null,
+  tenantId?: string,
 ): Promise<AgentKillSwitchRecord> {
-  const normalizedReason = latched ? normalizeReason(reason) : null;
-  const latchedAt = latched ? new Date() : null;
+  const updated = await setAgentAvailability(agentName, !latched, tenantId);
 
-  const record = await prisma.agentKillSwitch.upsert({
-    where: { agentName },
-    update: { latched, reason: normalizedReason, latchedAt },
-    create: { agentName, latched, reason: normalizedReason, latchedAt },
-  });
-
-  const parsed = toRecord(agentName, record);
-
-  await logKillSwitchChange({
-    switchName: agentName,
-    latched: parsed.latched,
-    reason: parsed.reason,
-    latchedAt: parsed.latchedAt,
-    scope: 'agent',
-  });
-
-  return parsed;
+  return toKillSwitchRecord({ ...updated, agentName });
 }
 
-export async function enforceAgentKillSwitch(agentName: AgentName) {
-  const state = await getAgentKillSwitchState(agentName);
+export async function enforceAgentKillSwitch(agentName: AgentName, tenantId?: string) {
+  const response = await enforceAgentAvailability(agentName, tenantId);
 
-  if (!state.latched) return null;
+  if (!response) return null;
 
-  const label = describeAgentKillSwitch(agentName);
-  await logKillSwitchBlock({
-    switchName: agentName,
-    reason: state.reason ?? DEFAULT_REASON,
-    latchedAt: state.latchedAt,
-    scope: 'agent',
-  });
+  const label = describeAgent(agentName);
 
   return NextResponse.json(
     {
       error: `${label} is currently disabled`,
-      reason: state.reason ?? DEFAULT_REASON,
-      latchedAt: state.latchedAt?.toISOString() ?? null,
+      reason: DEFAULT_REASON,
+      latchedAt: (await getAgentKillSwitchState(agentName, tenantId)).latchedAt?.toISOString() ?? null,
     },
     { status: 503 },
   );

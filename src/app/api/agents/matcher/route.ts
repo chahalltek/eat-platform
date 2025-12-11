@@ -3,6 +3,7 @@ import { runMatcher } from '@/lib/agents/matcher';
 import { requireRole } from '@/lib/auth/requireRole';
 import { USER_ROLES } from '@/lib/auth/roles';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 // TODO: Add role/tenant-aware RBAC before allowing matcher runs.
 
@@ -25,7 +26,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER);
+    const tenantId = await getCurrentTenantId(req);
+    const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER, tenantId);
 
     if (killSwitchResponse) {
       return killSwitchResponse;

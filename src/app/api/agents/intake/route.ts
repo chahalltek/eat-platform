@@ -7,6 +7,7 @@ import { USER_ROLES } from '@/lib/auth/roles';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 import { normalizeError } from '@/lib/errors';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -89,7 +90,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'rawDescription is required' }, { status: 400 });
   }
 
-  const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.INTAKE);
+  const tenantId = await getCurrentTenantId(req);
+  const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.INTAKE, tenantId);
 
   if (killSwitchResponse) {
     return killSwitchResponse;
