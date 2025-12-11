@@ -237,7 +237,7 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
     setSeedError(null);
 
     try {
-      const response = await fetch("/api/admin/eat/seed-sample-data", { method: "POST" });
+      const response = await fetch("/api/admin/ete/seed-sample-data", { method: "POST" });
       const payload = await response.json();
 
       if (!response.ok) {

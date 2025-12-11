@@ -1,4 +1,4 @@
-import { TenantDeletionMode, type SubscriptionPlan, type Tenant } from "@prisma/client";
+import { AgentRunStatus, TenantDeletionMode, type SubscriptionPlan, type Tenant } from "@prisma/client";
 
 import { getAppConfig } from "@/lib/config/configValidator";
 import { FEATURE_FLAGS, type FeatureFlagName } from "@/lib/featureFlags/constants";
@@ -25,8 +25,17 @@ export type TenantDiagnostics = {
   mode: SystemMode;
   fireDrill: { enabled: boolean; fireDrillImpact: string[] };
   sso: { configured: boolean; issuerUrl: string | null };
+<<<<<<< ours
   guardrailsPreset: GuardrailsPreset;
   guardrailsRecommendation: string | null;
+=======
+  fireDrill: {
+    enabled: boolean;
+    suggested: boolean;
+    reason: string | null;
+    windowMinutes: number;
+  };
+>>>>>>> theirs
   plan: {
     id: string | null;
     name: string | null;
@@ -116,6 +125,105 @@ async function resolveEnabledFlags(tenantId: string) {
   } as const;
 }
 
+const INCIDENT_WINDOW_MINUTES = 30;
+const EXPLAIN_FAILURE_THRESHOLD = 0.3;
+const LLM_FAILURE_THRESHOLD = 0.25;
+const MATCH_FAILURE_THRESHOLD = 0.25;
+
+async function evaluateFireDrillStatus(tenantId: string) {
+  const since = new Date(Date.now() - INCIDENT_WINDOW_MINUTES * 60 * 1000);
+
+  const [
+    explainTotal,
+    explainFailures,
+    llmTotal,
+    llmFailures,
+    matchTotal,
+    matchFailures,
+    fireDrillEnabled,
+  ] = await Promise.all([
+    prisma.agentRunLog.count({
+      where: { tenantId, agentName: { contains: "EXPLAIN", mode: "insensitive" }, startedAt: { gte: since } },
+    }),
+    prisma.agentRunLog.count({
+      where: {
+        tenantId,
+        agentName: { contains: "EXPLAIN", mode: "insensitive" },
+        status: AgentRunStatus.FAILED,
+        startedAt: { gte: since },
+      },
+    }),
+    prisma.agentRunLog.count({
+      where: {
+        tenantId,
+        OR: [
+          { agentName: { contains: "RINA", mode: "insensitive" } },
+          { agentName: { contains: "RUA", mode: "insensitive" } },
+        ],
+        startedAt: { gte: since },
+      },
+    }),
+    prisma.agentRunLog.count({
+      where: {
+        tenantId,
+        OR: [
+          { agentName: { contains: "RINA", mode: "insensitive" } },
+          { agentName: { contains: "RUA", mode: "insensitive" } },
+        ],
+        status: AgentRunStatus.FAILED,
+        startedAt: { gte: since },
+      },
+    }),
+    prisma.agentRunLog.count({
+      where: {
+        tenantId,
+        OR: [
+          { agentName: { contains: "MATCH", mode: "insensitive" } },
+          { agentName: { contains: "CONFIDENCE", mode: "insensitive" } },
+          { agentName: { contains: "RANK", mode: "insensitive" } },
+        ],
+        startedAt: { gte: since },
+      },
+    }),
+    prisma.agentRunLog.count({
+      where: {
+        tenantId,
+        OR: [
+          { agentName: { contains: "MATCH", mode: "insensitive" } },
+          { agentName: { contains: "CONFIDENCE", mode: "insensitive" } },
+          { agentName: { contains: "RANK", mode: "insensitive" } },
+        ],
+        status: AgentRunStatus.FAILED,
+        startedAt: { gte: since },
+      },
+    }),
+    isFeatureEnabledForTenant(tenantId, FEATURE_FLAGS.FIRE_DRILL_MODE),
+  ]);
+
+  const reasons: string[] = [];
+
+  if (explainTotal > 0 && explainFailures / explainTotal > EXPLAIN_FAILURE_THRESHOLD) {
+    reasons.push("elevated EXPLAIN errors were observed");
+  }
+
+  if (llmTotal > 0 && llmFailures / llmTotal > LLM_FAILURE_THRESHOLD) {
+    reasons.push("LLM producer failures exceeded thresholds");
+  }
+
+  if (matchTotal > 0 && matchFailures / matchTotal > MATCH_FAILURE_THRESHOLD) {
+    reasons.push("MATCH or CONFIDENCE failures exceeded thresholds");
+  }
+
+  const suggested = !fireDrillEnabled && reasons.length > 0;
+
+  return {
+    enabled: fireDrillEnabled,
+    suggested,
+    windowMinutes: INCIDENT_WINDOW_MINUTES,
+    reason: suggested ? `Consider enabling Fire Drill mode: ${reasons[0]}.` : null,
+  } as const;
+}
+
 async function countAuditEvents(tenantId: string) {
   try {
     return await prisma.securityEventLog.count({ where: { tenantId } });
@@ -153,13 +261,21 @@ function buildGuardrailsRecommendation(preset: GuardrailsPreset) {
 }
 
 export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDiagnostics> {
+<<<<<<< ours
   const [config, plan, tenant, auditEventCount, flags, guardrails] = await Promise.all([
+=======
+  const [config, plan, tenant, auditEventCount, flags, fireDrill] = await Promise.all([
+>>>>>>> theirs
     getAppConfig(),
     getTenantPlan(tenantId),
     prisma.tenant.findUnique({ where: { id: tenantId } }),
     countAuditEvents(tenantId),
     resolveEnabledFlags(tenantId),
+<<<<<<< ours
     loadTenantGuardrailConfig(tenantId),
+=======
+    evaluateFireDrillStatus(tenantId),
+>>>>>>> theirs
   ]);
 
   if (!tenant) {
@@ -177,8 +293,12 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     mode: systemMode.mode,
     fireDrill: systemMode.fireDrill,
     sso: { configured: isSsoConfigured(config), issuerUrl: config.SSO_ISSUER_URL ?? null },
+<<<<<<< ours
     guardrailsPreset,
     guardrailsRecommendation: buildGuardrailsRecommendation(guardrailsPreset),
+=======
+    fireDrill,
+>>>>>>> theirs
     plan: mapPlan(plan),
     auditLogging: { enabled: auditEventCount > 0, eventsRecorded: auditEventCount },
     dataExport: { enabled: true },

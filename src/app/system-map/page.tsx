@@ -1,4 +1,4 @@
-import SystemMapPage from "../eat/system-map/page";
+import SystemMapPage from "../ete/system-map/page";
 
 export default function RootSystemMapPage() {
   return <SystemMapPage />;

@@ -99,7 +99,7 @@ export function TestPlanChecklist({ sections, initialStatuses }: TestPlanCheckli
     setFeedback(null);
 
     try {
-      const response = await fetch("/api/eat/test-plan/status", {
+      const response = await fetch("/api/ete/test-plan/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemId, status: nextState.status, note: nextState.note }),

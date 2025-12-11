@@ -18,6 +18,7 @@ const mockGetSystemMode = vi.hoisted(() => vi.fn());
 const prismaMock = vi.hoisted(() => ({
   tenant: { findUnique: vi.fn() },
   securityEventLog: { count: vi.fn() },
+  agentRunLog: { count: vi.fn() },
 }));
 
 vi.mock("@/lib/config/configValidator", () => ({
@@ -56,6 +57,7 @@ describe("buildTenantDiagnostics", () => {
       api: { dailyLimit: 100, burstLimit: 10, burstWindowMs: 60000, bucket: "tenant" },
     });
     mockGetRateLimitOverrides.mockReturnValue({ api: { dailyLimit: 200 } });
+<<<<<<< ours
     mockIsFeatureEnabledForTenant.mockResolvedValue(true);
     mockLoadGuardrails.mockResolvedValue({
       matcherMinScore: 70,
@@ -66,7 +68,11 @@ describe("buildTenantDiagnostics", () => {
       confidencePassingScore: 70,
       source: "database",
     });
+=======
+    mockIsFeatureEnabledForTenant.mockImplementation(async (_tenantId, name) => name !== FEATURE_FLAGS.FIRE_DRILL_MODE);
+>>>>>>> theirs
     prismaMock.securityEventLog.count.mockResolvedValue(5);
+    prismaMock.agentRunLog.count.mockResolvedValue(0);
     prismaMock.tenant.findUnique.mockResolvedValue({
       id: "tenant-a",
       dataRetentionDays: 45,
@@ -117,6 +123,7 @@ describe("buildTenantDiagnostics", () => {
         override: { dailyLimit: 200 },
       },
     ]);
+<<<<<<< ours
     expect(diagnostics.guardrails).toEqual({
       matcherMinScore: 70,
       shortlistMinScore: 65,
@@ -127,9 +134,20 @@ describe("buildTenantDiagnostics", () => {
       source: "database",
     });
     const expectedFlags = Object.values(FEATURE_FLAGS);
+=======
+    const expectedFlags = Object.values(FEATURE_FLAGS).filter(
+      (flag) => flag !== FEATURE_FLAGS.FIRE_DRILL_MODE,
+    );
+>>>>>>> theirs
 
     expect(diagnostics.featureFlags.enabled).toBe(true);
     expect(diagnostics.featureFlags.enabledFlags).toEqual(expectedFlags);
+    expect(diagnostics.fireDrill).toEqual({
+      enabled: false,
+      suggested: false,
+      reason: null,
+      windowMinutes: 30,
+    });
   });
 
   it("handles missing optional features gracefully", async () => {
@@ -165,6 +183,7 @@ describe("buildTenantDiagnostics", () => {
     expect(diagnostics.retention).toEqual({ configured: false, days: null, mode: null });
     expect(diagnostics.featureFlags).toEqual({ enabled: false, enabledFlags: [] });
     expect(diagnostics.rateLimits[0].override).toBeNull();
+<<<<<<< ours
     expect(diagnostics.guardrails.source).toBe("default");
   });
 
@@ -181,6 +200,9 @@ describe("buildTenantDiagnostics", () => {
       "Agent dispatch paused",
       "Guardrails forced to conservative",
     ]);
+=======
+    expect(diagnostics.fireDrill.suggested).toBe(false);
+>>>>>>> theirs
   });
 
   it("treats audit logging as disabled when counting fails", async () => {
@@ -189,6 +211,7 @@ describe("buildTenantDiagnostics", () => {
     const diagnostics = await buildTenantDiagnostics("tenant-a");
 
     expect(diagnostics.auditLogging).toEqual({ enabled: false, eventsRecorded: 0 });
+    expect(diagnostics.fireDrill.enabled).toBe(false);
   });
 
   it("throws when tenant is missing", async () => {

@@ -28,7 +28,7 @@ vi.mock("@/lib/eat/testPlanRegistry", () => ({
 
 import { GET, POST } from "./route";
 
-describe("/api/eat/test-plan/status", () => {
+describe("/api/ete/test-plan/status", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCanManageFeatureFlags.mockReturnValue(true);
@@ -45,9 +45,9 @@ describe("/api/eat/test-plan/status", () => {
     mockIsValidTestPlanItemId.mockReturnValue(true);
   });
 
-  const buildGetRequest = () => new NextRequest("http://localhost/api/eat/test-plan/status");
+  const buildGetRequest = () => new NextRequest("http://localhost/api/ete/test-plan/status");
   const buildPostRequest = (body: unknown) =>
-    new NextRequest("http://localhost/api/eat/test-plan/status", { method: "POST", body: JSON.stringify(body) });
+    new NextRequest("http://localhost/api/ete/test-plan/status", { method: "POST", body: JSON.stringify(body) });
 
   it("rejects unauthenticated callers", async () => {
     mockGetCurrentUser.mockResolvedValue(null);

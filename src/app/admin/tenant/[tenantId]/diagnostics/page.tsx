@@ -15,6 +15,7 @@ import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { EATCard } from "@/components/EATCard";
 import { StatusPill } from "@/components/StatusPill";
 import { TenantTestTable } from "./TenantTestTable";
+import { TenantFireDrillCallout } from "./TenantFireDrillCallout";
 
 export const dynamic = "force-dynamic";
 
@@ -151,6 +152,8 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
               Back to tenants
             </Link>
           </header>
+
+          <TenantFireDrillCallout fireDrill={diagnostics.fireDrill} />
 
           <TenantTestTable tenantId={requestedTenant} />
 

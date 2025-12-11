@@ -44,6 +44,13 @@ describe('middleware role enforcement', () => {
     expect(response.status).toBe(200);
   });
 
+  it('redirects legacy eat paths to ete', async () => {
+    const response = await middleware(createRequest('/eat/system-map'));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe('https://example.com/ete/system-map');
+  });
+
   it('allows recruiter routes for recruiter users and sets headers', async () => {
     const response = await middleware(createRequest('/candidates'));
 

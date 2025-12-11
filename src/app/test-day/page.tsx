@@ -49,7 +49,7 @@ export default function TestDayPage() {
         </ul>
 
         <h3>✅ Test 2: System Map</h3>
-        <p>Go to /system-map (or /eat/system-map)</p>
+        <p>Go to /system-map (or /ete/system-map)</p>
         <p>Confirm:</p>
         <ul>
           <li>Pipeline displayed: INTAKE → PROFILE → MATCH → CONFIDENCE → EXPLAIN → SHORTLIST</li>
