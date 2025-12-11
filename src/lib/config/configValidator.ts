@@ -19,6 +19,8 @@ const EnvSchema = z.object({
   BILLING_PROVIDER_SECRET_KEY: z.string().min(1).optional(),
   BILLING_WEBHOOK_SECRET: z.string().min(1).optional(),
   TENANT_MODE: z.enum(["single", "multi"]).optional(),
+  NEXT_PUBLIC_ETE_APP_NAME: z.string().optional(),
+  NEXT_PUBLIC_ETE_APP_DESCRIPTION: z.string().optional(),
 });
 
 const ConfigSchema = EnvSchema.superRefine((value, ctx) => {
