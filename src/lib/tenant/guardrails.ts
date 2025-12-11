@@ -102,7 +102,21 @@ export async function loadTenantGuardrails(tenantId: string): Promise<TenantGuar
     throw error;
   });
 
-  const stored = (record?.guardrails as Partial<TenantGuardrails> | null | undefined) ?? null;
+  const storedGuardrails =
+    ((record as { guardrails?: unknown } | null | undefined)?.guardrails as
+      | Partial<TenantGuardrails>
+      | null
+      | undefined) ?? null;
+
+  const stored =
+    storedGuardrails ??
+    (record
+      ? {
+          scoring: record.scoring as Partial<TenantGuardrails["scoring"]>,
+          explain: record.explain as Partial<TenantGuardrails["explain"]>,
+          safety: record.safety as Partial<TenantGuardrails["safety"]>,
+        }
+      : null);
   try {
     return mergeGuardrails(stored);
   } catch (error) {
