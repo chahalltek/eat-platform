@@ -13,7 +13,12 @@ export type SystemExecutionState = {
   latestRunAt: string | null;
   latestSuccessAt: string | null;
   latestFailureAt: string | null;
+<<<<<<< ours
   runsToday: number;
+=======
+  latestFailureAgentName: string | null;
+  failureCountLast24h: number;
+>>>>>>> theirs
 };
 
 export type SystemStatus = { status: SubsystemState; detail?: string };
@@ -99,25 +104,43 @@ export async function getSystemStatus(): Promise<SystemStatusMap> {
 export async function getSystemExecutionState(): Promise<SystemExecutionState> {
   try {
     const tenantId = await getCurrentTenantId();
+<<<<<<< ours
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
     const [activeRuns, latestRun, latestFailure, latestSuccess, runsToday] = await Promise.all([
       prisma.agentRunLog.count({ where: { tenantId, status: AgentRunStatus.RUNNING } }),
+=======
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const [activeRuns, latestRun, latestFailure, recentFailureCount] = await Promise.all([
+      prisma.agentRunLog.count({ where: { tenantId, status: 'RUNNING' } }),
+>>>>>>> theirs
       prisma.agentRunLog.findFirst({
         where: { tenantId },
         orderBy: { startedAt: 'desc' },
         select: { startedAt: true },
       }),
       prisma.agentRunLog.findFirst({
+<<<<<<< ours
         where: { tenantId, status: AgentRunStatus.FAILED },
         orderBy: { startedAt: 'desc' },
         select: { startedAt: true },
       }),
       prisma.agentRunLog.findFirst({
         where: { tenantId, status: AgentRunStatus.SUCCESS },
+=======
+        where: { tenantId, status: 'FAILED', startedAt: { gte: twentyFourHoursAgo } },
+>>>>>>> theirs
         orderBy: { startedAt: 'desc' },
-        select: { startedAt: true },
+        select: { startedAt: true, agentName: true },
+      }),
+      prisma.agentRunLog.count({
+        where: {
+          tenantId,
+          status: 'FAILED',
+          startedAt: { gte: twentyFourHoursAgo },
+        },
       }),
       prisma.agentRunLog.count({
         where: {
@@ -145,7 +168,12 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
       latestRunAt: latestRun?.startedAt.toISOString() ?? null,
       latestSuccessAt: latestSuccess?.startedAt.toISOString() ?? null,
       latestFailureAt: latestFailure?.startedAt.toISOString() ?? null,
+<<<<<<< ours
       runsToday,
+=======
+      latestFailureAgentName: latestFailure?.agentName ?? null,
+      failureCountLast24h: recentFailureCount,
+>>>>>>> theirs
     };
   } catch (error) {
     console.error('[system-execution] Unable to compute execution state', error);
@@ -156,7 +184,12 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
       latestRunAt: null,
       latestSuccessAt: null,
       latestFailureAt: null,
+<<<<<<< ours
       runsToday: 0,
+=======
+      latestFailureAgentName: null,
+      failureCountLast24h: 0,
+>>>>>>> theirs
     };
   }
 }

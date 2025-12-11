@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { FilterFn } from "@tanstack/react-table";
+import type { ColumnFiltersState, FilterFn } from "@tanstack/react-table";
 
 import { StandardTable } from "@/components/table/StandardTable";
 import { TableFilterDropdown, type TableFilterOption } from "@/components/table/TableFilterDropdown";
@@ -110,10 +110,12 @@ export function AgentRunLogsTable({
   logs,
   selectedId,
   onSelect,
+  initialColumnFilters,
 }: {
   logs: AgentRunLogTableRow[];
   selectedId?: string;
   onSelect: (id: string) => void;
+  initialColumnFilters?: ColumnFiltersState;
 }) {
   const agentOptions = useMemo<TableFilterOption[]>(() => {
     const agentNames = Array.from(new Set(logs.map((log) => log.agentName))).sort();
@@ -175,7 +177,7 @@ export function AgentRunLogsTable({
         columns={columns}
         sorting={{ initialState: [{ id: "startedAt", desc: true }] }}
         filtering={{
-          columnFilters: { initialState: [] },
+          columnFilters: { initialState: initialColumnFilters ?? [] },
           globalFilter: { initialState: "" },
           globalFilterFn,
         }}

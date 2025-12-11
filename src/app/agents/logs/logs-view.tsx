@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { ColumnFiltersState } from "@tanstack/react-table";
 import clsx from "clsx";
 
 import { AgentRunLogsTable, formatDurationMs, formatTimestamp } from "./agent-run-logs-table";
@@ -155,11 +156,30 @@ function StatusPill({ status }: { status: AgentRunStatusValue }) {
   );
 }
 
-export default function AgentRunLogsView({ logs }: { logs: SerializableLog[] }) {
-  const [selectedId, setSelectedId] = useState<string | undefined>(logs[0]?.id);
+export default function AgentRunLogsView({
+  logs,
+  initialAgentFilter,
+}: {
+  logs: SerializableLog[];
+  initialAgentFilter?: string;
+}) {
+  const defaultSelectedId = useMemo(() => {
+    if (initialAgentFilter) {
+      const match = logs.find((log) => log.agentName === initialAgentFilter);
+      if (match) return match.id;
+    }
+    return logs[0]?.id;
+  }, [initialAgentFilter, logs]);
+
+  const [selectedId, setSelectedId] = useState<string | undefined>(defaultSelectedId);
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [retryError, setRetryError] = useState<string | null>(null);
   const router = useRouter();
+
+  const initialColumnFilters = useMemo<ColumnFiltersState>(() => {
+    if (!initialAgentFilter) return [];
+    return [{ id: "agentName", value: [initialAgentFilter] }];
+  }, [initialAgentFilter]);
 
   const selectedLog = useMemo(() => logs.find((log) => log.id === selectedId), [logs, selectedId]);
 
@@ -193,7 +213,12 @@ export default function AgentRunLogsView({ logs }: { logs: SerializableLog[] }) 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <AgentRunLogsTable logs={logs} selectedId={selectedId} onSelect={setSelectedId} />
+        <AgentRunLogsTable
+          logs={logs}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          initialColumnFilters={initialColumnFilters}
+        />
       </div>
       <div className="lg:col-span-1">
         <LogDetail

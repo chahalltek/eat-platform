@@ -9,7 +9,11 @@ import { EATClientLayout } from "@/components/EATClientLayout";
 
 export const dynamic = "force-dynamic";
 
-export default async function AgentRunLogsPage() {
+export default async function AgentRunLogsPage({
+  searchParams,
+}: {
+  searchParams?: { agent?: string | string[] };
+}) {
   const [user, tenantId] = await Promise.all([getCurrentUser(), getUserTenantId()]);
   const resolvedTenantId = tenantId ?? DEFAULT_TENANT_ID;
 
@@ -86,6 +90,10 @@ export default async function AgentRunLogsPage() {
     retryOfId: log.retryOfId,
   }));
 
+  const initialAgentFilter = Array.isArray(searchParams?.agent)
+    ? searchParams?.agent?.[0]
+    : searchParams?.agent ?? undefined;
+
   return (
     <EATClientLayout>
       <div className="space-y-6">
@@ -94,7 +102,7 @@ export default async function AgentRunLogsPage() {
           <p className="text-gray-600">Review all agent executions and their outcomes.</p>
         </div>
 
-        <AgentRunLogsView logs={serializableLogs} />
+        <AgentRunLogsView logs={serializableLogs} initialAgentFilter={initialAgentFilter} />
       </div>
     </EATClientLayout>
   );
