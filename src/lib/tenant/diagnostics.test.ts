@@ -10,7 +10,11 @@ const mockGetTenantPlan = vi.hoisted(() => vi.fn());
 const mockGetRateLimitDefaults = vi.hoisted(() => vi.fn());
 const mockGetRateLimitOverrides = vi.hoisted(() => vi.fn());
 const mockIsFeatureEnabledForTenant = vi.hoisted(() => vi.fn());
+<<<<<<< ours
 const mockLoadGuardrails = vi.hoisted(() => vi.fn());
+=======
+const mockGetSystemMode = vi.hoisted(() => vi.fn());
+>>>>>>> theirs
 const prismaMock = vi.hoisted(() => ({
   tenant: { findUnique: vi.fn() },
   securityEventLog: { count: vi.fn() },
@@ -31,6 +35,10 @@ vi.mock("@/lib/rateLimiting/rateLimiter", () => ({
 
 vi.mock("@/lib/featureFlags", () => ({
   isFeatureEnabledForTenant: mockIsFeatureEnabledForTenant,
+}));
+
+vi.mock("@/lib/systemMode", () => ({
+  getSystemMode: mockGetSystemMode,
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -68,6 +76,7 @@ describe("buildTenantDiagnostics", () => {
       SSO_ISSUER_URL: "https://sso.example.com",
       SSO_CLIENT_ID: "client-id",
       SSO_CLIENT_SECRET: "secret",
+      SYSTEM_MODE: "pilot",
     });
     mockGetTenantPlan.mockResolvedValue({
       plan: {
@@ -77,14 +86,20 @@ describe("buildTenantDiagnostics", () => {
       },
       subscription: { isTrial: true, endAt: new Date("2024-02-01T00:00:00.000Z") },
     });
+    mockGetSystemMode.mockReturnValue({ mode: "pilot", fireDrill: { enabled: false, fireDrillImpact: [] } });
   });
 
   it("summarizes tenant readiness state", async () => {
     const diagnostics = await buildTenantDiagnostics("tenant-a");
 
     expect(diagnostics.sso.configured).toBe(true);
+<<<<<<< ours
     expect(diagnostics.guardrailsPreset).toBe("balanced");
     expect(diagnostics.guardrailsRecommendation).toBe("Guardrails customized from default values.");
+=======
+    expect(diagnostics.mode).toBe("pilot");
+    expect(diagnostics.fireDrill).toEqual({ enabled: false, fireDrillImpact: [] });
+>>>>>>> theirs
     expect(diagnostics.plan).toEqual({
       id: "plan-basic",
       name: "Basic",
@@ -137,9 +152,11 @@ describe("buildTenantDiagnostics", () => {
       dataRetentionDays: null,
       deletionMode: TenantDeletionMode.HARD_DELETE,
     });
+    mockGetSystemMode.mockReturnValue({ mode: "sandbox", fireDrill: { enabled: false, fireDrillImpact: [] } });
 
     const diagnostics = await buildTenantDiagnostics("tenant-b");
 
+    expect(diagnostics.mode).toBe("sandbox");
     expect(diagnostics.sso.configured).toBe(false);
     expect(diagnostics.guardrailsPreset).toBeNull();
     expect(diagnostics.guardrailsRecommendation).toBe("Consider using a preset (balanced) to simplify tuning.");
@@ -149,6 +166,21 @@ describe("buildTenantDiagnostics", () => {
     expect(diagnostics.featureFlags).toEqual({ enabled: false, enabledFlags: [] });
     expect(diagnostics.rateLimits[0].override).toBeNull();
     expect(diagnostics.guardrails.source).toBe("default");
+  });
+
+  it("includes fire drill status when enabled", async () => {
+    mockGetSystemMode.mockReturnValue({
+      mode: "fire_drill",
+      fireDrill: { enabled: true, fireDrillImpact: ["Agent dispatch paused", "Guardrails forced to conservative"] },
+    });
+
+    const diagnostics = await buildTenantDiagnostics("tenant-a");
+
+    expect(diagnostics.mode).toBe("fire_drill");
+    expect(diagnostics.fireDrill.fireDrillImpact).toEqual([
+      "Agent dispatch paused",
+      "Guardrails forced to conservative",
+    ]);
   });
 
   it("treats audit logging as disabled when counting fails", async () => {

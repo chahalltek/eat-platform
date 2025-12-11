@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 import { Prisma } from '@prisma/client';
 
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
@@ -150,5 +151,53 @@ export function getSystemMode(): SystemMode {
 
 export function isFireDrillMode() {
   return getSystemMode() === "FIRE_DRILL";
+>>>>>>> theirs
+=======
+import { z } from "zod";
+
+import type { AppConfig } from "@/lib/config/configValidator";
+import { getAppConfig } from "@/lib/config/configValidator";
+
+export const SYSTEM_MODES = ["pilot", "production", "sandbox", "fire_drill"] as const;
+export type SystemMode = (typeof SYSTEM_MODES)[number];
+
+const FireDrillImpactSchema = z.union([z.array(z.string()), z.string()]).optional();
+
+function normalizeImpact(value?: string | string[] | null): string[] {
+  if (!value) return [];
+
+  const parsed = FireDrillImpactSchema.parse(value);
+
+  if (Array.isArray(parsed)) {
+    return parsed.map((entry) => entry.trim()).filter(Boolean);
+  }
+
+  try {
+    const asJson = JSON.parse(parsed);
+    if (Array.isArray(asJson)) {
+      return asJson.map((entry) => String(entry).trim()).filter(Boolean);
+    }
+  } catch {
+    // Fall back to treating the string as a delimiter-separated list.
+  }
+
+  return parsed
+    .split(/[,\n]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+export function getSystemMode(config: AppConfig = getAppConfig()) {
+  const mode: SystemMode = config.SYSTEM_MODE;
+  const fireDrillImpact = normalizeImpact(config.FIRE_DRILL_IMPACT);
+  const isFireDrill = mode === "fire_drill";
+
+  return {
+    mode,
+    fireDrill: {
+      enabled: isFireDrill,
+      fireDrillImpact: isFireDrill ? fireDrillImpact : [],
+    },
+  } as const;
 >>>>>>> theirs
 }

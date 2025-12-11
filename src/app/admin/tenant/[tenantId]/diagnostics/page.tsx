@@ -20,6 +20,10 @@ export const dynamic = "force-dynamic";
 
 type Status = "ok" | "warn" | "off";
 
+function formatMode(mode: string) {
+  return mode.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function StatusIcon({ status }: { status: Status }) {
   const classes = "h-5 w-5";
 
@@ -151,6 +155,34 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
           <TenantTestTable tenantId={requestedTenant} />
 
           <section className="grid gap-4 md:grid-cols-2">
+            <DiagnosticCard
+              title="System mode"
+              status={diagnostics.fireDrill.enabled ? "warn" : "ok"}
+              description="Current operating posture for this environment."
+            >
+              <div className="space-y-2 text-sm">
+                <p>
+                  Mode: <span className="font-semibold text-zinc-900 dark:text-zinc-50">{formatMode(diagnostics.mode)}</span>
+                </p>
+                {diagnostics.fireDrill.enabled ? (
+                  <div className="space-y-1">
+                    <p>Fire Drill safeguards are active. Impact:</p>
+                    <ul className="list-disc pl-5 text-xs text-zinc-700 dark:text-zinc-200">
+                      {diagnostics.fireDrill.fireDrillImpact.length > 0 ? (
+                        diagnostics.fireDrill.fireDrillImpact.map((impact) => <li key={impact}>{impact}</li>)
+                      ) : (
+                        <li>No impact details were provided.</li>
+                      )}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-700 dark:text-zinc-200">
+                    Fire Drill is not active; automation and guardrails are running normally.
+                  </p>
+                )}
+              </div>
+            </DiagnosticCard>
+
             <DiagnosticCard
               title="Single sign-on"
               status={diagnostics.sso.configured ? "ok" : "off"}

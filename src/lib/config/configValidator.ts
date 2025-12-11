@@ -14,6 +14,8 @@ const EnvSchema = z.object({
   SSO_ISSUER_URL: z.string().url().optional(),
   SSO_CLIENT_ID: z.string().min(1).optional(),
   SSO_CLIENT_SECRET: z.string().min(1).optional(),
+  SYSTEM_MODE: z.enum(["pilot", "production", "sandbox", "fire_drill"]).default("pilot"),
+  FIRE_DRILL_IMPACT: z.string().optional(),
   BILLING_PROVIDER_SECRET_KEY: z.string().min(1).optional(),
   BILLING_WEBHOOK_SECRET: z.string().min(1).optional(),
   TENANT_MODE: z.enum(["single", "multi"]).optional(),

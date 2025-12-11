@@ -85,7 +85,12 @@ describe("GET /api/tenant/diagnostics", () => {
   });
 
   it("returns diagnostics when authorized", async () => {
-    const payload = { tenantId: "tenant-a", sso: { configured: true, issuerUrl: "https://sso" } };
+    const payload = {
+      tenantId: "tenant-a",
+      mode: "pilot",
+      fireDrill: { enabled: false, fireDrillImpact: [] },
+      sso: { configured: true, issuerUrl: "https://sso" },
+    };
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-a");
     mockBuildTenantDiagnostics.mockResolvedValue(payload);
@@ -111,7 +116,12 @@ describe("GET /api/tenant/diagnostics", () => {
   });
 
   it("lets global admins bypass tenant membership", async () => {
-    const payload = { tenantId: "tenant-b", sso: { configured: true, issuerUrl: null } };
+    const payload = {
+      tenantId: "tenant-b",
+      mode: "pilot",
+      fireDrill: { enabled: false, fireDrillImpact: [] },
+      sso: { configured: true, issuerUrl: null },
+    };
     mockGetCurrentUser.mockResolvedValue({ id: "sysadmin", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-b");
     mockBuildTenantDiagnostics.mockResolvedValue(payload);

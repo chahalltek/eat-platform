@@ -4,6 +4,8 @@ import { getAppConfig } from "@/lib/config/configValidator";
 import { FEATURE_FLAGS, type FeatureFlagName } from "@/lib/featureFlags/constants";
 import { isFeatureEnabledForTenant } from "@/lib/featureFlags";
 import { getRateLimitDefaults, getRateLimitPlanOverrides, type RateLimitConfig, type RateLimitPlanOverrides } from "@/lib/rateLimiting/rateLimiter";
+import type { SystemMode } from "@/lib/systemMode";
+import { getSystemMode } from "@/lib/systemMode";
 import { getTenantPlan } from "@/lib/subscriptionPlans";
 import { prisma } from "@/lib/prisma";
 import { resolveRetentionPolicy } from "@/lib/retention";
@@ -20,6 +22,8 @@ export type GuardrailsPreset = "conservative" | "balanced" | "aggressive" | "cus
 
 export type TenantDiagnostics = {
   tenantId: string;
+  mode: SystemMode;
+  fireDrill: { enabled: boolean; fireDrillImpact: string[] };
   sso: { configured: boolean; issuerUrl: string | null };
   guardrailsPreset: GuardrailsPreset;
   guardrailsRecommendation: string | null;
@@ -162,10 +166,16 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     throw new TenantNotFoundError(tenantId);
   }
 
+<<<<<<< ours
   const guardrailsPreset = normalizeGuardrailsPreset(plan);
+=======
+  const systemMode = getSystemMode(config);
+>>>>>>> theirs
 
   return {
     tenantId,
+    mode: systemMode.mode,
+    fireDrill: systemMode.fireDrill,
     sso: { configured: isSsoConfigured(config), issuerUrl: config.SSO_ISSUER_URL ?? null },
     guardrailsPreset,
     guardrailsRecommendation: buildGuardrailsRecommendation(guardrailsPreset),
