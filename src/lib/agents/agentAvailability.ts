@@ -2,8 +2,40 @@ import type { AgentFlag as AgentFlagModel } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
+import { loadTenantMode } from '@/lib/modes/loadTenantMode';
 import { prisma } from '@/lib/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
+
+export async function getAgentAvailability(tenantId: string) {
+  const mode = await loadTenantMode(tenantId);
+  const flags = await prisma.agentFlag.findMany({ where: { tenantId } });
+
+  const flagMap = new Map<string, boolean>(flags.map((f) => [f.agentName, f.enabled]));
+
+  function isEnabled(agentName: string): boolean {
+    const modeAllows = mode.agentsEnabled.includes(agentName);
+
+    // Default flag = true if not explicitly stored
+    const flagAllows = flagMap.has(agentName)
+      ? Boolean(flagMap.get(agentName))
+      : true;
+
+    // Fire Drill hard override (extra safety, optional but recommended)
+    if (mode.mode === 'fire_drill') {
+      if (agentName === 'CONFIDENCE' || agentName === 'EXPLAIN') {
+        return false;
+      }
+    }
+
+    return modeAllows && flagAllows;
+  }
+
+  return {
+    isEnabled,
+    mode,
+    flags,
+  };
+}
 
 export const AGENTS = {
   MATCHER: 'ETE-TS.MATCHER',
@@ -78,7 +110,7 @@ export function describeAgent(agentName: AgentName) {
   }
 }
 
-export async function listAgentAvailability(tenantId?: string): Promise<AgentAvailabilityRecord[]> {
+export async function listAgentFlagAvailability(tenantId?: string): Promise<AgentAvailabilityRecord[]> {
   const resolvedTenantId = await resolveTenantId(tenantId);
   const stored = await prisma.agentFlag.findMany({ where: { tenantId: resolvedTenantId } });
   const storedByName = new Map(stored.map((record) => [record.agentName, record]));
@@ -86,14 +118,14 @@ export async function listAgentAvailability(tenantId?: string): Promise<AgentAva
   return allAgentNames().map((agentName) => toRecord(agentName, storedByName.get(agentName)));
 }
 
-export async function getAgentAvailability(agentName: AgentName, tenantId?: string): Promise<AgentAvailabilityRecord> {
+export async function getAgentFlagAvailability(agentName: AgentName, tenantId?: string): Promise<AgentAvailabilityRecord> {
   const resolvedTenantId = await resolveTenantId(tenantId);
   const record = await prisma.agentFlag.findUnique({ where: { tenantId_agentName: { tenantId: resolvedTenantId, agentName } } });
 
   return toRecord(agentName, record);
 }
 
-export async function setAgentAvailability(
+export async function setAgentFlagAvailability(
   agentName: AgentName,
   enabled: boolean,
   tenantId?: string,
@@ -118,14 +150,14 @@ export async function setAgentAvailability(
   return parsed;
 }
 
-export async function isAgentEnabled(agentName: AgentName, tenantId?: string): Promise<boolean> {
-  const record = await getAgentAvailability(agentName, tenantId);
+export async function isAgentFlagEnabled(agentName: AgentName, tenantId?: string): Promise<boolean> {
+  const record = await getAgentFlagAvailability(agentName, tenantId);
 
   return record.enabled;
 }
 
-export async function isAgentDisabled(agentName: AgentName, tenantId?: string): Promise<boolean> {
-  return !(await isAgentEnabled(agentName, tenantId));
+export async function isAgentFlagDisabled(agentName: AgentName, tenantId?: string): Promise<boolean> {
+  return !(await isAgentFlagEnabled(agentName, tenantId));
 }
 
 export class AgentDisabledError extends Error {
@@ -135,21 +167,21 @@ export class AgentDisabledError extends Error {
   }
 }
 
-export async function assertAgentEnabled(agentName: AgentName, tenantId?: string) {
-  const enabled = await isAgentEnabled(agentName, tenantId);
+export async function assertAgentFlagEnabled(agentName: AgentName, tenantId?: string) {
+  const enabled = await isAgentFlagEnabled(agentName, tenantId);
 
   if (!enabled) {
     throw new AgentDisabledError(agentName);
   }
 }
 
-export async function enforceAgentAvailability(agentName: AgentName, tenantId?: string) {
-  const enabled = await isAgentEnabled(agentName, tenantId);
+export async function enforceAgentFlagAvailability(agentName: AgentName, tenantId?: string) {
+  const enabled = await isAgentFlagEnabled(agentName, tenantId);
 
   if (enabled) return null;
 
   const label = describeAgent(agentName);
-  const state = await getAgentAvailability(agentName, tenantId);
+  const state = await getAgentFlagAvailability(agentName, tenantId);
 
   await logKillSwitchBlock({
     switchName: agentName,

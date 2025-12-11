@@ -5,11 +5,11 @@ import {
   AgentDisabledError,
   type AgentName,
   describeAgent,
-  enforceAgentAvailability,
-  getAgentAvailability,
-  listAgentAvailability,
+  enforceAgentFlagAvailability,
+  getAgentFlagAvailability,
+  listAgentFlagAvailability,
   parseAgentName,
-  setAgentAvailability,
+  setAgentFlagAvailability,
 } from './agentAvailability';
 
 export { AGENT_KILL_SWITCHES, parseAgentName };
@@ -39,13 +39,13 @@ export function describeAgentKillSwitch(name: AgentName) {
 }
 
 export async function listAgentKillSwitches(tenantId?: string): Promise<AgentKillSwitchRecord[]> {
-  const flags = await listAgentAvailability(tenantId);
+  const flags = await listAgentFlagAvailability(tenantId);
 
   return flags.map(toKillSwitchRecord);
 }
 
 export async function getAgentKillSwitchState(agentName: AgentName, tenantId?: string): Promise<AgentKillSwitchRecord> {
-  const record = await getAgentAvailability(agentName, tenantId);
+  const record = await getAgentFlagAvailability(agentName, tenantId);
 
   return toKillSwitchRecord(record);
 }
@@ -66,13 +66,13 @@ export async function setAgentKillSwitch(
   _reason?: string | null,
   tenantId?: string,
 ): Promise<AgentKillSwitchRecord> {
-  const updated = await setAgentAvailability(agentName, !latched, tenantId);
+  const updated = await setAgentFlagAvailability(agentName, !latched, tenantId);
 
   return toKillSwitchRecord({ ...updated, agentName });
 }
 
 export async function enforceAgentKillSwitch(agentName: AgentName, tenantId?: string) {
-  const response = await enforceAgentAvailability(agentName, tenantId);
+  const response = await enforceAgentFlagAvailability(agentName, tenantId);
 
   if (!response) return null;
 
