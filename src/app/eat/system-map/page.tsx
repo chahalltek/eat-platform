@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { EATClientLayout } from "@/components/EATClientLayout";
 import { StatusPill } from "@/components/StatusPill";
@@ -96,15 +94,12 @@ export default function SystemMapPage() {
       </section>
 
       <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Blueprint</p>
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Nodes and directional flows</h2>
-          </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Diagram</p>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Blueprint</p>
+          <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Nodes and directional flows</h2>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-4">
           <div className="space-y-4 rounded-2xl border border-indigo-100/60 bg-gradient-to-b from-white to-indigo-50/60 p-4 dark:border-indigo-800/50 dark:from-zinc-900 dark:to-indigo-950/30">
             <div className="space-y-3">
               {flowSequences.map((sequence) => (
@@ -148,27 +143,6 @@ export default function SystemMapPage() {
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="flex flex-col gap-3 rounded-2xl border border-indigo-100/70 bg-white/90 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">Diagram frame</p>
-              <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/50 dark:text-indigo-200 dark:ring-indigo-700/50">
-                Fits to card
-              </span>
-            </div>
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50/40 ring-1 ring-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:ring-indigo-900/70">
-              <Image
-                src="/system-map-diagram.svg"
-                alt="EAT data flow diagram showing intake, normalization, matching, and confidence steps"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              Diagram scales within the card without clipping; use the zoom controls in your browser if you need a closer look.
-            </p>
           </div>
         </div>
       </section>
