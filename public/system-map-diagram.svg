@@ -1,5 +1,5 @@
 <svg width="1440" height="480" viewBox="0 0 1440 480" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">EAT data flow diagram</title>
+  <title id="title">ETE data flow diagram</title>
   <desc id="desc">Pipeline showing intake, profile creation, matching, explain, and QA checkpoints.</desc>
   <defs>
     <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">

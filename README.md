@@ -1,4 +1,4 @@
-This project is a [Next.js](https://nextjs.org) application with CI guardrails baked in for security- and compliance-sensitive features.
+The ETE platform is a [Next.js](https://nextjs.org) application with CI guardrails baked in for security- and compliance-sensitive features.
 
 ## Definition of Done (DoD) enforcement
 

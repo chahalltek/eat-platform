@@ -1,6 +1,6 @@
 # Architecture and Internal References
 
-This folder collects internal guides that document how we build and operate EAT. Use these as entry points when adding new features or patterns.
+This folder collects internal guides that document how we build and operate ETE. Use these as entry points when adding new features or patterns.
 
 - [Database safety](./db-safety.md) — patterns and checklists for safe schema migrations and data changes.
 - [Deployment health](./deployment-health.md) — guidance for monitoring releases and responding to incidents.

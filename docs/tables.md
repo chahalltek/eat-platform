@@ -1,6 +1,6 @@
-# TanStack Table in EAT
+# TanStack Table in ETE
 
-This guide documents how we use [TanStack Table](https://tanstack.com/table) across EAT. It explains the reasoning behind our stack, the EATTable abstraction, and the repeatable steps for creating and testing tables so the approach is sustainable across the organization.
+This guide documents how we use [TanStack Table](https://tanstack.com/table) across ETE. It explains the reasoning behind our stack, the EATTable abstraction, and the repeatable steps for creating and testing tables so the approach is sustainable across the organization.
 
 ## Why TanStack Table
 
