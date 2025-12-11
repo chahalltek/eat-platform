@@ -148,8 +148,17 @@ export async function saveTenantGuardrails(tenantId: string, payload: unknown) {
 
   await prisma.tenantConfig.upsert({
     where: { tenantId },
-    create: { tenantId, guardrails: parsed },
-    update: { guardrails: parsed },
+    create: {
+      tenantId,
+      scoring: parsed.scoring,
+      explain: parsed.explain,
+      safety: parsed.safety,
+    },
+    update: {
+      scoring: parsed.scoring,
+      explain: parsed.explain,
+      safety: parsed.safety,
+    },
   });
 
   return { saved: parsed, created: !existing };
