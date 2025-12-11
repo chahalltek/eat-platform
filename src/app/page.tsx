@@ -169,6 +169,66 @@ function formatStatusText(status: CardState) {
   }
 }
 
+<<<<<<< ours
+=======
+const messageStyles: Record<string, string> = {
+  warning: "text-amber-700 dark:text-amber-200",
+  error: "text-red-700 dark:text-red-200",
+  unknown: "text-zinc-600 dark:text-zinc-400",
+  enabled: "text-blue-700 dark:text-blue-200",
+  healthy: "text-emerald-700 dark:text-emerald-200",
+};
+
+function TelemetryMetric({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: number | null;
+  href?: string | null;
+}) {
+  const displayValue = value == null ? "—" : value.toLocaleString();
+  const isLinkEnabled = href && value !== null && value > 0;
+
+  const content = (
+    <div className="flex w-full items-center justify-between gap-3">
+      <div className="flex flex-col">
+        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">
+          {label}
+        </span>
+        <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{displayValue}</span>
+      </div>
+      {isLinkEnabled ? (
+        <span className="text-xs font-semibold text-indigo-600 transition group-hover:translate-x-0.5 dark:text-indigo-300">
+          View
+        </span>
+      ) : null}
+    </div>
+  );
+
+  const sharedClassName =
+    "group flex h-full flex-1 items-center rounded-2xl border border-indigo-100/70 bg-white/80 px-4 py-3 shadow-sm transition hover:border-indigo-200 hover:bg-white dark:border-indigo-900/50 dark:bg-zinc-900/70 dark:hover:border-indigo-800";
+
+  if (isLinkEnabled) {
+    return (
+      <Link href={href!} className={sharedClassName} title={value == null ? "Telemetry unavailable" : undefined}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      className={`${sharedClassName} ${value == null ? "opacity-70" : ""}`}
+      title={value == null ? "Telemetry unavailable" : undefined}
+    >
+      {content}
+    </div>
+  );
+}
+
+>>>>>>> theirs
 function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
   return [
     {
@@ -501,6 +561,26 @@ export default async function Home() {
 >>>>>>> theirs
         </div>
       </header>
+
+      <section className="rounded-2xl border border-indigo-100/70 bg-white/70 p-4 shadow-sm dark:border-indigo-900/50 dark:bg-zinc-900/70">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+              Telemetry
+            </span>
+            <span className="text-xs text-zinc-600 dark:text-zinc-400">Live activity snapshot</span>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <TelemetryMetric label="Agents online" value={metrics.telemetry.agentsOnline} />
+          <TelemetryMetric label="Agents executed today" value={metrics.telemetry.agentsExecutedToday} />
+          <TelemetryMetric
+            label="Incidents in last 24h"
+            value={metrics.telemetry.incidentsLast24h}
+            href="/agents/runs?status=failed&range=24h"
+          />
+        </div>
+      </section>
 
       <SystemHealthPanel initialStatus={systemStatus} initialExecutionState={executionState} />
 

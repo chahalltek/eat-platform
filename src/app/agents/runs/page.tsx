@@ -135,7 +135,19 @@ function AgentRunHistory({ runs }: { runs: AgentRunTableRow[] }) {
   );
 }
 
-export default async function AgentRunsPage() {
+export default async function AgentRunsPage({
+  searchParams,
+}: {
+  searchParams?: { status?: string; range?: string };
+}) {
+  const statusFilter = searchParams?.status?.toLowerCase();
+  const rangeFilter = searchParams?.range?.toLowerCase();
+  const filterStatus =
+    statusFilter === "failed" || statusFilter === "failure" || statusFilter === "error"
+      ? "FAILED"
+      : null;
+  const startedAfter = rangeFilter === "24h" || rangeFilter === "day" ? new Date(Date.now() - 24 * 60 * 60 * 1000) : null;
+
   const tenantId = await getCurrentTenantId();
 
   const agentUiEnabled = await isEnabled(tenantId, FEATURE_FLAGS.AGENTS_MATCHED_UI_V1);
@@ -153,6 +165,18 @@ export default async function AgentRunsPage() {
     );
   }
 
+  const whereClauses = [Prisma.sql`"tenantId" = ${tenantId}`];
+
+  if (filterStatus) {
+    whereClauses.push(Prisma.sql`status = ${filterStatus}`);
+  }
+
+  if (startedAfter) {
+    whereClauses.push(Prisma.sql`"startedAt" >= ${startedAfter}`);
+  }
+
+  const whereClause = Prisma.join(whereClauses, Prisma.sql` AND `);
+
   const runs = await prisma.$queryRaw<AgentRunRecord[]>(Prisma.sql`
     SELECT
       id,
@@ -164,7 +188,7 @@ export default async function AgentRunsPage() {
       COALESCE(input->>'sourceType', output->>'sourceType') AS "sourceType",
       COALESCE(input->>'sourceTag', output->>'sourceTag') AS "sourceTag"
     FROM "AgentRunLog"
-    WHERE "tenantId" = ${tenantId}
+    WHERE ${whereClause}
     ORDER BY "startedAt" DESC
     LIMIT 50
   `);
@@ -187,6 +211,20 @@ export default async function AgentRunsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Agent Runs</h1>
           <p className="text-sm text-slate-500">Most recent runs for this tenant.</p>
+          {filterStatus || startedAfter ? (
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              {filterStatus ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 font-semibold uppercase tracking-wide text-red-700 ring-1 ring-red-100">
+                  Failed only
+                </span>
+              ) : null}
+              {startedAfter ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-100">
+                  Last 24h
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <BackToConsoleButton />
