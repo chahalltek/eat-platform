@@ -16,6 +16,8 @@ import { WorkflowCard } from "@/components/home/WorkflowCard";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
+type BadgeState = "enabled" | SubsystemState;
+
 type HomeLink = {
   label: string;
   cta: string;
@@ -67,27 +69,6 @@ const dependencyLabels: Record<SubsystemKey, string> = {
   tenantConfig: "Tenant Config",
 };
 
-type CardState = "idle" | "running" | "degraded" | "disabled";
-
-const cardStateStyles: Record<CardState, { rail: string; chip: string }> = {
-  idle: {
-    rail: "bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500",
-    chip: "border-blue-200/80 bg-blue-50 text-blue-800",
-  },
-  running: {
-    rail: "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400",
-    chip: "border-emerald-200/80 bg-emerald-50 text-emerald-800",
-  },
-  degraded: {
-    rail: "bg-gradient-to-r from-red-400 via-rose-500 to-red-500",
-    chip: "border-red-200/80 bg-red-50 text-red-800",
-  },
-  disabled: {
-    rail: "bg-gradient-to-r from-zinc-300 via-zinc-400 to-zinc-300",
-    chip: "border-zinc-200/80 bg-zinc-50 text-zinc-700",
-  },
-};
-
 const dependencyDotStyles: Record<SubsystemState, string> = {
   healthy: "bg-emerald-500",
   warning: "bg-amber-500",
@@ -95,140 +76,30 @@ const dependencyDotStyles: Record<SubsystemState, string> = {
   unknown: "bg-zinc-400",
 };
 
-<<<<<<< ours
-<<<<<<< ours
-const dependencyStatusTextStyles: Record<SubsystemState, string> = {
-  healthy: "text-emerald-700 dark:text-emerald-200",
-  warning: "text-amber-700 dark:text-amber-200",
-  error: "text-red-700 dark:text-red-200",
-  unknown: "text-zinc-600 dark:text-zinc-400",
-};
-
-const stateRailStyles: Record<BadgeState, string> = {
-  enabled: "from-indigo-400 via-blue-400 to-emerald-400 opacity-70",
-  healthy: "from-emerald-400 via-emerald-300 to-green-400 opacity-80",
-  warning: "from-amber-400 via-orange-300 to-amber-500 opacity-80",
-  error: "from-red-500 via-rose-400 to-red-600 opacity-80",
-  unknown: "from-zinc-400 via-slate-400 to-zinc-500 opacity-60",
-=======
-const heartbeatStyles: Record<
-  SystemExecutionState["state"],
-  { badge: string; dot: string; label: "LIVE" | "IDLE" | "DEGRADED" }
-> = {
-  operational: {
-    badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    dot: "bg-emerald-500",
-    label: "LIVE",
-  },
-  idle: {
-    badge: "border-zinc-200 bg-white text-zinc-700",
-    dot: "bg-zinc-400",
-    label: "IDLE",
-  },
-  degraded: {
-    badge: "border-rose-200 bg-rose-50 text-rose-700",
-    dot: "bg-rose-500",
-    label: "DEGRADED",
-  },
->>>>>>> theirs
+const badgeStyles: Record<BadgeState, string> = {
+  enabled: "border-indigo-200/80 bg-white text-indigo-700 dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200",
+  healthy: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200",
+  warning: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200",
+  error: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200",
+  unknown: "border-zinc-200 bg-white text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
 };
 
 function formatStatusText(status: BadgeState) {
-=======
-function getCardState(
-  dependencyState: ReturnType<typeof getDependencyState>,
-  executionState: SystemExecutionState,
-): CardState {
-  if (!dependencyState.isActive) {
-    return "disabled";
-  }
-
-  if (["warning", "error", "unknown"].includes(dependencyState.status)) {
-    return "degraded";
-  }
-
-  if (executionState.state === "operational") {
-    return "running";
-  }
-
-  return "idle";
-}
-
-function formatStatusText(status: CardState) {
->>>>>>> theirs
   switch (status) {
-    case "running":
-      return "Running";
-    case "degraded":
-      return "Degraded";
-    case "disabled":
-      return "Disabled";
-    case "idle":
+    case "healthy":
+      return "Healthy";
+    case "warning":
+      return "Waiting";
+    case "error":
+      return "Fault";
+    case "unknown":
+      return "Status unavailable";
+    case "enabled":
     default:
-      return "Idle";
+      return "Enabled";
   }
 }
 
-<<<<<<< ours
-=======
-const messageStyles: Record<string, string> = {
-  warning: "text-amber-700 dark:text-amber-200",
-  error: "text-red-700 dark:text-red-200",
-  unknown: "text-zinc-600 dark:text-zinc-400",
-  enabled: "text-blue-700 dark:text-blue-200",
-  healthy: "text-emerald-700 dark:text-emerald-200",
-};
-
-function TelemetryMetric({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: number | null;
-  href?: string | null;
-}) {
-  const displayValue = value == null ? "—" : value.toLocaleString();
-  const isLinkEnabled = href && value !== null && value > 0;
-
-  const content = (
-    <div className="flex w-full items-center justify-between gap-3">
-      <div className="flex flex-col">
-        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">
-          {label}
-        </span>
-        <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{displayValue}</span>
-      </div>
-      {isLinkEnabled ? (
-        <span className="text-xs font-semibold text-indigo-600 transition group-hover:translate-x-0.5 dark:text-indigo-300">
-          View
-        </span>
-      ) : null}
-    </div>
-  );
-
-  const sharedClassName =
-    "group flex h-full flex-1 items-center rounded-2xl border border-indigo-100/70 bg-white/80 px-4 py-3 shadow-sm transition hover:border-indigo-200 hover:bg-white dark:border-indigo-900/50 dark:bg-zinc-900/70 dark:hover:border-indigo-800";
-
-  if (isLinkEnabled) {
-    return (
-      <Link href={href!} className={sharedClassName} title={value == null ? "Telemetry unavailable" : undefined}>
-        {content}
-      </Link>
-    );
-  }
-
-  return (
-    <div
-      className={`${sharedClassName} ${value == null ? "opacity-70" : ""}`}
-      title={value == null ? "Telemetry unavailable" : undefined}
-    >
-      {content}
-    </div>
-  );
-}
-
->>>>>>> theirs
 function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
   return [
     {
@@ -356,6 +227,55 @@ function formatDependencyStatus(status: SubsystemState) {
   }
 }
 
+function TelemetryMetric({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: number | null;
+  href?: string | null;
+}) {
+  const displayValue = value == null ? "—" : value.toLocaleString();
+  const isLinkEnabled = href && value !== null && value > 0;
+
+  const content = (
+    <div className="flex w-full items-center justify-between gap-3">
+      <div className="flex flex-col">
+        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">
+          {label}
+        </span>
+        <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{displayValue}</span>
+      </div>
+      {isLinkEnabled ? (
+        <span className="text-xs font-semibold text-indigo-600 transition group-hover:translate-x-0.5 dark:text-indigo-300">
+          View
+        </span>
+      ) : null}
+    </div>
+  );
+
+  const sharedClassName =
+    "group flex h-full flex-1 items-center rounded-2xl border border-indigo-100/70 bg-white/80 px-4 py-3 shadow-sm transition hover:border-indigo-200 hover:bg-white dark:border-indigo-900/50 dark:bg-zinc-900/70 dark:hover:border-indigo-800";
+
+  if (isLinkEnabled) {
+    return (
+      <Link href={href!} className={sharedClassName} title={value == null ? "Telemetry unavailable" : undefined}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      className={`${sharedClassName} ${value == null ? "opacity-70" : ""}`}
+      title={value == null ? "Telemetry unavailable" : undefined}
+    >
+      {content}
+    </div>
+  );
+}
+
 export default async function Home() {
   const [uiEnabled, systemStatus, executionState, metrics] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
@@ -367,15 +287,10 @@ export default async function Home() {
   const links = buildLinks(metrics);
   const coreLinks = links.slice(0, 3);
   const dataLinks = links.slice(3);
-  const heartbeat = heartbeatStyles[executionState.state];
+  
 
   const renderLinkCard = (link: HomeLink) => {
     const dependencyState = getDependencyState(link, systemStatus);
-<<<<<<< ours
-<<<<<<< ours
-    const badgeState = dependencyState.status;
-<<<<<<< ours
-=======
     const isExecutionHistory = link.label === "Execution history";
     const runsLast7d = link.executionSummary?.runsLast7d ?? 0;
     const hasRuns = runsLast7d > 0;
@@ -383,72 +298,20 @@ export default async function Home() {
     const failuresLast7d = link.executionSummary?.failedRunsLast7d ?? 0;
     const hasFailures = failuresLast7d > 0;
     const badgeState: BadgeState = isExecutionHistory && hasFailures ? "error" : dependencyState.status;
->>>>>>> theirs
-    const isActive = dependencyState.isActive;
-    const dependencyMessage =
-      dependencyState.message ?? `${link.label} depends on ${dependencyLabels[link.dependency?.subsystem ?? "agents"]}`;
-    const railState = (link.dependency
-      ? dependencyState.dependencyStatus ?? "unknown"
-      : badgeState) as BadgeState;
-=======
-    const cardState = getCardState(dependencyState, executionState);
-    const isActive = cardState !== "disabled";
->>>>>>> theirs
-
-    const descriptionText = isExecutionHistory
-      ? hasFailures
-        ? "Execution warnings surfaced from recent failures."
-        : hasRuns
-          ? "Recent execution activity from the last week."
-          : "System idle — no executions detected in the last 7 days."
-      : link.description ?? `${link.label} workflow`;
-=======
->>>>>>> theirs
 
     return (
       <WorkflowCard
         key={link.href}
-<<<<<<< ours
-        href={link.href}
-        className={`group relative overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm ring-1 ring-transparent transition backdrop-blur dark:border-indigo-900/40 dark:bg-zinc-900/80 ${
-          isActive
-            ? "cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:ring-indigo-200 dark:hover:ring-indigo-800"
-            : "cursor-not-allowed pointer-events-none opacity-60"
-        }`}
-        aria-disabled={!isActive}
-        tabIndex={isActive ? 0 : -1}
+        link={link}
+        badgeState={badgeState}
+        dependencyState={dependencyState}
+        badgeStyles={badgeStyles}
+        dependencyLabels={dependencyLabels}
+        dependencyDotStyles={dependencyDotStyles}
+        formatStatusText={formatStatusText}
+        formatDependencyStatus={formatDependencyStatus}
       >
-        <div
-<<<<<<< ours
-<<<<<<< ours
-          className={`absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r ${stateRailStyles[railState]}`}
-=======
-          className={`absolute inset-x-6 top-0 h-1 rounded-full opacity-80 ${cardStateStyles[cardState].rail}`}
->>>>>>> theirs
-=======
-          className={`absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r opacity-70 ${
-            isExecutionHistory && hasFailures
-              ? "from-rose-500 via-rose-400 to-amber-400"
-              : "from-indigo-400 via-blue-400 to-emerald-400"
-          }`}
->>>>>>> theirs
-          aria-hidden
-        />
-
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-500 dark:text-indigo-300">Workflow</p>
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{link.label}</h2>
-            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              {descriptionText}
-            </p>
-          </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm ${cardStateStyles[cardState].chip}`}>
-            {formatStatusText(cardState)}
-          </span>
-        </div>
-
-        {isExecutionHistory ? (
+          {isExecutionHistory && (
           <div className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
             <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
               {hasRuns
@@ -462,63 +325,8 @@ export default async function Home() {
               <p className="text-xs font-semibold text-rose-700 dark:text-rose-400">Recent failures detected. Inspect execution logs.</p>
             ) : null}
           </div>
-        ) : link.stats ? (
-          <dl className="mt-4 grid gap-2 sm:grid-cols-2">
-            {link.stats.map((stat) => (
-              <div key={stat.label} className="flex flex-col rounded-xl border border-indigo-100/80 bg-indigo-50/40 px-3 py-2 dark:border-indigo-900/30 dark:bg-indigo-950/30">
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-200">{stat.label}</dt>
-                <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{stat.value}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-
-        <div className="mt-5 flex items-center justify-between gap-3">
-          {link.dependency ? (
-            <div className={`inline-flex flex-col gap-1 rounded-2xl border px-3 py-2 text-sm shadow-sm ${dependencyStatusStyles[dependencyState.dependencyStatus ?? "unknown"]}`}>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-200">LINKED SUBSYSTEM</span>
-              <div className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-zinc-100">
-                <span className={`h-2.5 w-2.5 rounded-full ${dependencyDotStyles[dependencyState.dependencyStatus ?? "unknown"]}`} aria-hidden />
-                <span>{dependencyState.dependencyLabel ?? dependencyLabels[link.dependency.subsystem]}</span>
-                <span className={`text-xs font-semibold ${dependencyStatusTextStyles[dependencyState.dependencyStatus ?? "unknown"]}`}>
-                  · {formatDependencyStatus(dependencyState.dependencyStatus ?? "unknown")}
-                </span>
-              </div>
-              <p className="text-xs font-medium text-zinc-700 dark:text-zinc-200/80">{dependencyMessage}</p>
-            </div>
-          ) : (
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">LINKED SUBSYSTEM</div>
-          )}
-
-          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition group-hover:bg-indigo-700">
-            <span>{link.cta}</span>
-            <svg
-              aria-hidden
-              className="h-4 w-4 transition group-hover:translate-x-0.5"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M5 12h14" />
-              <path d="m13 6 6 6-6 6" />
-            </svg>
-          </div>
-        </div>
-      </Link>
-=======
-        link={link}
-        badgeState={badgeState}
-        dependencyState={dependencyState}
-        badgeStyles={badgeStyles}
-        dependencyLabels={dependencyLabels}
-        dependencyDotStyles={dependencyDotStyles}
-        formatStatusText={formatStatusText}
-        formatDependencyStatus={formatDependencyStatus}
-      />
->>>>>>> theirs
+         )}
+      </WorkflowCard>
     );
   };
 
@@ -531,24 +339,6 @@ export default async function Home() {
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">EAT</p>
               <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">EAT – Talent System (MVP)</h1>
             </div>
-<<<<<<< ours
-            <div className="flex items-center gap-2 self-start">
-              <div
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] shadow-sm ${heartbeat.badge}`}
-                title={`Current system state: ${heartbeat.label}`}
-                aria-label={`Current system state: ${heartbeat.label}`}
-              >
-                <span className={`h-2 w-2 rounded-full ${heartbeat.dot}`} aria-hidden />
-                <span>{heartbeat.label}</span>
-              </div>
-              <Link
-                href="/system-map"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg"
-              >
-                System Map
-              </Link>
-            </div>
-=======
             <Link
               href="/system-map"
               title="View agents, data flows, and dependencies"
@@ -557,7 +347,6 @@ export default async function Home() {
               <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" aria-hidden />
               System Map
             </Link>
->>>>>>> theirs
           </div>
           <p className="max-w-2xl text-base leading-relaxed text-zinc-600">
             <span className="block">Real-time orchestration for intelligent hiring systems.</span>
@@ -591,24 +380,6 @@ export default async function Home() {
               <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Data + Controls</span>
             </div>
           </div>
-<<<<<<< ours
-          <div className="flex items-center gap-3 self-start">
-            <div
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] shadow-sm ${heartbeat.badge}`}
-              title={`Current system state: ${heartbeat.label}`}
-              aria-label={`Current system state: ${heartbeat.label}`}
-            >
-              <span className={`h-2 w-2 rounded-full ${heartbeat.dot}`} aria-hidden />
-              <span>{heartbeat.label}</span>
-            </div>
-            <Link
-              href="/system-map"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200 dark:hover:border-indigo-700"
-            >
-              System Map
-            </Link>
-          </div>
-=======
           <Link
             href="/system-map"
             title="View agents, data flows, and dependencies"
@@ -617,7 +388,6 @@ export default async function Home() {
             <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" aria-hidden />
             <span className="text-[13px] uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">System Map</span>
           </Link>
->>>>>>> theirs
         </div>
       </header>
 

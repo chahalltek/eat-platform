@@ -30,12 +30,9 @@ export async function GET() {
           latestRunAt: null,
           latestSuccessAt: null,
           latestFailureAt: null,
-<<<<<<< ours
           runsToday: 0,
-=======
           latestFailureAgentName: null,
           failureCountLast24h: 0,
->>>>>>> theirs
         },
       },
       { status: 200 },
