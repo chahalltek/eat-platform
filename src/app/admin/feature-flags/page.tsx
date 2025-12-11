@@ -74,6 +74,24 @@ export default async function FeatureFlagsPage() {
           </div>
         </EATCard>
 
+        <EATCard className="gap-4 border-emerald-100 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-zinc-900">EAT – Talent System (MVP) Test Plan</h2>
+              <p className="text-sm text-zinc-600">
+                Interactive checklist for validating the EAT MVP before release. Track charter items and detailed coverage.
+              </p>
+            </div>
+
+            <Link
+              href="/admin/eat/test-plan"
+              className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-500"
+            >
+              Open MVP test plan
+            </Link>
+          </div>
+        </EATCard>
+
         <FeatureFlagsPanel
           initialFlags={flags.map((flag) => ({
             ...flag,

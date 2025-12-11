@@ -463,3 +463,17 @@ model CoverageReport {
 
   @@index([branch, createdAt])
 }
+
+model EatTestPlanStatus {
+  id        String   @id @default(cuid())
+  tenantId  String   @default("default-tenant")
+  itemId    String
+  status    String
+  note      String?
+  updatedBy String
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, itemId])
+  @@index([tenantId])
+  @@index([tenantId, itemId])
+}

@@ -43,6 +43,7 @@ const TENANTED_MODELS = new Set([
   'JobCandidate',
   'TenantSubscription',
   'SecurityEventLog',
+  'EatTestPlanStatus',
 ]);
 
 function withTenantWhere(where: Record<string, any> | undefined, tenantId: string) {
