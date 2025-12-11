@@ -87,7 +87,6 @@ model TenantConfig {
   id        String   @id @default(cuid())
   tenantId  String   @unique
   preset    String?
-  preset    String?
   scoring   Json
   explain   Json
   safety    Json
@@ -164,7 +163,6 @@ model FeatureFlag {
 }
 
 model SystemMode {
-model AgentFlag {
   id        String   @id @default(cuid())
   tenantId  String   @unique
   mode      String
