@@ -21,6 +21,11 @@ type HomeLink = {
   href: string;
   description?: string;
   stats?: { label: string; value: string }[];
+  executionSummary?: {
+    runsLast7d: number | null;
+    lastRunAt: string | null;
+    failedRunsLast7d: number | null;
+  };
   dependency?: {
     subsystem: SubsystemKey;
     allowWhenDataPresent?: boolean;
@@ -48,9 +53,10 @@ function formatCandidateCount(value: number | null) {
   return value.toLocaleString();
 }
 
-function formatAgentRuns(value: number | null) {
-  if (value == null || value === 0) return "No agent runs";
-  return `${value.toLocaleString()} runs`;
+function formatExecutionTimestamp(value: string | null) {
+  if (!value) return "Not yet recorded";
+  const date = new Date(value);
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 const dependencyLabels: Record<SubsystemKey, string> = {
@@ -250,7 +256,11 @@ function buildLinks(metrics: HomeCardMetrics): HomeLink[] {
       cta: "Trace executions",
       href: "/agents/runs",
       description: "Latest agent runs",
-      stats: [{ label: "Agent runs in last 7 days", value: formatAgentRuns(metrics.agentRunsLast7d) }],
+      executionSummary: {
+        runsLast7d: metrics.agentRunsLast7d,
+        lastRunAt: metrics.lastAgentRunAt,
+        failedRunsLast7d: metrics.failedAgentRunsLast7d,
+      },
       dependency: {
         subsystem: "agents",
         flow: { source: "Execution History", target: "Agents" },
@@ -368,7 +378,17 @@ export default async function Home() {
   const renderLinkCard = (link: HomeLink) => {
     const dependencyState = getDependencyState(link, systemStatus);
 <<<<<<< ours
+<<<<<<< ours
     const badgeState = dependencyState.status;
+=======
+    const isExecutionHistory = link.label === "Execution history";
+    const runsLast7d = link.executionSummary?.runsLast7d ?? 0;
+    const hasRuns = runsLast7d > 0;
+    const lastRunAt = link.executionSummary?.lastRunAt ?? null;
+    const failuresLast7d = link.executionSummary?.failedRunsLast7d ?? 0;
+    const hasFailures = failuresLast7d > 0;
+    const badgeState: BadgeState = isExecutionHistory && hasFailures ? "error" : dependencyState.status;
+>>>>>>> theirs
     const isActive = dependencyState.isActive;
     const dependencyMessage =
       dependencyState.message ?? `${link.label} depends on ${dependencyLabels[link.dependency?.subsystem ?? "agents"]}`;
@@ -379,6 +399,14 @@ export default async function Home() {
     const cardState = getCardState(dependencyState, executionState);
     const isActive = cardState !== "disabled";
 >>>>>>> theirs
+
+    const descriptionText = isExecutionHistory
+      ? hasFailures
+        ? "Execution warnings surfaced from recent failures."
+        : hasRuns
+          ? "Recent execution activity from the last week."
+          : "System idle — no executions detected in the last 7 days."
+      : link.description ?? `${link.label} workflow`;
 
     return (
       <Link
@@ -394,9 +422,17 @@ export default async function Home() {
       >
         <div
 <<<<<<< ours
+<<<<<<< ours
           className={`absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r ${stateRailStyles[railState]}`}
 =======
           className={`absolute inset-x-6 top-0 h-1 rounded-full opacity-80 ${cardStateStyles[cardState].rail}`}
+>>>>>>> theirs
+=======
+          className={`absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r opacity-70 ${
+            isExecutionHistory && hasFailures
+              ? "from-rose-500 via-rose-400 to-amber-400"
+              : "from-indigo-400 via-blue-400 to-emerald-400"
+          }`}
 >>>>>>> theirs
           aria-hidden
         />
@@ -406,7 +442,7 @@ export default async function Home() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-500 dark:text-indigo-300">Workflow</p>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{link.label}</h2>
             <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              {link.description ?? `${link.label} workflow`}
+              {descriptionText}
             </p>
           </div>
           <span className={`rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm ${cardStateStyles[cardState].chip}`}>
@@ -414,7 +450,21 @@ export default async function Home() {
           </span>
         </div>
 
-        {link.stats ? (
+        {isExecutionHistory ? (
+          <div className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+              {hasRuns
+                ? `Runs in last 7 days: ${runsLast7d.toLocaleString()}`
+                : "System idle — no executions detected in the last 7 days."}
+            </p>
+            {hasRuns ? (
+              <p className="text-xs text-slate-600 dark:text-zinc-400">Last run: {formatExecutionTimestamp(lastRunAt)}</p>
+            ) : null}
+            {hasFailures ? (
+              <p className="text-xs font-semibold text-rose-700 dark:text-rose-400">Recent failures detected. Inspect execution logs.</p>
+            ) : null}
+          </div>
+        ) : link.stats ? (
           <dl className="mt-4 grid gap-2 sm:grid-cols-2">
             {link.stats.map((stat) => (
               <div key={stat.label} className="flex flex-col rounded-xl border border-indigo-100/80 bg-indigo-50/40 px-3 py-2 dark:border-indigo-900/30 dark:bg-indigo-950/30">

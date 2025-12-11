@@ -15,7 +15,12 @@ export type HomeCardMetrics = {
   totalCandidates: number | null;
   testContentRoles: number | null;
   agentRunsLast7d: number | null;
+<<<<<<< ours
   telemetry: HomeTelemetryMetrics;
+=======
+  lastAgentRunAt: string | null;
+  failedAgentRunsLast7d: number | null;
+>>>>>>> theirs
 };
 
 export async function getHomeCardMetrics(): Promise<HomeCardMetrics> {
@@ -37,14 +42,20 @@ export async function getHomeCardMetrics(): Promise<HomeCardMetrics> {
       totalCandidates,
       testContentRoles,
       agentRunsLast7d,
+<<<<<<< ours
       agentsExecutedToday,
       incidentsLast24h,
       killSwitches,
+=======
+      latestRun,
+      failedAgentRunsLast7d,
+>>>>>>> theirs
     ] = await Promise.all([
       prisma.jobReq.count({ where: { tenantId } }),
       prisma.candidate.count({ where: { tenantId } }),
       prisma.jobReq.count({ where: { tenantId, sourceType: "Test Content" } }),
       prisma.agentRunLog.count({ where: { tenantId, startedAt: { gte: oneWeekAgo } } }),
+<<<<<<< ours
       prisma.agentRunLog.count({ where: { tenantId, startedAt: { gte: startOfToday } } }),
       prisma.agentRunLog.count({
         where: { tenantId, status: AgentRunStatus.FAILED, startedAt: { gte: oneDayAgo } },
@@ -54,12 +65,29 @@ export async function getHomeCardMetrics(): Promise<HomeCardMetrics> {
 
     const agentsOnline = killSwitches.filter((agent) => !agent.latched).length;
 
+=======
+      prisma.agentRunLog.findFirst({
+        where: { tenantId, startedAt: { gte: oneWeekAgo } },
+        select: { startedAt: true },
+        orderBy: { startedAt: "desc" },
+      }),
+      prisma.agentRunLog.count({
+        where: { tenantId, startedAt: { gte: oneWeekAgo }, status: "FAILED" },
+      }),
+    ]);
+
+>>>>>>> theirs
     return {
       totalJobs,
       totalCandidates,
       testContentRoles,
       agentRunsLast7d,
+<<<<<<< ours
       telemetry: { agentsOnline, agentsExecutedToday, incidentsLast24h },
+=======
+      lastAgentRunAt: latestRun?.startedAt?.toISOString() ?? null,
+      failedAgentRunsLast7d,
+>>>>>>> theirs
     };
   } catch (error) {
     console.error("[Home] Failed to load card metrics", error);
@@ -68,7 +96,12 @@ export async function getHomeCardMetrics(): Promise<HomeCardMetrics> {
       totalCandidates: null,
       testContentRoles: null,
       agentRunsLast7d: null,
+<<<<<<< ours
       telemetry: { agentsOnline: null, agentsExecutedToday: null, incidentsLast24h: null },
+=======
+      lastAgentRunAt: null,
+      failedAgentRunsLast7d: null,
+>>>>>>> theirs
     };
   }
 }
