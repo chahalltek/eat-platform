@@ -1,6 +1,14 @@
 # TanStack Table in ETE
 
+<<<<<<< ours
+<<<<<<< ours
 This guide documents how we use [TanStack Table](https://tanstack.com/table) across ETE. It explains the reasoning behind our stack, the EATTable abstraction, and the repeatable steps for creating and testing tables so the approach is sustainable across the organization.
+=======
+This guide documents how we use [TanStack Table](https://tanstack.com/table) across ETE. It explains the reasoning behind our stack, the ETETable abstraction, and the repeatable steps for creating and testing tables so the approach is sustainable across the organization.
+>>>>>>> theirs
+=======
+This guide documents how we use [TanStack Table](https://tanstack.com/table) across ETE. It explains the reasoning behind our stack, the ETETable abstraction, and the repeatable steps for creating and testing tables so the approach is sustainable across the organization.
+>>>>>>> theirs
 
 ## Why TanStack Table
 
@@ -8,12 +16,12 @@ This guide documents how we use [TanStack Table](https://tanstack.com/table) acr
 - **Full control.** We own table rendering and behaviors, so product teams can ship bespoke experiences (toolbars, row actions, badges) without fighting default UI constraints.
 - **Reusable foundations.** Shared helpers (column factories, style presets, toolbar slots) keep tables consistent while still allowing feature-level flexibility.
 
-## The EATTable abstraction
+## The ETETable abstraction
 
-`EATTable` is a thin wrapper over `useReactTable` that centralizes common setup (state wiring, style presets) while keeping rendering customizable via a render-prop.
+`ETETable` is a thin wrapper over `useReactTable` that centralizes common setup (state wiring, style presets) while keeping rendering customizable via a render-prop.
 
-- `useEATTable` wires TanStack state, memoizes data/columns, and exposes sorting, filtering, pagination, and style presets. 【F:src/components/table/EATTable.tsx†L43-L112】
-- `EATTable` renders children with that context so callers can decide the markup. 【F:src/components/table/EATTable.tsx†L114-L119】
+- `useETETable` wires TanStack state, memoizes data/columns, and exposes sorting, filtering, pagination, and style presets. 【F:src/components/table/ETETable.tsx†L43-L112】
+- `ETETable` renders children with that context so callers can decide the markup. 【F:src/components/table/ETETable.tsx†L114-L119】
 - `StandardTable` is the primary consumer: it renders headers, rows, and empty states using the provided columns, style variant, and optional toolbar slot. Prefer it unless you need fully custom structure. 【F:src/components/table/StandardTable.tsx†L15-L96】
 - Column helper factories (`createTextColumn`, `createNumberColumn`, `createStatusBadgeColumn`) generate strongly typed column definitions with common defaults. 【F:src/components/table/tableTypes.tsx†L18-L71】
 
@@ -33,14 +41,14 @@ export type CandidateRow = {
 2) **Define columns via helpers.** Use the factories in `tableTypes.tsx` to enable sorting and formatting by default, and add custom `cell` renderers when needed.
 
 ```ts
-const columns: EATTableColumn<CandidateRow>[] = [
+const columns: ETETableColumn<CandidateRow>[] = [
   createTextColumn({ accessorKey: "name", header: "Name" }),
   createStatusBadgeColumn({ accessorKey: "status", header: "Status" }),
   createNumberColumn({ accessorKey: "score", header: "Score", sortable: true, formatValue: (value) => `${value}%` }),
 ];
 ```
 
-3) **Render with `StandardTable` or `EATTable`.** Use `StandardTable` for the common case (built-in header, row styles, empty state). Drop down to `EATTable` if you need fully custom markup.
+3) **Render with `StandardTable` or `ETETable`.** Use `StandardTable` for the common case (built-in header, row styles, empty state). Drop down to `ETETable` if you need fully custom markup.
 
 ```tsx
 <StandardTable
@@ -73,7 +81,7 @@ const columns: EATTableColumn<CandidateRow>[] = [
 />
 ```
 
-5) **Add tests using the table harness.** The table harness exposes helpers for rendering `EATTable` with mock data and asserting sorting/filtering behaviors.
+5) **Add tests using the table harness.** The table harness exposes helpers for rendering `ETETable` with mock data and asserting sorting/filtering behaviors.
 
 - `renderTableHarness` renders a lightweight table and returns the underlying `table` plus helpers such as `expectSortedBy` and `expectFilteredRows`. 【F:src/components/table/testing/tableHarness.tsx†L55-L115】
 - Swap in custom columns or filters via the harness options to cover feature-specific logic.
@@ -96,11 +104,11 @@ expectSortedBy("age", "desc");
 - ✅ **Do** define a typed row model and reuse `createTextColumn`/`createNumberColumn`/`createStatusBadgeColumn` to keep sorting and formatting consistent.
 - ✅ **Do** memoize column definitions inside components (e.g., `useMemo`) to avoid unnecessary re-renders and to keep referential equality. 【F:src/app/candidates/CandidateTable.tsx†L27-L108】
 - ✅ **Do** use `StandardTable` for typical list/detail tables; it already wires `flexRender`, styles, empty states, and toolbar placement. 【F:src/components/table/StandardTable.tsx†L29-L96】
-- ❌ **Don’t** bypass `EATTable` state management by rolling your own `useReactTable` setup unless you have a strong reason; shared behavior (filtering, pagination wiring, style presets) will be lost. 【F:src/components/table/EATTable.tsx†L43-L112】
+- ❌ **Don’t** bypass `ETETable` state management by rolling your own `useReactTable` setup unless you have a strong reason; shared behavior (filtering, pagination wiring, style presets) will be lost. 【F:src/components/table/ETETable.tsx†L43-L112】
 - ❌ **Don’t** inline untyped column objects when helper factories cover the same case—prefer helpers to keep headers, sorting flags, and cell formatting aligned. 【F:src/components/table/tableTypes.tsx†L18-L71】
 
 ## References
 
 - Example implementations: `src/app/candidates/CandidateTable.tsx`, `src/app/jobs/JobTable.tsx`, `src/app/agents/runs/AgentRunsTable.tsx`.
-- Core API surface: `src/components/table/EATTable.tsx`, `src/components/table/StandardTable.tsx`, `src/components/table/tableTypes.tsx`.
+- Core API surface: `src/components/table/ETETable.tsx`, `src/components/table/StandardTable.tsx`, `src/components/table/tableTypes.tsx`.
 - Testing utilities: `src/components/table/testing/tableHarness.tsx`.

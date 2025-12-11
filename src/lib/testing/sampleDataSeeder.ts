@@ -41,7 +41,7 @@ const SAMPLE_JOB: SampleJob = {
   location: "Remote",
   employmentType: "Full-time",
   seniorityLevel: "mid",
-  rawDescription: "Develop and ship resilient backend services for the EAT test harness.",
+  rawDescription: "Develop and ship resilient backend services for the ETE test harness.",
   status: "Open",
   skills: [
     { name: "TypeScript", normalizedName: "typescript", required: true, weight: 2 },

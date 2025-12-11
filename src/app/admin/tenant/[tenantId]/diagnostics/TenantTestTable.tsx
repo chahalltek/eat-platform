@@ -264,7 +264,7 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
       return { text: seedMessage, className: "text-emerald-700" } as const;
     }
 
-    return { text: "Seeds a sample job and three candidates for EAT tests.", className: "text-zinc-500" } as const;
+    return { text: "Seeds a sample job and three candidates for ETE tests.", className: "text-zinc-500" } as const;
   }, [seedError, seedMessage]);
 
   return (

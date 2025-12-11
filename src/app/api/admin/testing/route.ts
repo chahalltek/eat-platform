@@ -75,7 +75,7 @@ function verifyEnvAndConfig(tenant?: string) {
 
   if (missingEnv.length === 0 && missingConfig.length === 0) {
     const tenantLabel = tenant ? ` for tenant ${tenant}` : "";
-    return `EAT pipeline configuration ready${tenantLabel}`;
+    return `ETE pipeline configuration ready${tenantLabel}`;
   }
 
   const problems = [] as string[];
@@ -85,7 +85,7 @@ function verifyEnvAndConfig(tenant?: string) {
   }
 
   if (missingConfig.length > 0) {
-    problems.push(`Missing EAT config fields: ${missingConfig.join(", ")}`);
+    problems.push(`Missing ETE config fields: ${missingConfig.join(", ")}`);
   }
 
   throw new Error(problems.join("; "));

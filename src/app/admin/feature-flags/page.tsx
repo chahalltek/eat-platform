@@ -61,7 +61,7 @@ export default async function FeatureFlagsPage() {
             <div className="space-y-2">
               <h2 className="text-lg font-semibold text-zinc-900">Test &amp; diagnostics</h2>
               <p className="text-sm text-zinc-600">
-                Run quick checks on EAT agents, data, and scoring for this tenant.
+                Run quick checks on ETE agents, data, and scoring for this tenant.
               </p>
             </div>
 
@@ -77,9 +77,9 @@ export default async function FeatureFlagsPage() {
         <EATCard className="gap-4 border-emerald-100 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-zinc-900">EAT – Talent System (MVP) Test Plan</h2>
+              <h2 className="text-lg font-semibold text-zinc-900">ETE – Talent System (MVP) Test Plan</h2>
               <p className="text-sm text-zinc-600">
-                Interactive checklist for validating the EAT MVP before release. Track charter items and detailed coverage.
+                Interactive checklist for validating the ETE MVP before release. Track charter items and detailed coverage.
               </p>
             </div>
 
