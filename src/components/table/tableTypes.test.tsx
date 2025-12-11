@@ -1,5 +1,6 @@
 import { describe, expect, it, expectTypeOf } from "vitest";
 import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { MockTableRow } from "./testing/tableHarness";
 import { ETETableColumn, StatusVariant, createNumberColumn, createStatusBadgeColumn, createTextColumn } from "./tableTypes";
 
@@ -80,10 +81,10 @@ describe("tableTypes helpers", () => {
     expect(column.enableSorting).toBe(false);
 
     const rendered = column.cell?.({ getValue: () => "active" } as any) as JSX.Element;
+    const markup = renderToStaticMarkup(rendered);
 
-    expect(rendered.type).toBe("span");
-    expect(rendered.props.className).toContain("rounded-full");
-    expect(rendered.props.children).toBe("active");
+    expect(markup).toContain("rounded-full");
+    expect(markup).toContain(">active<");
   });
 
   it("applies formatting and variant mapping for status badges", () => {
@@ -102,18 +103,20 @@ describe("tableTypes helpers", () => {
     expect(column.enableSorting).toBe(true);
 
     const rendered = column.cell?.({ getValue: () => "inactive" } as any) as JSX.Element;
+    const markup = renderToStaticMarkup(rendered);
 
-    expect(rendered.props.className.includes("bg-red-100")).toBe(true);
-    expect(rendered.props.children).toBe("INACTIVE STATUS");
+    expect(markup.includes("bg-red-100")).toBe(true);
+    expect(markup).toContain(">INACTIVE STATUS<");
   });
 
   it("falls back to a neutral badge variant and default label when no helpers are provided", () => {
     const column = createStatusBadgeColumn<MockTableRow>({ accessorKey: "status", header: "Status" });
 
     const rendered = column.cell?.({ getValue: () => null } as any) as JSX.Element;
+    const markup = renderToStaticMarkup(rendered);
 
-    expect(rendered.props.className.includes("bg-gray-100")).toBe(true);
-    expect(rendered.props.children).toBe("");
+    expect(markup.includes("bg-gray-100")).toBe(true);
+    expect(markup).toContain("><");
   });
 
   it("enforces correct accessor keys and headers at compile time", () => {

@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { describe, expect, it } from "vitest";
+import "@testing-library/jest-dom/vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { CandidateTable, type CandidateRow } from "./CandidateTable";
@@ -54,15 +55,27 @@ function getRenderedNames() {
 }
 
 describe("CandidateTable", () => {
+  beforeAll(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockReturnValue({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }),
+    });
+  });
+
   it("renders candidate data with expected columns", () => {
     render(<CandidateTable candidates={candidates} />);
 
-    expect(screen.getByRole("columnheader", { name: /candidate/i })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: /primary role/i })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: /location/i })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: /status/i })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: /score/i })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: /last updated/i })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: /candidate/i })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /primary role/i })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /location/i })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /status/i })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /score/i })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /last updated/i })).toBeInTheDocument();
 
     const rows = screen.getAllByRole("row");
     expect(rows).toHaveLength(candidates.length + 1);

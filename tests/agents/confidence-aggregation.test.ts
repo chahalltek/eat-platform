@@ -63,19 +63,18 @@ describe("CONFIDENCE agent aggregation", () => {
   it("assigns a high confidence band when all signals are strong", () => {
     const result = computeCandidateConfidenceScore({ candidate: strongCandidate });
 
-    expect(result.score).toBeGreaterThanOrEqual(85);
+    expect(result.score).toBe(93);
     expect(categorizeConfidence(result.score)).toBe("High");
     expect(result.breakdown.resumeCompleteness.score).toBe(100);
-    expect(result.breakdown.skillCoverage.score).toBeGreaterThan(70);
-    expect(result.breakdown.agentAgreement.score).toBeGreaterThan(90);
+    expect(result.breakdown.skillCoverage.score).toBe(75);
+    expect(result.breakdown.agentAgreement.score).toBe(95);
     expect(result.breakdown.unknownFields.score).toBe(100);
   });
 
   it("returns a medium confidence band when signals are mixed", () => {
     const result = computeCandidateConfidenceScore({ candidate: mixedSignalsCandidate });
 
-    expect(result.score).toBeGreaterThanOrEqual(60);
-    expect(result.score).toBeLessThan(80);
+    expect(result.score).toBe(66);
     expect(categorizeConfidence(result.score)).toBe("Medium");
     expect(result.breakdown.resumeCompleteness.missingFields).toEqual(
       expect.arrayContaining(["current title", "phone"]),
@@ -86,7 +85,7 @@ describe("CONFIDENCE agent aggregation", () => {
   it("drops to a low confidence band when signals conflict or are missing", () => {
     const result = computeCandidateConfidenceScore({ candidate: lowSignalsCandidate });
 
-    expect(result.score).toBeLessThan(40);
+    expect(result.score).toBe(21);
     expect(categorizeConfidence(result.score)).toBe("Low");
     expect(result.breakdown.skillCoverage.recordedSkills).toBe(0);
     expect(result.breakdown.unknownFields.unknownFieldLabels.length).toBeGreaterThan(0);
@@ -113,5 +112,11 @@ describe("CONFIDENCE agent aggregation", () => {
     expect(result.breakdown.resumeCompleteness.completedFields).toBe(0);
     expect(result.breakdown.agentAgreement.score).toBe(60);
     expect(categorizeConfidence(result.score)).toBe("Low");
+  });
+
+  it("maps scores at the exact thresholds to the expected bands", () => {
+    expect(categorizeConfidence(80)).toBe("High");
+    expect(categorizeConfidence(60)).toBe("Medium");
+    expect(categorizeConfidence(59)).toBe("Low");
   });
 });

@@ -35,6 +35,7 @@ const {
   mockJobCandidateFindUnique,
   mockJobCandidateCreate,
   mockJobCandidateUpdate,
+  mockIsTableAvailable,
   mockPrisma,
 } = vi.hoisted(() => {
   const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-123", ...data }));
@@ -46,6 +47,7 @@ const {
   const mockJobCandidateFindUnique = vi.fn();
   const mockJobCandidateUpdate = vi.fn();
   const mockJobCandidateCreate = vi.fn();
+  const mockIsTableAvailable = vi.fn(async () => false);
 
   const mockPrisma = {
     agentRunLog: {
@@ -80,12 +82,17 @@ const {
     mockJobCandidateFindUnique,
     mockJobCandidateCreate,
     mockJobCandidateUpdate,
+    mockIsTableAvailable,
     mockPrisma,
   };
 });
 
 vi.mock("@/lib/prisma", () => {
-  return { prisma: mockPrisma };
+  return {
+    prisma: mockPrisma,
+    isTableAvailable: mockIsTableAvailable,
+    isPrismaUnavailableError: vi.fn(() => false),
+  };
 });
 
 describe("shortlist agent", () => {

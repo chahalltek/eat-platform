@@ -13,49 +13,88 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 vi.mock('@/lib/modes/loadTenantMode', () => ({
-  loadTenantMode: loadTenantModeMock(),
+  loadTenantMode: loadTenantModeMock,
 }));
 
 describe('getAgentAvailability', () => {
   const tenantId = 'tenant-123';
+
+  const modes = {
+    pilot: { mode: 'pilot', agentsEnabled: ['RUA', 'RINA', 'MATCH', 'SHORTLIST'] },
+    production: {
+      mode: 'production',
+      agentsEnabled: ['RUA', 'RINA', 'MATCH', 'CONFIDENCE', 'EXPLAIN', 'SHORTLIST'],
+    },
+    sandbox: {
+      mode: 'sandbox',
+      agentsEnabled: ['RUA', 'RINA', 'MATCH', 'CONFIDENCE', 'EXPLAIN', 'SHORTLIST'],
+    },
+    fireDrill: { mode: 'fire_drill', agentsEnabled: ['RUA', 'RINA', 'MATCH', 'SHORTLIST'] },
+  } as const;
+
+  const agentFlags = {
+    RUA: { agentName: 'RUA', enabled: true },
+    RINA: { agentName: 'RINA', enabled: true },
+    MATCH: { agentName: 'MATCH', enabled: true },
+    CONFIDENCE: { agentName: 'CONFIDENCE', enabled: true },
+    EXPLAIN: { agentName: 'EXPLAIN', enabled: true },
+  } as const;
 
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
   it('enables an agent when mode allows and flag is true', async () => {
-    loadTenantModeMock().mockResolvedValue({ mode: 'pilot', agentsEnabled: ['MATCH'] });
-    prismaMock.agentFlag.findMany.mockResolvedValue([{ agentName: 'MATCH', enabled: true }]);
+    loadTenantModeMock.mockResolvedValue(modes.pilot);
+    prismaMock.agentFlag.findMany.mockResolvedValue([agentFlags.MATCH]);
 
     const { isEnabled } = await getAgentAvailability(tenantId);
 
     expect(isEnabled('MATCH')).toBe(true);
   });
 
+  it('defaults to enabling an agent when mode allows but flag entry is missing', async () => {
+    loadTenantModeMock.mockResolvedValue(modes.production);
+    prismaMock.agentFlag.findMany.mockResolvedValue([agentFlags.MATCH]);
+
+    const { isEnabled } = await getAgentAvailability(tenantId);
+
+    expect(isEnabled('CONFIDENCE')).toBe(true);
+  });
+
   it('disables an agent when mode disallows it even if flag is true', async () => {
-    loadTenantModeMock().mockResolvedValue({ mode: 'pilot', agentsEnabled: [] });
-    prismaMock.agentFlag.findMany.mockResolvedValue([{ agentName: 'MATCH', enabled: true }]);
-
-    const { isEnabled } = await getAgentAvailability(tenantId);
-
-    expect(isEnabled('MATCH')).toBe(false);
-  });
-
-  it('disables an agent when mode allows but flag is false', async () => {
-    loadTenantModeMock().mockResolvedValue({ mode: 'pilot', agentsEnabled: ['MATCH'] });
-    prismaMock.agentFlag.findMany.mockResolvedValue([{ agentName: 'MATCH', enabled: false }]);
-
-    const { isEnabled } = await getAgentAvailability(tenantId);
-
-    expect(isEnabled('MATCH')).toBe(false);
-  });
-
-  it('overrides CONFIDENCE during fire drill regardless of flag', async () => {
-    loadTenantModeMock().mockResolvedValue({ mode: 'fire_drill', agentsEnabled: ['CONFIDENCE'] });
-    prismaMock.agentFlag.findMany.mockResolvedValue([{ agentName: 'CONFIDENCE', enabled: true }]);
+    loadTenantModeMock.mockResolvedValue(modes.pilot);
+    prismaMock.agentFlag.findMany.mockResolvedValue([agentFlags.MATCH, agentFlags.CONFIDENCE]);
 
     const { isEnabled } = await getAgentAvailability(tenantId);
 
     expect(isEnabled('CONFIDENCE')).toBe(false);
+  });
+
+  it('disables an agent when mode allows but flag is false', async () => {
+    loadTenantModeMock.mockResolvedValue(modes.sandbox);
+    prismaMock.agentFlag.findMany.mockResolvedValue([{ agentName: 'EXPLAIN', enabled: false }]);
+
+    const { isEnabled } = await getAgentAvailability(tenantId);
+
+    expect(isEnabled('EXPLAIN')).toBe(false);
+  });
+
+  it('overrides CONFIDENCE during fire drill regardless of flag', async () => {
+    loadTenantModeMock.mockResolvedValue(modes.fireDrill);
+    prismaMock.agentFlag.findMany.mockResolvedValue([agentFlags.CONFIDENCE]);
+
+    const { isEnabled } = await getAgentAvailability(tenantId);
+
+    expect(isEnabled('CONFIDENCE')).toBe(false);
+  });
+
+  it('overrides EXPLAIN during fire drill regardless of flag', async () => {
+    loadTenantModeMock.mockResolvedValue(modes.fireDrill);
+    prismaMock.agentFlag.findMany.mockResolvedValue([agentFlags.EXPLAIN]);
+
+    const { isEnabled } = await getAgentAvailability(tenantId);
+
+    expect(isEnabled('EXPLAIN')).toBe(false);
   });
 });

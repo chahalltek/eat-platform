@@ -3,11 +3,11 @@
  */
 
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import { getTestPlanSectionsWithItems } from "@/lib/ete/testPlanRegistry";
+import { TEST_PLAN_ITEMS, getTestPlanSectionsWithItems } from "@/lib/ete/testPlanRegistry";
 
 import { TestPlanChecklist } from "./TestPlanChecklist";
 
@@ -36,13 +36,15 @@ describe("TestPlanChecklist", () => {
     expect(screen.getByText(/MATCH – returns and ranks matches/i)).toBeInTheDocument();
     expect(screen.getByText(/Feature flags – view/i)).toBeInTheDocument();
 
-    const passFilters = screen.getAllByRole("button", { name: /^Pass$/ });
-    await user.click(passFilters[0]);
+    const filterLabel = screen.getByText(/Show only critical \(MVP charter\)/i).closest("div");
+    const filtersContainer = filterLabel?.querySelector("div") as HTMLElement;
+    const passFilter = within(filtersContainer).getByRole("button", { name: "Pass" });
+    await user.click(passFilter);
 
     expect(screen.getByText(/MATCH – returns and ranks matches/i)).toBeInTheDocument();
     expect(screen.queryByText(/Feature flags – view/i)).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText(/Show only critical/i));
+    await user.click(screen.getByLabelText(/Show only critical \(MVP charter\)/i));
 
     expect(screen.getByText(/MATCH – returns and ranks matches/i)).toBeInTheDocument();
   });
@@ -50,7 +52,13 @@ describe("TestPlanChecklist", () => {
   it("shows summary counts from registry items", () => {
     render(<TestPlanChecklist sections={sections} initialStatuses={baseStatuses} />);
 
-    expect(screen.getByText(/items touched/i)).toBeInTheDocument();
-    expect(screen.getByText(/critical items remaining/i)).toBeInTheDocument();
+    const totalItems = TEST_PLAN_ITEMS.length;
+    const completedItems = Object.values(baseStatuses).filter((item) => item.status !== "not_run").length;
+    const criticalRemaining = TEST_PLAN_ITEMS.filter(
+      (item) => item.isCritical && baseStatuses[item.id]?.status !== "pass",
+    ).length;
+
+    expect(screen.getByText(`${completedItems}/${totalItems} items touched`)).toBeInTheDocument();
+    expect(screen.getByText(`${criticalRemaining} critical items remaining`)).toBeInTheDocument();
   });
 });

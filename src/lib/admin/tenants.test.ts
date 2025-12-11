@@ -83,6 +83,7 @@ describe("admin tenants library", () => {
     expect(prismaMock.tenant.findMany).toHaveBeenCalledWith({
       orderBy: { createdAt: "desc" },
       include: {
+        tenantMode: true,
         subscriptions: {
           where: {
             startAt: { lte: new Date("2024-03-01T00:00:00.000Z") },
@@ -100,6 +101,7 @@ describe("admin tenants library", () => {
         id: baseTenant.id,
         name: baseTenant.name,
         status: baseTenant.status,
+        mode: "pilot",
         createdAt: baseTenant.createdAt,
         plan: { id: subscription.plan.id, name: subscription.plan.name },
         isTrial: false,
@@ -119,6 +121,7 @@ describe("admin tenants library", () => {
         id: baseTenant.id,
         name: baseTenant.name,
         status: baseTenant.status,
+        mode: "pilot",
         createdAt: baseTenant.createdAt,
         plan: { id: standardPlan.id, name: standardPlan.name },
         isTrial: false,
@@ -171,6 +174,7 @@ describe("admin tenants library", () => {
       id: baseTenant.id,
       name: baseTenant.name,
       status: baseTenant.status,
+      mode: "pilot",
       createdAt: baseTenant.createdAt,
       plan: { id: premiumPlan.id, name: premiumPlan.name },
       isTrial: true,

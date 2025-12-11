@@ -12,7 +12,6 @@ const mockGetRateLimitOverrides = vi.hoisted(() => vi.fn());
 const mockIsFeatureEnabledForTenant = vi.hoisted(() => vi.fn());
 const mockLoadGuardrails = vi.hoisted(() => vi.fn());
 const mockGetSystemMode = vi.hoisted(() => vi.fn());
-const mockGetSystemMode = vi.hoisted(() => vi.fn());
 const prismaMock = vi.hoisted(() => ({
   tenant: { findUnique: vi.fn() },
   securityEventLog: { count: vi.fn() },
@@ -175,12 +174,20 @@ describe("buildTenantDiagnostics", () => {
     expect(diagnostics.plan).toEqual({ id: null, name: null, isTrial: false, trialEndsAt: null, limits: null });
     expect(diagnostics.auditLogging).toEqual({ enabled: false, eventsRecorded: 0 });
     expect(diagnostics.retention).toEqual({ configured: false, days: null, mode: null });
+    expect(diagnostics.fireDrill).toEqual({
+      enabled: false,
+      fireDrillImpact: [],
+      suggested: false,
+      reason: null,
+      windowMinutes: 30,
+    });
     expect(diagnostics.featureFlags).toEqual({ enabled: false, enabledFlags: [] });
     expect(diagnostics.rateLimits[0].override).toBeNull();
     expect(diagnostics.guardrails.source).toBe("default");
   });
 
   it("includes fire drill status when enabled", async () => {
+    mockIsFeatureEnabledForTenant.mockResolvedValue(true);
     mockGetSystemMode.mockReturnValue({
       mode: "fire_drill",
       fireDrill: { enabled: true, fireDrillImpact: ["Agent dispatch paused", "Guardrails forced to conservative"] },
@@ -189,11 +196,14 @@ describe("buildTenantDiagnostics", () => {
     const diagnostics = await buildTenantDiagnostics("tenant-a");
 
     expect(diagnostics.mode).toBe("fire_drill");
+    expect(diagnostics.fireDrill.enabled).toBe(true);
+    expect(diagnostics.fireDrill.windowMinutes).toBe(30);
     expect(diagnostics.fireDrill.fireDrillImpact).toEqual([
       "Agent dispatch paused",
       "Guardrails forced to conservative",
     ]);
     expect(diagnostics.fireDrill.suggested).toBe(false);
+    expect(diagnostics.fireDrill.reason).toBeNull();
   });
 
   it("treats audit logging as disabled when counting fails", async () => {

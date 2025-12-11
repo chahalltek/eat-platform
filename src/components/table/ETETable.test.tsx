@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { render, renderHook, screen, act } from "@testing-library/react";
 import { flexRender } from "@tanstack/react-table";
 import { ETETable, useETETable } from "./ETETable";
@@ -11,6 +11,22 @@ import { MockTableRow, createMockColumns, createMockTableData } from "./testing/
 describe("ETETable", () => {
   const people = createMockTableData({ count: 3 });
   const columns = createMockColumns({ enableSorting: true });
+
+  beforeAll(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
 
   it("creates a table instance with provided columns and data", () => {
     render(

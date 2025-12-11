@@ -84,6 +84,22 @@ vi.mock("@/lib/auth/requireRole", () => ({
   requireRole: vi.fn(async () => ({ ok: true, user: { id: "user-1", tenantId: "tenant-1" } })),
 }));
 
+const mockAvailability = {
+  mode: {
+    mode: "pilot",
+    metadata: {},
+    guardrailsPreset: "human-vetted",
+    agentEnablement: { basic: true, shortlist: true, agents: true },
+  },
+  confidenceEnabled: true,
+  explainEnabled: true,
+  shortlistEnabled: true,
+} as const;
+
+vi.mock("@/lib/agents/availability", () => ({
+  getAgentAvailability: vi.fn(async () => mockAvailability),
+}));
+
 vi.mock("@/lib/agents/agentRunLog", () => ({
   createAgentRunLog: vi.fn(async () => ({ id: "agent-run-1" })),
 }));

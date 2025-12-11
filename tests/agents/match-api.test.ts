@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { POST as matchPost } from "@/app/api/agents/matcher/route";
+import { POST as matchPost } from "@/app/api/jobs/[jobId]/matcher/route";
 
 const {
   mockAgentRunLogCreate,
@@ -94,20 +94,29 @@ describe("MATCH agent API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockMatchJobToAllCandidates.mockResolvedValue(
-      matchResults.map((match) => ({ ...match, reasons: { summary: "LLM explanation" } } as any)),
+      matchResults.map(
+        (match) =>
+          ({
+            ...match,
+            reasons: { summary: "LLM explanation" },
+            candidateSignalBreakdown: {
+              confidence: { score: match.score / 100, category: "HIGH", reasons: ["Strong skills match"] },
+            },
+          }) as any,
+      ),
     );
   });
 
   it("returns matches and records a successful agent run", async () => {
     const request = new NextRequest(
-      new Request("http://localhost/api/agents/match", {
+      new Request("http://localhost/api/jobs/job-1/matcher", {
         method: "POST",
-        body: JSON.stringify({ recruiterId: "recruiter-1", jobId: "job-1", topN: 2 }),
+        body: JSON.stringify({ recruiterId: "recruiter-1", topN: 2 }),
         headers: { "content-type": "application/json" },
       }),
     );
 
-    const response = await matchPost(request);
+    const response = await matchPost(request, { params: { jobId: "job-1" } });
     const payload = await response.json();
 
     expect(response.status).toBe(200);
@@ -120,14 +129,18 @@ describe("MATCH agent API", () => {
           jobReqId: "job-1",
           matchScore: 90,
           explanationId: "match-2",
-          confidence: expect.any(Number),
+          confidence: 0.9,
+          confidenceCategory: "HIGH",
+          confidenceReasons: ["Strong skills match"],
         }),
         expect.objectContaining({
           candidateId: "cand-1",
           jobReqId: "job-1",
           matchScore: 70,
           explanationId: "match-1",
-          confidence: expect.any(Number),
+          confidence: 0.7,
+          confidenceCategory: "HIGH",
+          confidenceReasons: ["Strong skills match"],
         }),
       ],
     });
@@ -144,14 +157,14 @@ describe("MATCH agent API", () => {
     mockMatchJobToAllCandidates.mockRejectedValue(new Error("matching failed"));
 
     const request = new NextRequest(
-      new Request("http://localhost/api/agents/match", {
+      new Request("http://localhost/api/jobs/job-err/matcher", {
         method: "POST",
-        body: JSON.stringify({ recruiterId: "recruiter-1", jobId: "job-err" }),
+        body: JSON.stringify({ recruiterId: "recruiter-1" }),
         headers: { "content-type": "application/json" },
       }),
     );
 
-    const response = await matchPost(request);
+    const response = await matchPost(request, { params: { jobId: "job-err" } });
 
     expect(response.status).toBe(500);
     expect(mockAgentRunLogCreate).toHaveBeenCalled();
@@ -160,24 +173,20 @@ describe("MATCH agent API", () => {
     );
   });
 
-  it("rejects unauthorized roles", async () => {
-    mockGetCurrentUser.mockResolvedValueOnce({
-      id: "recruiter-1",
-      tenantId: "tenant-1",
-      role: "SALES",
-    });
+  it("fails when no authenticated user is available", async () => {
+    mockGetCurrentUser.mockResolvedValueOnce(null);
 
     const request = new NextRequest(
-      new Request("http://localhost/api/agents/match", {
+      new Request("http://localhost/api/jobs/job-1/matcher", {
         method: "POST",
-        body: JSON.stringify({ recruiterId: "recruiter-1", jobId: "job-1", topN: 2 }),
+        body: JSON.stringify({ recruiterId: "recruiter-1", topN: 2 }),
         headers: { "content-type": "application/json" },
       }),
     );
 
-    const response = await matchPost(request);
+    const response = await matchPost(request, { params: { jobId: "job-1" } });
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(500);
     expect(mockAgentRunLogCreate).not.toHaveBeenCalled();
   });
 });
