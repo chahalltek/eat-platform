@@ -21,7 +21,9 @@ export const dynamic = "force-dynamic";
 
 type Status = "ok" | "warn" | "off";
 
-function formatMode(mode: TenantDiagnostics["mode"] | string) {
+type ModeValue = TenantDiagnostics["mode"] | { mode: TenantDiagnostics["mode"] };
+
+function formatMode(mode: ModeValue) {
   const value = typeof mode === "string" ? mode : mode.mode;
 
   return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
