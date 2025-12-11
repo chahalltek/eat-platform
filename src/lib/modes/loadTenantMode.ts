@@ -1,11 +1,40 @@
-import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+
+import { isPrismaUnavailableError, prisma } from "@/lib/prisma";
 import { SYSTEM_MODES, type SystemModeName } from "./systemModes";
 
-export async function loadTenantMode(tenantId: string) {
-  const record = await prisma.tenantMode.findUnique({ where: { tenantId } });
+const DEFAULT_MODE: SystemModeName = "pilot";
+const DEFAULT_DEFINITION = SYSTEM_MODES[DEFAULT_MODE];
 
-  const mode: SystemModeName = (record?.mode as SystemModeName) ?? "pilot";
-  const definition = SYSTEM_MODES[mode];
+function isMissingTableError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+}
+
+function buildFallbackMode() {
+  return {
+    mode: DEFAULT_MODE,
+    guardrailsPreset: DEFAULT_DEFINITION.guardrailsPreset,
+    agentsEnabled: DEFAULT_DEFINITION.agentsEnabled,
+  };
+}
+
+export async function loadTenantMode(tenantId: string) {
+  const tenantModeModel = prisma.tenantMode as typeof prisma.tenantMode | undefined;
+
+  if (!tenantModeModel?.findUnique) {
+    return buildFallbackMode();
+  }
+
+  const record = await tenantModeModel.findUnique({ where: { tenantId } }).catch((error) => {
+    if (isPrismaUnavailableError(error) || isMissingTableError(error)) {
+      return null;
+    }
+
+    throw error;
+  });
+
+  const mode: SystemModeName = (record?.mode as SystemModeName) ?? DEFAULT_MODE;
+  const definition = SYSTEM_MODES[mode] ?? DEFAULT_DEFINITION;
 
   return {
     mode,
