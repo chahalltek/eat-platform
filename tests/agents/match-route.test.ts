@@ -91,7 +91,7 @@ vi.mock("@/lib/agents/agentRunLog", () => ({
 vi.mock("@/lib/auth/user", () => ({ getCurrentUser: vi.fn().mockResolvedValue({ id: "user-1" }) }));
 vi.mock("@/lib/featureFlags/middleware", () => ({ agentFeatureGuard: vi.fn().mockResolvedValue(null) }));
 vi.mock("@/lib/agents/killSwitch", () => ({
-  AGENT_KILL_SWITCHES: { MATCHER: "EAT-TS.MATCHER" },
+  AGENT_KILL_SWITCHES: { MATCHER: "ETE-TS.MATCHER" },
   enforceAgentKillSwitch: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/lib/llm", () => ({ callLLM: vi.fn().mockResolvedValue("LLM explanation") }));

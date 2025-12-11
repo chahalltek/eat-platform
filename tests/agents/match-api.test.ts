@@ -48,7 +48,7 @@ vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/killSwitch", () => ({ assertKillSwitchDisarmed: vi.fn(), KILL_SWITCHES: { AGENTS: "AGENTS" } }));
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),
-  AGENT_KILL_SWITCHES: { MATCHER: "EAT-TS.MATCHER" },
+  AGENT_KILL_SWITCHES: { MATCHER: "ETE-TS.MATCHER" },
   enforceAgentKillSwitch: vi.fn(),
 }));
 vi.mock("@/lib/subscription/usageLimits", () => ({ assertTenantWithinLimits: vi.fn() }));

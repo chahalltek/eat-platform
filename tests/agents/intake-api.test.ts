@@ -59,7 +59,7 @@ vi.mock("@/lib/killSwitch", () => ({
 }));
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),
-  AGENT_KILL_SWITCHES: { RUA: "EAT-TS.RUA" },
+  AGENT_KILL_SWITCHES: { RUA: "ETE-TS.RUA" },
   enforceAgentKillSwitch: vi.fn(),
 }));
 vi.mock("@/lib/agents/tenantScope", async () => {

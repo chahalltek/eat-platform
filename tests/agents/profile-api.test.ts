@@ -48,7 +48,7 @@ vi.mock("@/lib/agents/promptRegistry", () => ({
   resolveAgentPrompt: vi.fn().mockResolvedValue({ prompt: "prompt", version: "v1" }),
 }));
 vi.mock("@/lib/agents/killSwitch", () => ({
-  AGENT_KILL_SWITCHES: { RINA: "EAT-TS.RINA" },
+  AGENT_KILL_SWITCHES: { RINA: "ETE-TS.RINA" },
   enforceAgentKillSwitch: vi.fn(),
   assertAgentKillSwitchDisarmed: vi.fn(),
 }));

@@ -62,7 +62,7 @@ vi.mock("@/lib/killSwitch", () => ({
 
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),
-  AGENT_KILL_SWITCHES: { RINA: "EAT-TS.RINA" },
+  AGENT_KILL_SWITCHES: { RINA: "ETE-TS.RINA" },
   enforceAgentKillSwitch: vi.fn(),
 }));
 
@@ -137,7 +137,7 @@ describe("Agent run logging", () => {
     expect(response.status).toBe(200);
     expect(mockAgentRunLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ agentName: "EAT-TS.RINA", tenantId: "tenant-1", userId: "test-user-1" }),
+        data: expect.objectContaining({ agentName: "ETE-TS.RINA", tenantId: "tenant-1", userId: "test-user-1" }),
       }),
     );
   });

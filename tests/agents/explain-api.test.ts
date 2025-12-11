@@ -65,7 +65,7 @@ vi.mock("@/lib/llm", () => ({ callLLM: mockCallLLM }));
 vi.mock("@/lib/auth/requireRole", () => ({ requireRole: mockRequireRole }));
 vi.mock("@/lib/featureFlags/middleware", () => ({ agentFeatureGuard: vi.fn().mockResolvedValue(null) }));
 vi.mock("@/lib/agents/killSwitch", () => ({
-  AGENT_KILL_SWITCHES: { MATCHER: "EAT-TS.MATCHER", MATCH_EXPLAINER: "EAT-TS.EXPLAIN" },
+  AGENT_KILL_SWITCHES: { MATCHER: "ETE-TS.MATCHER", MATCH_EXPLAINER: "ETE-TS.EXPLAIN" },
   enforceAgentKillSwitch: vi.fn().mockResolvedValue(null),
 }));
 
@@ -138,7 +138,7 @@ describe("EXPLAIN agent API", () => {
       expect.any(Object),
       expect.objectContaining({
         status: "RUNNING",
-        agentName: "EAT-TS.EXPLAIN",
+        agentName: "ETE-TS.EXPLAIN",
       }),
     );
     expect(mockAgentRunLogUpdate).toHaveBeenCalledWith(

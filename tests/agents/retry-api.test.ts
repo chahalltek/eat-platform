@@ -55,7 +55,7 @@ describe("agent retry API", () => {
   it("retries RINA runs when raw resume text is available", async () => {
     mockFindFirst.mockResolvedValue({
       id: "run-123",
-      agentName: "EAT-TS.RINA",
+      agentName: "ETE-TS.RINA",
       inputSnapshot: { rawResumeText: "resume text", sourceType: "upload", sourceTag: "career" },
       retryPayload: { rawResumeText: "resume text", sourceType: "upload", sourceTag: "career" },
       rawResumeText: "resume text",
@@ -79,7 +79,7 @@ describe("agent retry API", () => {
   it("returns a clear error when RINA retry input is missing", async () => {
     mockFindFirst.mockResolvedValue({
       id: "run-404",
-      agentName: "EAT-TS.RINA",
+      agentName: "ETE-TS.RINA",
       inputSnapshot: { sourceType: "upload" },
       retryPayload: null,
       rawResumeText: null,

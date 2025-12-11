@@ -16,7 +16,7 @@ vi.mock("next/navigation", () => ({
 
 const baseLog: SerializableLog = {
   id: "log-1",
-  agentName: "EAT-TS.RINA",
+  agentName: "ETE-TS.RINA",
   status: "SUCCESS",
   startedAt: new Date().toISOString(),
   finishedAt: new Date().toISOString(),
