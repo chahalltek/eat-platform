@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ClientActionLink } from "@/components/ClientActionLink";
 
@@ -52,10 +52,77 @@ export function HiringManagerView({
   requiredSkills,
 }: HiringManagerViewProps) {
   const [selected, setSelected] = useState<ShortlistCandidate | null>(null);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
 
   const shortlisted = useMemo(() => shortlist.filter((entry) => entry.shortlisted), [shortlist]);
   const passed = shortlisted.length;
   const failed = shortlist.length - shortlisted.length;
+  const justificationPreview = useMemo(
+    () => (selected ? buildJustification(selected) : ""),
+    [selected]
+  );
+
+  useEffect(() => {
+    setCopyStatus("idle");
+  }, [selected]);
+
+  function confidenceBand(score?: number | null): string {
+    if (typeof score !== "number") return "Confidence: Not captured";
+    if (score >= 80) return "Confidence: High";
+    if (score >= 60) return "Confidence: Medium";
+    return "Confidence: Low";
+  }
+
+  function buildJustification(candidate: ShortlistCandidate): string {
+    const strengths = candidate.strengths.slice(0, 3);
+    const risks = candidate.weaknesses.slice(0, 2);
+
+    const summary =
+      candidate.explanation && candidate.explanation.trim().length > 0
+        ? candidate.explanation
+        : "No explanation captured.";
+
+    const parts: string[] = [];
+    parts.push(
+      `${candidate.name} — ${candidate.role ?? "Role not captured"} for ${jobTitle}` +
+        `${jobLocation ? ` (${jobLocation})` : ""}. ${summary}`
+    );
+
+    if (candidate.shortlistReason) {
+      parts.push(`Shortlist reason: ${candidate.shortlistReason}`);
+    }
+
+    parts.push("Top strengths:");
+    strengths.forEach((strength, index) => {
+      parts.push(`${index + 1}. ${strength}`);
+    });
+
+    parts.push("Risks / watchouts:");
+    risks.forEach((risk, index) => {
+      parts.push(`${index + 1}. ${risk}`);
+    });
+
+    parts.push(confidenceBand(candidate.score));
+
+    return parts.join("\n");
+  }
+
+  async function handleCopyJustification(candidate: ShortlistCandidate) {
+    setCopyStatus("idle");
+
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        throw new Error("Clipboard API not available");
+      }
+
+      const justification = buildJustification(candidate);
+      await navigator.clipboard.writeText(justification);
+      setCopyStatus("copied");
+    } catch (error) {
+      console.error("Failed to copy justification", error);
+      setCopyStatus("error");
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -261,6 +328,42 @@ export function HiringManagerView({
                 </p>
               ) : null}
               <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">Pass/fail is derived from stored shortlist records; actions are disabled.</p>
+            </div>
+
+            <div className="mt-4 space-y-3 rounded-2xl border border-indigo-100 bg-white/80 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.14em] text-indigo-700 dark:text-indigo-200">HM-ready justification</p>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-200">
+                    Summary paragraph, strengths, risks, and confidence for copy/paste.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => selected && handleCopyJustification(selected)}
+                    disabled={!selected.shortlisted}
+                    className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm ring-1 ring-indigo-500 hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {copyStatus === "copied" ? "Copied" : "Copy justification"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled
+                    className="rounded-md bg-white px-3 py-2 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200 dark:bg-zinc-900 dark:text-indigo-200 dark:ring-indigo-700/60"
+                  >
+                    PDF export (coming soon)
+                  </button>
+                </div>
+              </div>
+
+              <pre className="whitespace-pre-wrap rounded-xl border border-indigo-100 bg-indigo-50/70 p-3 text-sm text-zinc-800 dark:border-indigo-800/60 dark:bg-indigo-900/30 dark:text-zinc-100">{justificationPreview}</pre>
+              {copyStatus === "error" ? (
+                <p className="text-xs text-rose-600 dark:text-rose-400">Could not access clipboard. Try again or paste manually.</p>
+              ) : null}
+              {!selected.shortlisted ? (
+                <p className="text-xs text-amber-700 dark:text-amber-300">Justification is available for shortlisted candidates only.</p>
+              ) : null}
             </div>
           </div>
         </div>
