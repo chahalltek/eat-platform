@@ -1,4 +1,5 @@
 import { runScheduledComplianceScan } from "@/lib/agents/comply";
+import { captureWeeklyMatchQualitySnapshots } from "@/lib/learning/matchQuality";
 import { prisma } from "@/lib/prisma";
 import { prismaAdmin } from "@/lib/prismaAdmin";
 import { runTenantRetentionJob } from "@/lib/retention";
@@ -52,6 +53,24 @@ export const cronJobs: Record<string, CronJob> = {
       return {
         message: "Compliance scan completed",
         details: result,
+      } satisfies CronJobResult;
+    },
+  },
+  "match-quality-snapshot": {
+    name: "match-quality-snapshot",
+    description: "Captures weekly Match Quality Index snapshots for each tenant.",
+    run: async () => {
+      const tenants = await prisma.tenant.findMany({ select: { id: true } });
+
+      let snapshotsCreated = 0;
+      for (const tenant of tenants) {
+        const snapshots = await captureWeeklyMatchQualitySnapshots(tenant.id);
+        snapshotsCreated += snapshots.length;
+      }
+
+      return {
+        message: "Match Quality snapshots captured",
+        details: { tenantsProcessed: tenants.length, snapshotsCreated },
       } satisfies CronJobResult;
     },
   },

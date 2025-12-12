@@ -674,6 +674,20 @@ model MatchFeedback {
   @@unique([tenantId, matchResultId, outcome])
 }
 
+model MatchQualitySnapshot {
+  id        String   @id @default(cuid())
+  tenantId  String   @default("default-tenant")
+  scope     String
+  scopeRef  String?
+  windowDays Int
+  mqi       Float
+  components Json
+  capturedAt DateTime @default(now())
+
+  @@index([tenantId, scope, capturedAt])
+  @@index([tenantId, scopeRef])
+}
+
 model JobCandidateLabel {
   id             String       @id @default(cuid())
   tenantId       String       @default("default-tenant")
