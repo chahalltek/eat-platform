@@ -25,7 +25,8 @@ const PUBLIC_PATHS = [
   '/login',
 ];
 const ADMIN_PATH_PREFIXES = ['/admin', '/api/admin'];
-const RECRUITER_PATH_PREFIXES = ['/candidates', '/jobs', '/agents', '/dashboard', '/api'];
+const RECRUITER_PATH_PREFIXES = ['/candidates', '/jobs', '/agents', '/dashboard', '/api', '/ete/jobs'];
+const HIRING_MANAGER_PATH_PREFIXES = ['/ete/hiring-manager'];
 const LEGACY_PATH_PREFIXES = [
   { from: '/api/admin/eat', to: '/api/admin/ete' },
   { from: '/api/eat', to: '/api/ete' },
@@ -35,11 +36,11 @@ const LEGACY_PATH_PREFIXES = [
 const RECRUITER_ROLES = new Set<UserRole>([
   USER_ROLES.ADMIN,
   USER_ROLES.RECRUITER,
-  USER_ROLES.MANAGER,
   USER_ROLES.SOURCER,
   USER_ROLES.SALES,
   USER_ROLES.SYSTEM_ADMIN,
 ]);
+const HIRING_MANAGER_ROLES = new Set<UserRole>([USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.MANAGER]);
 
 function buildLoginRedirect(request: NextRequest) {
   const loginUrl = request.nextUrl.clone();
@@ -102,6 +103,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const isAdminPath = ADMIN_PATH_PREFIXES.some((path) => requestPath.startsWith(path));
+  const isHiringManagerPath = HIRING_MANAGER_PATH_PREFIXES.some((path) => requestPath.startsWith(path));
   const isRecruiterPath = RECRUITER_PATH_PREFIXES.some((path) => requestPath.startsWith(path));
 
   if (isAdminPath && !isAdminRole(normalizedRole)) {
@@ -112,8 +114,20 @@ export async function middleware(request: NextRequest) {
     return body;
   }
 
+  if (isHiringManagerPath && !HIRING_MANAGER_ROLES.has(normalizedRole)) {
+    const body = requestPath.startsWith('/api')
+      ? NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      : NextResponse.redirect(new URL('/', request.url));
+
+    return body;
+  }
+
   if (isRecruiterPath && !RECRUITER_ROLES.has(normalizedRole)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const body = requestPath.startsWith('/api')
+      ? NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      : NextResponse.redirect(new URL('/', request.url));
+
+    return body;
   }
 
   requestHeaders.set(USER_HEADER, resolvedUserId);

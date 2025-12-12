@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { FireDrillBanner } from "@/components/FireDrillBanner";
@@ -8,6 +8,8 @@ import { getCurrentTenantId } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { categorizeConfidence } from "@/app/jobs/[jobId]/matches/confidence";
+import { getCurrentUser } from "@/lib/auth/user";
+import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: true };
@@ -85,6 +87,14 @@ function buildInitialCandidates(matches: MatchResultWithCandidate[]): JobConsole
 }
 
 export default async function JobConsolePage({ params }: { params: { jobId: string } }) {
+  const currentUser = await getCurrentUser();
+  const normalizedRole = normalizeRole(currentUser?.role);
+  const recruiterRoles = new Set<string>([USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.RECRUITER, USER_ROLES.SOURCER, USER_ROLES.SALES]);
+
+  if (!normalizedRole || !recruiterRoles.has(normalizedRole)) {
+    redirect("/ete/jobs");
+  }
+
   const job = await prisma.jobReq.findUnique({
     where: { id: params.jobId },
     include: {

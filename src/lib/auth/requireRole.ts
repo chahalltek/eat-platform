@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import type { IdentityUser } from "./identityProvider";
 import { getCurrentUser } from "./user";
-import { normalizeRole, type UserRole } from "./roles";
+import { normalizeRole, USER_ROLES, type UserRole } from "./roles";
 
 type RoleCheckFailure = { ok: false; response: NextResponse };
 type RoleCheckSuccess = { ok: true; user: IdentityUser };
@@ -34,4 +34,21 @@ export async function requireRole(
   }
 
   return { ok: true, user: currentUser };
+}
+
+const ADMIN_ROLES = [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN];
+const RECRUITER_OR_ADMIN_ROLES: UserRole[] = [
+  ...ADMIN_ROLES,
+  USER_ROLES.RECRUITER,
+  USER_ROLES.SOURCER,
+  USER_ROLES.SALES,
+];
+const HIRING_MANAGER_OR_ADMIN_ROLES: UserRole[] = [...ADMIN_ROLES, USER_ROLES.MANAGER];
+
+export function requireRecruiterOrAdmin(req: NextRequest) {
+  return requireRole(req, RECRUITER_OR_ADMIN_ROLES);
+}
+
+export function requireHiringManagerOrAdmin(req: NextRequest) {
+  return requireRole(req, HIRING_MANAGER_OR_ADMIN_ROLES);
 }

@@ -40,6 +40,19 @@ describe('middleware role enforcement', () => {
     });
   });
 
+  function mockSessionRole(role: string) {
+    vi.mocked(getValidatedSession).mockResolvedValue({
+      session: {
+        userId: 'charlie',
+        tenantId: 'default-tenant',
+        role,
+        exp: Math.floor(Date.now() / 1000) + 60,
+        iat: Math.floor(Date.now() / 1000),
+      },
+      error: null,
+    });
+  }
+
   it('allows public health endpoints without auth checks', async () => {
     const response = await middleware(createRequest('/health'));
 
@@ -76,6 +89,23 @@ describe('middleware role enforcement', () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe('https://example.com/login?next=%2Fdashboard%3Ftab%3Doverview');
+  });
+
+  it('blocks hiring managers from recruiter-only routes', async () => {
+    mockSessionRole('MANAGER');
+
+    const response = await middleware(createRequest('/api/jobs'));
+
+    expect(response.status).toBe(403);
+  });
+
+  it('allows hiring manager pages for manager roles', async () => {
+    mockSessionRole('MANAGER');
+
+    const response = await middleware(createRequest('/ete/hiring-manager/jobs/123'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get(ROLE_HEADER)).toBe('MANAGER');
   });
 
   it('returns json unauthorized for api routes without a session', async () => {

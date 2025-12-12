@@ -2,16 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { FireDrillAgentDisabledError } from "@/lib/agents/availability";
 import { runConfidence } from "@/lib/agents/confidence";
-import { requireRole } from "@/lib/auth/requireRole";
-import { USER_ROLES } from "@/lib/auth/roles";
+import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 
 type RouteParams = { jobId: string };
 
-type RouteContext = { params: RouteParams | Promise<RouteParams> };
+  type RouteContext = { params: RouteParams | Promise<RouteParams> };
 
-export async function POST(req: NextRequest, context: RouteContext) {
+  export async function POST(req: NextRequest, context: RouteContext) {
   try {
-    const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
+    const roleCheck = await requireRecruiterOrAdmin(req);
 
     if (!roleCheck.ok) {
       return roleCheck.response;

@@ -3,19 +3,11 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
-import { normalizeRole, USER_ROLES, type UserRole } from "@/lib/auth/roles";
+import { getUserTenantId } from "@/lib/auth/user";
+import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { candidateProfileSchema, candidateSkillSchema } from "@/types/candidateIntake";
 import { onCandidateChanged } from "@/lib/orchestration/triggers";
 import { recordMetricEvent } from "@/lib/metrics/events";
-
-const recruiterRoles = new Set<UserRole>([
-  USER_ROLES.ADMIN,
-  USER_ROLES.SYSTEM_ADMIN,
-  USER_ROLES.MANAGER,
-  USER_ROLES.RECRUITER,
-  USER_ROLES.SOURCER,
-]);
 
 const requestSchema = z.object({
   profile: candidateProfileSchema,
@@ -25,16 +17,10 @@ const requestSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const currentUser = await getCurrentUser(req);
+  const roleCheck = await requireRecruiterOrAdmin(req);
 
-  if (!currentUser) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const normalizedRole = normalizeRole(currentUser.role);
-
-  if (!normalizedRole || !recruiterRoles.has(normalizedRole)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!roleCheck.ok) {
+    return roleCheck.response;
   }
 
   const tenantId = (await getUserTenantId(req)) ?? DEFAULT_TENANT_ID;
@@ -71,16 +57,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const currentUser = await getCurrentUser(req);
+  const roleCheck = await requireRecruiterOrAdmin(req);
 
-  if (!currentUser) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const normalizedRole = normalizeRole(currentUser.role);
-
-  if (!normalizedRole || !recruiterRoles.has(normalizedRole)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!roleCheck.ok) {
+    return roleCheck.response;
   }
 
   let parsedBody: z.infer<typeof requestSchema>;

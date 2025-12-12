@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { FireDrillAgentDisabledError } from '@/lib/agents/availability';
 import { runExplainForJob } from '@/lib/agents/explain';
+import { requireRecruiterOrAdmin } from '@/lib/auth/requireRole';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
+    const roleCheck = await requireRecruiterOrAdmin(req);
+
+    if (!roleCheck.ok) {
+      return roleCheck.response;
+    }
+
     const { jobId } = await params;
     const body = await req.json().catch(() => ({}));
 

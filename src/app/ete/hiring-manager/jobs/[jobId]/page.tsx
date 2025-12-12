@@ -1,10 +1,12 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { HiringManagerView } from "./HiringManagerView";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import type { ShortlistCandidate, ShortlistRunMeta } from "./HiringManagerView";
+import { getCurrentUser } from "@/lib/auth/user";
+import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: { include: { skills: true } } };
@@ -117,6 +119,14 @@ function normalizeShortlistRunMeta(runs: Prisma.AgentRunLogGetPayload<{}>[], job
 }
 
 export default async function HiringManagerPage({ params }: { params: { jobId: string } }) {
+  const currentUser = await getCurrentUser();
+  const normalizedRole = normalizeRole(currentUser?.role);
+  const hiringManagerRoles = new Set<string>([USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.MANAGER]);
+
+  if (!normalizedRole || !hiringManagerRoles.has(normalizedRole)) {
+    redirect("/");
+  }
+
   const job = await prisma.jobReq.findUnique({
     where: { id: params.jobId },
     include: {

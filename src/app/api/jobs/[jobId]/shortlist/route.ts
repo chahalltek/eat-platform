@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { FireDrillAgentDisabledError } from '@/lib/agents/availability';
 import { runShortlist } from '@/lib/agents/shortlist';
+import { requireRecruiterOrAdmin } from '@/lib/auth/requireRole';
 
 type RouteContext =
   | { params: { jobId: string } }
@@ -8,6 +10,12 @@ type RouteContext =
 
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
+    const roleCheck = await requireRecruiterOrAdmin(req);
+
+    if (!roleCheck.ok) {
+      return roleCheck.response;
+    }
+
     const { jobId } = await Promise.resolve(context.params);
     const body = await req.json().catch(() => ({}));
 

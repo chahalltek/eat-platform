@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { runMatcher } from '@/lib/agents/matcher';
+import { requireRecruiterOrAdmin } from '@/lib/auth/requireRole';
 
 type RouteParams = { jobId: string };
 
@@ -7,6 +9,12 @@ type RouteContext = { params: RouteParams | Promise<RouteParams> };
 
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
+    const roleCheck = await requireRecruiterOrAdmin(req);
+
+    if (!roleCheck.ok) {
+      return roleCheck.response;
+    }
+
     const params = await context.params;
     const jobId = params.jobId;
     const body = await req.json().catch(() => ({}));

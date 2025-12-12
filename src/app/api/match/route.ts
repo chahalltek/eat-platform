@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
@@ -11,8 +11,7 @@ import { enforceKillSwitch } from "@/lib/killSwitch/middleware";
 import { prisma } from "@/lib/prisma";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
-import { getCurrentUser } from "@/lib/auth/user";
-import { normalizeRole, USER_ROLES, type UserRole } from "@/lib/auth/roles";
+import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 
@@ -21,31 +20,20 @@ const matchRequestSchema = z.object({
   candidateId: z.string().trim().min(1, "candidateId must be a non-empty string"),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const killSwitchResponse = enforceKillSwitch(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
 
   if (killSwitchResponse) {
     return killSwitchResponse;
   }
 
-  const currentUser = await getCurrentUser();
+  const roleCheck = await requireRecruiterOrAdmin(req);
 
-  if (!currentUser) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!roleCheck.ok) {
+    return roleCheck.response;
   }
 
-  const normalizedRole = normalizeRole(currentUser.role);
-  const recruiterRoles = new Set<UserRole>([
-    USER_ROLES.ADMIN,
-    USER_ROLES.SYSTEM_ADMIN,
-    USER_ROLES.MANAGER,
-    USER_ROLES.RECRUITER,
-    USER_ROLES.SOURCER,
-  ]);
-
-  if (!normalizedRole || !recruiterRoles.has(normalizedRole)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const currentUser = roleCheck.user;
 
   let body: unknown;
 
