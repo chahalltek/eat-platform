@@ -35,7 +35,6 @@ export type ErrorRateByAgent = {
   errorRate: number;
 };
 
-<<<<<<< ours
 export type RecruiterBehaviorInsights = {
   windowDays: number;
   candidateOpens: number;
@@ -47,7 +46,8 @@ export type RecruiterBehaviorInsights = {
     byConfidence: Record<string, number>;
   };
   averageDecisionMs: number;
-=======
+};
+
 export type MatchQualityTrend = {
   label: string;
   mqi: number;
@@ -88,7 +88,6 @@ export type LearningPauseIndicator = {
   reason: string;
   since: string;
   impact: string;
->>>>>>> theirs
 };
 
 export type EteInsightsMetrics = {
@@ -101,15 +100,12 @@ export type EteInsightsMetrics = {
   skillScarcityIndex: number;
   timeToFillTrend: AverageSeriesBucket[];
   skillScarcityTrend: AverageSeriesBucket[];
-<<<<<<< ours
   recruiterBehavior: RecruiterBehaviorInsights;
-=======
   matchQualityHistory: MatchQualityTrend[];
   presetPerformance: PresetPerformanceEntry[];
   roleFamilyInsights: RoleFamilyInsight[];
   optimizationBacklog: OptimizationBacklogItem[];
   learningPauses: LearningPauseIndicator[];
->>>>>>> theirs
 };
 
 function buildDateBuckets(days: number): Record<string, TimeSeriesBucket> {
@@ -354,9 +350,7 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     jobPredictiveSignals.map((job) => ({ date: job.createdAt, value: job.scarcityIndex })),
   );
 
-<<<<<<< ours
   const recruiterBehavior = summarizeRecruiterBehavior(recruiterBehaviorEvents, BEHAVIOR_HISTORY_DAYS);
-=======
   const totalPipelineRuns = pipelineRuns.reduce((sum, bucket) => sum + bucket.count, 0);
   const worstErrorRate = errorRateByAgent[0]?.errorRate ?? 0;
 
@@ -497,7 +491,6 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
       impact: pilotPaused ? 'Limited experiments; backlog items batched.' : 'Preset comparison feeding MQI model.',
     },
   ];
->>>>>>> theirs
 
   return {
     pipelineRuns,
@@ -509,15 +502,12 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     skillScarcityIndex,
     timeToFillTrend,
     skillScarcityTrend,
-<<<<<<< ours
     recruiterBehavior,
-=======
     matchQualityHistory,
     presetPerformance,
     roleFamilyInsights,
     optimizationBacklog,
     learningPauses,
->>>>>>> theirs
   };
 }
 

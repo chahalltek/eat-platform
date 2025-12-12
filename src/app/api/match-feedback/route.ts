@@ -140,11 +140,8 @@ export async function POST(req: Request) {
       confidenceBand,
       confidenceReasons: confidence.reasons,
       systemMode: mode.mode,
-<<<<<<< ours
-      recommendationConfidence,
-=======
       explanationSnapshot,
->>>>>>> theirs
+      recommendationConfidence,
     };
 
     const feedback = await prisma.matchFeedback.upsert({
