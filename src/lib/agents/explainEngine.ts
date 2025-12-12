@@ -16,6 +16,12 @@ export type ExplainInput = {
   config: GuardrailsConfig;
 };
 
+type PolishOptions = {
+  config: GuardrailsConfig;
+  fireDrill?: boolean;
+  callLLMFn?: (prompts: { systemPrompt: string; userPrompt: string }) => Promise<string>;
+};
+
 type Verbosity = "compact" | "detailed";
 
 const DEFAULT_EXPERIENCE_ALIGNMENT = 0.5;
@@ -121,4 +127,64 @@ export function buildExplanation(input: ExplainInput): Explanation {
     strengths,
     risks,
   };
+}
+
+function parseExplanationCandidate(payload: unknown): Explanation | null {
+  if (!payload || typeof payload !== "object") return null;
+
+  const candidate = payload as Record<string, unknown>;
+  const summary = candidate.summary;
+  const strengths = candidate.strengths;
+  const risks = candidate.risks;
+
+  if (typeof summary !== "string") return null;
+  if (!Array.isArray(strengths) || !strengths.every((item) => typeof item === "string")) return null;
+  if (!Array.isArray(risks) || !risks.every((item) => typeof item === "string")) return null;
+
+  return { summary, strengths, risks } satisfies Explanation;
+}
+
+export async function maybePolishExplanation(base: Explanation, options: PolishOptions): Promise<Explanation> {
+  const { config, fireDrill = false, callLLMFn } = options;
+  const allowedAgents = (config.llm as { allowedAgents?: string[] } | undefined)?.allowedAgents ?? [];
+  const llmEnabled = !fireDrill && typeof callLLMFn === "function" && allowedAgents.includes("EXPLAIN");
+
+  if (!llmEnabled) {
+    return base;
+  }
+
+  const systemPrompt = [
+    "You are an assistant that polishes candidate-job explanations for recruiters.",
+    "Rewrite the provided summary, strengths, and risks to be concise and recruiter-friendly while preserving meaning.",
+    "Respond ONLY with JSON in the shape { \"summary\": string, \"strengths\": string[], \"risks\": string[] }.",
+    "Do not include any additional commentary or formatting.",
+  ].join(" ");
+
+  const userPrompt = JSON.stringify({
+    explanation: base,
+    constraints: {
+      strengthsMax: (config.explain as { strengthsMax?: number } | undefined)?.strengthsMax ?? 5,
+      risksMax: (config.explain as { risksMax?: number } | undefined)?.risksMax ?? 3,
+    },
+  });
+
+  try {
+    const response = await callLLMFn({ systemPrompt, userPrompt });
+    const parsed = parseExplanationCandidate(JSON.parse(response));
+
+    if (parsed) {
+      const strengthsMax = (config.explain as { strengthsMax?: number } | undefined)?.strengthsMax ?? Infinity;
+      const risksMax = (config.explain as { risksMax?: number } | undefined)?.risksMax ?? Infinity;
+
+      return {
+        summary: parsed.summary,
+        strengths: parsed.strengths.slice(0, strengthsMax),
+        risks: parsed.risks.slice(0, risksMax),
+      } satisfies Explanation;
+    }
+  } catch (error) {
+    console.warn("Explain polish LLM failed; returning base explanation", error);
+  }
+
+  return base;
 }
