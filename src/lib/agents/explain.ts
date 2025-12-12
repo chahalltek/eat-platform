@@ -138,7 +138,8 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
       const polished = await maybePolishExplanation(explanation, {
         config: guardrailConfig,
         fireDrill: isFireDrill,
-        callLLMFn: callLLM,
+        callLLMFn: ({ systemPrompt, userPrompt }) =>
+          callLLM({ systemPrompt, userPrompt, agent: "EXPLAIN" }),
       });
 
       explanations.push({ candidateId: match.candidateId, explanation: polished });
