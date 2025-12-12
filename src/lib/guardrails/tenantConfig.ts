@@ -51,11 +51,13 @@ export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardra
   const scoring = mergeConfig(presetConfig.scoring, storedConfig?.scoring ?? undefined);
   const explain = mergeConfig(presetConfig.explain, storedConfig?.explain ?? undefined);
   const safety = mergeConfig(presetConfig.safety, storedConfig?.safety ?? undefined);
+  const shortlist = mergeConfig(presetConfig.shortlist ?? {}, storedConfig?.shortlist ?? undefined);
 
   return {
     scoring,
     explain,
     safety,
+    shortlist,
     preset,
   } satisfies TenantGuardrailsConfig;
 }

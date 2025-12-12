@@ -6,6 +6,7 @@ import { setShortlistState } from "./shortlist";
 
 const mockCandidateMatchUpdateMany = vi.fn();
 const mockJobCandidateFindUnique = vi.fn();
+const mockJobCandidateFindFirst = vi.fn();
 const mockJobCandidateUpdate = vi.fn();
 const mockJobCandidateCreate = vi.fn();
 
@@ -15,6 +16,7 @@ const mockDb = {
   },
   jobCandidate: {
     findUnique: mockJobCandidateFindUnique,
+    findFirst: mockJobCandidateFindFirst,
     update: mockJobCandidateUpdate,
     create: mockJobCandidateCreate,
   },
@@ -26,7 +28,7 @@ describe("setShortlistState", () => {
   });
 
   it("updates shortlist flags and promotes pipeline status", async () => {
-    mockJobCandidateFindUnique.mockResolvedValue({
+    mockJobCandidateFindFirst.mockResolvedValue({
       id: "jc-1",
       status: JobCandidateStatus.POTENTIAL,
     });
@@ -48,7 +50,7 @@ describe("setShortlistState", () => {
   });
 
   it("creates a job candidate when shortlisting a new match", async () => {
-    mockJobCandidateFindUnique.mockResolvedValue(null);
+    mockJobCandidateFindFirst.mockResolvedValue(null);
 
     await setShortlistState("job-2", "cand-2", true, undefined, {
       tenantId: "tenant-1",
@@ -66,7 +68,7 @@ describe("setShortlistState", () => {
   });
 
   it("clears shortlist state and reverts pipeline status when appropriate", async () => {
-    mockJobCandidateFindUnique.mockResolvedValue({
+    mockJobCandidateFindFirst.mockResolvedValue({
       id: "jc-3",
       status: JobCandidateStatus.SHORTLISTED,
     });
@@ -87,7 +89,7 @@ describe("setShortlistState", () => {
   });
 
   it("does not downgrade progressed candidates when removing shortlist", async () => {
-    mockJobCandidateFindUnique.mockResolvedValue({
+    mockJobCandidateFindFirst.mockResolvedValue({
       id: "jc-4",
       status: JobCandidateStatus.SUBMITTED,
     });
