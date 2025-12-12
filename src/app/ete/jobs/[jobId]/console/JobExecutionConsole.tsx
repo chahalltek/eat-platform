@@ -6,6 +6,7 @@ import clsx from "clsx";
 
 import { StatusPill } from "@/components/StatusPill";
 import { categorizeConfidence } from "@/app/jobs/[jobId]/matches/confidence";
+import type { Explanation } from "@/lib/agents/explainEngine";
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -16,7 +17,7 @@ export type JobConsoleCandidate = {
   confidenceScore: number | null;
   confidenceBand: "HIGH" | "MEDIUM" | "LOW" | null;
   shortlisted: boolean;
-  explanation: string;
+  explanation: (Explanation & { summaryOnly?: boolean }) | null;
 };
 
 export type JobConsoleProps = {
@@ -33,6 +34,43 @@ export type JobConsoleProps = {
   modeLabel: string;
   modeDescription?: string | null;
 };
+
+function normalizeExplanation(
+  source: unknown,
+  options?: { summaryOnly?: boolean },
+): JobConsoleCandidate["explanation"] {
+  if (!source) return null;
+
+  if (typeof source === "string") {
+    return { summary: source, strengths: [], risks: [], summaryOnly: options?.summaryOnly ?? true } satisfies JobConsoleCandidate["explanation"];
+  }
+
+  if (typeof source === "object") {
+    const data = source as { summary?: unknown; strengths?: unknown; risks?: unknown; summaryOnly?: unknown; text?: unknown };
+    const strengths = Array.isArray(data.strengths)
+      ? data.strengths.map((entry) => String(entry)).filter(Boolean)
+      : [];
+    const risks = Array.isArray(data.risks)
+      ? data.risks.map((entry) => String(entry)).filter(Boolean)
+      : [];
+    const summaryCandidate = typeof data.summary === "string" && data.summary.trim().length > 0 ? data.summary : undefined;
+    const summaryFallback = typeof data.text === "string" && data.text.trim().length > 0 ? data.text : undefined;
+    const summary = summaryCandidate ?? summaryFallback;
+
+    if (!summary && strengths.length === 0 && risks.length === 0) {
+      return null;
+    }
+
+    return {
+      summary: summary ?? "Explanation not generated yet.",
+      strengths,
+      risks,
+      summaryOnly: options?.summaryOnly ?? (data.summaryOnly as boolean | undefined) ?? (strengths.length === 0 && risks.length === 0),
+    } satisfies JobConsoleCandidate["explanation"];
+  }
+
+  return null;
+}
 
 function AgentToggleNotice({
   agents,
@@ -82,11 +120,15 @@ function ConfidenceBadge({ band }: { band: JobConsoleCandidate["confidenceBand"]
 function ResultsTable({
   candidates,
   expandedId,
+  explainUnavailable,
   onToggle,
+  showFireDrillBadge,
 }: {
   candidates: JobConsoleCandidate[];
   expandedId: string | null;
+  explainUnavailable: boolean;
   onToggle: (id: string) => void;
+  showFireDrillBadge: boolean;
 }) {
   if (candidates.length === 0) {
     return (
@@ -148,19 +190,74 @@ function ResultsTable({
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => onToggle(candidate.candidateId)}
-                        className="text-sm font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-4 hover:text-indigo-900"
-                      >
-                        {expanded ? "Hide explanation" : "View explanation"}
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {showFireDrillBadge ? (
+                          <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-100">
+                            Fire Drill mode
+                          </span>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => onToggle(candidate.candidateId)}
+                          disabled={explainUnavailable && !candidate.explanation}
+                          title={explainUnavailable && !candidate.explanation ? "EXPLAIN disabled in current mode." : undefined}
+                          className={clsx(
+                            "text-sm font-semibold underline decoration-indigo-200 underline-offset-4",
+                            explainUnavailable && !candidate.explanation
+                              ? "cursor-not-allowed text-slate-500"
+                              : "text-indigo-700 hover:text-indigo-900",
+                          )}
+                        >
+                          {expanded ? "Hide" : "Explain"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {expanded ? (
                     <tr className="bg-indigo-50/40" key={`${candidate.candidateId}-explanation`}>
                       <td colSpan={5} className="px-4 py-4 text-sm text-slate-800">
-                        {candidate.explanation}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Summary</p>
+                            {candidate.explanation?.summaryOnly ? (
+                              <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 ring-1 ring-slate-200">
+                                Summary only
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="leading-relaxed text-slate-900">{candidate.explanation?.summary ?? "Explanation not generated yet."}</p>
+
+                          {candidate.explanation?.summaryOnly ? (
+                            <p className="text-xs text-amber-700">Detailed strengths and risks are paused in this mode.</p>
+                          ) : null}
+
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2 rounded-xl bg-white p-4 ring-1 ring-slate-200">
+                              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Strengths</p>
+                              {candidate.explanation?.strengths?.length ? (
+                                <ul className="list-disc space-y-1 pl-4 text-slate-800">
+                                  {candidate.explanation.strengths.map((item) => (
+                                    <li key={item}>{item}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-slate-500">Run EXPLAIN to surface strengths.</p>
+                              )}
+                            </div>
+                            <div className="space-y-2 rounded-xl bg-white p-4 ring-1 ring-slate-200">
+                              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Risks</p>
+                              {candidate.explanation?.risks?.length ? (
+                                <ul className="list-disc space-y-1 pl-4 text-slate-800">
+                                  {candidate.explanation.risks.map((item) => (
+                                    <li key={item}>{item}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-slate-500">Run EXPLAIN to capture risks.</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   ) : null}
@@ -238,7 +335,12 @@ function ExecutionToolbar({
 export function JobExecutionConsole(props: JobConsoleProps) {
   const { jobId, jobTitle, jobLocation, summary, mustHaveSkills, initialCandidates, agentState, modeLabel, modeDescription } =
     props;
-  const [candidates, setCandidates] = useState<JobConsoleCandidate[]>(initialCandidates);
+  const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
+    ...candidate,
+    explanation: normalizeExplanation(candidate.explanation),
+  });
+
+  const [candidates, setCandidates] = useState<JobConsoleCandidate[]>(initialCandidates.map(normalizeCandidate));
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [runningAgent, setRunningAgent] = useState<AgentName | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -253,14 +355,14 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       const cached = sessionStorage.getItem(storageKey);
       if (cached) {
         const parsed = JSON.parse(cached) as JobConsoleCandidate[];
-        setCandidates(parsed);
+        setCandidates(parsed.map(normalizeCandidate));
         return;
       }
     } catch (err) {
       console.warn("Failed to read cached console data", err);
     }
 
-    setCandidates(initialCandidates);
+    setCandidates(initialCandidates.map(normalizeCandidate));
   }, [storageKey, initialCandidates]);
 
   useEffect(() => {
@@ -280,6 +382,9 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       SHORTLIST: !(stateByAgent.get("SHORTLIST") ?? false),
     } satisfies Record<AgentName, boolean>;
   }, [agentState]);
+
+  const explainUnavailable = disabled.EXPLAIN;
+  const isFireDrillMode = modeLabel.toLowerCase().includes("fire drill");
 
   function normalizeBand(category?: string | null): JobConsoleCandidate["confidenceBand"] {
     if (!category) return null;
@@ -317,7 +422,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
               confidenceScore: Math.round(match.confidence),
               confidenceBand: normalizeBand(match.confidenceCategory) ?? normalizeBand(categorizeConfidence(match.confidence)),
               shortlisted: existing?.shortlisted ?? false,
-              explanation: existing?.explanation ?? "Explanation not generated yet.",
+              explanation: existing?.explanation ?? normalizeExplanation("Explanation not generated yet.", { summaryOnly: true }),
             };
 
             byId.set(match.candidateId, updated);
@@ -354,13 +459,13 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       if (agent === "EXPLAIN") {
         const res = await fetch(`/api/jobs/${jobId}/explain`, { method: "POST" });
         if (!res.ok) throw new Error(`EXPLAIN failed with ${res.status}`);
-        const payload = (await res.json()) as { explanations: Array<{ candidateId: string; explanation: string }> };
+        const payload = (await res.json()) as { explanations: Array<{ candidateId: string; explanation: Explanation }> };
 
         setCandidates((prev) =>
           prev.map((row) => {
             const explanation = payload.explanations.find((entry) => entry.candidateId === row.candidateId);
             if (!explanation) return row;
-            return { ...row, explanation: explanation.explanation };
+            return { ...row, explanation: normalizeExplanation(explanation.explanation, { summaryOnly: false }) };
           }),
         );
 
@@ -493,7 +598,13 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           </div>
         </div>
 
-        <ResultsTable candidates={candidates} expandedId={expandedId} onToggle={(id) => setExpandedId((prev) => (prev === id ? null : id))} />
+        <ResultsTable
+          candidates={candidates}
+          expandedId={expandedId}
+          explainUnavailable={explainUnavailable}
+          showFireDrillBadge={isFireDrillMode}
+          onToggle={(id) => setExpandedId((prev) => (prev === id ? null : id))}
+        />
       </div>
     </div>
   );
