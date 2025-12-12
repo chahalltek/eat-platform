@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ETECard } from "@/components/ETECard";
-import type { TenantGuardrails } from "@/lib/tenant/guardrails";
+import { defaultTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails";
 
 const PRESET_VALUES: Record<"Conservative" | "Balanced" | "Aggressive", TenantGuardrails> = {
   Conservative: {
@@ -36,6 +36,7 @@ const PRESET_VALUES: Record<"Conservative" | "Balanced" | "Aggressive", TenantGu
       requireMustHaves: true,
       excludeInternalCandidates: true,
     },
+    llm: defaultTenantGuardrails.llm,
   },
   Balanced: {
     scoring: {
@@ -60,6 +61,7 @@ const PRESET_VALUES: Record<"Conservative" | "Balanced" | "Aggressive", TenantGu
       requireMustHaves: true,
       excludeInternalCandidates: false,
     },
+    llm: defaultTenantGuardrails.llm,
   },
   Aggressive: {
     scoring: {
@@ -84,6 +86,7 @@ const PRESET_VALUES: Record<"Conservative" | "Balanced" | "Aggressive", TenantGu
       requireMustHaves: false,
       excludeInternalCandidates: false,
     },
+    llm: defaultTenantGuardrails.llm,
   },
 };
 
