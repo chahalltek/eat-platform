@@ -4,11 +4,19 @@ const mocks = vi.hoisted(() => ({
   ingestJobMock: vi.fn(),
   getCurrentTenantIdMock: vi.fn(),
   prisma: { jobReq: { update: vi.fn() } },
+  isPrismaUnavailableErrorMock: vi.fn(() => false),
+  isTableAvailableMock: vi.fn(() => true),
+  recordMetricEventMock: vi.fn(),
 }));
 
 vi.mock("@/lib/matching/matcher", () => ({ ingestJob: mocks.ingestJobMock }));
 vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: mocks.getCurrentTenantIdMock }));
-vi.mock("@/lib/prisma", () => ({ prisma: mocks.prisma }));
+vi.mock("@/lib/prisma", () => ({
+  prisma: mocks.prisma,
+  isPrismaUnavailableError: mocks.isPrismaUnavailableErrorMock,
+  isTableAvailable: mocks.isTableAvailableMock,
+}));
+vi.mock("@/lib/metrics/events", () => ({ recordMetricEvent: mocks.recordMetricEventMock }));
 
 import { POST } from "./route";
 
@@ -49,6 +57,16 @@ describe("POST /api/jobs/ingest", () => {
       expect.anything(),
     );
     expect(payload.skills[0].normalizedName).toBe("node.js");
+    expect(mocks.recordMetricEventMock).toHaveBeenCalledWith({
+      tenantId: "tenant-123",
+      eventType: "JOB_CREATED",
+      entityId: "job-1",
+      meta: {
+        skillsCount: 2,
+        sourceTag: undefined,
+        sourceType: "ingest",
+      },
+    });
   });
 
   it("rejects invalid payloads", async () => {

@@ -9,6 +9,7 @@ import { guardrailsPresets, type GuardrailsConfig } from "@/lib/guardrails/prese
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { prisma } from "@/lib/prisma";
 import { setShortlistState } from "@/lib/matching/shortlist";
+import { recordMetricEvent } from "@/lib/metrics/events";
 
 export type RunShortlistInput = {
   jobId: string;
@@ -182,6 +183,18 @@ export async function runShortlist(
             tenantId: job.tenantId,
           });
         }
+      });
+
+      void recordMetricEvent({
+        tenantId: job.tenantId,
+        eventType: "SHORTLIST_CREATED",
+        entityId: job.id,
+        meta: {
+          shortlistSize: shortlistedCandidates.length,
+          totalMatches: matches.length,
+          strategy: shortlistConfig.shortlist?.strategy ?? "quality",
+          shortlistLimit: shortlistMaxCandidates ?? requestedShortlistLimit ?? null,
+        },
       });
 
       return {

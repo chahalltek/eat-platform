@@ -5,6 +5,7 @@ import { runMatcher } from "@/lib/agents/matcher";
 import { runShortlist } from "@/lib/agents/shortlist";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { withTenantContext } from "@/lib/tenant";
+import { recordMetricEvent } from "@/lib/metrics/events";
 
 export type PipelineStep = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -34,10 +35,12 @@ export async function runPipeline(req: PipelineRequest): Promise<PipelineResult>
   const availability = await getAgentAvailability(req.tenantId);
   const isFireDrill = tenantMode.mode === "fire_drill";
   const mode = req.mode ?? "ui";
+  const startedAt = Date.now();
 
   const executedSteps: PipelineStep[] = [];
   const skippedSteps: PipelineResult["skippedSteps"] = [];
   const outputs: PipelineResult["outputs"] = {};
+  let error: unknown;
 
   const skipStep = (step: PipelineStep, reason: string) => {
     skippedSteps.push({ step, reason });
@@ -75,35 +78,55 @@ export async function runPipeline(req: PipelineRequest): Promise<PipelineResult>
     },
   };
 
-  for (const step of req.steps) {
-    if (isFireDrill && (step === "CONFIDENCE" || step === "EXPLAIN")) {
-      skipStep(step, "Step disabled during Fire Drill mode");
-      continue;
-    }
-
-    if (!availability.isEnabled(step)) {
-      skipStep(step, `${step} agent is disabled for this tenant`);
-      continue;
-    }
-
-    try {
-      await handlers[step]();
-      executedSteps.push(step);
-    } catch (error) {
-      if (mode === "auto") {
-        const reason = error instanceof Error ? error.message : String(error);
-        skipStep(step, reason);
+  try {
+    for (const step of req.steps) {
+      if (isFireDrill && (step === "CONFIDENCE" || step === "EXPLAIN")) {
+        skipStep(step, "Step disabled during Fire Drill mode");
         continue;
       }
 
-      throw error;
-    }
-  }
+      if (!availability.isEnabled(step)) {
+        skipStep(step, `${step} agent is disabled for this tenant`);
+        continue;
+      }
 
-  return {
-    jobId: req.jobId,
-    executedSteps,
-    skippedSteps,
-    outputs,
-  } satisfies PipelineResult;
+      try {
+        await handlers[step]();
+        executedSteps.push(step);
+      } catch (error) {
+        if (mode === "auto") {
+          const reason = error instanceof Error ? error.message : String(error);
+          skipStep(step, reason);
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    return {
+      jobId: req.jobId,
+      executedSteps,
+      skippedSteps,
+      outputs,
+    } satisfies PipelineResult;
+  } catch (err) {
+    error = err;
+    throw err;
+  } finally {
+    const finishedAt = Date.now();
+    void recordMetricEvent({
+      tenantId: req.tenantId,
+      eventType: "PIPELINE_RUN_COMPLETED",
+      entityId: req.jobId,
+      meta: {
+        status: error ? "failed" : "success",
+        durationMs: finishedAt - startedAt,
+        executedSteps,
+        skippedSteps,
+        mode,
+        candidateCount: req.candidateIds?.length ?? null,
+      },
+    });
+  }
 }

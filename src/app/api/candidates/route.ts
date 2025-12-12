@@ -7,6 +7,7 @@ import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES, type UserRole } from "@/lib/auth/roles";
 import { candidateProfileSchema, candidateSkillSchema } from "@/types/candidateIntake";
 import { onCandidateChanged } from "@/lib/orchestration/triggers";
+import { recordMetricEvent } from "@/lib/metrics/events";
 
 const recruiterRoles = new Set<UserRole>([
   USER_ROLES.ADMIN,
@@ -129,6 +130,17 @@ export async function POST(req: NextRequest) {
     if (jobReq) {
       void onCandidateChanged({ tenantId: jobReq.tenantId, jobId: jobReq.id, candidateIds: [candidate.id] });
     }
+
+    void recordMetricEvent({
+      tenantId,
+      eventType: "CANDIDATE_INGESTED",
+      entityId: candidate.id,
+      meta: {
+        jobReqId: jobReqId ?? undefined,
+        skillsCount: (parsedBody.skills ?? profile.skills ?? []).length,
+        parsingConfidence: profile.parsingConfidence ?? null,
+      },
+    });
 
     return NextResponse.json(candidate, { status: 201 });
   } catch (error) {

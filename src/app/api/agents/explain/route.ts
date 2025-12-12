@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { callLLM } from "@/lib/llm";
 import { makeDeterministicExplanation, normalizeMatchExplanation } from "@/lib/matching/explanation";
+import { recordMetricEvent } from "@/lib/metrics/events";
 
 const requestSchema = z
   .object({
@@ -168,6 +169,7 @@ export async function POST(req: NextRequest) {
       const explanation = makeDeterministicExplanation(parsedResponse);
 
       const finishedAt = new Date();
+      const durationMs = finishedAt.getTime() - startedAt.getTime();
       await scopedPrisma.agentRunLog.update({
         where: { id: agentRun.id },
         data: {
@@ -175,7 +177,19 @@ export async function POST(req: NextRequest) {
           output: { snapshot: explanation },
           outputSnapshot: explanation,
           finishedAt,
-          durationMs: finishedAt.getTime() - startedAt.getTime(),
+          durationMs,
+        },
+      });
+
+      void recordMetricEvent({
+        tenantId,
+        eventType: "EXPLANATION_GENERATED",
+        entityId: match.id,
+        meta: {
+          jobId: job.id,
+          candidateId: candidate.id,
+          durationMs,
+          agentRunId: agentRun.id,
         },
       });
 

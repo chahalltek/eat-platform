@@ -437,17 +437,17 @@ model AgentRunLog {
 }
 
 model AgentRun {
-  id          String   @id @default(cuid())
-  tenantId    String   @default("default-tenant")
+  id          String    @id @default(cuid())
+  tenantId    String    @default("default-tenant")
   agentName   String
   requestedBy String?
   jobId       String?
-  status      String   @default("running")
+  status      String    @default("running")
   promptMeta  Json?
   input       Json?
   output      Json?
   mode        String?
-  startedAt   DateTime @default(now())
+  startedAt   DateTime  @default(now())
   finishedAt  DateTime?
 
   @@index([tenantId, agentName])
@@ -722,4 +722,17 @@ model MatchScoreComponent {
   createdAt DateTime @default(now())
 
   @@index([tenantId, matchId])
+}
+
+model MetricEvent {
+  id        String   @id @default(cuid())
+  tenantId  String   @default("default-tenant")
+  eventType String
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, eventType])
+  @@index([createdAt])
 }

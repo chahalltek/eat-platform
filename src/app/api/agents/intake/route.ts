@@ -9,6 +9,7 @@ import { normalizeError } from '@/lib/errors';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { onJobChanged } from '@/lib/orchestration/triggers';
+import { recordMetricEvent } from '@/lib/metrics/events';
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -202,6 +203,18 @@ export async function POST(req: NextRequest) {
       if (jobReqId && resolvedTenantId) {
         void onJobChanged({ tenantId: resolvedTenantId, jobId: jobReqId });
       }
+
+      const tenantForMetrics = resolvedTenantId ?? 'default-tenant';
+      void recordMetricEvent({
+        tenantId: tenantForMetrics,
+        eventType: inputSnapshot.jobReqId ? 'JOB_UPDATED' : 'JOB_CREATED',
+        entityId: jobReqId ?? undefined,
+        meta: {
+          status: parsedProfile.status ?? null,
+          skillsCount: parsedProfile.skills.length,
+          sourceType: 'agent_intake',
+        },
+      });
 
       const finishedAt = new Date();
       const durationMs = finishedAt.getTime() - startedAt.getTime();
