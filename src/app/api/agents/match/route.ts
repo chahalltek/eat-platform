@@ -7,15 +7,17 @@ import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
-import { runMatch } from "@/lib/agents/matchEngine";
 import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
-import { callLLM } from "@/lib/llm";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 import { recordUsageEvent } from "@/lib/usage/events";
+import { computeMatchScore } from "@/lib/matching/msa";
+import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
+import { computeJobFreshnessScore } from "@/lib/matching/freshness";
+import { computeMatchConfidence } from "@/lib/matching/confidence";
 
 const requestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId is required"),
@@ -25,32 +27,6 @@ const requestSchema = z.object({
     .refine((ids) => !ids || ids.length > 0, "candidateIds cannot be empty"),
   limit: z.number().int().positive().max(500).optional(),
 });
-
-async function buildMatchExplanation(
-  jobTitle: string,
-  jobDescription: string | null,
-  candidateName: string,
-  candidateSummary: string | null,
-  deterministicBreakdown: Record<string, unknown>,
-  llmEnabled: boolean,
-) {
-  if (!llmEnabled) {
-    return "Fire Drill mode: using deterministic scoring";
-  }
-
-  const systemPrompt =
-    "You are a recruiting assistant. Given a job and candidate profile, explain why the candidate matches.";
-  const userPrompt = `Job: ${jobTitle}\nDescription: ${jobDescription ?? "N/A"}\nCandidate: ${candidateName}\nSummary: ${candidateSummary ?? "N/A"}\nDeterministic scores: ${JSON.stringify(
-    deterministicBreakdown,
-  )}\nWrite a concise, bullet-point match rationale.`;
-
-  try {
-    return await callLLM({ systemPrompt, userPrompt, agent: "MATCH_EXPLAIN" });
-  } catch (err) {
-    console.warn("LLM explanation failed for match", err);
-    return "LLM explanation unavailable";
-  }
-}
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -103,7 +79,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!availability.isEnabled("MATCH")) {
-    return NextResponse.json({ error: "MATCH agent is disabled" }, { status: 403 });
+    return NextResponse.json({ matches: [], jobReqId, agentRunId: null }, { status: 200 });
   }
 
   return runWithTenantContext(async () => {
@@ -139,7 +115,9 @@ export async function POST(req: NextRequest) {
           ...conservativePreset.scoring,
           ...(guardrailsConfig.scoring ?? {}),
           strategy: "simple",
-          thresholds: conservativePreset.scoring.thresholds,
+          thresholds:
+            (guardrailsConfig.scoring as { thresholds?: Prisma.JsonValue } | undefined)?.thresholds ??
+            conservativePreset.scoring.thresholds,
         },
         safety: {
           ...conservativePreset.safety,
@@ -147,6 +125,35 @@ export async function POST(req: NextRequest) {
         },
       };
     }
+
+    const scoringConfig = (guardrailsConfig.scoring ?? {}) as {
+      strategy?: string;
+      thresholds?: { minMatchScore?: number };
+      weights?: { mustHaveSkills?: number; niceToHaveSkills?: number; experience?: number; location?: number };
+    };
+
+    const safetyConfig = (guardrailsConfig.safety ?? {}) as { requireMustHaves?: boolean };
+    const matcherWeights = scoringConfig.weights ?? {};
+    const skillsWeight = (matcherWeights.mustHaveSkills ?? 0) + (matcherWeights.niceToHaveSkills ?? 0);
+    const seniorityWeight = matcherWeights.experience ?? 0;
+    const locationWeight = matcherWeights.location ?? 0;
+    const candidateSignalsWeight = Math.max(0, 1 - (skillsWeight + seniorityWeight + locationWeight));
+
+    const matcherConfig = {
+      mode: scoringConfig.strategy === "simple" ? "simple" : "mixed",
+      weights: {
+        skills: skillsWeight || 0.4,
+        seniority: seniorityWeight || 0.25,
+        location: locationWeight || 0.15,
+        candidateSignals: candidateSignalsWeight || 0.2,
+      },
+    } as const;
+
+    const thresholdValue = (scoringConfig.thresholds as { minMatchScore?: number } | undefined)?.minMatchScore;
+    const conservativeThreshold =
+      (conservativePreset.scoring as { thresholds?: { minMatchScore?: number } } | undefined)?.thresholds?.minMatchScore;
+    const minMatchScore = thresholdValue ?? conservativeThreshold ?? 0;
+    const normalizedMinScore = minMatchScore <= 1 ? Math.round((minMatchScore || 0) * 100) : Math.round(minMatchScore);
 
     const candidates = await scopedPrisma.candidate.findMany({
       where: candidateWhere,
@@ -161,12 +168,20 @@ export async function POST(req: NextRequest) {
 
     const candidateIdList = candidates.map((candidate) => candidate.id);
 
-    const [existingMatchResults, existingMatches] = await Promise.all([
+    const [existingMatchResults, existingMatches, jobCandidates, outreachInteractions] = await Promise.all([
       scopedPrisma.matchResult.findMany({
         where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
       }),
       scopedPrisma.match.findMany({
         where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
+      }),
+      scopedPrisma.jobCandidate.findMany({
+        where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
+      }),
+      scopedPrisma.outreachInteraction.groupBy({
+        by: ["candidateId"],
+        where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
+        _count: { _all: true },
       }),
     ]);
 
@@ -174,6 +189,10 @@ export async function POST(req: NextRequest) {
       existingMatchResults.map((result) => [result.candidateId, result]),
     );
     const existingMatchByCandidate = new Map(existingMatches.map((match) => [match.candidateId, match]));
+    const jobCandidateById = new Map(jobCandidates.map((entry) => [entry.candidateId, entry]));
+    const outreachByCandidateId = new Map(
+      outreachInteractions.map((interaction) => [interaction.candidateId, interaction._count._all]),
+    );
 
     const startedAt = new Date();
     const agentRun = await createAgentRunLog(scopedPrisma, {
@@ -188,24 +207,6 @@ export async function POST(req: NextRequest) {
     });
 
     try {
-      const matchResults = runMatch({
-        job: {
-          id: jobReq.id,
-          location: jobReq.location,
-          seniorityLevel: jobReq.seniorityLevel ?? undefined,
-          skills: jobReq.skills,
-        },
-        candidates: candidates.map((candidate) => ({
-          id: candidate.id,
-          location: candidate.location,
-          totalExperienceYears: candidate.totalExperienceYears ?? null,
-          seniorityLevel: candidate.seniorityLevel ?? undefined,
-          skills: candidate.skills,
-        })),
-        config: guardrailsConfig,
-      });
-
-      const candidateById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
       const matches = [] as Array<{
         matchResultId: string;
         candidateId: string;
@@ -218,67 +219,62 @@ export async function POST(req: NextRequest) {
         explanation: string;
       }>;
 
-      for (const match of matchResults) {
-        const candidate = candidateById.get(match.candidateId);
-        if (!candidate) {
+      const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
+      const jobFreshness = computeJobFreshnessScore({
+        createdAt: jobReq.createdAt,
+        updatedAt: jobReq.updatedAt,
+        latestMatchActivity,
+      });
+
+      for (const candidate of candidates) {
+        const candidateSignals = computeCandidateSignalScore({
+          candidate,
+          jobCandidate: jobCandidateById.get(candidate.id),
+          outreachInteractions: outreachByCandidateId.get(candidate.id) ?? 0,
+        });
+
+        const matchScore = computeMatchScore(
+          { candidate, jobReq },
+          {
+            jobFreshnessScore: jobFreshness.score,
+            candidateSignals,
+            matcherConfig,
+            guardrails: { requireMustHaveSkills: Boolean(safetyConfig.requireMustHaves) },
+            explain: true,
+          },
+        );
+
+        if (matchScore.score < normalizedMinScore) {
           continue;
         }
 
-        const averageSignal =
-          (match.signals.mustHaveSkillsCoverage +
-            match.signals.niceToHaveSkillsCoverage +
-            match.signals.experienceAlignment +
-            match.signals.locationAlignment) /
-          4;
-        const confidenceScore = Math.round(averageSignal * 100);
-        const confidenceCategory = confidenceScore >= 75 ? "HIGH" : confidenceScore >= 50 ? "MEDIUM" : "LOW";
-        const confidence = {
-          score: confidenceScore,
-          category: confidenceCategory,
-          reasons: [] as string[],
-        };
-        const guardrails: Prisma.JsonObject = {
-          strategy: (guardrailsConfig.scoring as { strategy?: string } | undefined)?.strategy ?? "weighted",
-          thresholds: (guardrailsConfig.scoring as { thresholds?: Prisma.JsonValue } | undefined)?.thresholds ?? null,
-        };
+        const confidence = computeMatchConfidence({ candidate, jobReq });
 
         const candidateSignalBreakdown: Prisma.JsonObject = {
-          signals: match.signals,
+          ...(candidateSignals.breakdown ?? {}),
           confidence,
-          guardrails,
         };
 
         const breakdown: Prisma.JsonObject = {
-          score: match.score,
-          signals: match.signals,
-          guardrails,
-          confidence,
+          matchScore,
+          guardrails: guardrailsConfig,
+          candidateSignals: candidateSignals.breakdown ?? null,
         };
 
-        const jobDescription = jobReq.rawDescription?.trim() || null;
-
-        const explanation = await buildMatchExplanation(
-          jobReq.title,
-          jobDescription,
-          candidate.fullName,
-          candidate.summary ?? candidate.rawResumeText ?? null,
-          breakdown,
-          availability.isEnabled("EXPLAIN"),
-        );
-
-        const existingResult = existingResultByCandidate.get(match.candidateId);
-        const existingMatch = existingMatchByCandidate.get(match.candidateId);
+        const explanation = matchScore.explanation.exportableText.join(" ");
+        const existingResult = existingResultByCandidate.get(candidate.id);
+        const existingMatch = existingMatchByCandidate.get(candidate.id);
 
         const savedMatchResult = await scopedPrisma.$transaction(async (tx) => {
           const data = {
-            candidateId: match.candidateId,
+            candidateId: candidate.id,
             jobReqId,
-            score: match.score,
+            score: matchScore.score,
             reasons: breakdown,
-            skillScore: Math.round(match.signals.mustHaveSkillsCoverage * 100),
-            seniorityScore: Math.round(match.signals.experienceAlignment * 100),
-            locationScore: Math.round(match.signals.locationAlignment * 100),
-            candidateSignalScore: Math.round(match.signals.niceToHaveSkillsCoverage * 100),
+            skillScore: matchScore.skillScore,
+            seniorityScore: matchScore.seniorityScore,
+            locationScore: matchScore.locationScore,
+            candidateSignalScore: matchScore.candidateSignalScore ?? candidateSignals.score,
             candidateSignalBreakdown,
             tenantId,
             agentRunId: agentRun.id,
@@ -288,13 +284,13 @@ export async function POST(req: NextRequest) {
             ? await tx.matchResult.update({ where: { id: existingResult.id }, data })
             : await tx.matchResult.create({ data });
 
-          await upsertJobCandidateForMatch(jobReqId, match.candidateId, result.id, tenantId, tx);
+          await upsertJobCandidateForMatch(jobReqId, candidate.id, result.id, tenantId, tx);
 
           if (existingMatch) {
             await tx.match.update({
               where: { id: existingMatch.id },
               data: {
-                overallScore: match.score,
+                overallScore: matchScore.score,
                 scoreBreakdown: breakdown,
                 explanation,
                 createdByAgent: "MATCH",
@@ -306,8 +302,8 @@ export async function POST(req: NextRequest) {
               data: {
                 tenantId,
                 jobReqId,
-                candidateId: match.candidateId,
-                overallScore: match.score,
+                candidateId: candidate.id,
+                overallScore: matchScore.score,
                 category: "Suggested",
                 scoreBreakdown: breakdown,
                 explanation,
@@ -321,9 +317,9 @@ export async function POST(req: NextRequest) {
 
         matches.push({
           matchResultId: savedMatchResult.id,
-          candidateId: match.candidateId,
+          candidateId: candidate.id,
           jobReqId,
-          score: match.score,
+          score: matchScore.score,
           confidence: confidence.score,
           confidenceCategory: confidence.category,
           confidenceReasons: confidence.reasons,
