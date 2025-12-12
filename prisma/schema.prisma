@@ -657,15 +657,21 @@ model MatchFeedback {
   jobCandidateId String?
   user           User?         @relation(fields: [userId], references: [id])
   userId         String?
-  direction      String?
-  outcome        String?
-  matchSignals   Json?
+  direction        String?
+  outcome          String
+  outcomeSource    String?
+  matchScore       Int?
+  confidenceScore  Int?
+  shortlistStrategy String?
+  matchSignals     Json?
   guardrailsPreset String?
-  systemMode     String?
-  createdAt      DateTime      @default(now())
+  guardrailsConfig Json?
+  systemMode       String?
+  createdAt        DateTime      @default(now())
 
   @@index([tenantId, matchResultId])
   @@index([tenantId, jobReqId])
+  @@unique([tenantId, matchResultId, outcome])
 }
 
 model JobCandidateLabel {

@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 
-const DIRECTION_LABELS = {
-  UP: { emoji: "👍", label: "Good match" },
-  DOWN: { emoji: "👎", label: "Not a fit" },
-} as const;
+const OUTCOME_OPTIONS = [
+  { outcome: "SCREENED", label: "Screened" },
+  { outcome: "INTERVIEWED", label: "Interviewed" },
+  { outcome: "OFFERED", label: "Offered" },
+  { outcome: "HIRED", label: "Hired" },
+  { outcome: "REJECTED", label: "Rejected" },
+] as const;
 
-type FeedbackDirection = keyof typeof DIRECTION_LABELS;
-type FeedbackOutcome = "INTERVIEWED" | "HIRED";
+type FeedbackOutcome = (typeof OUTCOME_OPTIONS)[number]["outcome"];
 
 type FeedbackState = "idle" | "saving" | "saved" | "error";
 
@@ -22,7 +24,7 @@ export function MatchFeedbackControls({
   const [state, setState] = useState<FeedbackState>("idle");
   const [message, setMessage] = useState<string | null>(null);
 
-  const submitFeedback = async (payload: { direction?: FeedbackDirection; outcome?: FeedbackOutcome }) => {
+  const submitFeedback = async (payload: { outcome: FeedbackOutcome }) => {
     setState("saving");
     setMessage(null);
 
@@ -50,28 +52,10 @@ export function MatchFeedbackControls({
 
   return (
     <div className="space-y-2 text-xs text-gray-800">
-      <p className="font-semibold text-gray-700">Feedback</p>
-      <div className="flex flex-wrap gap-2">
-        {(Object.keys(DIRECTION_LABELS) as FeedbackDirection[]).map((direction) => (
-          <button
-            key={direction}
-            type="button"
-            disabled={disabled}
-            onClick={() => submitFeedback({ direction })}
-            className="flex items-center gap-1 rounded border border-gray-200 bg-white px-2 py-1 font-semibold shadow-sm transition hover:border-blue-200 hover:text-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-            aria-label={`${DIRECTION_LABELS[direction].label} for ${candidateName}`}
-          >
-            <span aria-hidden>{DIRECTION_LABELS[direction].emoji}</span>
-            <span>{DIRECTION_LABELS[direction].label}</span>
-          </button>
-        ))}
-      </div>
+      <p className="font-semibold text-gray-700">Hiring outcome</p>
 
       <div className="flex flex-wrap gap-2">
-        {([
-          { outcome: "INTERVIEWED", label: "Interviewed" },
-          { outcome: "HIRED", label: "Hired" },
-        ] satisfies { outcome: FeedbackOutcome; label: string }[]).map(({ outcome, label }) => (
+        {OUTCOME_OPTIONS.map(({ outcome, label }) => (
           <button
             key={outcome}
             type="button"
