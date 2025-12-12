@@ -88,8 +88,13 @@ function WorkflowAlert({
   tone?: "warning" | "error" | "info";
 }) {
   const toneStyles: Record<typeof tone, string> = {
+<<<<<<< ours
     warning: "border-amber-100 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200",
     error: "border-rose-100 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200",
+=======
+    warning: "border-amber-100 bg-amber-50/70 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100",
+    error: "border-rose-100 bg-rose-50/70 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-100",
+>>>>>>> theirs
     info: "border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-zinc-900 dark:text-slate-100",
   };
 
@@ -130,16 +135,28 @@ function WorkflowDependencies({
   variant?: "default" | "strong";
 }) {
   const pillStyles: Record<SubsystemState, string> = {
-    healthy: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-900/70",
-    warning: "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-900/70",
-    error: "bg-rose-100 text-rose-900 border-rose-200 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-900/70",
-    unknown: "bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700",
+    healthy: "border-emerald-200 text-emerald-800 dark:border-emerald-900 dark:text-emerald-100",
+    warning: "border-amber-200 text-amber-800 dark:border-amber-900 dark:text-amber-100",
+    error: "border-rose-200 text-rose-800 dark:border-rose-900 dark:text-rose-100",
+    unknown: "border-slate-200 text-slate-800 dark:border-slate-700 dark:text-slate-100",
+  };
+
+  const dotStyles: Record<SubsystemState, string> = {
+    healthy: "bg-emerald-500",
+    warning: "bg-amber-500",
+    error: "bg-rose-500",
+    unknown: "bg-slate-400",
   };
 
   const containerStyles =
     variant === "strong"
+<<<<<<< ours
       ? "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-zinc-900"
       : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-zinc-900/70";
+=======
+      ? "border-slate-300 bg-white dark:border-slate-700 dark:bg-zinc-900"
+      : "border-slate-200 bg-white dark:border-slate-800 dark:bg-zinc-900/70";
+>>>>>>> theirs
 
   return (
     <div
@@ -153,12 +170,12 @@ function WorkflowDependencies({
         <span className="text-sm">{label}</span>
         <span
           className={clsx(
-            "flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-wide shadow-sm",
+            "flex items-center gap-2 rounded-full border bg-white px-3 py-1 text-[11px] uppercase tracking-wide shadow-sm dark:bg-zinc-900",
             pillStyles[status],
           )}
         >
-          <span className="h-2 w-2 rounded-full bg-current opacity-80" aria-hidden />
-          {formatDependencyStatus(status)} dependency
+          <span className={clsx("h-2 w-2 rounded-full", dotStyles[status])} aria-hidden />
+          <span className="text-slate-700 dark:text-slate-200">{formatDependencyStatus(status)} dependency</span>
         </span>
       </div>
       <p className="text-xs text-slate-700 dark:text-slate-200/80">{message}</p>
@@ -286,11 +303,12 @@ export function WorkflowCard({
         </div>
         <span
           className={clsx(
-            "mt-1 self-start rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm sm:self-center",
+            "mt-1 flex items-center gap-2 self-start rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm sm:self-center",
             badgeStyles[badgeState],
             isBadgeAnimating && "status-change-animate",
           )}
         >
+          <span className="h-2 w-2 rounded-full bg-current opacity-80" aria-hidden />
           {formatStatusText(badgeState)}
         </span>
       </header>
