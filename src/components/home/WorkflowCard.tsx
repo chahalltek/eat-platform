@@ -88,13 +88,9 @@ function WorkflowAlert({
   tone?: "warning" | "error" | "info";
 }) {
   const toneStyles: Record<typeof tone, string> = {
-<<<<<<< ours
-    warning: "border-amber-100 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200",
-    error: "border-rose-100 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200",
-=======
-    warning: "border-amber-100 bg-amber-50/70 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100",
+    warning:
+      "border-amber-100 bg-amber-50/70 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100",
     error: "border-rose-100 bg-rose-50/70 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-100",
->>>>>>> theirs
     info: "border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-zinc-900 dark:text-slate-100",
   };
 
@@ -150,13 +146,8 @@ function WorkflowDependencies({
 
   const containerStyles =
     variant === "strong"
-<<<<<<< ours
-      ? "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-zinc-900"
-      : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-zinc-900/70";
-=======
       ? "border-slate-300 bg-white dark:border-slate-700 dark:bg-zinc-900"
       : "border-slate-200 bg-white dark:border-slate-800 dark:bg-zinc-900/70";
->>>>>>> theirs
 
   return (
     <div
