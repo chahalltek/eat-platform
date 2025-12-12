@@ -1,0 +1,115 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { prisma } from "@/lib/prisma";
+import { __testing, getMarketSignals } from "./marketSignals";
+
+type AggregateRow = {
+  roleFamily: string;
+  region: string;
+  normalizedSkill: string;
+  confidence: number;
+  timeToFillDays: number;
+  openRoles: number;
+  activeCandidates: number;
+  capturedAt: Date;
+};
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: { $queryRaw: vi.fn() },
+}));
+
+describe("getMarketSignals", () => {
+  const rows: AggregateRow[] = [
+    {
+      roleFamily: "Data",
+      region: "US",
+      normalizedSkill: "python",
+      confidence: 0.72,
+      timeToFillDays: 32,
+      openRoles: 12,
+      activeCandidates: 6,
+      capturedAt: new Date("2024-06-01"),
+    },
+    {
+      roleFamily: "Data",
+      region: "US",
+      normalizedSkill: "sql",
+      confidence: 0.48,
+      timeToFillDays: 28,
+      openRoles: 4,
+      activeCandidates: 20,
+      capturedAt: new Date("2024-06-02"),
+    },
+    {
+      roleFamily: "Data",
+      region: "EMEA",
+      normalizedSkill: "python",
+      confidence: 0.29,
+      timeToFillDays: 41,
+      openRoles: 10,
+      activeCandidates: 3,
+      capturedAt: new Date("2024-06-03"),
+    },
+    {
+      roleFamily: "Design",
+      region: "US",
+      normalizedSkill: "figma",
+      confidence: 0.83,
+      timeToFillDays: 22,
+      openRoles: 5,
+      activeCandidates: 30,
+      capturedAt: new Date("2024-06-04"),
+    },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    __testing.resetCache();
+    (prisma.$queryRaw as unknown as vi.Mock).mockResolvedValue(rows);
+  });
+
+  it("builds aggregated market signals with the benchmark label", async () => {
+    const result = await getMarketSignals({ roleFamily: "Data", region: "US" });
+
+    expect(prisma.$queryRaw).toHaveBeenCalledOnce();
+    expect(result.label).toBe("Market benchmark (aggregated)");
+    expect(result.roleFamily).toBe("Data");
+    expect(result.region).toBe("US");
+    expect(result.skillScarcity).toEqual([
+      {
+        roleFamily: "Data",
+        demand: 16,
+        supply: 26,
+        scarcityIndex: 15,
+      },
+    ]);
+    expect(result.confidenceByRegion).toEqual([
+      { region: "US", low: 0, medium: 1, high: 1, total: 2 },
+    ]);
+    expect(result.timeToFillBenchmarks).toEqual([
+      {
+        roleFamily: "Data",
+        region: "US",
+        averageDays: 30,
+        p90Days: 32,
+        sampleSize: 2,
+      },
+    ]);
+    expect(result.oversuppliedRoles).toEqual([
+      {
+        roleFamily: "Data",
+        region: "US",
+        supplyDemandRatio: 1.625,
+        openRoles: 16,
+        activeCandidates: 26,
+      },
+    ]);
+  });
+
+  it("caches the aggregate rows for a day", async () => {
+    await getMarketSignals({ region: "US" });
+    await getMarketSignals({ region: "US" });
+
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+  });
+});
