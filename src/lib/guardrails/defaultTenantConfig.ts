@@ -25,4 +25,11 @@ export const defaultTenantGuardrails = {
     excludeInternalCandidates: false,
     confidenceBands: { high: 0.75, medium: 0.55 },
   },
+  llm: {
+    provider: "openai" as const,
+    model: "gpt-4.1-mini",
+    allowedAgents: ["EXPLAIN", "RINA", "RUA", "OUTREACH", "INTAKE"],
+    maxTokens: 600,
+    verbosityCap: 2000,
+  },
 };

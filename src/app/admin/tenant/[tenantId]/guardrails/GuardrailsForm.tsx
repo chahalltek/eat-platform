@@ -45,6 +45,8 @@ export function GuardrailsForm({ tenantId }: { tenantId: string }) {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<Status>(null);
 
+  const agentOptions = ["EXPLAIN", "RINA", "RUA", "OUTREACH", "INTAKE", "MATCH_EXPLAIN"] as const;
+
   const disabled = saving || loading;
 
   const fetchConfig = async () => {
@@ -276,6 +278,84 @@ export function GuardrailsForm({ tenantId }: { tenantId: string }) {
             />
             Exclude internal candidates
           </label>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-zinc-900">LLM provider controls</h3>
+          <p className="text-sm text-zinc-600">Choose which provider, model, and agents can call LLMs for this tenant.</p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm text-zinc-700">
+            <span className="font-medium text-zinc-800">Provider</span>
+            <select
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-base text-zinc-900 shadow-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              value={form.llm.provider}
+              disabled={disabled}
+              onChange={(event) => updateField(["llm", "provider"], event.target.value)}
+            >
+              <option value="openai">OpenAI</option>
+              <option value="azure-openai">Azure OpenAI</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-zinc-700">
+            <span className="font-medium text-zinc-800">Model</span>
+            <input
+              type="text"
+              value={form.llm.model}
+              disabled={disabled}
+              onChange={(event) => updateField(["llm", "model"], event.target.value)}
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-base text-zinc-900 shadow-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <NumberInput
+            label="Max tokens per call"
+            value={form.llm.maxTokens ?? defaultTenantGuardrails.llm.maxTokens ?? 0}
+            min={1}
+            onChange={(value) => updateField(["llm", "maxTokens"], value)}
+            helper="Caps completions to a safe budget."
+          />
+          <NumberInput
+            label="Verbosity cap (characters)"
+            value={form.llm.verbosityCap ?? defaultTenantGuardrails.llm.verbosityCap ?? 0}
+            min={1}
+            onChange={(value) => updateField(["llm", "verbosityCap"], value)}
+            helper="Truncates prompts to keep outputs concise."
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-medium text-zinc-800">Agents allowed to call LLMs</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {agentOptions.map((agentKey) => {
+              const checked = form.llm.allowedAgents.includes(agentKey);
+              return (
+                <label key={agentKey} className="flex items-center gap-2 text-sm text-zinc-800">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={disabled}
+                    onChange={(event) => {
+                      const next = event.target.checked
+                        ? [...new Set([...form.llm.allowedAgents, agentKey])]
+                        : form.llm.allowedAgents.filter((entry) => entry !== agentKey);
+
+                      updateField(["llm", "allowedAgents"], next);
+                    }}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  {agentKey}
+                </label>
+              );
+            })}
+          </div>
         </div>
       </section>
 

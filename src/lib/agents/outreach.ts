@@ -154,6 +154,7 @@ export async function runOutreach(
       const message = await callLLM({
         systemPrompt: SYSTEM_PROMPT,
         userPrompt,
+        agent: 'OUTREACH',
       });
 
       return {

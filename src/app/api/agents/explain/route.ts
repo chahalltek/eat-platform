@@ -155,6 +155,7 @@ export async function POST(req: NextRequest) {
       const rawResponse = await callLLM({
         systemPrompt: buildSystemPrompt(),
         userPrompt: buildUserPrompt(promptData),
+        agent: "EXPLAIN",
       });
 
       let llmPayload: unknown = rawResponse;

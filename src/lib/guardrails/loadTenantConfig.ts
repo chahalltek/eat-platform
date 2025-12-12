@@ -37,6 +37,7 @@ export async function loadTenantConfig(tenantId: string) {
     scoring: { ...defaultTenantGuardrails.scoring, ...coerceGuardrailSection(existing.scoring) },
     explain: { ...defaultTenantGuardrails.explain, ...coerceGuardrailSection(existing.explain) },
     safety: mergeSafetySection(existing.safety),
+    llm: { ...defaultTenantGuardrails.llm, ...coerceGuardrailSection((existing as { llm?: unknown }).llm) },
     _source: "db" as const,
   };
 }

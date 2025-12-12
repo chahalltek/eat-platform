@@ -36,7 +36,10 @@ function normalizePreset(preset: string | null | undefined): GuardrailsPresetNam
   return names.includes(preset as GuardrailsPresetName) ? (preset as GuardrailsPresetName) : null;
 }
 
-export type TenantGuardrailsConfig = GuardrailsConfig & { preset: GuardrailsPresetName | null };
+export type TenantGuardrailsConfig = GuardrailsConfig & {
+  preset: GuardrailsPresetName | null;
+  llm: Record<string, unknown>;
+};
 
 const balancedPreset = guardrailsPresets.balanced;
 
@@ -55,12 +58,14 @@ export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardra
     presetConfig.shortlist ?? {},
     (storedConfig as { shortlist?: unknown } | undefined)?.shortlist ?? undefined,
   );
+  const llm = mergeConfig(presetConfig.llm ?? {}, (storedConfig as { llm?: unknown } | undefined)?.llm ?? undefined);
 
   return {
     scoring,
     explain,
     safety,
     shortlist,
+    llm,
     preset,
   } satisfies TenantGuardrailsConfig;
 }

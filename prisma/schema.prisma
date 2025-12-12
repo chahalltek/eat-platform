@@ -91,6 +91,7 @@ model TenantConfig {
   scoring   Json
   explain   Json
   safety    Json
+  llm       Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

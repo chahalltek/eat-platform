@@ -82,6 +82,12 @@ function formatGuardrailsPreset(preset: TenantDiagnostics["guardrailsPreset"]) {
   return preset[0].toUpperCase() + preset.slice(1);
 }
 
+function mapLlmStatus(status: TenantDiagnostics["llm"]["status"]): Status {
+  if (status === "ready") return "ok";
+  if (status === "disabled") return "off";
+  return "warn";
+}
+
 export default async function TenantDiagnosticsPage({ params }: { params: { tenantId?: string } }) {
   const user = await getCurrentUser();
   const requestedTenant = params.tenantId?.trim?.() ?? "";
@@ -220,6 +226,31 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
                     Recommendation: {diagnostics.guardrailsRecommendation}
                   </p>
                 ) : null}
+              </div>
+            </DiagnosticCard>
+
+            <DiagnosticCard
+              title="LLM provider & model"
+              status={mapLlmStatus(diagnostics.llm.status)}
+              description="Allowed provider, model, and agent access for LLM usage."
+            >
+              <div className="space-y-2 text-sm">
+                <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                  Provider: {diagnostics.llm.provider} • Model: {diagnostics.llm.model}
+                </p>
+                <p className="text-xs text-zinc-700 dark:text-zinc-200">
+                  Allowed agents: {diagnostics.llm.allowedAgents.join(", ")}
+                </p>
+                <p className="text-xs text-zinc-700 dark:text-zinc-200">
+                  Caps: max tokens {diagnostics.llm.maxTokens ?? "—"}, verbosity cap {diagnostics.llm.verbosityCap ?? "—"}
+                </p>
+                {diagnostics.llm.reason ? (
+                  <p className="text-xs text-amber-700">{diagnostics.llm.reason}</p>
+                ) : diagnostics.llm.fireDrillOverride ? (
+                  <p className="text-xs text-amber-700">Fire Drill overrides LLM calls until incidents resolve.</p>
+                ) : (
+                  <p className="text-xs text-zinc-700 dark:text-zinc-200">LLM usage is available for configured agents.</p>
+                )}
               </div>
             </DiagnosticCard>
 

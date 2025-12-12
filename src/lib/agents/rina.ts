@@ -62,6 +62,7 @@ export async function runRina(
         systemPrompt: promptContract.prompt,
         userPrompt,
         adapter: llmAdapter,
+        agent: 'RINA',
       });
 
       let parsed: RinaLLMResponse;

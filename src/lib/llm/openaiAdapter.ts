@@ -7,6 +7,7 @@ export type ChatCompletionParams = {
   model: string;
   messages: ChatMessage[];
   temperature: number;
+  maxTokens?: number;
 };
 
 export interface OpenAIAdapter {

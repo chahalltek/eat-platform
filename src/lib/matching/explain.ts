@@ -44,6 +44,7 @@ Explain why this candidate received this score. Be honest about both strengths a
     model: 'gpt-4.1-mini',
     systemPrompt,
     userPrompt,
+    agent: 'MATCH_EXPLAIN',
   });
 
   // MVP: assume the model returns valid JSON; we can harden later

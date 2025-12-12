@@ -29,6 +29,13 @@ export const guardrailsSchema = z
         .object({ high: z.number().min(0), medium: z.number().min(0) })
         .optional(),
     }),
+    llm: z.object({
+      provider: z.enum(["openai", "azure-openai", "disabled"]),
+      model: z.string().min(1),
+      allowedAgents: z.array(z.string()).min(1),
+      maxTokens: z.number().int().positive().optional(),
+      verbosityCap: z.number().int().positive().optional(),
+    }),
   })
   .refine((value) => value.scoring.thresholds.shortlistMinScore >= value.scoring.thresholds.minMatchScore, {
     message: "Shortlist min score must be greater than or equal to min match score",
@@ -41,6 +48,7 @@ type PartialTenantGuardrails = {
   scoring?: Partial<TenantGuardrails["scoring"]>;
   explain?: Partial<TenantGuardrails["explain"]>;
   safety?: Partial<TenantGuardrails["safety"]>;
+  llm?: Partial<TenantGuardrails["llm"]>;
 };
 
 export const defaultTenantGuardrails: TenantGuardrails = {
@@ -66,6 +74,13 @@ export const defaultTenantGuardrails: TenantGuardrails = {
     requireMustHaves: true,
     excludeInternalCandidates: false,
     confidenceBands: { high: 0.75, medium: 0.55 },
+  },
+  llm: {
+    provider: "openai",
+    model: "gpt-4.1-mini",
+    allowedAgents: ["EXPLAIN", "RINA", "RUA", "OUTREACH", "INTAKE"],
+    maxTokens: 600,
+    verbosityCap: 2000,
   },
 };
 
@@ -95,6 +110,11 @@ function mergeGuardrails(
         ...defaultTenantGuardrails.safety.confidenceBands,
         ...(override?.safety?.confidenceBands ?? {}),
       },
+    },
+    llm: {
+      ...defaultTenantGuardrails.llm,
+      ...(override?.llm ?? {}),
+      allowedAgents: override?.llm?.allowedAgents ?? defaultTenantGuardrails.llm.allowedAgents,
     },
   });
 }
@@ -131,6 +151,7 @@ export async function loadTenantGuardrails(tenantId: string): Promise<TenantGuar
           scoring: record.scoring as Partial<TenantGuardrails["scoring"]> | undefined,
           explain: record.explain as Partial<TenantGuardrails["explain"]> | undefined,
           safety: record.safety as Partial<TenantGuardrails["safety"]> | undefined,
+          llm: (record as { llm?: Partial<TenantGuardrails["llm"]> }).llm,
         }
       : null);
   try {
@@ -161,11 +182,13 @@ export async function saveTenantGuardrails(tenantId: string, payload: unknown) {
       scoring: parsed.scoring,
       explain: parsed.explain,
       safety: parsed.safety,
+      llm: parsed.llm,
     },
     update: {
       scoring: parsed.scoring,
       explain: parsed.explain,
       safety: parsed.safety,
+      llm: parsed.llm,
     },
   });
 

@@ -1,26 +1,29 @@
 import OpenAI from 'openai';
 
-import {
-  ChatMessage,
-  OpenAIAdapter,
-  formatEmptyResponseError,
-} from '@/lib/llm/openaiAdapter';
+import { ChatMessage, OpenAIAdapter, formatEmptyResponseError } from '@/lib/llm/openaiAdapter';
 import { getCurrentUserId } from '@/lib/auth/user';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
 import { AIFailureError } from '@/lib/errors';
+import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
 
 type CallLLMParams = {
   systemPrompt: string;
   userPrompt: string;
   model?: string;
   adapter?: OpenAIAdapter;
+  agent: string;
 };
 
 class OpenAIChatAdapter implements OpenAIAdapter {
   constructor(private apiKey = process.env.OPENAI_API_KEY) {}
 
-  async chatCompletion({ model, messages, temperature }: { model: string; messages: ChatMessage[]; temperature: number; }): Promise<string> {
+  async chatCompletion({ model, messages, temperature, maxTokens }: {
+    model: string;
+    messages: ChatMessage[];
+    temperature: number;
+    maxTokens?: number;
+  }): Promise<string> {
     if (!this.apiKey) {
       throw new Error('OPENAI_API_KEY is not configured');
     }
@@ -29,6 +32,7 @@ class OpenAIChatAdapter implements OpenAIAdapter {
       model,
       messages,
       temperature,
+      max_tokens: maxTokens,
     });
 
     const content = response.choices[0]?.message?.content;
@@ -43,10 +47,22 @@ class OpenAIChatAdapter implements OpenAIAdapter {
 export async function callLLM({
   systemPrompt,
   userPrompt,
-  model = 'gpt-4.1-mini',
+  model,
   adapter = new OpenAIChatAdapter(),
+  agent,
 }: CallLLMParams): Promise<string> {
   const [tenantId, userId] = await Promise.all([getCurrentTenantId(), getCurrentUserId()]);
+  const llmControls = await assertLlmUsageAllowed({ tenantId, agent });
+  const resolvedModel = model ?? llmControls.model;
+
+  if (resolvedModel !== llmControls.model) {
+    throw new LLMUsageRestrictedError('Requested model is not permitted for this tenant.');
+  }
+
+  const trimmedUserPrompt = llmControls.verbosityCap
+    ? userPrompt.slice(0, llmControls.verbosityCap)
+    : userPrompt;
+
   await consumeRateLimit({
     tenantId,
     userId,
@@ -55,15 +71,20 @@ export async function callLLM({
 
   try {
     return await adapter.chatCompletion({
-      model,
+      model: resolvedModel,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        { role: 'user', content: trimmedUserPrompt },
       ],
       temperature: 0.2,
+      maxTokens: llmControls.maxTokens,
     });
   } catch (err) {
     if (isRateLimitError(err)) {
+      throw err;
+    }
+
+    if (err instanceof LLMUsageRestrictedError) {
       throw err;
     }
 

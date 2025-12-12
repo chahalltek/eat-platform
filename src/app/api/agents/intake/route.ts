@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
       const llmRaw = await callLLM({
         systemPrompt: buildSystemPrompt(),
         userPrompt: `Job Description:\n"""${trimmedDescription}"""`,
+        agent: 'INTAKE',
       });
 
       let parsedProfile: JobIntakeProfile;

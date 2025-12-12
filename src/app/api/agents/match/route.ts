@@ -44,7 +44,7 @@ async function buildMatchExplanation(
   )}\nWrite a concise, bullet-point match rationale.`;
 
   try {
-    return await callLLM({ systemPrompt, userPrompt });
+    return await callLLM({ systemPrompt, userPrompt, agent: "MATCH_EXPLAIN" });
   } catch (err) {
     console.warn("LLM explanation failed for match", err);
     return "LLM explanation unavailable";

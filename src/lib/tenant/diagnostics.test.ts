@@ -12,6 +12,7 @@ const mockGetRateLimitOverrides = vi.hoisted(() => vi.fn());
 const mockIsFeatureEnabledForTenant = vi.hoisted(() => vi.fn());
 const mockLoadGuardrails = vi.hoisted(() => vi.fn());
 const mockLoadTenantMode = vi.hoisted(() => vi.fn());
+const mockLoadTenantGuardrails = vi.hoisted(() => vi.fn());
 const prismaMock = vi.hoisted(() => ({
   tenant: { findUnique: vi.fn() },
   securityEventLog: { count: vi.fn() },
@@ -48,9 +49,14 @@ vi.mock("@/lib/guardrails/config", () => ({
   loadTenantGuardrailConfig: mockLoadGuardrails,
 }));
 
+vi.mock("@/lib/tenant/guardrails", () => ({
+  loadTenantGuardrails: mockLoadTenantGuardrails,
+}));
+
 describe("buildTenantDiagnostics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.OPENAI_API_KEY = "test-api-key";
     mockGetRateLimitDefaults.mockReturnValue({
       api: { dailyLimit: 100, burstLimit: 10, burstWindowMs: 60000, bucket: "tenant" },
     });
@@ -64,6 +70,15 @@ describe("buildTenantDiagnostics", () => {
       explainLevel: "compact",
       confidencePassingScore: 70,
       source: "database",
+    });
+    mockLoadTenantGuardrails.mockResolvedValue({
+      llm: {
+        provider: "openai",
+        model: "gpt-4.1-mini",
+        allowedAgents: ["EXPLAIN", "RINA", "RUA"],
+        maxTokens: 600,
+        verbosityCap: 2000,
+      },
     });
     prismaMock.securityEventLog.count.mockResolvedValue(5);
     prismaMock.agentRunLog.count.mockResolvedValue(0);
@@ -134,6 +149,16 @@ describe("buildTenantDiagnostics", () => {
       confidencePassingScore: 70,
       source: "database",
     });
+    expect(diagnostics.llm).toEqual({
+      provider: "openai",
+      model: "gpt-4.1-mini",
+      allowedAgents: ["EXPLAIN", "RINA", "RUA"],
+      status: "ready",
+      reason: null,
+      maxTokens: 600,
+      verbosityCap: 2000,
+      fireDrillOverride: false,
+    });
     const expectedFlags = Object.values(FEATURE_FLAGS).filter(
       (flag) => flag !== FEATURE_FLAGS.FIRE_DRILL_MODE,
     );
@@ -162,6 +187,15 @@ describe("buildTenantDiagnostics", () => {
       explainLevel: "detailed",
       confidencePassingScore: 60,
       source: "default",
+    });
+    mockLoadTenantGuardrails.mockResolvedValue({
+      llm: {
+        provider: "disabled",
+        model: "gpt-4.1-mini",
+        allowedAgents: ["EXPLAIN"],
+        maxTokens: undefined,
+        verbosityCap: undefined,
+      },
     });
     prismaMock.securityEventLog.count.mockResolvedValue(0);
     prismaMock.tenant.findUnique.mockResolvedValue({
@@ -195,6 +229,7 @@ describe("buildTenantDiagnostics", () => {
     expect(diagnostics.featureFlags).toEqual({ enabled: false, enabledFlags: [] });
     expect(diagnostics.rateLimits[0].override).toBeNull();
     expect(diagnostics.guardrails.source).toBe("default");
+    expect(diagnostics.llm.status).toBe("disabled");
   });
 
   it("includes fire drill status when enabled", async () => {

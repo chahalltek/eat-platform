@@ -9,6 +9,7 @@ export type GuardrailsConfig = {
   explain: Record<string, unknown>;
   safety: { confidenceBands?: ConfidenceBands } & Record<string, unknown>;
   shortlist?: { strategy?: ShortlistStrategy; maxCandidates?: number } & Record<string, unknown>;
+  llm?: Record<string, unknown>;
 };
 
 export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> = {
@@ -39,6 +40,13 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
       excludeInternalCandidates: true,
       confidenceBands: { high: 0.75, medium: 0.55 },
     },
+    llm: {
+      provider: "openai",
+      model: "gpt-4.1-mini",
+      allowedAgents: ["EXPLAIN", "RINA", "RUA", "OUTREACH", "INTAKE"],
+      maxTokens: 600,
+      verbosityCap: 2000,
+    },
   },
   balanced: {
     scoring: {
@@ -67,6 +75,13 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
       excludeInternalCandidates: false,
       confidenceBands: { high: 0.75, medium: 0.55 },
     },
+    llm: {
+      provider: "openai",
+      model: "gpt-4.1-mini",
+      allowedAgents: ["EXPLAIN", "RINA", "RUA", "OUTREACH", "INTAKE"],
+      maxTokens: 600,
+      verbosityCap: 2000,
+    },
   },
   aggressive: {
     scoring: {
@@ -94,6 +109,13 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
       requireMustHaves: false,
       excludeInternalCandidates: false,
       confidenceBands: { high: 0.75, medium: 0.55 },
+    },
+    llm: {
+      provider: "openai",
+      model: "gpt-4.1-mini",
+      allowedAgents: ["EXPLAIN", "RINA", "RUA", "OUTREACH", "INTAKE"],
+      maxTokens: 600,
+      verbosityCap: 2000,
     },
   },
 };

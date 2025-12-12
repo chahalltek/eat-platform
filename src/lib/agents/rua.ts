@@ -57,6 +57,7 @@ ${rawJobText}
         systemPrompt: promptContract.prompt,
         userPrompt,
         adapter: llmAdapter,
+        agent: 'RUA',
       });
 
       let parsed: RuaLLMResponse;

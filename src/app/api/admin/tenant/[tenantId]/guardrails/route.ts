@@ -33,6 +33,13 @@ const guardrailsPayloadSchema = z
       requireMustHaves: z.boolean(),
       excludeInternalCandidates: z.boolean(),
     }),
+    llm: z.object({
+      provider: z.enum(["openai", "azure-openai", "disabled"]),
+      model: z.string().min(1),
+      allowedAgents: z.array(z.string()).min(1),
+      maxTokens: z.number().int().positive().optional(),
+      verbosityCap: z.number().int().positive().optional(),
+    }),
   })
   .superRefine((value, ctx) => {
     const { minMatchScore, shortlistMinScore, shortlistMaxCandidates } = value.scoring.thresholds;
@@ -58,6 +65,14 @@ const guardrailsPayloadSchema = z
         code: z.ZodIssueCode.custom,
         path: ["scoring", "thresholds", "shortlistMaxCandidates"],
         message: "shortlistMaxCandidates must be at least 1",
+      });
+    }
+
+    if (!value.llm.allowedAgents.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["llm", "allowedAgents"],
+        message: "At least one agent must be allowed to use the LLM",
       });
     }
   });
@@ -100,12 +115,14 @@ export async function PUT(
         scoring: payload.scoring,
         explain: payload.explain,
         safety: payload.safety,
+        llm: payload.llm,
       },
       update: {
         preset: payload.preset ?? null,
         scoring: payload.scoring,
         explain: payload.explain,
         safety: payload.safety,
+        llm: payload.llm,
       },
     });
 

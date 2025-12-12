@@ -9,6 +9,7 @@ import { getTenantPlan } from "@/lib/subscriptionPlans";
 import { prisma } from "@/lib/prisma";
 import { resolveRetentionPolicy } from "@/lib/retention";
 import { loadTenantGuardrailConfig } from "@/lib/guardrails/config";
+import { loadTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 
 export class TenantNotFoundError extends Error {
@@ -60,6 +61,16 @@ export type TenantDiagnostics = {
     explainLevel: string;
     confidencePassingScore: number;
   };
+  llm: {
+    provider: string;
+    model: string;
+    allowedAgents: string[];
+    status: "ready" | "disabled" | "blocked" | "fire_drill";
+    reason: string | null;
+    maxTokens: number | null;
+    verbosityCap: number | null;
+    fireDrillOverride: boolean;
+  };
 };
 
 function isSsoConfigured(config: ReturnType<typeof getAppConfig>) {
@@ -96,6 +107,72 @@ function mapRetention(tenant: Pick<Tenant, "id" | "dataRetentionDays" | "deletio
     days: policy?.cutoff ? (tenant.dataRetentionDays as number) : null,
     mode: policy?.mode ?? null,
   } as const;
+}
+
+function isLlmProviderReady(llm: TenantGuardrails["llm"]) {
+  if (llm.provider === "openai") {
+    return Boolean(process.env.OPENAI_API_KEY);
+  }
+
+  if (llm.provider === "azure-openai") {
+    return Boolean(process.env.AZURE_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY);
+  }
+
+  return false;
+}
+
+function mapLlmDiagnostics(llm: TenantGuardrails["llm"], fireDrillEnabled: boolean) {
+  const providerReady = isLlmProviderReady(llm);
+
+  if (fireDrillEnabled) {
+    return {
+      provider: llm.provider,
+      model: llm.model,
+      allowedAgents: llm.allowedAgents,
+      status: "fire_drill" as const,
+      reason: "Fire Drill mode disables LLM access.",
+      maxTokens: llm.maxTokens ?? null,
+      verbosityCap: llm.verbosityCap ?? null,
+      fireDrillOverride: true,
+    };
+  }
+
+  if (llm.provider === "disabled") {
+    return {
+      provider: llm.provider,
+      model: llm.model,
+      allowedAgents: llm.allowedAgents,
+      status: "disabled" as const,
+      reason: "Provider disabled for this tenant.",
+      maxTokens: llm.maxTokens ?? null,
+      verbosityCap: llm.verbosityCap ?? null,
+      fireDrillOverride: false,
+    };
+  }
+
+  if (!providerReady) {
+    return {
+      provider: llm.provider,
+      model: llm.model,
+      allowedAgents: llm.allowedAgents,
+      status: "blocked" as const,
+      reason: "Provider credentials are missing or unavailable.",
+      maxTokens: llm.maxTokens ?? null,
+      verbosityCap: llm.verbosityCap ?? null,
+      fireDrillOverride: false,
+    };
+  }
+
+  return {
+    provider: llm.provider,
+    model: llm.model,
+    allowedAgents: llm.allowedAgents,
+    status: "ready" as const,
+    reason: null,
+    maxTokens: llm.maxTokens ?? null,
+    verbosityCap: llm.verbosityCap ?? null,
+    fireDrillOverride: false,
+  };
 }
 
 function mapRateLimits(plan: SubscriptionPlan | null) {
@@ -287,7 +364,7 @@ function buildGuardrailsStatus(guardrails: TenantDiagnostics["guardrails"], fire
 }
 
 export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDiagnostics> {
-  const [config, plan, tenant, auditEventCount, flags, guardrails, fireDrill, tenantMode] = await Promise.all([
+  const [config, plan, tenant, auditEventCount, flags, guardrails, fireDrill, tenantMode, tenantGuardrails] = await Promise.all([
     getAppConfig(),
     getTenantPlan(tenantId),
     prisma.tenant.findUnique({ where: { id: tenantId }, include: { config: true } }),
@@ -296,6 +373,7 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     loadTenantGuardrailConfig(tenantId),
     evaluateFireDrillStatus(tenantId),
     loadTenantMode(tenantId),
+    loadTenantGuardrails(tenantId),
   ]);
 
   if (!tenant) {
@@ -338,5 +416,6 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
       explainLevel: guardrails.explainLevel,
       confidencePassingScore: guardrails.confidencePassingScore,
     },
+    llm: mapLlmDiagnostics(tenantGuardrails.llm, fireDrill.enabled),
   } satisfies TenantDiagnostics;
 }
