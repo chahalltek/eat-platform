@@ -3,7 +3,7 @@
 import { type FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { IntakeSkill, JobIntakeProfile, JobIntakeResponse } from "@/types/intake";
+import type { IntakeSkill, JobIntakeProfile, JobIntakeResponse, MarketSignal } from "@/types/intake";
 
 function mergeSkills(mustHaves: string[], skills: IntakeSkill[]) {
   const combined = new Map<string, IntakeSkill>();
@@ -39,6 +39,38 @@ export default function JobIntakePage() {
   const intakeSkills = useMemo(() => {
     if (!profile) return [];
     return mergeSkills(profile.mustHaves, profile.skills);
+  }, [profile]);
+
+  const marketInsights = useMemo(() => {
+    const frictionLevel = profile?.frictionLevel ?? "medium";
+    const poolImpact = profile?.candidatePoolImpact ?? 42;
+    const estimatedTimeToFill = profile?.estimatedTimeToFillDays ?? 41;
+    const marketAverageTimeToFill = profile?.marketAverageTimeToFillDays ?? 29;
+
+    const defaultSignals: MarketSignal[] = [
+      {
+        title: "Harder than average to fill",
+        description: "Regional demand is outpacing supply for this role.",
+        tone: "caution",
+      },
+      {
+        title: "Must-haves shrink the pool",
+        description: `Must-have skills reduce candidate pool by ~${poolImpact}%.`,
+        tone: "info",
+      },
+      {
+        title: "Time-to-fill outlook",
+        description: `Estimated time-to-fill: ${estimatedTimeToFill} days (market avg: ${marketAverageTimeToFill} days).`,
+      },
+    ];
+
+    return {
+      frictionLevel,
+      poolImpact,
+      estimatedTimeToFill,
+      marketAverageTimeToFill,
+      signals: profile?.marketSignals?.length ? profile.marketSignals : defaultSignals,
+    };
   }, [profile]);
 
   async function handleRunIntake(event: FormEvent<HTMLFormElement>) {
@@ -201,6 +233,79 @@ export default function JobIntakePage() {
             >
               {isSaving ? "Saving..." : "Save Job"}
             </button>
+          </div>
+
+          <div className="rounded-lg border border-indigo-100 bg-indigo-50/80 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Market signals</p>
+                <h3 className="text-lg font-semibold text-slate-900">Guidance at the moment of job creation</h3>
+                <p className="text-sm text-slate-700">
+                  Recruiters see market friction immediately—no forced actions, just helpful context.
+                </p>
+              </div>
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+                <span
+                  className={
+                    "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold " +
+                    (marketInsights.frictionLevel === "low"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : marketInsights.frictionLevel === "high"
+                        ? "bg-amber-200 text-amber-900"
+                        : "bg-indigo-100 text-indigo-800")
+                  }
+                >
+                  <span
+                    className={
+                      "h-2 w-2 rounded-full " +
+                      (marketInsights.frictionLevel === "low"
+                        ? "bg-emerald-500"
+                        : marketInsights.frictionLevel === "high"
+                          ? "bg-amber-600"
+                          : "bg-indigo-500")
+                    }
+                    aria-hidden
+                  />
+                  {marketInsights.frictionLevel === "low"
+                    ? "Low market friction"
+                    : marketInsights.frictionLevel === "high"
+                      ? "High market friction"
+                      : "Moderate market friction"}
+                </span>
+                <a
+                  className="text-sm font-medium text-indigo-700 underline-offset-4 hover:text-indigo-800 hover:underline"
+                  href="/admin/guardrails"
+                >
+                  Adjust guardrails
+                </a>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {marketInsights.signals.map((signal) => (
+                <div
+                  key={signal.title}
+                  className="rounded-lg border border-white/70 bg-white/70 p-3 shadow-sm shadow-indigo-100"
+                >
+                  <div className="flex items-start gap-2">
+                    <span
+                      className={`mt-1 h-2.5 w-2.5 rounded-full ${
+                        signal.tone === "caution"
+                          ? "bg-amber-500"
+                          : signal.tone === "info"
+                            ? "bg-indigo-500"
+                            : "bg-slate-400"
+                      }`}
+                      aria-hidden
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{signal.title}</p>
+                      <p className="text-sm text-slate-700">{signal.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
