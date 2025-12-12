@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { logModeChange } from "@/lib/audit/adminAudit";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
@@ -60,7 +61,15 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
 
+  const previousMode = await getTenantMode(tenantId);
   const updated = await updateTenantMode(tenantId, mode);
+
+  await logModeChange({
+    tenantId,
+    actorId: user?.id ?? null,
+    previousMode,
+    newMode: mode,
+  });
 
   return NextResponse.json({ tenant: updated });
 }

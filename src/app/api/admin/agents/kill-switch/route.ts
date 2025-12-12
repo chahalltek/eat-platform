@@ -6,6 +6,7 @@ import {
   parseAgentName,
   setAgentKillSwitch,
 } from "@/lib/agents/killSwitch";
+import { logAgentFlagToggle } from "@/lib/audit/adminAudit";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
@@ -14,17 +15,17 @@ async function requireAdmin(request: NextRequest) {
   const user = await getCurrentUser(request);
 
   if (!canManageFeatureFlags(user)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return { response: NextResponse.json({ error: "Forbidden" }, { status: 403 }), user } as const;
   }
 
-  return null;
+  return { response: null, user } as const;
 }
 
 export async function GET(request: NextRequest) {
-  const guardResponse = await requireAdmin(request);
+  const { response } = await requireAdmin(request);
 
-  if (guardResponse) {
-    return guardResponse;
+  if (response) {
+    return response;
   }
 
   const tenantId = await getCurrentTenantId(request);
@@ -34,10 +35,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const guardResponse = await requireAdmin(request);
+  const { response, user } = await requireAdmin(request);
 
-  if (guardResponse) {
-    return guardResponse;
+  if (response) {
+    return response;
   }
 
   let body: unknown;
@@ -62,6 +63,15 @@ export async function PATCH(request: NextRequest) {
 
   const tenantId = await getCurrentTenantId(request);
   const updated = await setAgentKillSwitch(parsedName, latched, typeof reason === "string" ? reason : null, tenantId);
+
+  await logAgentFlagToggle({
+    tenantId,
+    actorId: user?.id ?? null,
+    agentName: parsedName,
+    latched: updated.latched,
+    reason: updated.reason,
+    latchedAt: updated.latchedAt?.toISOString() ?? null,
+  });
 
   return NextResponse.json({
     ...updated,

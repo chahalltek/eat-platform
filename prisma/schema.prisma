@@ -149,6 +149,18 @@ model SecurityEventLog {
   @@index([tenantId, eventType])
 }
 
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String   @default("default-tenant")
+  actorId   String?
+  action    String   // "MODE_CHANGED", "GUARDRAILS_UPDATED", "AGENT_FLAG_TOGGLED"
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, action])
+}
+
 model FeatureFlag {
   id          String   @id @default(cuid())
   tenantId    String   @default("default-tenant")

@@ -30,7 +30,7 @@ describe('applyTenantScope', () => {
 
   it('preserves non-tenanted models', () => {
     const params = {
-      model: 'AuditLog',
+      model: 'SubscriptionPlan',
       action: 'findMany',
       args: { where: { id: 'x' } },
     } as const;

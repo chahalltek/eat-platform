@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { logGuardrailsUpdate } from "@/lib/audit/adminAudit";
 import { requireTenantAdmin } from "@/lib/auth/requireTenantAdmin";
 import { loadTenantConfig } from "@/lib/guardrails/loadTenantConfig";
 import { prisma } from "@/lib/prisma";
@@ -106,6 +107,16 @@ export async function PUT(
         explain: payload.explain,
         safety: payload.safety,
       },
+    });
+
+    await logGuardrailsUpdate({
+      tenantId,
+      actorId: access.user.id,
+      preset: payload.preset ?? null,
+      scoringStrategy: payload.scoring.strategy,
+      thresholds: payload.scoring.thresholds,
+      explain: payload.explain,
+      safety: payload.safety,
     });
 
     const config = await loadTenantConfig(tenantId);
