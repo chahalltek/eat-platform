@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 
 import { getSystemExecutionState, getSystemStatus } from "@/lib/systemStatus";
-import { getSystemMode } from "@/lib/systemMode";
+import { getRedactedExecutionState, getRedactedSystemStatus, isPublicDemoMode } from "@/lib/demoMode";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   try {
+    if (isPublicDemoMode()) {
+      return NextResponse.json({
+        statusMap: getRedactedSystemStatus(),
+        executionState: getRedactedExecutionState(),
+      });
+    }
+
     const [statusMap, executionState] = await Promise.all([
       getSystemStatus(),
       getSystemExecutionState(),
@@ -19,23 +26,8 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        statusMap: {
-          agents: { status: "unknown" },
-          scoring: { status: "unknown" },
-          database: { status: "unknown" },
-          tenantConfig: { status: "unknown" },
-        },
-        executionState: {
-          state: "degraded",
-          mode: getSystemMode(),
-          activeRuns: 0,
-          latestRunAt: null,
-          latestSuccessAt: null,
-          latestFailureAt: null,
-          runsToday: 0,
-          latestFailureAgentName: null,
-          failureCountLast24h: 0,
-        },
+        statusMap: getRedactedSystemStatus(),
+        executionState: getRedactedExecutionState(),
       },
       { status: 200 },
     );

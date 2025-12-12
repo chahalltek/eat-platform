@@ -13,6 +13,7 @@ import {
 } from './lib/auth/config';
 import { isAdminRole, normalizeRole, USER_ROLES, type UserRole } from './lib/auth/roles';
 import { clearSessionCookie, getValidatedSession } from './lib/auth/session';
+import { isDemoMutationAllowed, isPublicDemoMode, isReadOnlyHttpMethod } from './lib/demoMode';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from './lib/rateLimiting/http';
 
@@ -57,6 +58,15 @@ export async function middleware(request: NextRequest) {
   const { session, error: sessionError } = await getValidatedSession(request);
   const searchParams = request.nextUrl.searchParams;
   const requestPath = request.nextUrl.pathname;
+
+  if (
+    isPublicDemoMode() &&
+    requestPath.startsWith('/api') &&
+    !isReadOnlyHttpMethod(request.method) &&
+    !isDemoMutationAllowed(requestPath)
+  ) {
+    return NextResponse.json({ error: 'Read-only demo mode: changes are disabled' }, { status: 403 });
+  }
 
   const legacyPrefix = LEGACY_PATH_PREFIXES.find(
     ({ from }) => requestPath === from || requestPath.startsWith(`${from}/`),
