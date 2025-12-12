@@ -10,13 +10,14 @@ import type { Prisma } from "@prisma/client";
 import { categorizeConfidence } from "@/app/jobs/[jobId]/matches/confidence";
 import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
+import type { Explanation } from "@/lib/agents/explainEngine";
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: true };
 }>;
 
-function toExplanationSummary(reasons: MatchResultWithCandidate["reasons"]): string {
-  if (!reasons) return "Explanation not generated yet.";
+function toExplanationSummary(reasons: MatchResultWithCandidate["reasons"]): string | null {
+  if (!reasons) return null;
 
   if (typeof reasons === "string") return reasons;
 
@@ -39,7 +40,7 @@ function toExplanationSummary(reasons: MatchResultWithCandidate["reasons"]): str
     if (typeof summary === "string" && summary.trim().length > 0) return summary;
   }
 
-  return "Explanation not generated yet.";
+  return null;
 }
 
 function parseConfidenceBand(match: MatchResultWithCandidate): {
@@ -73,6 +74,18 @@ function parseConfidenceBand(match: MatchResultWithCandidate): {
 function buildInitialCandidates(matches: MatchResultWithCandidate[]): JobConsoleCandidate[] {
   return matches.map((match) => {
     const confidence = parseConfidenceBand(match);
+    const summary = toExplanationSummary(match.reasons);
+    const strengths = Array.isArray((match.reasons as { strengths?: unknown } | null | undefined)?.strengths)
+      ? ((match.reasons as { strengths?: unknown }).strengths as unknown[]).map((entry) => String(entry)).filter(Boolean)
+      : [];
+    const risks = Array.isArray((match.reasons as { risks?: unknown } | null | undefined)?.risks)
+      ? ((match.reasons as { risks?: unknown }).risks as unknown[]).map((entry) => String(entry)).filter(Boolean)
+      : [];
+    const explanation: (Explanation & { summaryOnly?: boolean }) | null = summary
+      ? { summary, strengths, risks, summaryOnly: strengths.length === 0 && risks.length === 0 }
+      : strengths.length || risks.length
+        ? { summary: "Explanation not generated yet.", strengths, risks, summaryOnly: strengths.length === 0 && risks.length === 0 }
+        : null;
 
     return {
       candidateId: match.candidateId,
@@ -81,7 +94,7 @@ function buildInitialCandidates(matches: MatchResultWithCandidate[]): JobConsole
       confidenceScore: confidence.score,
       confidenceBand: confidence.band,
       shortlisted: Boolean(match.shortlisted),
-      explanation: toExplanationSummary(match.reasons),
+      explanation,
     } satisfies JobConsoleCandidate;
   });
 }
