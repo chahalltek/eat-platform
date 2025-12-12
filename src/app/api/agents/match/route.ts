@@ -3,20 +3,18 @@ import { z } from "zod";
 
 import type { Prisma } from "@prisma/client";
 
-import { getAgentAvailability } from "@/lib/agents/availability";
+import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
+import { runMatch } from "@/lib/agents/matchEngine";
 import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { callLLM } from "@/lib/llm";
-import { computeMatchConfidence } from "@/lib/matching/confidence";
-import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
-import { computeJobFreshnessScore } from "@/lib/matching/freshness";
-import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { guardrailsPresets } from "@/lib/guardrails/presets";
+import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 
 const requestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId is required"),
@@ -79,15 +77,6 @@ export async function POST(req: NextRequest) {
     return flagCheck;
   }
 
-  const [availability, killSwitchResponse] = await Promise.all([
-    getAgentAvailability(),
-    enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER),
-  ]);
-
-  if (killSwitchResponse) {
-    return killSwitchResponse;
-  }
-
   let scopedTenant;
   try {
     scopedTenant = await getTenantScopedPrismaClient(req);
@@ -102,6 +91,19 @@ export async function POST(req: NextRequest) {
   }
 
   const { tenantId, runWithTenantContext, prisma: scopedPrisma } = scopedTenant;
+
+  const [availability, killSwitchResponse] = await Promise.all([
+    getAgentAvailability(tenantId),
+    enforceAgentKillSwitch(AGENT_KILL_SWITCHES.MATCHER, tenantId),
+  ]);
+
+  if (killSwitchResponse) {
+    return killSwitchResponse;
+  }
+
+  if (!availability.isEnabled("MATCH")) {
+    return NextResponse.json({ error: "MATCH agent is disabled" }, { status: 403 });
+  }
 
   return runWithTenantContext(async () => {
     const jobReq = await scopedPrisma.jobReq.findUnique({
@@ -124,6 +126,27 @@ export async function POST(req: NextRequest) {
       ? { id: { in: candidateIds }, tenantId }
       : { tenantId };
 
+    const modeName = availability.mode.mode ?? "pilot";
+    const conservativePreset = guardrailsPresets.conservative;
+
+    let guardrailsConfig = await loadTenantConfig(tenantId);
+
+    if (modeName === "fire_drill") {
+      guardrailsConfig = {
+        ...guardrailsConfig,
+        scoring: {
+          ...conservativePreset.scoring,
+          ...(guardrailsConfig.scoring ?? {}),
+          strategy: "simple",
+          thresholds: conservativePreset.scoring.thresholds,
+        },
+        safety: {
+          ...conservativePreset.safety,
+          ...(guardrailsConfig.safety ?? {}),
+        },
+      };
+    }
+
     const candidates = await scopedPrisma.candidate.findMany({
       where: candidateWhere,
       include: { skills: true },
@@ -137,15 +160,7 @@ export async function POST(req: NextRequest) {
 
     const candidateIdList = candidates.map((candidate) => candidate.id);
 
-    const [jobCandidates, outreachInteractions, existingMatchResults, existingMatches] = await Promise.all([
-      scopedPrisma.jobCandidate.findMany({
-        where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
-      }),
-      scopedPrisma.outreachInteraction.groupBy({
-        by: ["candidateId"],
-        where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
-        _count: { _all: true },
-      }),
+    const [existingMatchResults, existingMatches] = await Promise.all([
       scopedPrisma.matchResult.findMany({
         where: { tenantId, jobReqId, candidateId: { in: candidateIdList } },
       }),
@@ -154,21 +169,10 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
-    const jobCandidateById = new Map(jobCandidates.map((jc) => [jc.candidateId, jc]));
-    const outreachByCandidateId = new Map(
-      outreachInteractions.map((interaction) => [interaction.candidateId, interaction._count._all]),
-    );
     const existingResultByCandidate = new Map(
       existingMatchResults.map((result) => [result.candidateId, result]),
     );
     const existingMatchByCandidate = new Map(existingMatches.map((match) => [match.candidateId, match]));
-
-    const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
-    const jobFreshness = computeJobFreshnessScore({
-      createdAt: jobReq.createdAt,
-      updatedAt: jobReq.updatedAt,
-      latestMatchActivity,
-    });
 
     const startedAt = new Date();
     const agentRun = await createAgentRunLog(scopedPrisma, {
@@ -183,6 +187,24 @@ export async function POST(req: NextRequest) {
     });
 
     try {
+      const matchResults = runMatch({
+        job: {
+          id: jobReq.id,
+          location: jobReq.location,
+          seniorityLevel: jobReq.seniorityLevel ?? undefined,
+          skills: jobReq.skills,
+        },
+        candidates: candidates.map((candidate) => ({
+          id: candidate.id,
+          location: candidate.location,
+          totalExperienceYears: candidate.totalExperienceYears ?? null,
+          seniorityLevel: candidate.seniorityLevel ?? undefined,
+          skills: candidate.skills,
+        })),
+        config: guardrailsConfig,
+      });
+
+      const candidateById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
       const matches = [] as Array<{
         matchResultId: string;
         candidateId: string;
@@ -195,32 +217,39 @@ export async function POST(req: NextRequest) {
         explanation: string;
       }>;
 
-      for (const candidate of candidates) {
-        const candidateSignals = computeCandidateSignalScore({
-          candidate,
-          jobCandidate: jobCandidateById.get(candidate.id),
-          outreachInteractions: outreachByCandidateId.get(candidate.id) ?? 0,
-        });
+      for (const match of matchResults) {
+        const candidate = candidateById.get(match.candidateId);
+        if (!candidate) {
+          continue;
+        }
 
-        const matchScore = computeMatchScore(
-          { candidate, jobReq },
-          { candidateSignals, jobFreshnessScore: jobFreshness.score },
-        );
-
-        const confidence = computeMatchConfidence({ candidate, jobReq });
+        const averageSignal =
+          (match.signals.mustHaveSkillsCoverage +
+            match.signals.niceToHaveSkillsCoverage +
+            match.signals.experienceAlignment +
+            match.signals.locationAlignment) /
+          4;
+        const confidenceScore = Math.round(averageSignal * 100);
+        const confidenceCategory = confidenceScore >= 75 ? "HIGH" : confidenceScore >= 50 ? "MEDIUM" : "LOW";
+        const confidence = {
+          score: confidenceScore,
+          category: confidenceCategory,
+          reasons: [] as string[],
+        };
         const candidateSignalBreakdown = {
-          ...(matchScore.candidateSignalBreakdown ?? {}),
+          signals: match.signals,
           confidence,
+          guardrails: {
+            strategy: (guardrailsConfig.scoring as { strategy?: string } | undefined)?.strategy ?? "weighted",
+            thresholds: (guardrailsConfig.scoring as { thresholds?: Record<string, unknown> } | undefined)?.thresholds,
+          },
         } as const;
 
         const breakdown = {
-          score: matchScore.score,
-          skillScore: matchScore.skillScore,
-          seniorityScore: matchScore.seniorityScore,
-          locationScore: matchScore.locationScore,
-          candidateSignalScore: matchScore.candidateSignalScore,
-          candidateSignalBreakdown,
-          jobFreshnessScore: jobFreshness.score,
+          score: match.score,
+          signals: match.signals,
+          guardrails: candidateSignalBreakdown.guardrails,
+          confidence,
         } as const;
 
         const jobDescription = jobReq.rawDescription?.trim() || null;
@@ -231,22 +260,22 @@ export async function POST(req: NextRequest) {
           candidate.fullName,
           candidate.summary ?? candidate.rawResumeText ?? null,
           breakdown,
-          availability.explainEnabled,
+          availability.isEnabled("EXPLAIN"),
         );
 
-        const existingResult = existingResultByCandidate.get(candidate.id);
-        const existingMatch = existingMatchByCandidate.get(candidate.id);
+        const existingResult = existingResultByCandidate.get(match.candidateId);
+        const existingMatch = existingMatchByCandidate.get(match.candidateId);
 
         const savedMatchResult = await scopedPrisma.$transaction(async (tx) => {
           const data = {
-            candidateId: candidate.id,
+            candidateId: match.candidateId,
             jobReqId,
-            score: matchScore.score,
-            reasons: matchScore.explanation,
-            skillScore: matchScore.skillScore,
-            seniorityScore: matchScore.seniorityScore,
-            locationScore: matchScore.locationScore,
-            candidateSignalScore: matchScore.candidateSignalScore,
+            score: match.score,
+            reasons: breakdown,
+            skillScore: Math.round(match.signals.mustHaveSkillsCoverage * 100),
+            seniorityScore: Math.round(match.signals.experienceAlignment * 100),
+            locationScore: Math.round(match.signals.locationAlignment * 100),
+            candidateSignalScore: Math.round(match.signals.niceToHaveSkillsCoverage * 100),
             candidateSignalBreakdown,
             tenantId,
             agentRunId: agentRun.id,
@@ -256,13 +285,13 @@ export async function POST(req: NextRequest) {
             ? await tx.matchResult.update({ where: { id: existingResult.id }, data })
             : await tx.matchResult.create({ data });
 
-          await upsertJobCandidateForMatch(jobReqId, candidate.id, result.id, tenantId, tx);
+          await upsertJobCandidateForMatch(jobReqId, match.candidateId, result.id, tenantId, tx);
 
           if (existingMatch) {
             await tx.match.update({
               where: { id: existingMatch.id },
               data: {
-                overallScore: matchScore.score,
+                overallScore: match.score,
                 scoreBreakdown: breakdown,
                 explanation,
                 createdByAgent: "MATCH",
@@ -274,8 +303,8 @@ export async function POST(req: NextRequest) {
               data: {
                 tenantId,
                 jobReqId,
-                candidateId: candidate.id,
-                overallScore: matchScore.score,
+                candidateId: match.candidateId,
+                overallScore: match.score,
                 category: "Suggested",
                 scoreBreakdown: breakdown,
                 explanation,
@@ -289,9 +318,9 @@ export async function POST(req: NextRequest) {
 
         matches.push({
           matchResultId: savedMatchResult.id,
-          candidateId: candidate.id,
+          candidateId: match.candidateId,
           jobReqId,
-          score: matchScore.score,
+          score: match.score,
           confidence: confidence.score,
           confidenceCategory: confidence.category,
           confidenceReasons: confidence.reasons,

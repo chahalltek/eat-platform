@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as matchPost } from "@/app/api/agents/match/route";
+import { guardrailsPresets } from "@/lib/guardrails/presets";
 
 const {
   mockGetTenantScopedPrismaClient,
@@ -36,6 +37,9 @@ const {
         ...create,
         ...update,
       })),
+      findFirst: vi.fn(async () => null),
+      update: vi.fn(async ({ where, data }) => ({ id: where.id, ...data })),
+      create: vi.fn(async ({ data }) => ({ id: "job-candidate-1", ...data })),
     },
   } as const;
 
@@ -87,17 +91,18 @@ vi.mock("@/lib/auth/requireRole", () => ({
 const mockAvailability = {
   mode: {
     mode: "pilot",
-    metadata: {},
-    guardrailsPreset: "human-vetted",
-    agentEnablement: { basic: true, shortlist: true, agents: true },
+    guardrailsPreset: "conservative",
+    agentsEnabled: ["MATCH", "EXPLAIN", "SHORTLIST"],
   },
-  confidenceEnabled: true,
-  explainEnabled: true,
-  shortlistEnabled: true,
-} as const;
+  flags: [],
+  isEnabled: vi.fn(() => true),
+};
 
-vi.mock("@/lib/agents/availability", () => ({
+vi.mock("@/lib/agents/agentAvailability", () => ({
   getAgentAvailability: vi.fn(async () => mockAvailability),
+}));
+vi.mock("@/lib/guardrails/tenantConfig", () => ({
+  loadTenantConfig: vi.fn(async () => guardrailsPresets.balanced),
 }));
 
 vi.mock("@/lib/agents/agentRunLog", () => ({
