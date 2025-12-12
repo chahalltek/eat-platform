@@ -25,6 +25,9 @@ export const guardrailsSchema = z
     safety: z.object({
       requireMustHaves: z.boolean(),
       excludeInternalCandidates: z.boolean(),
+      confidenceBands: z
+        .object({ high: z.number().min(0), medium: z.number().min(0) })
+        .optional(),
     }),
   })
   .refine((value) => value.scoring.thresholds.shortlistMinScore >= value.scoring.thresholds.minMatchScore, {
@@ -62,6 +65,7 @@ export const defaultTenantGuardrails: TenantGuardrails = {
   safety: {
     requireMustHaves: true,
     excludeInternalCandidates: false,
+    confidenceBands: { high: 0.75, medium: 0.55 },
   },
 };
 
@@ -87,6 +91,10 @@ function mergeGuardrails(
     safety: {
       ...defaultTenantGuardrails.safety,
       ...(override?.safety ?? {}),
+      confidenceBands: {
+        ...defaultTenantGuardrails.safety.confidenceBands,
+        ...(override?.safety?.confidenceBands ?? {}),
+      },
     },
   });
 }

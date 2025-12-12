@@ -20,5 +20,6 @@ export const defaultTenantGuardrails = {
   safety: {
     requireMustHaves: true,
     excludeInternalCandidates: false,
+    confidenceBands: { high: 0.75, medium: 0.55 },
   },
 };

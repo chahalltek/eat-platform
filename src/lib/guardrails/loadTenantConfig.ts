@@ -5,6 +5,20 @@ function coerceGuardrailSection(value: unknown) {
   return value && typeof value === "object" ? value : {};
 }
 
+function mergeSafetySection(value: unknown) {
+  const safetyOverrides = coerceGuardrailSection(value) as Record<string, unknown>;
+  const bandOverrides = coerceGuardrailSection(safetyOverrides.confidenceBands);
+
+  return {
+    ...defaultTenantGuardrails.safety,
+    ...safetyOverrides,
+    confidenceBands: {
+      ...defaultTenantGuardrails.safety.confidenceBands,
+      ...bandOverrides,
+    },
+  };
+}
+
 export async function loadTenantConfig(tenantId: string) {
   const existing = await prisma.tenantConfig.findUnique({
     where: { tenantId },
@@ -22,7 +36,7 @@ export async function loadTenantConfig(tenantId: string) {
     preset: existing.preset ?? null,
     scoring: { ...defaultTenantGuardrails.scoring, ...coerceGuardrailSection(existing.scoring) },
     explain: { ...defaultTenantGuardrails.explain, ...coerceGuardrailSection(existing.explain) },
-    safety: { ...defaultTenantGuardrails.safety, ...coerceGuardrailSection(existing.safety) },
+    safety: mergeSafetySection(existing.safety),
     _source: "db" as const,
   };
 }
