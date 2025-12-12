@@ -112,7 +112,7 @@ export default function RoleFamilyIntelligencePage() {
       <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
         <div className="flex items-center gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Role families</p>
-          <StatusPill status="enabled">Tenant-aware</StatusPill>
+          <StatusPill status="enabled" label="Tenant-aware" />
         </div>
         <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Introduce the role families we learn from</h2>
         <p className="text-sm text-zinc-600 dark:text-zinc-300">Engineering, Data, Product, Sales, Ops, and Custom (tenant-defined) give us predictable patterns without losing flexibility.</p>
@@ -148,7 +148,7 @@ export default function RoleFamilyIntelligencePage() {
       <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
         <div className="flex items-center gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Learning signals</p>
-          <StatusPill status="healthy">Live telemetry</StatusPill>
+          <StatusPill status="healthy" label="Live telemetry" />
         </div>
         <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Aggregate what we learn per family</h2>
         <p className="text-sm text-zinc-600 dark:text-zinc-300">
@@ -181,7 +181,7 @@ export default function RoleFamilyIntelligencePage() {
       <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
         <div className="flex items-center gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Defaults and controls</p>
-          <StatusPill status="enabled">Ready for rollout</StatusPill>
+          <StatusPill status="enabled" label="Ready for rollout" />
         </div>
         <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Use role family defaults everywhere they matter</h2>
         <p className="text-sm text-zinc-600 dark:text-zinc-300">New jobs get smart defaults automatically, and admins keep override controls visible for audits.</p>
