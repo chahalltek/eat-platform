@@ -27,6 +27,24 @@ type MatchReasons = {
   guardrails?: unknown;
 } | null;
 
+function isInputJsonValue(value: unknown): value is Prisma.InputJsonValue {
+  if (value === null) return true;
+
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return true;
+  }
+
+  if (Array.isArray(value)) {
+    return value.every((entry) => isInputJsonValue(entry));
+  }
+
+  if (typeof value === "object") {
+    return Object.values(value as Record<string, unknown>).every((entry) => isInputJsonValue(entry));
+  }
+
+  return false;
+}
+
 function hashGuardrails(config: Prisma.InputJsonValue) {
   try {
     return createHash("sha256").update(JSON.stringify(config)).digest("hex");
@@ -107,7 +125,7 @@ export async function POST(req: Request) {
     const reasons = parseMatchReasons(match.reasons);
     const confidence = getConfidence(reasons);
     const guardrailsFromMatch =
-      reasons?.guardrails && typeof reasons.guardrails === "object" ? reasons.guardrails : null;
+      reasons && isInputJsonValue(reasons.guardrails) ? reasons.guardrails : null;
     const guardrailsPreset = guardrailsConfig.preset ?? "balanced";
     const guardrailsConfigSnapshot = (guardrailsFromMatch ?? guardrailsConfig) as Prisma.InputJsonValue;
     const guardrailsConfigHash = hashGuardrails(guardrailsConfigSnapshot);
@@ -116,7 +134,21 @@ export async function POST(req: Request) {
       ((guardrailsConfig.shortlist as { strategy?: string } | undefined)?.strategy ?? null);
 
     const confidenceBand = getConfidenceBand(confidence.score ?? 0, guardrailsConfig as never);
-    const explanationSnapshot = reasons ?? match.reasons ?? null;
+    const explanationSnapshot: Prisma.InputJsonValue | null = reasons
+      ? {
+          confidence:
+            confidence.score !== null || confidence.category !== null || confidence.reasons.length
+              ? {
+                  score: confidence.score,
+                  category: confidence.category,
+                  reasons: confidence.reasons,
+                }
+              : null,
+          guardrails: guardrailsFromMatch,
+        }
+      : isInputJsonValue(match.reasons)
+        ? match.reasons
+        : null;
 
     const outcomeSource = source ?? (typeof user.role === "string" ? user.role.toUpperCase() : null);
 
