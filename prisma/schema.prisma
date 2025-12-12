@@ -436,6 +436,24 @@ model AgentRunLog {
   @@index([tenantId, deletedAt])
 }
 
+model AgentRun {
+  id          String   @id @default(cuid())
+  tenantId    String   @default("default-tenant")
+  agentName   String
+  requestedBy String?
+  jobId       String?
+  status      String   @default("running")
+  promptMeta  Json?
+  input       Json?
+  output      Json?
+  mode        String?
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+
+  @@index([tenantId, agentName])
+  @@index([tenantId, jobId])
+}
+
 model OutreachInteraction {
   id          String    @id @default(cuid())
   tenantId    String    @default("default-tenant")
