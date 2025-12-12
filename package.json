@@ -26,6 +26,7 @@
     "@tanstack/react-table": "^8.21.3",
     "ajv": "^8.17.1",
     "clsx": "^2.1.1",
+    "date-fns": "^2.30.0",
     "jszip": "^3.10.1",
     "mammoth": "^1.11.0",
     "next": "16.0.7",
