@@ -6,10 +6,14 @@ import { JobExecutionConsole, type JobConsoleCandidate, type JobConsoleProps } f
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
-import type { MatchResult } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { categorizeConfidence } from "@/app/jobs/[jobId]/matches/confidence";
 
-function toExplanationSummary(reasons: MatchResult["reasons"]): string {
+type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
+  include: { candidate: true };
+}>;
+
+function toExplanationSummary(reasons: MatchResultWithCandidate["reasons"]): string {
   if (!reasons) return "Explanation not generated yet.";
 
   if (typeof reasons === "string") return reasons;
@@ -36,7 +40,7 @@ function toExplanationSummary(reasons: MatchResult["reasons"]): string {
   return "Explanation not generated yet.";
 }
 
-function parseConfidenceBand(match: MatchResult): {
+function parseConfidenceBand(match: MatchResultWithCandidate): {
   score: number | null;
   band: JobConsoleCandidate["confidenceBand"];
 } {
@@ -64,7 +68,7 @@ function parseConfidenceBand(match: MatchResult): {
   return { score, band: null };
 }
 
-function buildInitialCandidates(matches: MatchResult[]): JobConsoleCandidate[] {
+function buildInitialCandidates(matches: MatchResultWithCandidate[]): JobConsoleCandidate[] {
   return matches.map((match) => {
     const confidence = parseConfidenceBand(match);
 
