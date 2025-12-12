@@ -3,6 +3,7 @@ import { AgentRunStatus, type Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 const DAYS_OF_HISTORY = 7;
+const BEHAVIOR_HISTORY_DAYS = 14;
 
 export type TimeSeriesBucket = {
   date: string;
@@ -34,6 +35,19 @@ export type ErrorRateByAgent = {
   errorRate: number;
 };
 
+export type RecruiterBehaviorInsights = {
+  windowDays: number;
+  candidateOpens: number;
+  explanationOpensByConfidence: Record<string, number>;
+  shortlistOverrides: {
+    total: number;
+    toShortlist: number;
+    removedFromShortlist: number;
+    byConfidence: Record<string, number>;
+  };
+  averageDecisionMs: number;
+};
+
 export type EteInsightsMetrics = {
   pipelineRuns: TimeSeriesBucket[];
   matchRunsByMode: ModeBreakdown[];
@@ -44,6 +58,7 @@ export type EteInsightsMetrics = {
   skillScarcityIndex: number;
   timeToFillTrend: AverageSeriesBucket[];
   skillScarcityTrend: AverageSeriesBucket[];
+  recruiterBehavior: RecruiterBehaviorInsights;
 };
 
 function buildDateBuckets(days: number): Record<string, TimeSeriesBucket> {
@@ -126,6 +141,10 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
   sinceDate.setHours(0, 0, 0, 0);
   sinceDate.setDate(sinceDate.getDate() - (DAYS_OF_HISTORY - 1));
 
+  const behaviorSinceDate = new Date();
+  behaviorSinceDate.setHours(0, 0, 0, 0);
+  behaviorSinceDate.setDate(behaviorSinceDate.getDate() - (BEHAVIOR_HISTORY_DAYS - 1));
+
   const [
     recentAgentRuns,
     matchRunsByModeRaw,
@@ -135,6 +154,7 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     totalRuns,
     jobPredictiveInputs,
     candidateSkillCounts,
+    recruiterBehaviorEvents,
   ] = await Promise.all([
     prisma.agentRun.findMany({
       where: { tenantId, startedAt: { gte: sinceDate } },
@@ -178,6 +198,21 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
       by: ['normalizedName'],
       where: { tenantId },
       _count: { _all: true },
+    }),
+    prisma.metricEvent.findMany({
+      where: {
+        tenantId,
+        createdAt: { gte: behaviorSinceDate },
+        eventType: {
+          in: [
+            'RECRUITER_BEHAVIOR_CANDIDATE_OPEN',
+            'RECRUITER_BEHAVIOR_EXPLANATION_EXPANDED',
+            'RECRUITER_BEHAVIOR_SHORTLIST_OVERRIDE',
+            'RECRUITER_BEHAVIOR_DECISION_TIME',
+          ],
+        },
+      },
+      select: { eventType: true, meta: true },
     }),
   ]);
 
@@ -264,6 +299,8 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     jobPredictiveSignals.map((job) => ({ date: job.createdAt, value: job.scarcityIndex })),
   );
 
+  const recruiterBehavior = summarizeRecruiterBehavior(recruiterBehaviorEvents, BEHAVIOR_HISTORY_DAYS);
+
   return {
     pipelineRuns,
     matchRunsByMode: matchRunsByModeList,
@@ -274,6 +311,7 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     skillScarcityIndex,
     timeToFillTrend,
     skillScarcityTrend,
+    recruiterBehavior,
   };
 }
 
@@ -421,4 +459,94 @@ export async function getJobPredictiveSignals(jobId: string, tenantId: string) {
   });
 
   return { estimatedTimeToFillDays, skillScarcityIndex: scarcityIndex };
+}
+
+function getMetaObject(value: Prisma.JsonValue | null | unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function normalizeConfidenceBand(value: unknown) {
+  if (typeof value !== 'string') return 'UNKNOWN';
+  const trimmed = value.trim();
+  if (!trimmed) return 'UNKNOWN';
+
+  const upper = trimmed.toUpperCase();
+
+  if (upper.startsWith('H')) return 'HIGH';
+  if (upper.startsWith('M')) return 'MEDIUM';
+  if (upper.startsWith('L')) return 'LOW';
+
+  return upper;
+}
+
+function summarizeRecruiterBehavior(
+  events: { eventType: string; meta: Prisma.JsonValue | null }[],
+  windowDays: number,
+): RecruiterBehaviorInsights {
+  const explanationByConfidence: Record<string, number> = {};
+  const overrideConfidence: Record<string, number> = {};
+  const decisionDurations: number[] = [];
+
+  let candidateOpens = 0;
+  let toShortlist = 0;
+  let removedFromShortlist = 0;
+
+  for (const event of events) {
+    const meta = getMetaObject(event.meta);
+    const details = getMetaObject(meta.details);
+    const confidenceBand = normalizeConfidenceBand(meta.confidence);
+
+    if (event.eventType === 'RECRUITER_BEHAVIOR_CANDIDATE_OPEN') {
+      candidateOpens += 1;
+    }
+
+    if (event.eventType === 'RECRUITER_BEHAVIOR_EXPLANATION_EXPANDED') {
+      explanationByConfidence[confidenceBand] = (explanationByConfidence[confidenceBand] ?? 0) + 1;
+    }
+
+    if (event.eventType === 'RECRUITER_BEHAVIOR_SHORTLIST_OVERRIDE') {
+      overrideConfidence[confidenceBand] = (overrideConfidence[confidenceBand] ?? 0) + 1;
+
+      const toValue = typeof details.to === 'boolean' ? details.to : false;
+      const fromValue = typeof details.from === 'boolean' ? details.from : !toValue;
+
+      if (toValue !== fromValue) {
+        if (toValue) {
+          toShortlist += 1;
+        } else {
+          removedFromShortlist += 1;
+        }
+      }
+    }
+
+    if (event.eventType === 'RECRUITER_BEHAVIOR_DECISION_TIME') {
+      const duration = typeof meta.durationMs === 'number' ? meta.durationMs : null;
+
+      if (duration !== null && Number.isFinite(duration)) {
+        decisionDurations.push(duration);
+      }
+    }
+  }
+
+  const averageDecisionMs =
+    decisionDurations.length > 0
+      ? decisionDurations.reduce((sum, entry) => sum + entry, 0) / decisionDurations.length
+      : 0;
+
+  return {
+    windowDays,
+    candidateOpens,
+    explanationOpensByConfidence: explanationByConfidence,
+    shortlistOverrides: {
+      total: toShortlist + removedFromShortlist,
+      toShortlist,
+      removedFromShortlist,
+      byConfidence: overrideConfidence,
+    },
+    averageDecisionMs,
+  } satisfies RecruiterBehaviorInsights;
 }

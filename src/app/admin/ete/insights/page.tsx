@@ -144,6 +144,76 @@ function EstimateTrendChart({
   );
 }
 
+function BehaviorInsightsCard({
+  insights,
+}: {
+  insights: Awaited<ReturnType<typeof getEteInsightsMetrics>>["recruiterBehavior"];
+}) {
+  const explanationTotals = Object.entries(insights.explanationOpensByConfidence);
+  const overrideTotals = Object.entries(insights.shortlistOverrides.byConfidence);
+
+  const explanationSummary =
+    explanationTotals.length === 0
+      ? "No expansions captured"
+      : explanationTotals
+          .map(([band, value]) => `${band}: ${value}`)
+          .sort()
+          .join(" • ");
+
+  const overrideSummary =
+    overrideTotals.length === 0
+      ? "No overrides yet"
+      : overrideTotals
+          .map(([band, value]) => `${band}: ${value}`)
+          .sort()
+          .join(" • ");
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Behavior (private)</p>
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Recruiter learning signals</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Anonymized telemetry from recruiter decisions. Used for defaults tuning only; visible to admins/ops.
+          </p>
+        </div>
+        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">
+          Last {insights.windowDays}d
+        </span>
+      </div>
+
+      <dl className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="space-y-1 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <dt className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Candidate opens</dt>
+          <dd className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{insights.candidateOpens}</dd>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Times recruiters expanded matches or confidence details.</p>
+        </div>
+        <div className="space-y-1 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <dt className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Explanation expands</dt>
+          <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{explanationSummary}</dd>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Confidence bands receiving the most curiosity.</p>
+        </div>
+        <div className="space-y-1 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <dt className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Shortlist overrides</dt>
+          <dd className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{insights.shortlistOverrides.total}</dd>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            To shortlist: {insights.shortlistOverrides.toShortlist} • Removed: {insights.shortlistOverrides.removedFromShortlist}
+          </p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Confidence mix: {overrideSummary}</p>
+        </div>
+        <div className="space-y-1 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <dt className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Avg. time spent</dt>
+          <dd className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+            {(insights.averageDecisionMs / 1000).toFixed(1)}s
+          </dd>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Decision dwell time between opening reasoning and closing.</p>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
 function ModeBreakdownList({ data }: { data: { mode: string; count: number }[] }) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -324,6 +394,8 @@ export default async function EteInsightsPage() {
             </div>
             <ModeBreakdownList data={metrics.matchRunsByMode} />
           </div>
+
+          <BehaviorInsightsCard insights={metrics.recruiterBehavior} />
 
           <div className="grid gap-6 lg:grid-cols-3">
             <EstimateTrendChart

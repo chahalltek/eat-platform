@@ -15,6 +15,7 @@ import { OutreachGenerator } from "./OutreachGenerator";
 import type { CandidateSignalBreakdown } from "@/lib/matching/candidateSignals";
 import { normalizeMatchExplanation } from "@/lib/matching/explanation";
 import { LOW_CONFIDENCE_THRESHOLD, categorizeConfidence } from "./confidence";
+import { logRecruiterBehavior } from "@/lib/metrics/recruiterBehaviorClient";
 
 export type MatchRow = {
   id: string;
@@ -155,10 +156,26 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
   );
 
   const handleShortlistToggle = useCallback(
-    (matchId: string, shortlisted: boolean) => {
-      const nextState = { ...shortlistStateFor(matchId), shortlisted };
-      updateShortlistState(matchId, nextState);
-      void persistShortlistState(matchId, nextState);
+    (match: MatchRow, shortlisted: boolean) => {
+      const nextState = { ...shortlistStateFor(match.id), shortlisted };
+
+      if (nextState.shortlisted !== shortlistStateFor(match.id).shortlisted) {
+        void logRecruiterBehavior({
+          action: "SHORTLIST_OVERRIDE",
+          jobId: match.jobId,
+          matchId: match.id,
+          candidateId: match.candidateId,
+          confidence: match.confidenceCategory ?? categorizeConfidence(match.confidenceScore),
+          details: {
+            from: shortlistStateFor(match.id).shortlisted,
+            to: shortlisted,
+            jobTitle: match.jobTitle,
+          },
+        });
+      }
+
+      updateShortlistState(match.id, nextState);
+      void persistShortlistState(match.id, nextState);
     },
     [persistShortlistState, shortlistStateFor, updateShortlistState],
   );
@@ -250,14 +267,14 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
           return (
             <div className="space-y-2 text-sm">
               <label className="flex items-center gap-2 font-medium text-gray-700">
-                <input
-                  type="checkbox"
-                  aria-label={`Shortlist ${row.original.candidateName}`}
-                  checked={shortlist.shortlisted}
-                  onChange={(event) => handleShortlistToggle(row.original.id, event.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  disabled={isSaving}
-                />
+                  <input
+                    type="checkbox"
+                    aria-label={`Shortlist ${row.original.candidateName}`}
+                    checked={shortlist.shortlisted}
+                  onChange={(event) => handleShortlistToggle(row.original, event.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    disabled={isSaving}
+                  />
                 <span>Shortlist</span>
               </label>
 
@@ -477,7 +494,24 @@ function ConfidenceCell({ match }: { match: MatchRow }) {
           <button
             type="button"
             className="text-[11px] font-semibold text-blue-700 underline decoration-dotted underline-offset-2 hover:text-blue-900"
-            onClick={() => setOpen((current) => !current)}
+            onClick={() => {
+              setOpen((current) => {
+                const next = !current;
+
+                if (next) {
+                  void logRecruiterBehavior({
+                    action: "CANDIDATE_OPEN",
+                    jobId: match.jobId,
+                    matchId: match.id,
+                    candidateId: match.candidateId,
+                    confidence: category,
+                    details: { trigger: "confidence_details" },
+                  });
+                }
+
+                return next;
+              });
+            }}
           >
             {open ? "Hide details" : "Show details"}
           </button>
@@ -496,13 +530,60 @@ function ConfidenceCell({ match }: { match: MatchRow }) {
 
 function ExplainabilityCell({ match, onExplain }: { match: MatchRow; onExplain: () => void }) {
   const [open, setOpen] = useState(false);
+  const [openedAt, setOpenedAt] = useState<number | null>(null);
   const explanation = normalizeMatchExplanation(match.explanation);
+
+  const handleToggle = () => {
+    const now = Date.now();
+
+    if (!open) {
+      setOpen(true);
+      setOpenedAt(now);
+
+      const confidenceBand = match.confidenceCategory ?? categorizeConfidence(match.confidenceScore);
+
+      void logRecruiterBehavior({
+        action: "CANDIDATE_OPEN",
+        jobId: match.jobId,
+        matchId: match.id,
+        candidateId: match.candidateId,
+        confidence: confidenceBand,
+        details: { trigger: "explainability" },
+      });
+
+      void logRecruiterBehavior({
+        action: "EXPLANATION_EXPANDED",
+        jobId: match.jobId,
+        matchId: match.id,
+        candidateId: match.candidateId,
+        confidence: confidenceBand,
+        details: { jobTitle: match.jobTitle },
+      });
+      return;
+    }
+
+    setOpen(false);
+
+    if (openedAt) {
+      void logRecruiterBehavior({
+        action: "DECISION_TIME",
+        jobId: match.jobId,
+        matchId: match.id,
+        candidateId: match.candidateId,
+        confidence: match.confidenceCategory ?? categorizeConfidence(match.confidenceScore),
+        durationMs: Math.max(0, now - openedAt),
+        details: { source: "explainability" },
+      });
+    }
+
+    setOpenedAt(null);
+  };
 
   return (
     <div className="space-y-2">
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={handleToggle}
         className="text-xs font-semibold text-blue-700 hover:text-blue-900"
       >
         {open ? "Hide reasoning" : "Show reasoning"}
