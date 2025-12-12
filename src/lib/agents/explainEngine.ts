@@ -129,7 +129,6 @@ export function buildExplanation(input: ExplainInput): Explanation {
   };
 }
 
-<<<<<<< ours
 function parseExplanationCandidate(payload: unknown): Explanation | null {
   if (!payload || typeof payload !== "object") return null;
 
@@ -188,38 +187,4 @@ export async function maybePolishExplanation(base: Explanation, options: PolishO
   }
 
   return base;
-=======
-type PolishOptions = {
-  config: GuardrailsConfig;
-  fireDrill: boolean;
-  callLLMFn: (input: { systemPrompt: string; userPrompt: string }) => Promise<string>;
-};
-
-export async function maybePolishExplanation(explanation: Explanation, options: PolishOptions): Promise<Explanation> {
-  // In fire drill mode, or when no polishing hook is provided, return the base explanation unchanged.
-  if (options.fireDrill) {
-    return explanation;
-  }
-
-  try {
-    const systemPrompt = "Rewrite the explanation to be concise, recruiter-friendly, and safe.";
-    const userPrompt = `Summary: ${explanation.summary}\nStrengths: ${explanation.strengths.join(", ")}\nRisks: ${explanation.risks.join(", ")}`;
-
-    const raw = await options.callLLMFn({ systemPrompt, userPrompt });
-    const parsed = JSON.parse(raw) as Partial<Explanation>;
-
-    return {
-      summary: parsed.summary && typeof parsed.summary === "string" ? parsed.summary : explanation.summary,
-      strengths: Array.isArray(parsed.strengths)
-        ? parsed.strengths.filter((entry): entry is string => typeof entry === "string")
-        : explanation.strengths,
-      risks: Array.isArray(parsed.risks)
-        ? parsed.risks.filter((entry): entry is string => typeof entry === "string")
-        : explanation.risks,
-    } satisfies Explanation;
-  } catch (error) {
-    console.warn("Polish explanation failed, falling back to base explanation", error);
-    return explanation;
-  }
->>>>>>> theirs
 }
