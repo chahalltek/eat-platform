@@ -48,6 +48,7 @@ const TENANTED_MODELS = new Set([
   'TenantSubscription',
   'SecurityEventLog',
   'AuditLog',
+  'UsageEvent',
   'EatTestPlanStatus',
   'TenantConfig',
   'TenantMode',

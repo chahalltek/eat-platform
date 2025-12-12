@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma, UsageEventType } from "@prisma/client";
 
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
@@ -15,6 +15,7 @@ import { callLLM } from "@/lib/llm";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
+import { recordUsageEvent } from "@/lib/usage/events";
 
 const requestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId is required"),
@@ -347,6 +348,13 @@ export async function POST(req: NextRequest) {
           durationMs,
           finishedAt,
         },
+      });
+
+      void recordUsageEvent({
+        tenantId,
+        eventType: "CANDIDATES_EVALUATED" as UsageEventType,
+        count: candidates.length,
+        metadata: { jobReqId },
       });
 
       return NextResponse.json(

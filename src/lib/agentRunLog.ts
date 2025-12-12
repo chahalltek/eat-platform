@@ -1,6 +1,7 @@
-import { AgentRunStatus, Prisma } from "@prisma/client";
+import { AgentRunStatus, Prisma, type UsageEventType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { recordUsageEvent } from "@/lib/usage/events";
 
 function normalizeJsonValue(value: unknown): Prisma.InputJsonValue {
   if (value === undefined) {
@@ -34,6 +35,8 @@ export async function startAgentRun({
       startedAt: new Date(),
     },
   });
+
+  void recordUsageEvent({ tenantId, eventType: "AGENT_RUN" as UsageEventType });
 
   return { runId: run.id };
 }

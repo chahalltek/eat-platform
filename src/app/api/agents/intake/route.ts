@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import type { UsageEventType } from '@prisma/client';
+
 import { callLLM } from '@/lib/llm';
 import { requireRole } from '@/lib/auth/requireRole';
 import { USER_ROLES } from '@/lib/auth/roles';
@@ -10,6 +12,7 @@ import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents
 import { getCurrentTenantId } from '@/lib/tenant';
 import { onJobChanged } from '@/lib/orchestration/triggers';
 import { recordMetricEvent } from '@/lib/metrics/events';
+import { recordUsageEvent } from '@/lib/usage/events';
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -122,6 +125,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    void recordUsageEvent({ tenantId: resolvedTenantId ?? tenantId, eventType: 'AGENT_RUN' as UsageEventType });
+
     try {
       const llmRaw = await callLLM({
         systemPrompt: buildSystemPrompt(),
@@ -216,6 +221,10 @@ export async function POST(req: NextRequest) {
           sourceType: 'agent_intake',
         },
       });
+
+      if (resolvedTenantId) {
+        void recordUsageEvent({ tenantId: resolvedTenantId, eventType: 'JOBS_PROCESSED' as UsageEventType });
+      }
 
       const finishedAt = new Date();
       const durationMs = finishedAt.getTime() - startedAt.getTime();

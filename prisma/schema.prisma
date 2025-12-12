@@ -7,6 +7,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum UsageEventType {
+  JOBS_PROCESSED
+  CANDIDATES_EVALUATED
+  AGENT_RUN
+  EXPLAIN_CALL
+  COPILOT_CALL
+}
+
 enum TenantDeletionMode {
   SOFT_DELETE
   HARD_DELETE
@@ -161,6 +169,19 @@ model AuditLog {
 
   @@index([tenantId])
   @@index([tenantId, action])
+}
+
+model UsageEvent {
+  id        String         @id @default(cuid())
+  tenantId  String         @default("default-tenant")
+  eventType UsageEventType
+  count     Int            @default(1)
+  metadata  Json?
+  occurredAt DateTime      @default(now())
+  createdAt DateTime       @default(now())
+
+  @@index([tenantId, occurredAt])
+  @@index([tenantId, eventType, occurredAt])
 }
 
 model FeatureFlag {

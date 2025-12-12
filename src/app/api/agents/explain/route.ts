@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import type { UsageEventType } from "@prisma/client";
+
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
 import { requireRole } from "@/lib/auth/requireRole";
@@ -8,6 +10,7 @@ import { USER_ROLES } from "@/lib/auth/roles";
 import { callLLM } from "@/lib/llm";
 import { makeDeterministicExplanation, normalizeMatchExplanation } from "@/lib/matching/explanation";
 import { recordMetricEvent } from "@/lib/metrics/events";
+import { recordUsageEvent } from "@/lib/usage/events";
 
 const requestSchema = z
   .object({
@@ -193,6 +196,8 @@ export async function POST(req: NextRequest) {
           agentRunId: agentRun.id,
         },
       });
+
+      void recordUsageEvent({ tenantId, eventType: "EXPLAIN_CALL" as UsageEventType, metadata: { matchId: match.id } });
 
       return NextResponse.json({ explanation, agentRunId: agentRun.id }, { status: 200 });
     } catch (error) {
