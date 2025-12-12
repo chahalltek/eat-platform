@@ -88,6 +88,27 @@ function ResultsTable({
   expandedId: string | null;
   onToggle: (id: string) => void;
 }) {
+  if (candidates.length === 0) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-6 py-10 text-center shadow-sm">
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-3">
+          <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 ring-1 ring-slate-200">
+            <span className="h-2 w-2 rounded-full bg-indigo-400" aria-hidden />
+            No candidates yet
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900">Waiting for a MATCH run</h3>
+          <p className="max-w-lg text-sm leading-relaxed text-slate-600">
+            Kick off MATCH to pull candidates into the console. Confidence, explanations, and shortlist actions will unlock as soon as results arrive.
+          </p>
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-white" aria-hidden />
+            Run MATCH to begin
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
@@ -102,13 +123,6 @@ function ResultsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
-            {candidates.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
-                  No matches yet. Run MATCH to populate candidates.
-                </td>
-              </tr>
-            ) : null}
             {candidates.map((candidate) => {
               const expanded = expandedId === candidate.candidateId;
 
@@ -202,7 +216,18 @@ function ExecutionToolbar({
               buttonClasses[agent],
             )}
           >
-            {isRunning ? "Running…" : labels[agent]}
+            <span className="relative flex items-center gap-2">
+              {isRunning ? (
+                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
+                  <span className="relative flex h-2 w-2 items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60" aria-hidden />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-current" aria-hidden />
+                  </span>
+                  Running
+                </span>
+              ) : null}
+              <span>{labels[agent]}</span>
+            </span>
           </button>
         );
       })}
@@ -219,6 +244,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
 
@@ -301,6 +327,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         });
 
         setMessage("MATCH completed. Scores updated.");
+        setLastUpdated(new Date());
       }
 
       if (agent === "CONFIDENCE") {
@@ -318,6 +345,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         );
 
         setMessage("Confidence bands refreshed.");
+        setLastUpdated(new Date());
       }
 
       if (agent === "EXPLAIN") {
@@ -334,6 +362,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         );
 
         setMessage("Explain summaries updated.");
+        setLastUpdated(new Date());
       }
 
       if (agent === "SHORTLIST") {
@@ -351,6 +380,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         );
 
         setMessage("Shortlist updated.");
+        setLastUpdated(new Date());
       }
     } catch (err) {
       console.error("Failed to run agent", err);
@@ -417,9 +447,31 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 
         <ExecutionToolbar onRun={runAgent} disabled={disabled} running={runningAgent || (isPending ? runningAgent : null)} />
 
+        <div className="flex flex-col gap-1 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
+          {runningAgent ? (
+            <p className="flex items-center gap-2 font-semibold text-indigo-700">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" aria-hidden />
+              {runningAgent} agent is executing…
+            </p>
+          ) : (
+            <p className="flex items-center gap-2 font-semibold text-slate-700">
+              <span className="h-2 w-2 rounded-full bg-slate-400" aria-hidden />
+              Choose an agent to kick off the flow.
+            </p>
+          )}
+          <p className="text-xs text-slate-500">Controls stay responsive while background work completes.</p>
+        </div>
+
         {message ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            {message}
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 animate-pulse">
+            <div className="flex items-center justify-between gap-3">
+              <span>{message}</span>
+              {lastUpdated ? (
+                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                  Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              ) : null}
+            </div>
           </div>
         ) : null}
         {error ? (

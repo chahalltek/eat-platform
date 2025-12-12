@@ -225,6 +225,13 @@ export function HiringManagerView({
               </tr>
             </thead>
             <tbody className="divide-y divide-indigo-100/80 dark:divide-indigo-800/60">
+              {shortlist.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-sm text-indigo-900/80 dark:text-indigo-100/80">
+                    No candidates yet. Run MATCH to begin.
+                  </td>
+                </tr>
+              ) : null}
               {shortlist.map((candidate) => (
                 <tr key={candidate.id} className="bg-white/70 text-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100">
                   <td className="px-4 py-3">

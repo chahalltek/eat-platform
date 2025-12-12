@@ -66,7 +66,10 @@ function DataTable({
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">{title}</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Live snapshot</p>
+        </div>
         {columns ? (
           <div className="flex items-center gap-6 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             <span>{columns.label}</span>
@@ -122,9 +125,9 @@ export default async function AdminHealthPage() {
   const snapshot = await getPlatformHealthSnapshot();
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-12 sm:px-10">
-        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-indigo-100 bg-white/80 p-4 shadow-sm dark:border-indigo-900/50 dark:bg-zinc-900/60">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-indigo-50/40 text-zinc-900 dark:from-black dark:via-zinc-950 dark:to-zinc-900 dark:text-zinc-50">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 sm:px-10">
+        <div className="flex flex-wrap items-center gap-4 rounded-3xl border border-indigo-100 bg-white/90 p-5 shadow-sm ring-1 ring-white/80 dark:border-indigo-900/50 dark:bg-zinc-900/60">
           <EteLogo variant="horizontal" />
           <div className="text-sm text-zinc-700 dark:text-zinc-300">
             <p className="font-semibold text-zinc-900 dark:text-zinc-50">EDGE Talent Engine admin</p>
@@ -148,7 +151,7 @@ export default async function AdminHealthPage() {
           </Link>
         </header>
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Agents" value={snapshot.agents.totalAgents} icon={WrenchScrewdriverIcon} helper="Unique agent names" />
           <StatCard label="Runs (24h)" value={snapshot.runs.last24h} icon={PlayCircleIcon} tone="emerald" helper="Execution volume" />
           <StatCard
@@ -161,7 +164,7 @@ export default async function AdminHealthPage() {
           <StatCard label="Total users" value={snapshot.users.total} icon={UserGroupIcon} tone="sky" helper={`${snapshot.users.admins} admins`} />
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-3">
+        <section className="grid gap-8 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
