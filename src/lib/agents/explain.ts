@@ -3,11 +3,11 @@ import { Prisma } from "@prisma/client";
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { FireDrillAgentDisabledError } from "@/lib/agents/availability";
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
-import { buildExplanation, maybePolishExplanation, type ConfidenceBand, type Explanation } from "@/lib/agents/explainEngine";
+import type { ConfidenceResult } from "@/lib/agents/confidenceEngine.v2";
+import { buildExplanation, type Explanation } from "@/lib/agents/explainEngine";
 import type { MatchResult } from "@/lib/agents/matchEngine";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
-import { callLLM } from "@/lib/llm";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -34,13 +34,14 @@ function normalizeSignals(source?: Record<string, unknown>): MatchResult["signal
   } satisfies MatchResult["signals"];
 }
 
-function toConfidenceBand(source: unknown): ConfidenceBand {
+function toConfidenceResult(source: unknown): ConfidenceResult {
   const data = (source ?? {}) as Record<string, unknown>;
   const score = typeof data.score === "number" ? data.score : 0;
-  const category = data.category === "HIGH" || data.category === "MEDIUM" ? data.category : "LOW";
+  const rawBand = (data.band ?? data.category) as string | undefined;
+  const band = rawBand === "HIGH" || rawBand === "MEDIUM" ? rawBand : "LOW";
   const reasons = Array.isArray(data.reasons) ? (data.reasons as string[]) : [];
 
-  return { score, category, reasons } satisfies ConfidenceBand;
+  return { score, band, reasons, candidateId: String(data.candidateId ?? "unknown") };
 }
 
 export async function runExplainForJob(input: RunExplainInput): Promise<RunExplainResult> {
@@ -106,7 +107,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
     for (const match of matchResults) {
       const breakdown = (match.candidateSignalBreakdown as Record<string, unknown> | null) ?? {};
       const signals = normalizeSignals((breakdown as { signals?: Record<string, unknown> }).signals);
-      const confidenceBand = toConfidenceBand((breakdown as { confidence?: unknown }).confidence);
+      const confidence = toConfidenceResult((breakdown as { confidence?: unknown }).confidence);
 
       const baseMatch: MatchResult = {
         candidateId: match.candidateId,
@@ -131,18 +132,11 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
           skills: match.candidate.skills,
         },
         match: baseMatch,
-        confidenceBand,
+        confidence,
         config: guardrailConfig,
       });
 
-      const polished = await maybePolishExplanation(explanation, {
-        config: guardrailConfig,
-        fireDrill: isFireDrill,
-        callLLMFn: ({ systemPrompt, userPrompt }) =>
-          callLLM({ systemPrompt, userPrompt, agent: "EXPLAIN" }),
-      });
-
-      explanations.push({ candidateId: match.candidateId, explanation: polished });
+      explanations.push({ candidateId: match.candidateId, explanation });
     }
 
     const output: Prisma.InputJsonObject = { snapshot: explanations };

@@ -1,215 +1,124 @@
-import { type GuardrailsConfig } from "@/lib/guardrails/presets";
+import type { GuardrailsConfig } from "@/lib/guardrails/presets";
+import type { ConfidenceResult } from "./confidenceEngine.v2";
 import type { Candidate, Job, MatchResult } from "./matchEngine";
-
-export type ConfidenceBand = {
-  score: number;
-  category: "HIGH" | "MEDIUM" | "LOW";
-  reasons: string[];
-};
 
 export type Explanation = {
   summary: string;
   strengths: string[];
   risks: string[];
-  notes?: string[];
 };
 
-const DEFAULT_SIGNALS: MatchResult["signals"] = {
-  mustHaveSkillsCoverage: 0.5,
-  niceToHaveSkillsCoverage: 0.5,
-  experienceAlignment: 0.5,
-  locationAlignment: 0.5,
-};
-
-function toPercent(value: number) {
-  return Math.round(value * 100);
-}
-
-function intersectSkills(jobSkills: Job["skills"], candidateSkills: Candidate["skills"], required: boolean) {
-  const targetSkills = jobSkills.filter((skill) => Boolean(skill.required) === required);
-  const candidateNames = new Set(
-    candidateSkills.map((skill) => (skill.normalizedName ?? skill.name).trim().toLowerCase()),
-  );
-
-  const matches = targetSkills
-    .map((skill) => skill.name)
-    .filter((skill) => candidateNames.has(skill.trim().toLowerCase()));
-
-  return matches;
-}
-
-function createStrengths(
-  job: Job,
-  candidate: Candidate,
-  match: MatchResult,
-  confidenceBand: ConfidenceBand,
-  level: "compact" | "detailed",
-): string[] {
-  const signals = match.signals ?? DEFAULT_SIGNALS;
-  const strengths: string[] = [];
-  const mustHaveHits = intersectSkills(job.skills, candidate.skills, true);
-  const niceToHaveHits = intersectSkills(job.skills, candidate.skills, false);
-
-  if (signals.mustHaveSkillsCoverage >= 0.75) {
-    const skillList = mustHaveHits.slice(0, 4).join(", ");
-    strengths.push(
-      skillList
-        ? `Strong coverage of must-have skills (${skillList}).`
-        : "Strong coverage of must-have skills.",
-    );
-  }
-
-  if (signals.niceToHaveSkillsCoverage >= 0.6 && niceToHaveHits.length > 0) {
-    strengths.push(`Good alignment on nice-to-have skills (${niceToHaveHits.slice(0, 4).join(", ")}).`);
-  }
-
-  if (signals.experienceAlignment >= 0.7) {
-    strengths.push("Experience aligned with target expectations.");
-  }
-
-  if (signals.locationAlignment >= 0.7) {
-    strengths.push("Location aligns with job preferences or remote flexibility.");
-  }
-
-  if (match.score >= 85) {
-    strengths.push(`High overall match score (${match.score}).`);
-  }
-
-  if (confidenceBand.category === "HIGH") {
-    strengths.push("Profile data quality supports high confidence.");
-  }
-
-  const maxStrengths = level === "compact" ? 2 : 5;
-  const minStrengths = level === "compact" ? 1 : 3;
-  const trimmed = strengths.slice(0, maxStrengths);
-
-  while (trimmed.length < minStrengths) {
-    trimmed.push("Solid alignment observed across multiple signals.");
-  }
-
-  return trimmed;
-}
-
-function createRisks(match: MatchResult, confidenceBand: ConfidenceBand, level: "compact" | "detailed") {
-  const signals = match.signals ?? DEFAULT_SIGNALS;
-  const risks: string[] = [];
-
-  if (signals.mustHaveSkillsCoverage < 0.6) {
-    risks.push("Limited coverage of must-have skills; confirm ability to ramp quickly.");
-  }
-
-  if (signals.experienceAlignment < 0.6) {
-    risks.push("Experience slightly below target range for years in role.");
-  }
-
-  if (signals.locationAlignment < 0.5) {
-    risks.push("Location does not fully match preferred region; confirm remote flexibility.");
-  }
-
-  if (confidenceBand.category === "LOW") {
-    risks.push("Low confidence due to sparse profile data; validate details manually.");
-  }
-
-  const maxRisks = level === "compact" ? 1 : 3;
-  const minRisks = level === "compact" ? 0 : 1;
-  const trimmed = risks.slice(0, maxRisks);
-
-  while (trimmed.length < minRisks) {
-    trimmed.push("No major risks identified; proceed with standard diligence.");
-  }
-
-  return trimmed;
-}
-
-function buildNotes(match: MatchResult, confidenceBand: ConfidenceBand, includeWeights: boolean): string[] {
-  const notes: string[] = [];
-  const signals = match.signals ?? DEFAULT_SIGNALS;
-
-  if (includeWeights) {
-    notes.push(
-      `Signal blend — must-have ${toPercent(signals.mustHaveSkillsCoverage)}%, nice-to-have ${toPercent(
-        signals.niceToHaveSkillsCoverage,
-      )}%, experience ${toPercent(signals.experienceAlignment)}%, location ${toPercent(signals.locationAlignment)}%.`,
-    );
-  }
-
-  if (confidenceBand.reasons.length > 0) {
-    notes.push(`Confidence rationale: ${confidenceBand.reasons[0]}`);
-  }
-
-  return notes;
-}
-
-function buildSummary(strengths: string[], risks: string[]) {
-  const headlineStrength = strengths[0];
-  const headlineRisk = risks[0];
-
-  if (headlineRisk) {
-    return `${headlineStrength} Key risk: ${headlineRisk}`;
-  }
-
-  return headlineStrength;
-}
-
-export function buildExplanation(input: {
+export type ExplainInput = {
   job: Job;
   candidate: Candidate;
   match: MatchResult;
-  confidenceBand: ConfidenceBand;
+  confidence: ConfidenceResult;
   config: GuardrailsConfig;
-}): Explanation {
-  const level = (input.config.explain as { level?: string } | undefined)?.level === "compact" ? "compact" : "detailed";
-  const includeWeights = Boolean((input.config.explain as { includeWeights?: boolean } | undefined)?.includeWeights);
+};
 
-  const strengths = createStrengths(
-    input.job,
-    input.candidate,
-    { ...input.match, signals: input.match.signals ?? DEFAULT_SIGNALS },
-    input.confidenceBand,
-    level,
-  );
-  const risks = createRisks({ ...input.match, signals: input.match.signals ?? DEFAULT_SIGNALS }, input.confidenceBand, level);
-  const notes = buildNotes(input.match, input.confidenceBand, includeWeights);
+type Verbosity = "compact" | "detailed";
+
+const DEFAULT_EXPERIENCE_ALIGNMENT = 0.5;
+const DEFAULT_LOCATION_ALIGNMENT = 0.5;
+const DEFAULT_MUST_HAVE_COVERAGE = 0.5;
+
+function resolveVerbosity(config: GuardrailsConfig): Verbosity {
+  const level = (config.explain as { level?: string } | undefined)?.level;
+  return level === "compact" ? "compact" : "detailed";
+}
+
+function buildStrengths(input: ExplainInput, verbosity: Verbosity): string[] {
+  const strengths: string[] = [];
+  const { match, confidence } = input;
+
+  const mustHaveCoverage = match.signals?.mustHaveSkillsCoverage ?? DEFAULT_MUST_HAVE_COVERAGE;
+  const experienceAlignment = match.signals?.experienceAlignment ?? DEFAULT_EXPERIENCE_ALIGNMENT;
+
+  if (mustHaveCoverage >= 0.8) {
+    strengths.push(`High must-have skill coverage (${Math.round(mustHaveCoverage * 100)}%).`);
+  }
+
+  if (experienceAlignment >= 0.7) {
+    strengths.push("Strong experience alignment with the role expectations.");
+  }
+
+  if (confidence.band === "HIGH") {
+    const reason = confidence.reasons?.[0];
+    strengths.push(reason ? `High confidence band driven by ${reason}.` : "High confidence band supported by reliable signals.");
+  }
+
+  const max = verbosity === "compact" ? 2 : 5;
+  const min = verbosity === "compact" ? 1 : 3;
+  const trimmed = strengths.slice(0, max);
+
+  while (trimmed.length < min) {
+    trimmed.push("Overall signals suggest strong fit.");
+  }
+
+  return trimmed;
+}
+
+function isLocationMismatch(job: Job, candidate: Candidate, alignment: number): boolean {
+  const normalizedJob = job.location?.trim().toLowerCase();
+  const normalizedCandidate = candidate.location?.trim().toLowerCase();
+
+  if (!normalizedJob || !normalizedCandidate) return alignment < 0.5;
+
+  return normalizedJob !== normalizedCandidate || alignment < 0.5;
+}
+
+function buildRisks(input: ExplainInput, verbosity: Verbosity): string[] {
+  const risks: string[] = [];
+  const { job, candidate, match, confidence } = input;
+
+  const mustHaveCoverage = match.signals?.mustHaveSkillsCoverage ?? DEFAULT_MUST_HAVE_COVERAGE;
+  const experienceAlignment = match.signals?.experienceAlignment ?? DEFAULT_EXPERIENCE_ALIGNMENT;
+  const locationAlignment = match.signals?.locationAlignment ?? DEFAULT_LOCATION_ALIGNMENT;
+
+  if (mustHaveCoverage < 0.8) {
+    risks.push("Missing must-have skills may require ramp-up.");
+  }
+
+  const targetMinYears = job.minExperienceYears ?? null;
+  const candidateYears = candidate.totalExperienceYears ?? null;
+  if ((typeof targetMinYears === "number" && typeof candidateYears === "number" && candidateYears < targetMinYears) || experienceAlignment < 0.5) {
+    risks.push("Experience appears below the target range.");
+  }
+
+  if (isLocationMismatch(job, candidate, locationAlignment)) {
+    risks.push("Location mismatch could impact availability expectations.");
+  }
+
+  if (confidence.band === "LOW") {
+    risks.push("Low confidence band; profile data needs manual validation.");
+  }
+
+  const max = verbosity === "compact" ? 1 : 3;
+  const min = verbosity === "compact" ? 0 : 1;
+  const trimmed = risks.slice(0, max);
+
+  while (trimmed.length < min) {
+    trimmed.push("No significant risks flagged.");
+  }
+
+  return trimmed;
+}
+
+function buildSummary(strengths: string[], risks: string[]): string {
+  const leadingStrength = strengths[0] ?? "Candidate shows relevant alignment.";
+  const leadingRisk = risks[0];
+
+  return leadingRisk ? `${leadingStrength} Top risk: ${leadingRisk}` : leadingStrength;
+}
+
+export function buildExplanation(input: ExplainInput): Explanation {
+  const verbosity = resolveVerbosity(input.config);
+  const strengths = buildStrengths(input, verbosity);
+  const risks = buildRisks(input, verbosity);
 
   return {
     summary: buildSummary(strengths, risks),
     strengths,
     risks,
-    notes: notes.length > 0 ? notes : undefined,
-  } satisfies Explanation;
-}
-
-export async function maybePolishExplanation(
-  explanation: Explanation,
-  options: {
-    config: GuardrailsConfig;
-    fireDrill: boolean;
-    callLLMFn?: (payload: { systemPrompt: string; userPrompt: string }) => Promise<string>;
-  },
-): Promise<Explanation> {
-  const includeWeights = Boolean((options.config.explain as { includeWeights?: boolean } | undefined)?.includeWeights);
-
-  if (!includeWeights || options.fireDrill || !options.callLLMFn) {
-    return explanation;
-  }
-
-  const userPrompt =
-    `Summary: ${explanation.summary}\n` +
-    `Strengths: ${explanation.strengths.join("; ")}\n` +
-    `Risks: ${explanation.risks.join("; ")}\n` +
-    `Notes: ${(explanation.notes ?? []).join("; ")}`;
-
-  try {
-    const polished = await options.callLLMFn({
-      systemPrompt:
-        "You are a concise recruiter. Polish the summary to be clear and human-friendly without changing the facts.",
-      userPrompt,
-    });
-
-    const cleaned = polished.trim();
-
-    return { ...explanation, summary: cleaned || explanation.summary } satisfies Explanation;
-  } catch {
-    return explanation;
-  }
+  };
 }
