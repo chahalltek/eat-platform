@@ -47,6 +47,7 @@ model User {
   matchHistories        MatchHistory[]
   jobCandidateNotes     JobCandidateNote[]
   jobCandidateHistories JobCandidateHistory[]
+  matchFeedback         MatchFeedback[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -513,6 +514,7 @@ model JobCandidate {
   steps             JobCandidateStep[]
   statusHistory     JobCandidateStatusHistory[]
   feedbackEntries   JobCandidateFeedback[]
+  matchFeedback     MatchFeedback[]
   labels            JobCandidateLabel[]
   stages            JobCandidateStage[]
 
@@ -541,6 +543,7 @@ model MatchResult {
   candidateSignalBreakdown Json?
   shortlisted              Boolean      @default(false)
   shortlistReason          String?
+  feedbackEntries          MatchFeedback[]
 
   jobCandidate   JobCandidate? @relation("JobCandidateMatchResults", fields: [jobCandidateId], references: [id])
   jobCandidateId String?
@@ -640,6 +643,28 @@ model JobCandidateFeedback {
   createdAt      DateTime     @default(now())
 
   @@index([tenantId, jobCandidateId])
+}
+
+model MatchFeedback {
+  id             String        @id @default(cuid())
+  tenantId       String        @default("default-tenant")
+  matchResult    MatchResult   @relation(fields: [matchResultId], references: [id])
+  matchResultId  String
+  jobReqId       String
+  candidateId    String
+  jobCandidate   JobCandidate? @relation(fields: [jobCandidateId], references: [id])
+  jobCandidateId String?
+  user           User?         @relation(fields: [userId], references: [id])
+  userId         String?
+  direction      String?
+  outcome        String?
+  matchSignals   Json?
+  guardrailsPreset String?
+  systemMode     String?
+  createdAt      DateTime      @default(now())
+
+  @@index([tenantId, matchResultId])
+  @@index([tenantId, jobReqId])
 }
 
 model JobCandidateLabel {

@@ -9,6 +9,7 @@ import type { ETETableColumn } from "@/components/table/tableTypes";
 import { createNumberColumn, createTextColumn } from "@/components/table/tableTypes";
 import { JobCandidateStatus } from "@prisma/client";
 
+import { MatchFeedbackControls } from "./MatchFeedbackControls";
 import { JobCandidateStatusControl } from "./JobCandidateStatusControl";
 import { OutreachGenerator } from "./OutreachGenerator";
 import type { CandidateSignalBreakdown } from "@/lib/matching/candidateSignals";
@@ -331,6 +332,14 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
         header: "Confidence",
         enableSorting: false,
         cell: ({ row }) => <ConfidenceCell match={row.original} />,
+      },
+      {
+        id: "feedback",
+        header: "Feedback",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <MatchFeedbackControls matchId={row.original.id} candidateName={row.original.candidateName} />
+        ),
       },
       {
         id: "status",
