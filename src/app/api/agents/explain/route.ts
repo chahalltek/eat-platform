@@ -19,6 +19,7 @@ const requestSchema = z
   .object({
     matchId: z.string().trim().min(1).optional(),
     candidateMatchId: z.string().trim().min(1).optional(),
+    force: z.boolean().optional(),
   })
   .refine((value) => value.matchId || value.candidateMatchId, {
     message: "matchId or candidateMatchId is required",
@@ -50,7 +51,7 @@ function toConfidenceBand(
   source: unknown,
   fallbackScore?: number,
   fallbackReasons?: unknown,
-): { score: number; category: "HIGH" | "MEDIUM" | "LOW"; reasons: string[] } {
+): { score: number; category: "HIGH" | "MEDIUM" | "LOW"; band: "HIGH" | "MEDIUM" | "LOW"; reasons: string[] } {
   const data = (source ?? {}) as Record<string, unknown>;
   const score = typeof data.score === "number" ? data.score : typeof fallbackScore === "number" ? fallbackScore : 0;
   const reasons = Array.isArray(data.reasons)
@@ -62,7 +63,7 @@ function toConfidenceBand(
     ? data.category
     : deriveConfidenceCategory(score);
 
-  return { score, category, reasons };
+  return { score, category, band: category, reasons };
 }
 
 function toJobSkills(
@@ -85,6 +86,129 @@ function buildMinimalExplanation(mode: string): Explanation {
     strengths: [],
     risks: [],
   } satisfies Explanation;
+}
+
+type JobFingerprintInput = {
+  id: string;
+  location: string | null;
+  seniorityLevel: string | null;
+  skills: ReturnType<typeof toJobSkills>;
+};
+
+type CandidateFingerprintInput = {
+  id: string;
+  location: string | null;
+  seniorityLevel: string | null;
+  totalExperienceYears: number | null;
+  skills: ReturnType<typeof toCandidateSkills>;
+};
+
+type ExplanationFingerprints = {
+  mode: string;
+  guardrails: string;
+  job: string;
+  candidate: string;
+  match: string;
+};
+
+type PersistedExplanation = {
+  version: 1;
+  updatedAt: string;
+  explanation: Explanation;
+  fingerprints: ExplanationFingerprints;
+};
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableStringify(entry)).join(",")}]`;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
+
+  return `{${entries
+    .map(([key, val]) => `${JSON.stringify(key)}:${stableStringify(val)}`)
+    .join(",")}}`;
+}
+
+function buildFingerprints({
+  mode,
+  guardrails,
+  job,
+  candidate,
+  match,
+  confidence,
+}: {
+  mode: string;
+  guardrails: Prisma.InputJsonValue;
+  job: JobFingerprintInput;
+  candidate: CandidateFingerprintInput;
+  match: MatchResult;
+  confidence: ReturnType<typeof toConfidenceBand>;
+}): ExplanationFingerprints {
+  const normalizedJob = {
+    ...job,
+    skills: [...job.skills].sort((a, b) => a.name.localeCompare(b.name)),
+  };
+
+  const normalizedCandidate = {
+    ...candidate,
+    skills: [...candidate.skills].sort((a, b) => a.name.localeCompare(b.name)),
+  };
+
+  return {
+    mode,
+    guardrails: stableStringify(guardrails),
+    job: stableStringify(normalizedJob),
+    candidate: stableStringify(normalizedCandidate),
+    match: stableStringify({ ...match, confidence }),
+  } satisfies ExplanationFingerprints;
+}
+
+function parsePersistedExplanation(raw: unknown): PersistedExplanation | null {
+  if (!raw) return null;
+
+  if (typeof raw === "string") {
+    try {
+      return parsePersistedExplanation(JSON.parse(raw));
+    } catch (err) {
+      console.warn("Failed to parse persisted explanation string", err);
+      return null;
+    }
+  }
+
+  const data = raw as Record<string, unknown>;
+
+  if (
+    data.version === 1 &&
+    data.explanation &&
+    typeof data.updatedAt === "string" &&
+    typeof data.fingerprints === "object"
+  ) {
+    return data as PersistedExplanation;
+  }
+
+  return null;
+}
+
+function isPersistedExplanationValid(
+  persisted: PersistedExplanation | null,
+  fingerprints: ExplanationFingerprints,
+): persisted is PersistedExplanation {
+  if (!persisted) return false;
+
+  const current = persisted.fingerprints;
+
+  return (
+    current.mode === fingerprints.mode &&
+    current.guardrails === fingerprints.guardrails &&
+    current.job === fingerprints.job &&
+    current.candidate === fingerprints.candidate &&
+    current.match === fingerprints.match
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -118,7 +242,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { prisma: scopedPrisma, tenantId, runWithTenantContext } = scopedTenant;
-  const { matchId, candidateMatchId } = parsed.data;
+  const { matchId, candidateMatchId, force } = parsed.data;
 
   return runWithTenantContext(async () => {
     const match = matchId
@@ -157,6 +281,32 @@ export async function POST(req: NextRequest) {
       "confidenceReasons" in match ? (match.confidenceReasons as unknown) : undefined,
     );
 
+    const jobContext = {
+      id: job.id,
+      location: job.location ?? null,
+      seniorityLevel: "seniorityLevel" in job ? job.seniorityLevel ?? null : null,
+      skills: toJobSkills("skills" in job ? job.skills : job.requiredSkills),
+    } satisfies {
+      id: string;
+      location: string | null;
+      seniorityLevel: string | null;
+      skills: ReturnType<typeof toJobSkills>;
+    };
+
+    const candidateContext = {
+      id: candidate.id,
+      location: candidate.location ?? null,
+      seniorityLevel: "seniorityLevel" in candidate ? candidate.seniorityLevel ?? null : null,
+      totalExperienceYears: "totalExperienceYears" in candidate ? candidate.totalExperienceYears ?? null : null,
+      skills: toCandidateSkills(candidate.skills as Array<{ name: string; normalizedName?: string | null }> | undefined),
+    } satisfies {
+      id: string;
+      location: string | null;
+      seniorityLevel: string | null;
+      totalExperienceYears: number | null;
+      skills: ReturnType<typeof toCandidateSkills>;
+    };
+
     const matchResult: MatchResult = {
       candidateId: candidate.id,
       score: Math.round("overallScore" in match ? Number(match.overallScore ?? 0) : Number(match.matchScore ?? 0)),
@@ -167,11 +317,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "EXPLAIN agent disabled" }, { status: 403 });
     }
 
+    const fingerprints = buildFingerprints({
+      mode: availability.mode.mode,
+      guardrails: guardrailsSnapshot,
+      job: jobContext,
+      candidate: candidateContext,
+      match: matchResult,
+      confidence: confidenceBand,
+    });
+
+    const persisted = parsePersistedExplanation(
+      "jobReq" in match ? (match as { explanation?: unknown }).explanation : (match as { explanation?: unknown }).explanation,
+    );
+
     const startedAt = new Date();
     const inputSnapshot: Prisma.JsonObject = {
       ...parsed.data,
       mode: availability.mode.mode,
       guardrails: guardrailsSnapshot,
+      fingerprints,
     };
     const agentRun = await createAgentRunLog(scopedPrisma, {
       agentName: AGENT_NAME,
@@ -185,40 +349,57 @@ export async function POST(req: NextRequest) {
     });
 
     try {
-      const baseExplanation = isFireDrill
-        ? buildMinimalExplanation(availability.mode.mode)
-        : buildExplanation({
-            job: {
-              id: job.id,
-              location: job.location,
-              seniorityLevel: "seniorityLevel" in job ? job.seniorityLevel ?? null : null,
-              minExperienceYears: null,
-              maxExperienceYears: null,
-              skills: toJobSkills("skills" in job ? job.skills : job.requiredSkills),
-            },
-            candidate: {
-              id: candidate.id,
-              location: candidate.location,
-              totalExperienceYears: "totalExperienceYears" in candidate ? candidate.totalExperienceYears ?? null : null,
-              seniorityLevel: "seniorityLevel" in candidate ? candidate.seniorityLevel ?? null : null,
-              skills: toCandidateSkills(candidate.skills as Array<{ name: string; normalizedName?: string | null }> | undefined),
-            },
-            match: matchResult,
-            confidenceBand,
-            config: guardrails,
-          });
+      const usePersisted = !force && isPersistedExplanationValid(persisted, fingerprints);
+      const baseExplanation =
+        isFireDrill || usePersisted
+          ? usePersisted
+            ? persisted.explanation
+            : buildMinimalExplanation(availability.mode.mode)
+          : buildExplanation({
+              job: {
+                ...jobContext,
+                minExperienceYears: null,
+                maxExperienceYears: null,
+              },
+              candidate: candidateContext,
+              match: matchResult,
+              confidence: confidenceBand,
+              config: guardrails,
+            });
 
-      const explanation = isFireDrill
-        ? baseExplanation
-        : await maybePolishExplanation(baseExplanation, {
-            config: guardrails,
-            fireDrill: isFireDrill,
-            callLLMFn: ({ systemPrompt, userPrompt }) => callLLM({ systemPrompt, userPrompt, agent: "EXPLAIN" }),
-          });
+      const explanation =
+        isFireDrill || usePersisted
+          ? baseExplanation
+          : await maybePolishExplanation(baseExplanation, {
+              config: guardrails,
+              fireDrill: isFireDrill,
+              callLLMFn: ({ systemPrompt, userPrompt }) => callLLM({ systemPrompt, userPrompt, agent: "EXPLAIN" }),
+            });
 
       const finishedAt = new Date();
       const durationMs = finishedAt.getTime() - startedAt.getTime();
-      const output: Prisma.InputJsonObject = { snapshot: explanation };
+      const persistedPayload: PersistedExplanation = {
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        explanation,
+        fingerprints,
+      };
+
+      if (!usePersisted) {
+        if ("jobReq" in match) {
+          await scopedPrisma.match.update({
+            where: { id: match.id },
+            data: { explanation: JSON.stringify(persistedPayload) },
+          });
+        } else {
+          await scopedPrisma.candidateMatch.update({
+            where: { id: match.id },
+            data: { explanation: persistedPayload as Prisma.InputJsonValue },
+          });
+        }
+      }
+
+      const output: Prisma.InputJsonObject = { snapshot: explanation, cached: usePersisted };
 
       await scopedPrisma.agentRunLog.update({
         where: { id: agentRun.id },

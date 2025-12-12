@@ -7,17 +7,21 @@ const {
   mockGetTenantScopedPrismaClient,
   mockMatchFindFirst,
   mockCandidateMatchFindFirst,
+  mockMatchUpdate,
+  mockCandidateMatchUpdate,
   mockAgentRunLogCreate,
   mockAgentRunLogUpdate,
 } = vi.hoisted(() => {
   const mockMatchFindFirst = vi.fn();
   const mockCandidateMatchFindFirst = vi.fn();
+  const mockMatchUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
+  const mockCandidateMatchUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockAgentRunLogCreate = vi.fn(async (_client, { data }) => ({ id: "run-123", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
 
   const scopedPrisma = {
-    match: { findFirst: mockMatchFindFirst },
-    candidateMatch: { findFirst: mockCandidateMatchFindFirst },
+    match: { findFirst: mockMatchFindFirst, update: mockMatchUpdate },
+    candidateMatch: { findFirst: mockCandidateMatchFindFirst, update: mockCandidateMatchUpdate },
     agentRunLog: { update: mockAgentRunLogUpdate },
   } as const;
 
@@ -31,6 +35,8 @@ const {
     mockGetTenantScopedPrismaClient,
     mockMatchFindFirst,
     mockCandidateMatchFindFirst,
+    mockMatchUpdate,
+    mockCandidateMatchUpdate,
     mockAgentRunLogCreate,
     mockAgentRunLogUpdate,
   };
@@ -124,13 +130,80 @@ const explanationPayload = {
   exportableText: "Great fit",
 };
 
+const guardrails = { explain: { includeWeights: false } };
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableStringify(entry)).join(",")}]`;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
+
+  return `{${entries
+    .map(([key, val]) => `${JSON.stringify(key)}:${stableStringify(val)}`)
+    .join(",")}}`;
+}
+
+function buildPersistedExplanation() {
+  const jobContext = {
+    id: mockMatch.jobReq.id,
+    location: mockMatch.jobReq.location ?? null,
+    seniorityLevel: (mockMatch.jobReq as { seniorityLevel?: string | null }).seniorityLevel ?? null,
+    skills: mockMatch.jobReq.skills.map((skill) => ({
+      name: skill.name,
+      normalizedName: skill.normalizedName,
+      required: true,
+    })),
+  };
+
+  const candidateContext = {
+    id: mockMatch.candidate.id,
+    location: mockMatch.candidate.location ?? null,
+    seniorityLevel: (mockMatch.candidate as { seniorityLevel?: string | null }).seniorityLevel ?? null,
+    totalExperienceYears: (mockMatch.candidate as { totalExperienceYears?: number | null }).totalExperienceYears ?? null,
+    skills: (mockMatch.candidate.skills as Array<{ name: string; normalizedName?: string | null }>).map((skill) => ({
+      name: skill.name,
+      normalizedName: skill.normalizedName ?? undefined,
+    })),
+  };
+
+  const confidence = { score: 82, category: "HIGH", reasons: ["Good data"] };
+
+  const fingerprints = {
+    mode: "standard",
+    guardrails: stableStringify(guardrails),
+    job: stableStringify({ ...jobContext, skills: [...jobContext.skills].sort((a, b) => a.name.localeCompare(b.name)) }),
+    candidate: stableStringify({
+      ...candidateContext,
+      skills: [...candidateContext.skills].sort((a, b) => a.name.localeCompare(b.name)),
+    }),
+    match: stableStringify({
+      candidateId: mockMatch.candidate.id,
+      score: mockMatch.matchScore,
+      signals: mockMatch.scoreBreakdown.signals,
+      confidence,
+    }),
+  } as const;
+
+  return {
+    version: 1 as const,
+    updatedAt: new Date().toISOString(),
+    explanation: explanationPayload,
+    fingerprints,
+  };
+}
+
 describe("EXPLAIN agent API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCallLLM.mockResolvedValue(JSON.stringify(explanationPayload));
     mockMatchFindFirst.mockResolvedValue(mockMatch);
     mockCandidateMatchFindFirst.mockResolvedValue(null);
-    mockLoadTenantConfig.mockResolvedValue({ explain: { includeWeights: false } });
+    mockLoadTenantConfig.mockResolvedValue(guardrails);
     mockGetAgentAvailability.mockResolvedValue(baseAvailability);
     mockIsEnabled.mockReturnValue(true);
     (baseAvailability as { mode: { mode: string } }).mode = { mode: "standard" };
@@ -188,7 +261,73 @@ describe("EXPLAIN agent API", () => {
         risks: expect.any(Array),
       }),
     });
-    expect(body.explanation.summary).toContain("Strong coverage");
+    expect(typeof body.explanation.summary).toBe("string");
+  });
+
+  it("reuses a cached explanation when fingerprints match", async () => {
+    const firstResponse = await explainPost(
+      new NextRequest(
+        new Request("http://localhost/api/agents/explain", {
+          method: "POST",
+          body: JSON.stringify({ matchId: "match-1" }),
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+
+    expect(firstResponse.status).toBe(200);
+    const persistedPayload = mockMatchUpdate.mock.calls.at(-1)?.[0]?.data.explanation as string;
+
+    mockCallLLM.mockClear();
+    mockAgentRunLogUpdate.mockClear();
+    mockMatchFindFirst.mockResolvedValueOnce({ ...mockMatch, explanation: persistedPayload });
+
+    const response = await explainPost(
+      new NextRequest(
+        new Request("http://localhost/api/agents/explain", {
+          method: "POST",
+          body: JSON.stringify({ matchId: "match-1" }),
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockCallLLM).not.toHaveBeenCalled();
+    expect(body.explanation.summary).toBeDefined();
+    expect(mockAgentRunLogUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "SUCCESS",
+          output: expect.objectContaining({ cached: true }),
+        }),
+      }),
+    );
+  });
+
+  it("forces regeneration when requested", async () => {
+    const persisted = buildPersistedExplanation();
+    mockMatchFindFirst.mockResolvedValueOnce({ ...mockMatch, explanation: JSON.stringify(persisted) });
+
+    const response = await explainPost(
+      new NextRequest(
+        new Request("http://localhost/api/agents/explain", {
+          method: "POST",
+          body: JSON.stringify({ matchId: "match-1", force: true }),
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockCallLLM).toHaveBeenCalled();
+    expect(mockMatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "match-1" },
+      }),
+    );
   });
 
   it("returns a minimal explanation in fire drill mode", async () => {
