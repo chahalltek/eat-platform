@@ -236,10 +236,10 @@ export async function POST(req: NextRequest) {
           category: confidenceCategory,
           reasons: [] as string[],
         };
-        const guardrails = {
+        const guardrails: Prisma.JsonObject = {
           strategy: (guardrailsConfig.scoring as { strategy?: string } | undefined)?.strategy ?? "weighted",
-          thresholds: (guardrailsConfig.scoring as { thresholds?: Record<string, unknown> } | undefined)?.thresholds ?? null,
-        } satisfies Prisma.JsonValue;
+          thresholds: (guardrailsConfig.scoring as { thresholds?: Prisma.JsonValue } | undefined)?.thresholds ?? null,
+        };
 
         const candidateSignalBreakdown: Prisma.JsonObject = {
           signals: match.signals,
