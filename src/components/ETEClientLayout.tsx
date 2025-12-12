@@ -7,7 +7,7 @@ import { getAgentFailureCount } from "@/lib/agents/failures";
 import { getCurrentUser } from "@/lib/auth/user";
 import type { SystemModeName } from "@/lib/modes/systemModes";
 import { getCurrentTenantId } from "@/lib/tenant";
-import { getTenantMode } from "@/lib/tenantMode";
+import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 
 type ETEClientLayoutProps = PropsWithChildren<{
   maxWidthClassName?: string;
@@ -28,7 +28,8 @@ export async function ETEClientLayout({
     const user = await getCurrentUser();
     const tenantId = await getCurrentTenantId();
 
-    tenantMode = await getTenantMode(tenantId);
+    const mode = await loadTenantMode(tenantId);
+    tenantMode = mode.mode;
 
     if (user) {
       failedRuns = await getAgentFailureCount(tenantId);

@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
+import { AgentAvailabilityHints } from "@/components/AgentAvailabilityHints";
 import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { prisma } from "@/lib/prisma";
@@ -231,6 +232,8 @@ export default async function AgentRunsPage({
           <ClientActionLink href="/agents/logs">View detailed logs</ClientActionLink>
         </div>
       </div>
+
+      <AgentAvailabilityHints />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">

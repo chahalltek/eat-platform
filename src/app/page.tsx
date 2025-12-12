@@ -11,6 +11,7 @@ import {
 import { SystemHealthPanel } from "@/components/SystemHealthPanel";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { BrandMark } from "@/components/BrandMark";
+import { AgentAvailabilityHints } from "@/components/AgentAvailabilityHints";
 import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 import { WorkflowCard } from "@/components/home/WorkflowCard";
 import { getCurrentTenantId } from "@/lib/tenant";
@@ -385,6 +386,8 @@ export default async function Home() {
           </section>
 
           <SystemHealthPanel initialStatus={systemStatus} initialExecutionState={executionState} />
+
+          <AgentAvailabilityHints />
 
           <div className="space-y-6">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-zinc-900">

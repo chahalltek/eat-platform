@@ -11,8 +11,8 @@ export function FireDrillBanner({ maxWidthClassName = "max-w-6xl" }: { maxWidthC
           <div className="flex flex-col">
             <p className="text-sm font-semibold">Fire Drill is active</p>
             <p className="text-xs text-amber-50">
-              Explain and Confidence agents are paused and guardrails are locked to conservative defaults until Fire Drill is
-              turned off.
+              Only essential agents are enabled. Explain and Confidence agents are paused and guardrails are locked until Fire
+              Drill is turned off.
             </p>
           </div>
         </div>
