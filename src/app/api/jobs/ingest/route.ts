@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ingestJob } from "@/lib/matching/matcher";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
+import { onJobChanged } from "@/lib/orchestration/triggers";
 
 // TODO: Enforce RBAC/tenant ownership before allowing job ingestion.
 
@@ -50,6 +51,8 @@ export async function POST(req: Request) {
     await prisma.jobReq.update({ where: { id: jobReq.id }, data: { tenantId } });
     jobReq.tenantId = tenantId;
   }
+
+  void onJobChanged({ tenantId: jobReq.tenantId, jobId: jobReq.id });
 
   return NextResponse.json(jobReq, { status: 201 });
 }

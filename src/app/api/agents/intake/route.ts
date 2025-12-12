@@ -8,6 +8,7 @@ import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSw
 import { normalizeError } from '@/lib/errors';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
 import { getCurrentTenantId } from '@/lib/tenant';
+import { onJobChanged } from '@/lib/orchestration/triggers';
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -140,6 +141,8 @@ export async function POST(req: NextRequest) {
         : async (fn: (tx: typeof scopedPrisma) => Promise<void>) =>
             fn(scopedPrisma as unknown as typeof scopedPrisma);
 
+      let jobReqId: string | null = null;
+
       await runTransaction(async (tx) => {
         const skillCreates = parsedProfile.skills.map((skill) => ({
           name: skill.name,
@@ -175,10 +178,12 @@ export async function POST(req: NextRequest) {
             },
           });
 
+          jobReqId = existing.id;
+
           return;
         }
 
-        await tx.jobReq.create({
+        const createdJob = await tx.jobReq.create({
           data: {
             tenantId: resolvedTenantId,
             title: parsedProfile.title,
@@ -190,7 +195,13 @@ export async function POST(req: NextRequest) {
             skills: { create: skillCreates },
           },
         });
+
+        jobReqId = createdJob.id;
       });
+
+      if (jobReqId && resolvedTenantId) {
+        void onJobChanged({ tenantId: resolvedTenantId, jobId: jobReqId });
+      }
 
       const finishedAt = new Date();
       const durationMs = finishedAt.getTime() - startedAt.getTime();

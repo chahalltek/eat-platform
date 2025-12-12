@@ -10,6 +10,7 @@ import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents
 import { requireRole } from '@/lib/auth/requireRole';
 import { USER_ROLES } from '@/lib/auth/roles';
 import { getCurrentTenantId } from '@/lib/tenant';
+import { onCandidateChanged } from '@/lib/orchestration/triggers';
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const { recruiterId, rawResumeText, sourceType, sourceTag } = body ?? {};
+    const jobReqId = typeof body?.jobReqId === 'string' ? body.jobReqId.trim() : undefined;
 
     const recruiterValidation = await validateRecruiterId(
       recruiterId ?? currentUser.id,
@@ -86,13 +88,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await scopedTenant.runWithTenantContext(() =>
+    const { prisma: scopedPrisma, runWithTenantContext } = scopedTenant;
+
+    const result = await runWithTenantContext(() =>
       runRina({
         rawResumeText,
         sourceType,
         sourceTag,
       }),
     );
+
+    if (jobReqId) {
+      const job = await scopedPrisma.jobReq.findUnique({
+        where: { id: jobReqId, tenantId },
+        select: { id: true, tenantId: true },
+      });
+
+      if (job) {
+        void onCandidateChanged({
+          tenantId: job.tenantId,
+          jobId: job.id,
+          candidateIds: [result.candidateId],
+        });
+      }
+    }
 
     return NextResponse.json(result, { status: 200 });
   } catch (err) {

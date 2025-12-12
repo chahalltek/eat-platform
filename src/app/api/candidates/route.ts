@@ -6,6 +6,7 @@ import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES, type UserRole } from "@/lib/auth/roles";
 import { candidateProfileSchema, candidateSkillSchema } from "@/types/candidateIntake";
+import { onCandidateChanged } from "@/lib/orchestration/triggers";
 
 const recruiterRoles = new Set<UserRole>([
   USER_ROLES.ADMIN,
@@ -19,6 +20,7 @@ const requestSchema = z.object({
   profile: candidateProfileSchema,
   tenantId: z.string().trim().optional(),
   skills: z.array(candidateSkillSchema).optional(),
+  jobReqId: z.string().trim().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -91,6 +93,11 @@ export async function POST(req: NextRequest) {
 
   const tenantId = (parsedBody.tenantId || (await getUserTenantId(req)) || DEFAULT_TENANT_ID).trim();
   const { profile } = parsedBody;
+  const jobReqId = parsedBody.jobReqId?.trim();
+
+  const jobReq = jobReqId
+    ? await prisma.jobReq.findUnique({ where: { id: jobReqId, tenantId }, select: { id: true, tenantId: true } })
+    : null;
 
   try {
     const candidate = await prisma.candidate.create({
@@ -118,6 +125,10 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    if (jobReq) {
+      void onCandidateChanged({ tenantId: jobReq.tenantId, jobId: jobReq.id, candidateIds: [candidate.id] });
+    }
 
     return NextResponse.json(candidate, { status: 201 });
   } catch (error) {
