@@ -2,10 +2,13 @@ export type GuardrailsPresetName = "conservative" | "balanced" | "aggressive";
 
 type ConfidenceBands = { high: number; medium: number };
 
+export type ShortlistStrategy = "quality" | "diversity" | "fast" | "strict";
+
 export type GuardrailsConfig = {
   scoring: Record<string, unknown>;
   explain: Record<string, unknown>;
   safety: { confidenceBands?: ConfidenceBands } & Record<string, unknown>;
+  shortlist?: { strategy?: ShortlistStrategy; maxCandidates?: number } & Record<string, unknown>;
 };
 
 export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> = {
@@ -23,6 +26,9 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
         shortlistMinScore: 0.75,
         shortlistMaxCandidates: 3,
       },
+    },
+     shortlist: {
+     strategy: "quality",
     },
     explain: {
       level: "detailed",
@@ -49,6 +55,9 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
         shortlistMaxCandidates: 5,
       },
     },
+     shortlist: {
+     strategy: "quality",
+    },
     explain: {
       level: "standard",
       includeWeights: true,
@@ -73,6 +82,9 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
         shortlistMinScore: 0.55,
         shortlistMaxCandidates: 10,
       },
+    },
+      shortlist: {
+      strategy: "quality",
     },
     explain: {
       level: "compact",

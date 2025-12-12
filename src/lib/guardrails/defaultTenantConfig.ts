@@ -13,6 +13,9 @@ export const defaultTenantGuardrails = {
       shortlistMaxCandidates: 5,
     },
   },
+   shortlist: {
+    strategy: "quality" as const,
+  },
   explain: {
     level: "compact" as const, // "compact" | "detailed"
     includeWeights: false,
