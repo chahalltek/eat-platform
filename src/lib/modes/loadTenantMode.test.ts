@@ -31,6 +31,7 @@ describe('loadTenantMode', () => {
       mode: 'pilot',
       guardrailsPreset: 'conservative',
       agentsEnabled: ['RUA', 'RINA', 'MATCH', 'SHORTLIST'],
+      source: 'fallback',
     });
   });
 
@@ -42,6 +43,7 @@ describe('loadTenantMode', () => {
       mode: 'production',
       guardrailsPreset: 'balanced',
       agentsEnabled: ['RUA', 'RINA', 'MATCH', 'CONFIDENCE', 'EXPLAIN', 'SHORTLIST'],
+      source: 'database',
     });
   });
 
@@ -53,6 +55,7 @@ describe('loadTenantMode', () => {
       mode: 'pilot',
       guardrailsPreset: 'conservative',
       agentsEnabled: ['RUA', 'RINA', 'MATCH', 'SHORTLIST'],
+      source: 'fallback',
     });
   });
 });

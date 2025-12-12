@@ -10,11 +10,14 @@ function isMissingTableError(error: unknown) {
   return Boolean(error && typeof error === "object" && (error as { code?: unknown }).code === "P2021");
 }
 
-function buildFallbackMode() {
+type ModeSource = "database" | "fallback";
+
+function buildFallbackMode(): { mode: SystemModeName; guardrailsPreset: string; agentsEnabled: string[]; source: ModeSource } {
   return {
     mode: DEFAULT_MODE,
     guardrailsPreset: DEFAULT_DEFINITION.guardrailsPreset,
     agentsEnabled: DEFAULT_DEFINITION.agentsEnabled,
+    source: "fallback",
   };
 }
 
@@ -40,6 +43,7 @@ export async function loadTenantMode(tenantId: string) {
       mode,
       guardrailsPreset: definition.guardrailsPreset,
       agentsEnabled: definition.agentsEnabled,
+      source: record ? "database" : "fallback",
     };
   } catch (error) {
     if (isPrismaUnavailableError(error) || isMissingTableError(error)) {

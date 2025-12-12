@@ -171,6 +171,9 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
                 <p>
                   Mode: <span className="font-semibold text-zinc-900 dark:text-zinc-50">{formatMode(diagnostics.mode)}</span>
                 </p>
+                {diagnostics.modeNotice ? (
+                  <p className="text-xs text-amber-700">{diagnostics.modeNotice}</p>
+                ) : null}
                 {diagnostics.fireDrill.enabled ? (
                   <div className="space-y-1">
                     <p>Fire Drill safeguards are active. Impact:</p>
@@ -204,11 +207,14 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
             <DiagnosticCard
               title="Guardrails"
-              status={diagnostics.guardrailsPreset ? "ok" : "warn"}
+              status={diagnostics.guardrailsStatus === "Guardrails healthy" ? "ok" : "warn"}
               description="Active safety preset and recommendation for agent behavior."
             >
-              <div className="space-y-1">
-                <p>Preset: {formatGuardrailsPreset(diagnostics.guardrailsPreset)}</p>
+              <div className="space-y-2">
+                <div>
+                  <p>Preset: {formatGuardrailsPreset(diagnostics.guardrailsPreset)}</p>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-200">Status: {diagnostics.guardrailsStatus}</p>
+                </div>
                 {diagnostics.guardrailsRecommendation ? (
                   <p className="text-sm text-zinc-600 dark:text-zinc-300">
                     Recommendation: {diagnostics.guardrailsRecommendation}

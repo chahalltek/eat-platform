@@ -5,11 +5,11 @@ import { FEATURE_FLAGS, type FeatureFlagName } from "@/lib/featureFlags/constant
 import { isFeatureEnabledForTenant } from "@/lib/featureFlags";
 import { getRateLimitDefaults, getRateLimitPlanOverrides, type RateLimitConfig, type RateLimitPlanOverrides } from "@/lib/rateLimiting/rateLimiter";
 import type { SystemModeName } from "@/lib/systemMode";
-import { getSystemMode } from "@/lib/systemMode";
 import { getTenantPlan } from "@/lib/subscriptionPlans";
 import { prisma } from "@/lib/prisma";
 import { resolveRetentionPolicy } from "@/lib/retention";
 import { loadTenantGuardrailConfig } from "@/lib/guardrails/config";
+import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 
 export class TenantNotFoundError extends Error {
   constructor(tenantId: string) {
@@ -23,6 +23,7 @@ export type GuardrailsPreset = "conservative" | "balanced" | "aggressive" | "cus
 export type TenantDiagnostics = {
   tenantId: string;
   mode: SystemModeName;
+  modeNotice: string | null;
   fireDrill: {
     enabled: boolean;
     fireDrillImpact: string[];
@@ -32,6 +33,7 @@ export type TenantDiagnostics = {
   };
   sso: { configured: boolean; issuerUrl: string | null };
   guardrailsPreset: GuardrailsPreset;
+  guardrailsStatus: string;
   guardrailsRecommendation: string | null;
   plan: {
     id: string | null;
@@ -266,35 +268,60 @@ function buildGuardrailsRecommendation(preset: GuardrailsPreset) {
   return "Guardrails customized from default values.";
 }
 
+function buildGuardrailsStatus(guardrails: TenantDiagnostics["guardrails"], fireDrill: TenantDiagnostics["fireDrill"]) {
+  if (fireDrill.enabled) {
+    return "EXPLAIN & CONFIDENCE are restricted";
+  }
+
+  const missingCriticalSettings =
+    guardrails.matcherMinScore <= 0 ||
+    guardrails.shortlistMinScore <= 0 ||
+    guardrails.shortlistMaxCandidates <= 0 ||
+    guardrails.confidencePassingScore <= 0;
+
+  if (missingCriticalSettings) {
+    return "Guardrails partially configured";
+  }
+
+  return "Guardrails healthy";
+}
+
 export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDiagnostics> {
-  const [config, plan, tenant, auditEventCount, flags, guardrails, fireDrill] = await Promise.all([
+  const [config, plan, tenant, auditEventCount, flags, guardrails, fireDrill, tenantMode] = await Promise.all([
     getAppConfig(),
     getTenantPlan(tenantId),
-    prisma.tenant.findUnique({ where: { id: tenantId } }),
+    prisma.tenant.findUnique({ where: { id: tenantId }, include: { config: true } }),
     countAuditEvents(tenantId),
     resolveEnabledFlags(tenantId),
     loadTenantGuardrailConfig(tenantId),
     evaluateFireDrillStatus(tenantId),
+    loadTenantMode(tenantId),
   ]);
 
   if (!tenant) {
     throw new TenantNotFoundError(tenantId);
   }
 
-  const systemMode = await getSystemMode(tenantId);
-  const guardrailsPreset = normalizeGuardrailsPreset(plan);
+  const guardrailsPreset = (tenant?.config?.preset as GuardrailsPreset | null) ?? normalizeGuardrailsPreset(plan) ?? "custom";
+
+  const configuredMode = (tenant?.config as { mode?: string | null } | null)?.mode ?? null;
+  const modeNotice = configuredMode ? null : tenantMode.source === "fallback" ? "Mode not found; defaulting to diagnostics." : null;
+  const mode = (configuredMode as SystemModeName | null) ?? tenantMode.mode;
 
   const fireDrillImpact = fireDrill?.fireDrillImpact ?? [];
+  const guardrailsStatus = buildGuardrailsStatus(guardrails, fireDrill);
 
   return {
     tenantId,
-    mode: systemMode.mode,
+    mode,
+    modeNotice,
     fireDrill: {
       ...fireDrill,
       fireDrillImpact,
     },
     sso: { configured: isSsoConfigured(config), issuerUrl: config.SSO_ISSUER_URL ?? null },
     guardrailsPreset,
+    guardrailsStatus,
     guardrailsRecommendation: buildGuardrailsRecommendation(guardrailsPreset),
     plan: mapPlan(plan),
     auditLogging: { enabled: auditEventCount > 0, eventsRecorded: auditEventCount },

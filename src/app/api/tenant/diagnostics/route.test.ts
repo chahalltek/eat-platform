@@ -88,8 +88,10 @@ describe("GET /api/tenant/diagnostics", () => {
     const payload = {
       tenantId: "tenant-a",
       mode: "pilot",
+      modeNotice: null,
       sso: { configured: true, issuerUrl: "https://sso" },
       fireDrill: { enabled: false, fireDrillImpact: [], suggested: false, reason: null, windowMinutes: 30 },
+      guardrailsStatus: "Guardrails healthy",
     };
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-a");
@@ -119,8 +121,10 @@ describe("GET /api/tenant/diagnostics", () => {
     const payload = {
       tenantId: "tenant-b",
       mode: "pilot",
+      modeNotice: null,
       fireDrill: { enabled: false, fireDrillImpact: [] },
       sso: { configured: true, issuerUrl: null },
+      guardrailsStatus: "Guardrails healthy",
     };
     mockGetCurrentUser.mockResolvedValue({ id: "sysadmin", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-b");
