@@ -10,14 +10,10 @@ export async function POST(
     const { jobId } = await params;
     const body = await req.json().catch(() => ({}));
 
-    const recruiterId =
-      body.recruiterId ?? 'recruiter@example.com'; // TODO: auth later
-    const maxMatches = body.maxMatches ?? 20;
-
     const result = await runExplainForJob({
-      recruiterId,
       jobId,
-      maxMatches,
+      candidateIds: Array.isArray(body.candidateIds) ? body.candidateIds : undefined,
+      tenantId: typeof body.tenantId === "string" ? body.tenantId : undefined,
     });
 
     return NextResponse.json(result, { status: 200 });

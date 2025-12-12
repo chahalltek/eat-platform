@@ -14,7 +14,7 @@ const { mockRunExplainForJob, mockRunShortlist } = vi.hoisted(() => {
 vi.mock("@/lib/agents/explain", () => ({ runExplainForJob: mockRunExplainForJob }));
 vi.mock("@/lib/agents/shortlist", () => ({ runShortlist: mockRunShortlist }));
 
-const explainBody = { recruiterId: "recruiter-1", maxMatches: 3 };
+const explainBody = { candidateIds: ["candidate-1", "candidate-2"] };
 const shortlistBody = { recruiterId: "recruiter-1", shortlistLimit: 2 };
 
 const mockShortlisted = [
@@ -40,7 +40,7 @@ describe("EXPLAIN and SHORTLIST job endpoints", () => {
 
     mockRunExplainForJob.mockResolvedValue({
       jobId: "job-123",
-      processedCount: 2,
+      explanations: [],
       agentRunId: "agent-run-explain",
     });
 
@@ -68,13 +68,12 @@ describe("EXPLAIN and SHORTLIST job endpoints", () => {
 
     expect(response.status).toBe(200);
     expect(mockRunExplainForJob).toHaveBeenCalledWith({
-      recruiterId: "recruiter-1",
       jobId: "job-123",
-      maxMatches: 3,
+      candidateIds: ["candidate-1", "candidate-2"],
     });
     expect(payload).toEqual({
       jobId: "job-123",
-      processedCount: 2,
+      explanations: [],
       agentRunId: "agent-run-explain",
     });
   });
