@@ -6,6 +6,8 @@ import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { createHash } from "node:crypto";
+import { getConfidenceBand } from "@/lib/agents/confidenceEngine";
 
 const feedbackSchema = z.object({
   matchId: z.string().trim().min(1, "matchId is required"),
@@ -24,6 +26,15 @@ type MatchReasons = {
   confidence?: { score?: number; category?: string; reasons?: unknown };
   guardrails?: unknown;
 } | null;
+
+function hashGuardrails(config: Prisma.InputJsonValue) {
+  try {
+    return createHash("sha256").update(JSON.stringify(config)).digest("hex");
+  } catch (error) {
+    console.error("Unable to hash guardrails config", error);
+    return null;
+  }
+}
 
 function parseMatchReasons(value: unknown): MatchReasons {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -99,9 +110,13 @@ export async function POST(req: Request) {
       reasons?.guardrails && typeof reasons.guardrails === "object" ? reasons.guardrails : null;
     const guardrailsPreset = guardrailsConfig.preset ?? "balanced";
     const guardrailsConfigSnapshot = (guardrailsFromMatch ?? guardrailsConfig) as Prisma.InputJsonValue;
+    const guardrailsConfigHash = hashGuardrails(guardrailsConfigSnapshot);
     const shortlistStrategy =
       ((guardrailsFromMatch as { strategy?: string } | null)?.strategy as string | undefined) ??
       ((guardrailsConfig.shortlist as { strategy?: string } | undefined)?.strategy ?? null);
+
+    const confidenceBand = getConfidenceBand(confidence.score ?? 0, guardrailsConfig as never);
+    const explanationSnapshot = reasons ?? match.reasons ?? null;
 
     const outcomeSource = source ?? (typeof user.role === "string" ? user.role.toUpperCase() : null);
 
@@ -117,13 +132,19 @@ export async function POST(req: Request) {
       shortlisted: match.shortlisted,
       shortlistReason: match.shortlistReason,
       guardrailsConfig: guardrailsConfigSnapshot,
+      guardrailsConfigHash,
       guardrailsPreset,
       shortlistStrategy,
       confidenceScore: confidence.score,
       confidenceCategory: confidence.category,
+      confidenceBand,
       confidenceReasons: confidence.reasons,
       systemMode: mode.mode,
+<<<<<<< ours
       recommendationConfidence,
+=======
+      explanationSnapshot,
+>>>>>>> theirs
     };
 
     const feedback = await prisma.matchFeedback.upsert({
