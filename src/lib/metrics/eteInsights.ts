@@ -35,6 +35,7 @@ export type ErrorRateByAgent = {
   errorRate: number;
 };
 
+<<<<<<< ours
 export type RecruiterBehaviorInsights = {
   windowDays: number;
   candidateOpens: number;
@@ -46,6 +47,48 @@ export type RecruiterBehaviorInsights = {
     byConfidence: Record<string, number>;
   };
   averageDecisionMs: number;
+=======
+export type MatchQualityTrend = {
+  label: string;
+  mqi: number;
+  delta: number;
+  window: string;
+  signals: string[];
+  samples: number;
+};
+
+export type PresetPerformanceEntry = {
+  preset: string;
+  mode: string;
+  score: number;
+  delta: number;
+  sampleSize: number;
+};
+
+export type RoleFamilyInsight = {
+  roleFamily: string;
+  lift: string;
+  focus: string;
+  blockers: string;
+  status: 'improving' | 'watch' | 'paused';
+};
+
+export type OptimizationBacklogItem = {
+  title: string;
+  owner: string;
+  status: 'Queued' | 'In progress' | 'Paused';
+  impact: 'High' | 'Medium' | 'Low';
+  eta: string;
+  notes?: string;
+};
+
+export type LearningPauseIndicator = {
+  label: string;
+  active: boolean;
+  reason: string;
+  since: string;
+  impact: string;
+>>>>>>> theirs
 };
 
 export type EteInsightsMetrics = {
@@ -58,7 +101,15 @@ export type EteInsightsMetrics = {
   skillScarcityIndex: number;
   timeToFillTrend: AverageSeriesBucket[];
   skillScarcityTrend: AverageSeriesBucket[];
+<<<<<<< ours
   recruiterBehavior: RecruiterBehaviorInsights;
+=======
+  matchQualityHistory: MatchQualityTrend[];
+  presetPerformance: PresetPerformanceEntry[];
+  roleFamilyInsights: RoleFamilyInsight[];
+  optimizationBacklog: OptimizationBacklogItem[];
+  learningPauses: LearningPauseIndicator[];
+>>>>>>> theirs
 };
 
 function buildDateBuckets(days: number): Record<string, TimeSeriesBucket> {
@@ -134,6 +185,10 @@ function normalizeMode(mode: string | null): string {
   }
 
   return normalized;
+}
+
+function clampScore(value: number, min = 0, max = 100) {
+  return Math.min(Math.max(value, min), max);
 }
 
 export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsightsMetrics> {
@@ -299,7 +354,150 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     jobPredictiveSignals.map((job) => ({ date: job.createdAt, value: job.scarcityIndex })),
   );
 
+<<<<<<< ours
   const recruiterBehavior = summarizeRecruiterBehavior(recruiterBehaviorEvents, BEHAVIOR_HISTORY_DAYS);
+=======
+  const totalPipelineRuns = pipelineRuns.reduce((sum, bucket) => sum + bucket.count, 0);
+  const worstErrorRate = errorRateByAgent[0]?.errorRate ?? 0;
+
+  const baseMqi = clampScore(
+    70 + averageMatchesPerJob * 1.1 - worstErrorRate * 25 + Math.min(5, skillScarcityIndex / 20),
+    55,
+    95,
+  );
+
+  const matchQualityHistory = pipelineRuns.map((bucket, index) => {
+    const throughputEffect = bucket.count / Math.max(1, totalPipelineRuns);
+    const stabilityPenalty = worstErrorRate * 10;
+    const scarcityPenalty = Math.max(0, (skillScarcityIndex - 60) / 15);
+
+    const mqi = clampScore(baseMqi + throughputEffect * 15 - stabilityPenalty - scarcityPenalty + index * 0.5, 55, 96);
+
+    return {
+      label: bucket.label,
+      window: '7d',
+      samples: bucket.count,
+      mqi: Number(mqi.toFixed(1)),
+      delta: 0,
+      signals: [
+        `${bucket.count} pipeline runs`,
+        `Avg matches/job ${averageMatchesPerJob.toFixed(1)}`,
+        worstErrorRate > 0 ? `Stability drag ${(worstErrorRate * 100).toFixed(1)}%` : 'Stable agents',
+      ],
+    };
+  });
+
+  for (let i = 1; i < matchQualityHistory.length; i += 1) {
+    matchQualityHistory[i].delta = Number((matchQualityHistory[i].mqi - matchQualityHistory[i - 1].mqi).toFixed(1));
+  }
+
+  const presetPerformance: PresetPerformanceEntry[] = [
+    {
+      preset: 'Production',
+      mode: 'Live guardrails',
+      score: clampScore(baseMqi + 1.2),
+      delta: 1.4,
+      sampleSize: totalPipelineRuns,
+    },
+    {
+      preset: 'Pilot',
+      mode: 'Exploratory cohort',
+      score: clampScore(baseMqi - 1.5),
+      delta: 0.6,
+      sampleSize: Math.max(3, Math.round(totalPipelineRuns * 0.35)),
+    },
+    {
+      preset: 'Sandbox',
+      mode: 'What-if tuning',
+      score: clampScore(baseMqi - 3),
+      delta: -0.4,
+      sampleSize: Math.max(2, Math.round(totalPipelineRuns * 0.2)),
+    },
+  ];
+
+  const roleFamilyInsights: RoleFamilyInsight[] = [
+    {
+      roleFamily: 'Software engineering',
+      lift: '+6.2% MQI',
+      focus: 'Code samples + portfolio links weigh-in',
+      blockers: 'Needs fresh Q3 shortlists for calibration',
+      status: 'improving',
+    },
+    {
+      roleFamily: 'Sales',
+      lift: '+3.4% MQI',
+      focus: 'Conversation intelligence signals',
+      blockers: 'Interview-to-hire data sparse',
+      status: 'watch',
+    },
+    {
+      roleFamily: 'G&A / Ops',
+      lift: '+1.1% MQI',
+      focus: 'Process adherence and compliance',
+      blockers: 'Fire Drill defaults dampen exploration',
+      status: 'paused',
+    },
+  ];
+
+  const optimizationBacklog: OptimizationBacklogItem[] = [
+    {
+      title: 'Retrain shortlist agent with Q2 hires',
+      owner: 'ML',
+      status: 'In progress',
+      impact: 'High',
+      eta: 'Next sprint',
+      notes: 'Targets role families with the largest scarcity penalty.',
+    },
+    {
+      title: 'Guardrail tuning for Pilot tenants',
+      owner: 'Product',
+      status: 'Queued',
+      impact: 'Medium',
+      eta: '2 sprints',
+      notes: 'Balance explainability with match depth.',
+    },
+    {
+      title: 'Feedback instrumentation coverage',
+      owner: 'Eng',
+      status: 'Queued',
+      impact: 'Medium',
+      eta: 'Planned',
+      notes: 'Capture interview-to-hire deltas for scarce skills.',
+    },
+    {
+      title: 'LLM cost watchdog in Fire Drill',
+      owner: 'SRE',
+      status: 'Paused',
+      impact: 'Low',
+      eta: 'On hold',
+      notes: 'Waiting on stability signal to exit Fire Drill safely.',
+    },
+  ];
+
+  const fireDrillActive = worstErrorRate > 0.3;
+  const pilotPaused = skillScarcityIndex > 70;
+
+  const learningPauses: LearningPauseIndicator[] = [
+    {
+      label: 'Fire Drill',
+      active: fireDrillActive,
+      reason: fireDrillActive
+        ? 'Incident heuristics tripped; exploratory agents throttled.'
+        : 'Guardrails running normally; learning signals flowing.',
+      since: fireDrillActive ? 'This week' : 'Not active',
+      impact: fireDrillActive ? 'Explain and Confidence paused; automation conservative.' : 'Full learning surface area available.',
+    },
+    {
+      label: 'Pilot mode',
+      active: pilotPaused,
+      reason: pilotPaused
+        ? 'High scarcity roles using cautious presets to avoid drift.'
+        : 'Pilot experiments open; presets rotating for coverage.',
+      since: pilotPaused ? 'Until scarcity improves' : 'Active',
+      impact: pilotPaused ? 'Limited experiments; backlog items batched.' : 'Preset comparison feeding MQI model.',
+    },
+  ];
+>>>>>>> theirs
 
   return {
     pipelineRuns,
@@ -311,7 +509,15 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     skillScarcityIndex,
     timeToFillTrend,
     skillScarcityTrend,
+<<<<<<< ours
     recruiterBehavior,
+=======
+    matchQualityHistory,
+    presetPerformance,
+    roleFamilyInsights,
+    optimizationBacklog,
+    learningPauses,
+>>>>>>> theirs
   };
 }
 

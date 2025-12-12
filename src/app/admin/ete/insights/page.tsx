@@ -1,8 +1,13 @@
 import {
+  AcademicCapIcon,
   ArrowTrendingUpIcon,
+  BeakerIcon,
   ChartBarIcon,
+  ClipboardDocumentListIcon,
   ClockIcon,
   ExclamationTriangleIcon,
+  PauseCircleIcon,
+  ShieldCheckIcon,
   SignalIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -321,6 +326,256 @@ function ErrorRateTable({
   );
 }
 
+function TrendBadge({ value }: { value: number }) {
+  const tone = value > 0 ? "text-emerald-600 bg-emerald-50" : value < 0 ? "text-amber-600 bg-amber-50" : "text-zinc-600 bg-zinc-100";
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${tone} dark:bg-opacity-20`}>
+      {value > 0 ? "+" : null}
+      {value.toFixed(1)}
+      <span className="text-[10px] font-normal uppercase tracking-wide text-current/80">Δ</span>
+    </span>
+  );
+}
+
+function MatchQualityTimeline({
+  data,
+}: {
+  data: { label: string; mqi: number; delta: number; signals: string[]; window: string; samples: number }[];
+}) {
+  const maxScore = Math.max(...data.map((point) => point.mqi), 1);
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm dark:border-indigo-900/60 dark:bg-zinc-900">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
+            <AcademicCapIcon className="h-4 w-4" aria-hidden />
+            Learning
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Match Quality Index (MQI)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Signals that ETE is learning over the last 7 days.</p>
+        </div>
+        <TrendBadge value={data[data.length - 1]?.delta ?? 0} />
+      </div>
+      <div className="space-y-3">
+        {data.map((point) => {
+          const width = `${(point.mqi / maxScore) * 100}%`;
+          return (
+            <div
+              key={point.label}
+              className="rounded-xl border border-indigo-50 bg-indigo-50/60 p-4 dark:border-indigo-900/40 dark:bg-indigo-900/20"
+            >
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-[0.15em] text-indigo-600">{point.window}</span>
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{point.label}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <TrendBadge value={point.delta} />
+                  <span className="text-base font-semibold text-indigo-700 dark:text-indigo-200">{point.mqi.toFixed(1)}</span>
+                </div>
+              </div>
+              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-white/70 dark:bg-indigo-950">
+                <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400" style={{ width }} />
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-indigo-700 shadow-sm dark:bg-indigo-950/80 dark:text-indigo-100">
+                  {point.samples} samples
+                </span>
+                {point.signals.map((signal) => (
+                  <span
+                    key={signal}
+                    className="rounded-full bg-white px-2 py-0.5 text-[11px] text-zinc-700 shadow-sm dark:bg-indigo-950/80 dark:text-zinc-200"
+                  >
+                    {signal}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PresetPerformance({
+  data,
+}: {
+  data: { preset: string; mode: string; score: number; delta: number; sampleSize: number }[];
+}) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
+            <BeakerIcon className="h-4 w-4" aria-hidden />
+            Presets
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Preset performance comparison</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Live vs experimental presets ranked by MQI.</p>
+        </div>
+        <span className="text-xs font-medium text-indigo-700 dark:text-indigo-200">Transparent by design</span>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        {data.map((entry) => (
+          <div
+            key={entry.preset}
+            className="flex flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/60"
+          >
+            <div className="flex items-center justify-between text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              <span>{entry.preset}</span>
+              <TrendBadge value={entry.delta} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-200">{entry.score.toFixed(1)}</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">Mode: {entry.mode}</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">{entry.sampleSize} recent runs</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RoleFamilyInsights({
+  data,
+}: {
+  data: { roleFamily: string; lift: string; focus: string; blockers: string; status: string }[];
+}) {
+  const statusTone: Record<string, string> = {
+    improving: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-100",
+    watch: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-100",
+    paused: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-100",
+  };
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
+            <ChartBarIcon className="h-4 w-4" aria-hidden />
+            Role families
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Role family insights</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Where MQI lift is coming from and what is blocked.</p>
+        </div>
+      </div>
+      <div className="mt-4 space-y-3">
+        {data.map((entry) => (
+          <div
+            key={entry.roleFamily}
+            className="rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/60"
+          >
+            <div className="flex items-center justify-between text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              <div className="flex items-center gap-3">
+                <span>{entry.roleFamily}</span>
+                <span className="text-emerald-600 dark:text-emerald-200">{entry.lift}</span>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusTone[entry.status]}`}>{entry.status}</span>
+            </div>
+            <div className="mt-2 text-sm text-zinc-700 dark:text-zinc-200">
+              <p className="font-semibold">Focus</p>
+              <p className="text-zinc-600 dark:text-zinc-400">{entry.focus}</p>
+            </div>
+            <div className="mt-2 text-sm text-zinc-700 dark:text-zinc-200">
+              <p className="font-semibold">Blockers</p>
+              <p className="text-zinc-600 dark:text-zinc-400">{entry.blockers}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OptimizationBacklog({
+  data,
+}: {
+  data: { title: string; owner: string; status: string; impact: string; eta: string; notes?: string }[];
+}) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
+            <ClipboardDocumentListIcon className="h-4 w-4" aria-hidden />
+            Optimization
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Optimization suggestions backlog</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">What is queued, in flight, or paused.</p>
+        </div>
+      </div>
+      <div className="mt-4 divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
+        {data.map((item) => (
+          <div key={item.title} className="flex flex-col gap-1 py-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{item.title}</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">Owner: {item.owner}</p>
+              {item.notes ? <p className="text-xs text-zinc-500 dark:text-zinc-400">{item.notes}</p> : null}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">{item.status}</span>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-100">{item.impact} impact</span>
+              <span className="rounded-full bg-zinc-100 px-3 py-1 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">ETA: {item.eta}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LearningPauses({ data }: { data: { label: string; active: boolean; reason: string; since: string; impact: string }[] }) {
+  return (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm dark:border-amber-900/60 dark:bg-amber-950/40">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 dark:text-amber-200">
+            <PauseCircleIcon className="h-5 w-5" aria-hidden />
+            Learning pauses
+          </div>
+          <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-50">Fire Drill & Pilot indicators</h3>
+          <p className="text-sm text-amber-900/80 dark:text-amber-100/80">Know when learning is paused and why.</p>
+        </div>
+        <ShieldCheckIcon className="h-5 w-5 text-amber-700 dark:text-amber-200" aria-hidden />
+      </div>
+      <div className="mt-4 space-y-3">
+        {data.map((entry) => (
+          <div
+            key={entry.label}
+            className={`rounded-xl border p-4 ${
+              entry.active
+                ? "border-amber-300 bg-white/60 dark:border-amber-900/50 dark:bg-amber-950/60"
+                : "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/40"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-50">
+                <span>{entry.label}</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    entry.active
+                      ? "bg-amber-200 text-amber-900 dark:bg-amber-800 dark:text-amber-100"
+                      : "bg-emerald-200 text-emerald-900 dark:bg-emerald-800 dark:text-emerald-100"
+                  }`}
+                >
+                  {entry.active ? "Paused" : "Running"}
+                </span>
+              </div>
+              <span className="text-xs font-medium text-amber-800 dark:text-amber-100">{entry.since}</span>
+            </div>
+            <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-100/80">{entry.reason}</p>
+            <p className="text-xs text-amber-800/80 dark:text-amber-100/70">Impact: {entry.impact}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function EteInsightsPage() {
   const user = await getCurrentUser();
   const tenantId = await getCurrentTenantId();
@@ -416,6 +671,20 @@ export default async function EteInsightsPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <ErrorRateTable data={metrics.errorRateByAgent} />
           </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <MatchQualityTimeline data={metrics.matchQualityHistory} />
+            </div>
+            <LearningPauses data={metrics.learningPauses} />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <PresetPerformance data={metrics.presetPerformance} />
+            <RoleFamilyInsights data={metrics.roleFamilyInsights} />
+          </div>
+
+          <OptimizationBacklog data={metrics.optimizationBacklog} />
         </div>
       </main>
     </ETEClientLayout>
