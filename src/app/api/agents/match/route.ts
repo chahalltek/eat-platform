@@ -236,21 +236,23 @@ export async function POST(req: NextRequest) {
           category: confidenceCategory,
           reasons: [] as string[],
         };
-        const candidateSignalBreakdown = {
+        const guardrails = {
+          strategy: (guardrailsConfig.scoring as { strategy?: string } | undefined)?.strategy ?? "weighted",
+          thresholds: (guardrailsConfig.scoring as { thresholds?: Record<string, unknown> } | undefined)?.thresholds ?? null,
+        } satisfies Prisma.JsonValue;
+
+        const candidateSignalBreakdown: Prisma.JsonObject = {
           signals: match.signals,
           confidence,
-          guardrails: {
-            strategy: (guardrailsConfig.scoring as { strategy?: string } | undefined)?.strategy ?? "weighted",
-            thresholds: (guardrailsConfig.scoring as { thresholds?: Record<string, unknown> } | undefined)?.thresholds,
-          },
-        } as const;
+          guardrails,
+        };
 
-        const breakdown = {
+        const breakdown: Prisma.JsonObject = {
           score: match.score,
           signals: match.signals,
-          guardrails: candidateSignalBreakdown.guardrails,
+          guardrails,
           confidence,
-        } as const;
+        };
 
         const jobDescription = jobReq.rawDescription?.trim() || null;
 
