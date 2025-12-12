@@ -27,6 +27,7 @@ type MatchReasons = {
   guardrails?: unknown;
 } | null;
 
+<<<<<<< ours
 function isInputJsonValue(value: unknown): value is Prisma.InputJsonValue {
   if (value === null) return true;
 
@@ -43,6 +44,26 @@ function isInputJsonValue(value: unknown): value is Prisma.InputJsonValue {
   }
 
   return false;
+=======
+function sanitizeInputJsonValue(value: unknown): Prisma.InputJsonValue {
+  if (value === null) return null;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeInputJsonValue(entry)) as Prisma.InputJsonArray;
+  }
+
+  if (typeof value === "object") {
+    return Object.entries(value).reduce<Prisma.InputJsonObject>((acc, [key, entry]) => {
+      acc[key] = sanitizeInputJsonValue(entry);
+      return acc;
+    }, {} as Prisma.InputJsonObject);
+  }
+
+  return null;
+>>>>>>> theirs
 }
 
 function hashGuardrails(config: Prisma.InputJsonValue) {
@@ -134,6 +155,7 @@ export async function POST(req: Request) {
       ((guardrailsConfig.shortlist as { strategy?: string } | undefined)?.strategy ?? null);
 
     const confidenceBand = getConfidenceBand(confidence.score ?? 0, guardrailsConfig as never);
+<<<<<<< ours
     const explanationSnapshot: Prisma.InputJsonValue | null = reasons
       ? {
           confidence:
@@ -149,6 +171,9 @@ export async function POST(req: Request) {
       : isInputJsonValue(match.reasons)
         ? match.reasons
         : null;
+=======
+    const explanationSnapshot = sanitizeInputJsonValue(reasons ?? match.reasons ?? null);
+>>>>>>> theirs
 
     const outcomeSource = source ?? (typeof user.role === "string" ? user.role.toUpperCase() : null);
 
