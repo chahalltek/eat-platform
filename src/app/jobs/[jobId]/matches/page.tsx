@@ -6,6 +6,7 @@ import { JobMatchesTable, type MatchRow } from "./JobMatchesTable";
 import { RunMatcherButton } from "./RunMatcherButton";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { categorizeConfidence } from "./confidence";
+import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
 import { prisma } from "@/lib/prisma";
 import { ShortlistActions } from "./ShortlistActions";
 
@@ -40,8 +41,8 @@ export default async function JobMatchesPage({
     })
     .catch((error) => {
       console.error("Failed to load job matches", error);
-      return null;
-    });
+    return null;
+  });
 
   if (!job) {
     return (
@@ -58,6 +59,8 @@ export default async function JobMatchesPage({
   const jobCandidateByCandidateId = new Map(
     job.jobCandidates.map((jobCandidate) => [jobCandidate.candidateId, jobCandidate]),
   );
+
+  const predictiveSignals = await getJobPredictiveSignals(job.id, job.tenantId);
 
   const matchRows: MatchRow[] = job.matchResults.map((match) => {
     const candidateId = match.candidateId ?? match.candidate.id;
@@ -129,6 +132,21 @@ export default async function JobMatchesPage({
           <Link href="/jobs" className="text-blue-600 hover:text-blue-800">
             Jobs list
           </Link>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-indigo-900">
+          <div className="text-xs font-semibold uppercase tracking-wide">Estimated time-to-fill</div>
+          <div className="text-2xl font-semibold">
+            {predictiveSignals.estimatedTimeToFillDays} days
+          </div>
+          <p className="text-xs">Estimate based on shortlist velocity and match volume.</p>
+        </div>
+        <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-amber-900">
+          <div className="text-xs font-semibold uppercase tracking-wide">Skill scarcity index</div>
+          <div className="text-2xl font-semibold">{predictiveSignals.skillScarcityIndex}/100</div>
+          <p className="text-xs">Higher values indicate tighter talent supply (estimate).</p>
         </div>
       </div>
 

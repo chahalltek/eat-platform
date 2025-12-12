@@ -1,4 +1,10 @@
-import { ArrowTrendingUpIcon, ChartBarIcon, ClockIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTrendingUpIcon,
+  ChartBarIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  SignalIcon,
+} from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
@@ -81,6 +87,54 @@ function PipelineRunChart({ data }: { data: { label: string; count: number }[] }
               <div className="flex flex-col items-center text-center text-xs text-zinc-600 dark:text-zinc-400">
                 <span className="font-semibold text-zinc-800 dark:text-zinc-100">{item.count}</span>
                 <span>{item.label}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function EstimateTrendChart({
+  title,
+  description,
+  unit,
+  data,
+}: {
+  title: string;
+  description: string;
+  unit: string;
+  data: { label: string; value: number; samples: number }[];
+}) {
+  const maxValue = Math.max(...data.map((item) => item.value), 1);
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
+        </div>
+      </div>
+      <div className="flex items-end gap-4 overflow-x-auto pb-1">
+        {data.map((item) => {
+          const heightPercent = `${(item.value / maxValue) * 100}%`;
+          return (
+            <div key={item.label} className="flex min-w-[52px] flex-1 flex-col items-center gap-2">
+              <div className="flex h-32 w-full items-end rounded-xl bg-zinc-100 dark:bg-zinc-800/80">
+                <div
+                  className="w-full rounded-xl bg-emerald-500 shadow-sm"
+                  style={{ height: heightPercent }}
+                  aria-label={`${item.label}: ${item.value.toFixed(1)} ${unit}`}
+                />
+              </div>
+              <div className="flex flex-col items-center text-center text-xs text-zinc-600 dark:text-zinc-400">
+                <span className="font-semibold text-zinc-800 dark:text-zinc-100">
+                  {item.value.toFixed(1)} {unit}
+                </span>
+                <span>{item.label}</span>
+                <span className="text-[11px] text-zinc-500 dark:text-zinc-500">{item.samples} jobs</span>
               </div>
             </div>
           );
@@ -231,7 +285,7 @@ export default async function EteInsightsPage() {
             </Link>
           </header>
 
-          <section className="grid gap-4 md:grid-cols-3">
+          <section className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
             <StatCard
               label="Match runs"
               value={metrics.pipelineRuns.reduce((sum, bucket) => sum + bucket.count, 0)}
@@ -250,6 +304,18 @@ export default async function EteInsightsPage() {
               description={metrics.errorRateByAgent[0] ? `Worst offender: ${metrics.errorRateByAgent[0].agentName}` : "No failures"}
               icon={ExclamationTriangleIcon}
             />
+            <StatCard
+              label="Est. time-to-fill"
+              value={`${metrics.estimatedTimeToFillDays.toFixed(1)} days`}
+              description="Estimate based on shortlist velocity"
+              icon={ClockIcon}
+            />
+            <StatCard
+              label="Skill scarcity index"
+              value={`${metrics.skillScarcityIndex.toFixed(1)}/100`}
+              description="Estimate of candidate supply"
+              icon={SignalIcon}
+            />
           </section>
 
           <div className="grid gap-6 lg:grid-cols-3">
@@ -259,8 +325,23 @@ export default async function EteInsightsPage() {
             <ModeBreakdownList data={metrics.matchRunsByMode} />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <EstimateTrendChart
+              title="Estimated time-to-fill (est.)"
+              description="Average forecast for jobs created each day"
+              unit="days"
+              data={metrics.timeToFillTrend}
+            />
+            <EstimateTrendChart
+              title="Skill scarcity (est.)"
+              description="Higher numbers mean tighter supply"
+              unit="index"
+              data={metrics.skillScarcityTrend}
+            />
             <ShortlistDistribution data={metrics.shortlistDistribution} />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
             <ErrorRateTable data={metrics.errorRateByAgent} />
           </div>
         </div>
