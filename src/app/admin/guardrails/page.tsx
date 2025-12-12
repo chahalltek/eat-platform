@@ -4,8 +4,10 @@ import { ETECard } from "@/components/ETECard";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
+import { getTenantMode } from "@/lib/tenantMode";
 
 import { GuardrailsPresetPanel } from "./GuardrailsPresetPanel";
+import { SystemModePanel } from "./SystemModePanel";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +44,8 @@ export default async function GuardrailsAdminPage() {
     );
   }
 
+  const initialMode = await getTenantMode();
+
   return (
     <ETEClientLayout>
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -61,6 +65,8 @@ export default async function GuardrailsAdminPage() {
             Back to home
           </Link>
         </header>
+
+        <SystemModePanel initialMode={initialMode} />
 
         <GuardrailsPresetPanel initialConfig={DEFAULT_GUARDRAIL_CONFIG} />
       </div>
