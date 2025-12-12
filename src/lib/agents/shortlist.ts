@@ -107,13 +107,17 @@ export async function runShortlist(
           }
         : thresholds;
 
+      const guardrailSafety =
+        (tenantConfig as GuardrailsConfig).safety ?? guardrailsPresets.balanced.safety;
+      const shortlistMaxCandidates = fireDrillThresholds.shortlistMaxCandidates as number | undefined;
+
       const shortlistConfig: GuardrailsConfig = {
         scoring: { ...(tenantConfig.scoring as Record<string, unknown>), thresholds: fireDrillThresholds },
         explain: tenantConfig.explain,
-        safety: tenantConfig.safety,
+        safety: guardrailSafety,
         shortlist: {
           strategy: isFireDrill ? "strict" : shortlistOverrides.strategy,
-          maxCandidates: shortlistOverrides.maxCandidates ?? requestedShortlistLimit ?? fireDrillThresholds.shortlistMaxCandidates,
+          maxCandidates: shortlistOverrides.maxCandidates ?? requestedShortlistLimit ?? shortlistMaxCandidates,
         },
       };
 
@@ -128,7 +132,14 @@ export async function runShortlist(
         .filter((match) => !candidateIds || candidateIds.includes(match.candidateId))
         .map((match) => {
           const score = Math.max(0, Math.min(100, Math.round(match.matchScore)));
-          const signals = (match.matchSignals as Record<string, number> | undefined) ?? {};
+          const matchSignals =
+            ((match as { matchSignals?: Record<string, number> }).matchSignals ?? {}) as Record<string, number>;
+          const signals = {
+            mustHaveSkillsCoverage: matchSignals.mustHaveSkillsCoverage ?? 0,
+            niceToHaveSkillsCoverage: matchSignals.niceToHaveSkillsCoverage ?? 0,
+            experienceAlignment: matchSignals.experienceAlignment ?? 0,
+            locationAlignment: matchSignals.locationAlignment ?? 0,
+          };
           const confidenceBand = getConfidenceBand(match.confidence, shortlistConfig);
 
           return {

@@ -4,7 +4,7 @@ import { getAppConfig } from "@/lib/config/configValidator";
 import { FEATURE_FLAGS, type FeatureFlagName } from "@/lib/featureFlags/constants";
 import { isFeatureEnabledForTenant } from "@/lib/featureFlags";
 import { getRateLimitDefaults, getRateLimitPlanOverrides, type RateLimitConfig, type RateLimitPlanOverrides } from "@/lib/rateLimiting/rateLimiter";
-import type { SystemModeName } from "@/lib/systemMode";
+import type { SystemModeName } from "@/lib/modes/systemModes";
 import { getTenantPlan } from "@/lib/subscriptionPlans";
 import { prisma } from "@/lib/prisma";
 import { resolveRetentionPolicy } from "@/lib/retention";

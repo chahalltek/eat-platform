@@ -159,7 +159,7 @@ export async function runConfidenceAgent(
   const loadMode = deps.loadMode ?? loadTenantMode;
 
   const [guardrails, mode] = await Promise.all([
-    loadGuardrails(tenantId),
+    loadGuardrails(tenantId ?? undefined),
     loadMode(tenantId ?? "default-tenant"),
   ]);
 

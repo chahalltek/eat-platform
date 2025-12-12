@@ -92,12 +92,14 @@ function toNumber(value: unknown, fallback: number): number {
 }
 
 function normalizeConfig(config: GuardrailsConfig): NormalizedConfig {
-  const presetWeights =
+  const presetWeights: Partial<NormalizedWeights> =
     config.scoring?.strategy === "simple"
       ? { mustHaveSkills: 0.7, niceToHaveSkills: 0.3, experience: 0, location: 0 }
-      : guardrailsPresets.balanced.scoring.weights;
+      : (guardrailsPresets.balanced.scoring.weights as Partial<NormalizedWeights>);
 
-  const weights = normalizeWeights(config.scoring?.weights as Partial<NormalizedWeights> | undefined);
+  const weights = normalizeWeights(
+    (config.scoring?.weights as Partial<NormalizedWeights> | undefined) ?? undefined,
+  );
 
   const strategy = config.scoring?.strategy === "simple" ? "simple" : "weighted";
   const threshold = toNumber(

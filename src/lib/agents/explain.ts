@@ -1,4 +1,4 @@
-import { type Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { FireDrillAgentDisabledError } from "@/lib/agents/availability";
@@ -68,11 +68,12 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
   }
 
   const guardrails = await loadTenantConfig(tenantId);
+  const guardrailsSnapshot = JSON.parse(JSON.stringify(guardrails)) as Prisma.InputJsonValue;
   const explainConfig: Prisma.InputJsonObject = {
     jobId,
     candidateIds,
     tenantId,
-    guardrails,
+    guardrails: guardrailsSnapshot,
   };
 
   const agentRun = await createAgentRunLog(prisma, {
@@ -105,7 +106,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
     for (const match of matchResults) {
       const breakdown = (match.candidateSignalBreakdown as Record<string, unknown> | null) ?? {};
       const signals = normalizeSignals((breakdown as { signals?: Record<string, unknown> }).signals);
-      const confidenceBand = toConfidenceBand((breakdown as { confidence?: unknown }).confidence ?? match.confidence);
+      const confidenceBand = toConfidenceBand((breakdown as { confidence?: unknown }).confidence);
 
       const baseMatch: MatchResult = {
         candidateId: match.candidateId,
@@ -147,7 +148,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
 
     await prisma.agentRunLog.update({
       where: { id: agentRun.id },
-      data: { status: "SUCCESS", output, outputSnapshot: output.snapshot },
+      data: { status: "SUCCESS", output, outputSnapshot: output.snapshot ?? Prisma.JsonNull },
     });
 
     return { jobId, explanations, agentRunId: agentRun.id } satisfies RunExplainResult;
