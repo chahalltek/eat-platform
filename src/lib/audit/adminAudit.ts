@@ -97,7 +97,7 @@ export async function listAuditLogs({
   }
 
   if (since) {
-    where.createdAt = { ...(where.createdAt ?? {}), gte: since };
+    where.createdAt = { gte: since };
   }
 
   if (actorId) {
