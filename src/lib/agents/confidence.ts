@@ -1,9 +1,8 @@
 import type { NextRequest } from "next/server";
 
 import { withAgentRun } from "@/lib/agents/agentRun";
-import { assertAgentEnabled } from "@/lib/agents/availability";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
-import { persistCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
+import { runConfidenceAgent } from "@/lib/agents/confidenceEngine";
 import { prisma } from "@/lib/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
 
@@ -14,9 +13,11 @@ export type RunConfidenceInput = {
 
 export type RunConfidenceResult = {
   jobId: string;
-  recomputed: Array<{
+  results: Array<{
     candidateId: string;
-    confidence: number;
+    score: number;
+    confidenceBand: "HIGH" | "MEDIUM" | "LOW";
+    confidenceReasons: string[];
   }>;
 };
 
@@ -25,7 +26,6 @@ export async function runConfidence({
   recruiterId,
 }: RunConfidenceInput, req?: NextRequest): Promise<RunConfidenceResult> {
   const tenantId = await getCurrentTenantId(req);
-  await assertAgentEnabled("confidenceEnabled", "Confidence agent is disabled in Fire Drill mode");
 
   const [result] = await withAgentRun<RunConfidenceResult>(
     {
@@ -36,44 +36,39 @@ export async function runConfidence({
       sourceTag: "confidence",
     },
     async () => {
-      const jobReq = await prisma.jobReq.findUnique({
-        where: { id: jobId, tenantId },
-        include: {
-          matchResults: {
-            include: {
-              candidate: {
-                include: {
-                  skills: {
-                    select: {
-                      id: true,
-                      name: true,
-                      proficiency: true,
-                      yearsOfExperience: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
+      const matches = await prisma.matchResult.findMany({
+        where: { jobReqId: jobId, tenantId },
+        select: {
+          candidateId: true,
+          score: true,
+          candidateSignalBreakdown: true,
         },
       });
 
-      if (!jobReq) {
-        throw new Error(`Job ${jobId} not found`);
-      }
+      const matchResults = matches.map((match) => {
+        const breakdown = (match.candidateSignalBreakdown as
+          | { confidence?: { reasons?: string[] } }
+          | null
+          | undefined) ?? { confidence: {} };
 
-      const recomputed: RunConfidenceResult["recomputed"] = [];
+        const notes = Array.isArray(breakdown.confidence?.reasons)
+          ? breakdown.confidence?.reasons
+          : [];
 
-      for (const match of jobReq.matchResults) {
-        const confidence = await persistCandidateConfidenceScore({
+        return {
           candidateId: match.candidateId,
-          candidate: match.candidate,
-        });
+          score: match.score,
+          signals: notes.length ? { notes } : undefined,
+        };
+      });
 
-        recomputed.push({ candidateId: match.candidateId, confidence: confidence.score });
-      }
+      const confidence = await runConfidenceAgent({
+        matchResults,
+        job: { id: jobId },
+        tenantId,
+      });
 
-      return { result: { jobId, recomputed } };
+      return { result: confidence };
     },
   );
 

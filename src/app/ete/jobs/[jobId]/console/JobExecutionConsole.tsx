@@ -333,14 +333,17 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       if (agent === "CONFIDENCE") {
         const res = await fetch(`/api/jobs/${jobId}/confidence`, { method: "POST" });
         if (!res.ok) throw new Error(`CONFIDENCE failed with ${res.status}`);
-        const payload = (await res.json()) as { recomputed: Array<{ candidateId: string; confidence: number }> };
+        const payload = (await res.json()) as {
+          results: Array<{ candidateId: string; score: number; confidenceBand: string }>;
+        };
 
         setCandidates((prev) =>
           prev.map((row) => {
-            const updated = payload.recomputed.find((entry) => entry.candidateId === row.candidateId);
+            const updated = payload.results.find((entry) => entry.candidateId === row.candidateId);
             if (!updated) return row;
-            const band = normalizeBand(categorizeConfidence(updated.confidence));
-            return { ...row, confidenceScore: Math.round(updated.confidence), confidenceBand: band };
+            const band = normalizeBand(updated.confidenceBand);
+            const confidenceScore = updated.score <= 1 ? Math.round(updated.score * 100) : Math.round(updated.score);
+            return { ...row, confidenceScore, confidenceBand: band };
           }),
         );
 
