@@ -13,11 +13,13 @@ export async function loadTenantConfig(tenantId: string) {
   if (!existing) {
     return {
       ...defaultTenantGuardrails,
+      preset: null,
       _source: "default" as const,
     };
   }
 
   return {
+    preset: existing.preset ?? null,
     scoring: { ...defaultTenantGuardrails.scoring, ...coerceGuardrailSection(existing.scoring) },
     explain: { ...defaultTenantGuardrails.explain, ...coerceGuardrailSection(existing.explain) },
     safety: { ...defaultTenantGuardrails.safety, ...coerceGuardrailSection(existing.safety) },

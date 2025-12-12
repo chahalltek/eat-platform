@@ -1,32 +1,81 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { ZodError } from "zod";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-import { requireTenantAdmin } from "@/lib/auth/tenantAdmin";
-import { getCurrentUser } from "@/lib/auth/user";
-import { defaultTenantGuardrails, loadTenantGuardrails, saveTenantGuardrails } from "@/lib/tenant/guardrails";
+import { requireTenantAdmin } from "@/lib/auth/requireTenantAdmin";
+import { loadTenantConfig } from "@/lib/guardrails/loadTenantConfig";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+const guardrailsPayloadSchema = z
+  .object({
+    preset: z.enum(["conservative", "balanced", "aggressive"]).nullable().optional(),
+    scoring: z.object({
+      strategy: z.enum(["simple", "weighted"]),
+      weights: z.object({
+        mustHaveSkills: z.number(),
+        niceToHaveSkills: z.number(),
+        experience: z.number(),
+        location: z.number(),
+      }),
+      thresholds: z.object({
+        minMatchScore: z.number(),
+        shortlistMinScore: z.number(),
+        shortlistMaxCandidates: z.number().int(),
+      }),
+    }),
+    explain: z.object({
+      level: z.enum(["compact", "detailed"]),
+      includeWeights: z.boolean(),
+    }),
+    safety: z.object({
+      requireMustHaves: z.boolean(),
+      excludeInternalCandidates: z.boolean(),
+    }),
+  })
+  .superRefine((value, ctx) => {
+    const { minMatchScore, shortlistMinScore, shortlistMaxCandidates } = value.scoring.thresholds;
+
+    if (minMatchScore < 0 || minMatchScore > 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["scoring", "thresholds", "minMatchScore"],
+        message: "minMatchScore must be between 0 and 1",
+      });
+    }
+
+    if (shortlistMinScore < 0 || shortlistMinScore > 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["scoring", "thresholds", "shortlistMinScore"],
+        message: "shortlistMinScore must be between 0 and 1",
+      });
+    }
+
+    if (shortlistMaxCandidates < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["scoring", "thresholds", "shortlistMaxCandidates"],
+        message: "shortlistMaxCandidates must be at least 1",
+      });
+    }
+  });
+
+type GuardrailsPayload = z.infer<typeof guardrailsPayloadSchema>;
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
-  const user = await getCurrentUser(request);
-
-  if (!user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await requireTenantAdmin(request, tenantId);
+  if (!access.ok) {
+    return access.response;
   }
 
-  const access = await requireTenantAdmin(tenantId, user.id);
+  const config = await loadTenantConfig(tenantId);
 
-  if (!access.isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const guardrails = await loadTenantGuardrails(tenantId);
-
-  return NextResponse.json({ guardrails, defaults: defaultTenantGuardrails });
+  return NextResponse.json(config);
 }
 
 export async function PUT(
@@ -34,25 +83,36 @@ export async function PUT(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
-  const user = await getCurrentUser(request);
-
-  if (!user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const access = await requireTenantAdmin(tenantId, user.id);
-
-  if (!access.isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   try {
-    const body = await request.json();
-    const { saved } = await saveTenantGuardrails(tenantId, body);
+    const access = await requireTenantAdmin(request, tenantId);
+    if (!access.ok) {
+      return access.response;
+    }
 
-    return NextResponse.json({ guardrails: saved });
+    const payload = guardrailsPayloadSchema.parse(await request.json()) as GuardrailsPayload;
+
+    await prisma.tenantConfig.upsert({
+      where: { tenantId },
+      create: {
+        tenantId,
+        preset: payload.preset ?? null,
+        scoring: payload.scoring,
+        explain: payload.explain,
+        safety: payload.safety,
+      },
+      update: {
+        preset: payload.preset ?? null,
+        scoring: payload.scoring,
+        explain: payload.explain,
+        safety: payload.safety,
+      },
+    });
+
+    const config = await loadTenantConfig(tenantId);
+
+    return NextResponse.json(config);
   } catch (error) {
-    if (error instanceof ZodError) {
+    if (error instanceof z.ZodError) {
       const message = error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
       return NextResponse.json({ error: message }, { status: 400 });
     }
