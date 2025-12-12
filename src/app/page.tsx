@@ -73,11 +73,11 @@ const dependencyLabels: Record<SubsystemKey, string> = {
 };
 
 const badgeStyles: Record<BadgeState, string> = {
-  enabled: "border-indigo-200/80 bg-white text-indigo-700 dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200",
-  healthy: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200",
-  warning: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200",
-  error: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200",
-  unknown: "border-zinc-200 bg-white text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+  enabled: "border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-zinc-900 dark:text-slate-100",
+  healthy: "border-emerald-200 bg-white text-emerald-800 dark:border-emerald-800 dark:bg-zinc-900 dark:text-emerald-200",
+  warning: "border-amber-200 bg-white text-amber-800 dark:border-amber-800 dark:bg-zinc-900 dark:text-amber-200",
+  error: "border-rose-200 bg-white text-rose-800 dark:border-rose-800 dark:bg-zinc-900 dark:text-rose-200",
+  unknown: "border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-zinc-900 dark:text-slate-100",
 };
 
 function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
@@ -209,13 +209,13 @@ function TelemetryMetric({
   const content = (
     <div className="flex w-full items-center justify-between gap-3">
       <div className="flex flex-col">
-        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
           {label}
         </span>
         <span className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{displayValue}</span>
       </div>
       {isLinkEnabled ? (
-        <span className="text-xs font-semibold text-indigo-600 transition group-hover:translate-x-0.5 dark:text-indigo-300">
+        <span className="text-xs font-semibold text-slate-600 transition group-hover:translate-x-0.5 dark:text-slate-200">
           View
         </span>
       ) : null}
@@ -223,7 +223,7 @@ function TelemetryMetric({
   );
 
   const sharedClassName =
-    "group flex h-full flex-1 items-center rounded-2xl border border-indigo-100/70 bg-white/80 px-4 py-3 shadow-sm transition hover:border-indigo-200 hover:bg-white dark:border-indigo-900/50 dark:bg-zinc-900/70 dark:hover:border-indigo-800";
+    "group flex h-full flex-1 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm transition hover:border-slate-300 hover:bg-white dark:border-slate-800 dark:bg-zinc-900 dark:hover:border-slate-700";
 
   if (isLinkEnabled) {
     return (
@@ -336,7 +336,7 @@ export default async function Home() {
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="flex flex-col gap-10 pb-12">
       <div className="flex flex-col gap-6">
         <div className="flex flex-1 flex-col gap-6">
-          <header className="mt-2 overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
+          <header className="mt-2 overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-zinc-900">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-3">
                 <BrandMark withText />
@@ -347,30 +347,30 @@ export default async function Home() {
                     <span className="block text-sm text-zinc-500 dark:text-zinc-400">Agents, data, and decisioning in one control plane.</span>
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600 dark:text-indigo-300">
-                  <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Agents</span>
-                  <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Workflows</span>
-                  <span className="rounded-full bg-white/70 px-3 py-1 ring-1 ring-indigo-100 dark:bg-indigo-950/50 dark:ring-indigo-800">Data + Controls</span>
+                <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300">
+                  <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Agents</span>
+                  <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Workflows</span>
+                  <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Data + Controls</span>
                 </div>
               </div>
               <Link
                 href="/system-map"
                 title="View agents, data flows, and dependencies"
-                className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white/90 px-5 py-2 text-sm font-semibold text-indigo-700 shadow-md transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900 dark:text-indigo-200 dark:hover:border-indigo-700"
+                className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-zinc-800 dark:text-slate-100 dark:hover:border-slate-600"
               >
-                <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" aria-hidden />
-                <span className="text-[13px] uppercase tracking-[0.16em] text-indigo-600 dark:text-indigo-300">System Map</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-slate-400 shadow-sm" aria-hidden />
+                <span className="text-[13px] uppercase tracking-[0.14em] text-slate-700 dark:text-slate-200">System Map</span>
               </Link>
             </div>
           </header>
 
-          <section className="rounded-2xl border border-indigo-100/70 bg-white/70 p-4 shadow-sm dark:border-indigo-900/50 dark:bg-zinc-900/70">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-zinc-900">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex flex-col">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">
                   Telemetry
                 </span>
-                <span className="text-xs text-zinc-600 dark:text-zinc-400">Live activity snapshot</span>
+                <span className="text-xs text-slate-600 dark:text-zinc-400">Live activity snapshot</span>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -387,18 +387,18 @@ export default async function Home() {
           <SystemHealthPanel initialStatus={systemStatus} initialExecutionState={executionState} />
 
           <div className="space-y-6">
-            <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-zinc-900">
               <div className="flex flex-col gap-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Core workflows</p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">Launch and monitor the everyday agent actions.</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">Core workflows</p>
+                <p className="text-sm text-slate-600 dark:text-zinc-400">Launch and monitor the everyday agent actions.</p>
               </div>
               <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
             </section>
 
-            <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-zinc-900">
               <div className="flex flex-col gap-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Data &amp; controls</p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">Review the information that feeds the system.</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">Data &amp; controls</p>
+                <p className="text-sm text-slate-600 dark:text-zinc-400">Review the information that feeds the system.</p>
               </div>
               <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
             </section>
