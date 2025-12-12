@@ -3,18 +3,20 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { SITE_NAME, SITE_DESCRIPTION } from "@/config/siteMetadata";
+import { BRANDING } from "@/config/branding";
 
 const homePath = path.join(process.cwd(), "src", "app", "page.tsx");
 const homeSource = fs.readFileSync(homePath, "utf8");
 
 describe("main page branding", () => {
-  it("uses the ETE console branding on the hero", () => {
-    expect(homeSource).toMatch(/EDGE Talent Engine/);
-    expect(homeSource).toMatch(/ETE Console/);
+  it("pulls hero branding from the shared config", () => {
+    expect(homeSource).toContain("BRANDING.name");
+    expect(homeSource).toContain("BRANDING.description");
+    expect(homeSource).toContain("BRANDING.tagline");
   });
 
-  it("defaults site metadata to the EDGE Talent Engine brand", () => {
-    expect(SITE_NAME).toBe("EDGE Talent Engine");
-    expect(SITE_DESCRIPTION).toContain("EDGE Talent Engine");
+  it("keeps site metadata aligned with configurable branding", () => {
+    expect(SITE_NAME).toBe(BRANDING.name);
+    expect(SITE_DESCRIPTION).toBe(BRANDING.description);
   });
 });

@@ -8,6 +8,7 @@ import {
   isFeatureEnabledForTenant,
   isEnabled,
   parseFeatureFlagName,
+  resetEnvironmentFeatureFlagDefaults,
   resetFeatureFlagCache,
 } from './featureFlags';
 import { configurePlanFeatureFlags, resetPlanFeatureFlags } from './featureFlags/planMapping';
@@ -57,6 +58,7 @@ describe('isFeatureEnabledForTenant', () => {
   beforeEach(() => {
     resetFeatureFlagCache();
     resetPlanFeatureFlags();
+    resetEnvironmentFeatureFlagDefaults();
     configurePlanFeatureFlags({ [subscriptionPlan.id]: [FEATURE_FLAGS.AGENTS] });
     prismaMock.featureFlag.findFirst.mockReset();
     getTenantPlan.mockReset();
@@ -66,18 +68,20 @@ describe('isFeatureEnabledForTenant', () => {
   afterEach(() => {
     resetFeatureFlagCache();
     resetPlanFeatureFlags();
+    resetEnvironmentFeatureFlagDefaults();
     vi.clearAllMocks();
   });
 
   it('returns plan defaults when no override exists', async () => {
     prismaMock.featureFlag.findFirst.mockResolvedValue(null);
+    configurePlanFeatureFlags({ [subscriptionPlan.id]: [FEATURE_FLAGS.FIRE_DRILL_MODE] });
     getTenantPlan.mockResolvedValue({ plan: subscriptionPlan, subscription: activeSubscription });
 
-    const enabled = await isFeatureEnabledForTenant('tenant-1', FEATURE_FLAGS.AGENTS);
+    const enabled = await isFeatureEnabledForTenant('tenant-1', FEATURE_FLAGS.FIRE_DRILL_MODE);
 
     expect(enabled).toBe(true);
     expect(prismaMock.featureFlag.findFirst).toHaveBeenCalledWith({
-      where: { tenantId: 'tenant-1', name: FEATURE_FLAGS.AGENTS },
+      where: { tenantId: 'tenant-1', name: FEATURE_FLAGS.FIRE_DRILL_MODE },
     });
     expect(getTenantPlan).toHaveBeenCalledWith('tenant-1');
   });
@@ -104,7 +108,7 @@ describe('isFeatureEnabledForTenant', () => {
 
     const enabled = await getFeatureFlag('tenant-3', FEATURE_FLAGS.AGENTS_MATCHED_UI_V1);
 
-    expect(enabled).toBe(false);
+    expect(enabled).toBe(true);
     expect(prismaMock.featureFlag.findFirst).not.toHaveBeenCalled();
   });
 
@@ -131,5 +135,22 @@ describe('isFeatureEnabledForTenant', () => {
     const parsed = parseFeatureFlagName('ete_confidence_enabled');
 
     expect(parsed).toBe(FEATURE_FLAGS.CONFIDENCE_ENABLED);
+  });
+
+  it('honors environment defaults ahead of plan mappings', async () => {
+    resetEnvironmentFeatureFlagDefaults({
+      NODE_ENV: 'test',
+      APP_ENV: 'development',
+      DEFAULT_FEATURE_FLAGS: 'agents=false',
+    } as NodeJS.ProcessEnv);
+
+    prismaMock.featureFlag.findFirst.mockResolvedValue(null);
+    configurePlanFeatureFlags({ [subscriptionPlan.id]: [FEATURE_FLAGS.AGENTS] });
+    getTenantPlan.mockResolvedValue({ plan: subscriptionPlan, subscription: activeSubscription });
+
+    const enabled = await isFeatureEnabledForTenant('tenant-1', FEATURE_FLAGS.AGENTS);
+
+    expect(enabled).toBe(false);
+    expect(getTenantPlan).not.toHaveBeenCalled();
   });
 });

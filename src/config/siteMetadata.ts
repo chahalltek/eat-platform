@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
 
-import { getAppConfig } from "@/lib/config/configValidator";
+import { BRANDING } from "./branding";
 
-const appConfig = getAppConfig();
-
-export const SITE_NAME =
-  appConfig.NEXT_PUBLIC_ETE_APP_NAME ?? "EDGE Talent Engine";
-export const SITE_DESCRIPTION =
-  appConfig.NEXT_PUBLIC_ETE_APP_DESCRIPTION ??
-  "EDGE Talent Engine – Precision and Matching. Explainable Decisions. Faster recruiting.";
+export const SITE_NAME = BRANDING.name;
+export const SITE_DESCRIPTION = BRANDING.description;
 
 export const siteMetadata: Metadata = {
   title: SITE_NAME,

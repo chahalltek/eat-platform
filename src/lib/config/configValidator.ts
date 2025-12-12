@@ -5,6 +5,9 @@ const FALLBACK_DATABASE_URL = "postgresql://placeholder.invalid:5432/placeholder
 const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]),
   APP_ENV: z.enum(["development", "staging", "production"]).default("development"),
+  DEPLOYMENT_MODE: z
+    .enum(["internal_strsi", "managed_service", "customer_hosted", "demo"])
+    .default("internal_strsi"),
   DATABASE_URL: z
     .string()
     .min(1, "DATABASE_URL is required")
@@ -21,6 +24,10 @@ const EnvSchema = z.object({
   TENANT_MODE: z.enum(["single", "multi"]).optional(),
   NEXT_PUBLIC_ETE_APP_NAME: z.string().optional(),
   NEXT_PUBLIC_ETE_APP_DESCRIPTION: z.string().optional(),
+  NEXT_PUBLIC_ETE_APP_TAGLINE: z.string().optional(),
+  NEXT_PUBLIC_ETE_BRAND_LOGO_HORIZONTAL: z.string().url().optional(),
+  NEXT_PUBLIC_ETE_BRAND_LOGO_MARK: z.string().url().optional(),
+  DEFAULT_FEATURE_FLAGS: z.string().optional(),
 });
 
 const ConfigSchema = EnvSchema.superRefine((value, ctx) => {

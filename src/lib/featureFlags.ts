@@ -8,6 +8,7 @@ import {
   FEATURE_FLAGS,
   type FeatureFlagName,
 } from './featureFlags/constants';
+import { getDeploymentFeatureFlagDefaults } from './deployment/deploymentModes';
 import { isFeatureEnabledForPlan } from './featureFlags/planMapping';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 import { getTenantPlan } from './subscriptionPlans';
@@ -24,6 +25,7 @@ export { FEATURE_FLAGS, type FeatureFlagName } from './featureFlags/constants';
 
 const flagCache = new Map<string, boolean>();
 const FALLBACK_COOKIE_NAME = 'feature-flag-fallbacks';
+let environmentFlagDefaults = getDeploymentFeatureFlagDefaults();
 
 function buildFallbackFlag(name: FeatureFlagName, enabled = false) {
   return {
@@ -105,6 +107,11 @@ export function resetFeatureFlagCache() {
   flagCache.clear();
 }
 
+export function resetEnvironmentFeatureFlagDefaults(env: NodeJS.ProcessEnv = process.env) {
+  environmentFlagDefaults = getDeploymentFeatureFlagDefaults(env);
+  resetFeatureFlagCache();
+}
+
 function isMissingTableError(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021';
 }
@@ -120,6 +127,10 @@ async function findFeatureFlagOverride(tenantId: string, name: FeatureFlagName) 
     if (isMissingTableError(error) || isPrismaUnavailableError(error)) return null;
     throw error;
   }
+}
+
+function getEnvironmentFeatureFlagDefault(name: FeatureFlagName) {
+  return environmentFlagDefaults.get(name) ?? null;
 }
 
 async function fetchFeatureFlagOverrides(tenantId: string) {
@@ -152,11 +163,15 @@ export async function listFeatureFlags(): Promise<FeatureFlagRecord[]> {
   return (Object.values(FEATURE_FLAGS) as FeatureFlagName[])
     .map((name) => {
       const override = overrides.get(name);
+      const environmentDefault = getEnvironmentFeatureFlagDefault(name);
       const enabledByPlan = planId ? isFeatureEnabledForPlan(planId, name) : false;
-      const enabled = override?.enabled ?? enabledByPlan ?? false;
+      const enabled =
+        override?.enabled ?? (environmentDefault != null ? environmentDefault : enabledByPlan ?? false);
 
       if (override) {
         flagCache.set(cacheKey(tenantId, name), override.enabled);
+      } else if (environmentDefault != null) {
+        flagCache.set(cacheKey(tenantId, name), environmentDefault);
       }
 
       return {
@@ -184,6 +199,13 @@ export async function isFeatureEnabledForTenant(
   if (override) {
     flagCache.set(cacheKey(tenantId, name), override.enabled);
     return override.enabled;
+  }
+
+  const environmentDefault = getEnvironmentFeatureFlagDefault(name);
+
+  if (environmentDefault != null) {
+    flagCache.set(cacheKey(tenantId, name), environmentDefault);
+    return environmentDefault;
   }
 
   const plan = await getTenantPlan(tenantId);

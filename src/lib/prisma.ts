@@ -96,6 +96,8 @@ export function applyTenantScope(params: PrismaParams, tenantId: string): Prisma
     case 'groupBy':
     case 'deleteMany':
     case 'updateMany':
+    case 'delete':
+    case 'update':
       return { ...params, args: scopeWhereArgs(args, tenantId) };
     case 'create':
       return { ...params, args: { ...args, data: withTenantData(args.data, tenantId) } };

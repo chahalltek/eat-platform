@@ -1,6 +1,8 @@
 import Image from "next/image";
 import clsx from "clsx";
 
+import { BRANDING } from "@/config/branding";
+
 type EteLogoProps = {
   variant?: "mark" | "horizontal";
   className?: string;
@@ -14,19 +16,24 @@ function LogoMark({ className }: { className?: string }) {
         className,
       )}
     >
-      <Image src="/ete-logo.svg" alt="EDGE Talent Engine logo" width={40} height={40} priority />
+      <Image src="/ete-logo.svg" alt={`${BRANDING.name} logo`} width={40} height={40} priority />
     </div>
   );
 }
 
 export function EteLogo({ variant = "mark", className }: EteLogoProps) {
+  const [primaryWord, ...rest] = BRANDING.name.split(" ");
+  const secondaryLine = rest.join(" ") || BRANDING.tagline || BRANDING.name;
+
   if (variant === "horizontal") {
     return (
       <div className={clsx("flex items-center gap-3", className)}>
         <LogoMark />
         <div className="flex flex-col">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">EDGE</span>
-          <span className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Talent Engine</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+            {primaryWord}
+          </span>
+          <span className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{secondaryLine}</span>
         </div>
       </div>
     );

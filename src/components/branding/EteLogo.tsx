@@ -1,6 +1,8 @@
 import Image from "next/image";
 import clsx from "clsx";
 
+import { BRANDING } from "@/config/branding";
+
 type LogoVariant = "horizontal" | "mark";
 
 type EteLogoProps = {
@@ -13,10 +15,11 @@ type EteLogoProps = {
 export function EteLogo({
   variant = "horizontal",
   image,
-  tagline = "Employment Access Technology",
+  tagline = BRANDING.tagline,
   className,
 }: EteLogoProps) {
-  const src = image ?? (variant === "horizontal" ? "/branding/ete-logo-horizontal.png" : "/branding/ete-logo-mark.png");
+  const src =
+    image ?? (variant === "horizontal" ? BRANDING.logoHorizontal : BRANDING.logoMark);
   const dimensions = variant === "horizontal" ? { width: 420, height: 160 } : { width: 240, height: 240 };
 
   return (
