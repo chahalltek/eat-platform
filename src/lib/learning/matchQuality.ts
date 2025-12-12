@@ -1,5 +1,6 @@
 import { JobCandidateStatus } from "@prisma/client";
 
+import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { prisma } from "@/lib/prisma";
 
 type MatchQualityComponents = {
@@ -43,7 +44,7 @@ type MatchQualitySnapshotPayload = {
   scopeRef?: string | null;
   windowDays: number;
   mqi: number;
-  components: MatchQualityComponents;
+  components: MatchQualityComponents & { context?: { systemMode: string } };
   capturedAt: Date;
 };
 
@@ -271,6 +272,11 @@ export async function captureWeeklyMatchQualitySnapshots(
   tenantId: string,
   options?: { windows?: number[]; referenceDate?: Date },
 ) {
+  const mode = await loadTenantMode(tenantId);
+  if (mode.mode === "fire_drill") {
+    return [] as MatchQualitySnapshotPayload[];
+  }
+
   const windows = options?.windows ?? [30, 60, 90];
   const referenceDate = options?.referenceDate ?? new Date();
   const capturedAt = startOfWeek(referenceDate);
@@ -283,7 +289,7 @@ export async function captureWeeklyMatchQualitySnapshots(
     scopeRef: null,
     windowDays: entry.windowDays,
     mqi: entry.mqi,
-    components: entry.components,
+    components: { ...entry.components, context: { systemMode: mode.mode } },
     capturedAt,
   }));
 

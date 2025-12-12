@@ -4,6 +4,12 @@ import { JobCandidateStatus } from "@prisma/client";
 
 import { calculateMatchQualityIndex, captureWeeklyMatchQualitySnapshots } from "./matchQuality";
 
+const mockLoadTenantMode = vi.fn();
+
+vi.mock("@/lib/modes/loadTenantMode", () => ({
+  loadTenantMode: (...args: unknown[]) => mockLoadTenantMode(...args),
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     jobCandidate: { findMany: vi.fn() },
@@ -18,6 +24,7 @@ describe("calculateMatchQualityIndex", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-02-15T00:00:00.000Z"));
     vi.clearAllMocks();
+    mockLoadTenantMode.mockResolvedValue({ mode: "pilot" });
   });
 
   afterEach(() => {
@@ -84,6 +91,7 @@ describe("captureWeeklyMatchQualitySnapshots", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-02-17T10:00:00.000Z"));
     vi.clearAllMocks();
+    mockLoadTenantMode.mockResolvedValue({ mode: "production" });
   });
 
   afterEach(() => {
@@ -128,7 +136,26 @@ describe("captureWeeklyMatchQualitySnapshots", () => {
     expect(prisma.prisma.matchQualitySnapshot.createMany).toHaveBeenCalled();
     expect(snapshots).toHaveLength(1);
     expect(snapshots[0]).toEqual(
-      expect.objectContaining({ scope: "tenant", windowDays: 30, capturedAt: new Date("2025-02-17T00:00:00.000Z") }),
+      expect.objectContaining({
+        scope: "tenant",
+        windowDays: 30,
+        capturedAt: new Date("2025-02-17T00:00:00.000Z"),
+      }),
     );
+    expect((snapshots[0].components as { context?: { systemMode?: string } }).context).toEqual({
+      systemMode: "production",
+    });
+  });
+
+  it("skips snapshot capture when Fire Drill mode is active", async () => {
+    const prisma = await import("@/lib/prisma");
+
+    mockLoadTenantMode.mockResolvedValueOnce({ mode: "fire_drill" });
+
+    const snapshots = await captureWeeklyMatchQualitySnapshots("tenant-1", { windows: [30] });
+
+    expect(prisma.prisma.matchQualitySnapshot.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.prisma.matchQualitySnapshot.createMany).not.toHaveBeenCalled();
+    expect(snapshots).toEqual([]);
   });
 });

@@ -82,6 +82,17 @@ export async function POST(req: Request) {
       loadTenantMode(tenantId),
     ]);
 
+    if (mode.mode === "fire_drill") {
+      return NextResponse.json(
+        {
+          suppressed: true,
+          reason: "fire_drill",
+          message: "Learning updates are paused while Fire Drill is active.",
+        },
+        { status: 202 },
+      );
+    }
+
     const reasons = parseMatchReasons(match.reasons);
     const confidence = getConfidence(reasons);
     const guardrailsFromMatch =
@@ -93,6 +104,8 @@ export async function POST(req: Request) {
       ((guardrailsConfig.shortlist as { strategy?: string } | undefined)?.strategy ?? null);
 
     const outcomeSource = source ?? (typeof user.role === "string" ? user.role.toUpperCase() : null);
+
+    const recommendationConfidence = mode.mode === "pilot" ? "low" : "normal";
 
     const matchSignals: Prisma.InputJsonObject = {
       score: match.score,
@@ -110,6 +123,7 @@ export async function POST(req: Request) {
       confidenceCategory: confidence.category,
       confidenceReasons: confidence.reasons,
       systemMode: mode.mode,
+      recommendationConfidence,
     };
 
     const feedback = await prisma.matchFeedback.upsert({
@@ -158,6 +172,7 @@ export async function POST(req: Request) {
       guardrailsConfig: feedback.guardrailsConfig,
       shortlistStrategy: feedback.shortlistStrategy,
       systemMode: feedback.systemMode,
+      recommendationConfidence,
     });
   } catch (error) {
     console.error("Failed to record match feedback", error);
