@@ -27,7 +27,6 @@ type MatchReasons = {
   guardrails?: unknown;
 } | null;
 
-<<<<<<< ours
 function isInputJsonValue(value: unknown): value is Prisma.InputJsonValue {
   if (value === null) return true;
 
@@ -44,7 +43,8 @@ function isInputJsonValue(value: unknown): value is Prisma.InputJsonValue {
   }
 
   return false;
-=======
+}
+
 function sanitizeInputJsonValue(value: unknown): Prisma.InputJsonValue {
   if (value === null) return null;
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
@@ -63,7 +63,6 @@ function sanitizeInputJsonValue(value: unknown): Prisma.InputJsonValue {
   }
 
   return null;
->>>>>>> theirs
 }
 
 function hashGuardrails(config: Prisma.InputJsonValue) {
@@ -155,25 +154,21 @@ export async function POST(req: Request) {
       ((guardrailsConfig.shortlist as { strategy?: string } | undefined)?.strategy ?? null);
 
     const confidenceBand = getConfidenceBand(confidence.score ?? 0, guardrailsConfig as never);
-<<<<<<< ours
-    const explanationSnapshot: Prisma.InputJsonValue | null = reasons
-      ? {
-          confidence:
-            confidence.score !== null || confidence.category !== null || confidence.reasons.length
-              ? {
-                  score: confidence.score,
-                  category: confidence.category,
-                  reasons: confidence.reasons,
-                }
-              : null,
-          guardrails: guardrailsFromMatch,
-        }
-      : isInputJsonValue(match.reasons)
-        ? match.reasons
-        : null;
-=======
-    const explanationSnapshot = sanitizeInputJsonValue(reasons ?? match.reasons ?? null);
->>>>>>> theirs
+    const explanationSnapshot = sanitizeInputJsonValue(
+      reasons
+        ? {
+            confidence:
+              confidence.score !== null || confidence.category !== null || confidence.reasons.length
+                ? {
+                    score: confidence.score,
+                    category: confidence.category,
+                    reasons: confidence.reasons,
+                  }
+                : null,
+            guardrails: guardrailsFromMatch,
+          }
+        : match.reasons ?? null,
+    );
 
     const outcomeSource = source ?? (typeof user.role === "string" ? user.role.toUpperCase() : null);
 
