@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import clsx from "clsx";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import type { SubsystemKey, SubsystemState } from "@/lib/systemStatus";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
@@ -88,9 +88,9 @@ function WorkflowAlert({
   tone?: "warning" | "error" | "info";
 }) {
   const toneStyles: Record<typeof tone, string> = {
-    warning: "border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-200",
-    error: "border-rose-200 bg-rose-50/70 text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-200",
-    info: "border-indigo-200 bg-indigo-50/70 text-indigo-900 dark:border-indigo-900/60 dark:bg-indigo-950/50 dark:text-indigo-200",
+    warning: "border-amber-100 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200",
+    error: "border-rose-100 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200",
+    info: "border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-zinc-900 dark:text-slate-100",
   };
 
   return (
@@ -109,9 +109,9 @@ function WorkflowAlert({
 
 function WorkflowStatusChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col rounded-xl border border-indigo-100/80 bg-indigo-50/50 px-3 py-2 dark:border-indigo-900/30 dark:bg-indigo-950/30">
-      <dt className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-200">{label}</dt>
-      <dd className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{value}</dd>
+    <div className="flex flex-col rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-zinc-900">
+      <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{label}</dt>
+      <dd className="text-base font-semibold text-slate-900 dark:text-slate-50">{value}</dd>
     </div>
   );
 }
@@ -138,8 +138,8 @@ function WorkflowDependencies({
 
   const containerStyles =
     variant === "strong"
-      ? "border-indigo-200/80 bg-indigo-50/70 dark:border-indigo-900/60 dark:bg-indigo-950/60"
-      : "border-indigo-100/80 bg-indigo-50/60 dark:border-indigo-900/40 dark:bg-indigo-950/40";
+      ? "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-zinc-900"
+      : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-zinc-900/70";
 
   return (
     <div
@@ -149,7 +149,7 @@ function WorkflowDependencies({
         containerStyles,
       )}
     >
-      <div className="flex flex-wrap items-center gap-3 font-semibold text-indigo-900 dark:text-indigo-50">
+      <div className="flex flex-wrap items-center gap-3 font-semibold text-slate-900 dark:text-slate-50">
         <span className="text-sm">{label}</span>
         <span
           className={clsx(
@@ -161,11 +161,11 @@ function WorkflowDependencies({
           {formatDependencyStatus(status)} dependency
         </span>
       </div>
-      <p className="text-xs text-indigo-700 dark:text-indigo-200/80">{message}</p>
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">
-        <span className="h-2 w-2 rounded-full bg-indigo-400 shadow-sm" aria-hidden />
+      <p className="text-xs text-slate-700 dark:text-slate-200/80">{message}</p>
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+        <span className="h-2 w-2 rounded-full bg-slate-400 shadow-sm" aria-hidden />
         <span>{systemLink}</span>
-        <span className="text-[10px] text-indigo-400">System link</span>
+        <span className="text-[10px] text-slate-400">System link</span>
       </div>
     </div>
   );
@@ -175,8 +175,8 @@ function WorkflowCardFooter({ cta, href, disabled }: { cta: string; href: string
   const content = (
     <div
       className={clsx(
-        "inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition",
-        disabled ? "opacity-70" : "group-hover:bg-indigo-700",
+        "inline-flex items-center gap-2 rounded-full border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition",
+        disabled ? "opacity-60" : "group-hover:-translate-y-0.5 group-hover:shadow-md",
       )}
     >
       <span>{cta}</span>
@@ -220,22 +220,11 @@ export function WorkflowCard({
 }: WorkflowCardProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [isBadgeAnimating, setIsBadgeAnimating] = useState(false);
-  const [isRailPulsing, setIsRailPulsing] = useState(false);
   const previousBadgeState = useRef<BadgeState | null>(null);
-
-  const topRailClassName = useMemo(
-    () =>
-      clsx(
-        "absolute inset-x-6 top-0 h-1 rounded-full bg-gradient-to-r from-indigo-400 via-blue-400 to-emerald-400 opacity-70",
-        !prefersReducedMotion && isRailPulsing && "workflow-rail-pulse",
-      ),
-    [isRailPulsing, prefersReducedMotion],
-  );
 
   useEffect(() => {
     if (prefersReducedMotion) {
       setIsBadgeAnimating(false);
-      setIsRailPulsing(false);
       previousBadgeState.current = badgeState;
       return;
     }
@@ -243,15 +232,12 @@ export function WorkflowCard({
     const badgeChanged = !previousBadgeState.current || previousBadgeState.current !== badgeState;
     if (badgeChanged) {
       setIsBadgeAnimating(true);
-      setIsRailPulsing(true);
       previousBadgeState.current = badgeState;
 
       const badgeTimeout = setTimeout(() => setIsBadgeAnimating(false), 200);
-      const railTimeout = setTimeout(() => setIsRailPulsing(false), 320);
 
       return () => {
         clearTimeout(badgeTimeout);
-        clearTimeout(railTimeout);
       };
     }
 
@@ -269,17 +255,15 @@ export function WorkflowCard({
     <article
       key={link.href}
       className={clsx(
-        "group relative grid min-h-[440px] grid-rows-[auto,1fr,auto] content-start overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/80 px-5 pb-5 pt-4 shadow-sm ring-1 ring-transparent backdrop-blur transition",
-        "dark:border-indigo-900/40 dark:bg-zinc-900/80",
+        "group flex min-h-[420px] flex-col gap-5 overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 pb-5 pt-4 shadow-sm ring-1 ring-transparent transition",
+        "dark:border-slate-800 dark:bg-zinc-900",
         dependencyState.isActive
-          ? "hover:-translate-y-0.5 hover:shadow-lg hover:ring-indigo-200 dark:hover:ring-indigo-800"
+          ? "hover:-translate-y-0.5 hover:shadow-md hover:ring-slate-200 dark:hover:ring-slate-700"
           : "pointer-events-none opacity-60",
         prefersReducedMotion && "!transform-none !transition-none",
       )}
       aria-disabled={!dependencyState.isActive}
     >
-      <div className={topRailClassName} aria-hidden />
-
       {/*
       -------------------------------------
       | Zone A – Header                   |
@@ -292,11 +276,11 @@ export function WorkflowCard({
       */}
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-500 dark:text-indigo-300">Workflow</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300">Workflow</p>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{link.label}</h2>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">{link.label}</h2>
           </div>
-          <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
             {link.description ?? `${link.label} workflow`}
           </p>
         </div>
@@ -311,10 +295,9 @@ export function WorkflowCard({
         </span>
       </header>
 
-      <div className="mt-4 flex flex-col gap-4">
+      <div className="mt-2 flex flex-col gap-4 text-sm text-slate-600 dark:text-zinc-300">
         {alert ? <WorkflowAlert title={alert.title} description={alert.description} tone={alert.tone} /> : null}
-        {statusPanel}
-
+        {statusPanel ? <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-zinc-900">{statusPanel}</div> : null}
         {statusChips?.length ? (
           <dl className="grid gap-2 sm:grid-cols-2">
             {statusChips.map((stat) => (
@@ -322,9 +305,7 @@ export function WorkflowCard({
             ))}
           </dl>
         ) : null}
-
         {children}
-
         {link.dependency ? (
           <WorkflowDependencies
             label={link.dependency.flow?.target ?? dependencyLabel}
@@ -336,7 +317,7 @@ export function WorkflowCard({
         ) : null}
       </div>
 
-      <div className="mt-6 flex items-end justify-start">
+      <div className="mt-auto flex items-end justify-start">
         <WorkflowCardFooter cta={link.cta} href={link.href} disabled={!dependencyState.isActive} />
       </div>
     </article>
