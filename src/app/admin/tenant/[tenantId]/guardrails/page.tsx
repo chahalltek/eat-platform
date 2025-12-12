@@ -8,6 +8,7 @@ import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
 import { GuardrailsPreviewPanel } from "./GuardrailsPreviewPanel";
+import { OptimizationSuggestionsPanel } from "./OptimizationSuggestionsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,7 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
             </Link>
           </header>
 
+          <OptimizationSuggestionsPanel tenantId={normalizedTenantId} />
           <GuardrailsPreviewPanel tenantId={normalizedTenantId} />
         </div>
       </main>
