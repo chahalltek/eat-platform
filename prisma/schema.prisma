@@ -949,8 +949,6 @@ model InsightSnapshot {
 
   @@index([releaseId])
   @@index([status])
-<<<<<<< ours
-=======
 }
 
 model CopilotAudit {
@@ -964,5 +962,4 @@ model CopilotAudit {
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
->>>>>>> theirs
 }
