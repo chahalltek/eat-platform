@@ -98,7 +98,9 @@ export function getDeploymentFeatureFlagDefaults(env: NodeJS.ProcessEnv = proces
   const manualOverrides = parseFeatureFlagDefaults(config.DEFAULT_FEATURE_FLAGS);
 
   return new Map<FeatureFlagName, boolean>([
-    ...Object.entries(preset).map(([name, enabled]) => [name as FeatureFlagName, Boolean(enabled)]),
-    ...manualOverrides,
+    ...Object.entries(preset).map(
+      ([name, enabled]) => [name as FeatureFlagName, Boolean(enabled)] as const,
+    ),
+    ...manualOverrides.entries(),
   ]);
 }
