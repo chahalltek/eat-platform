@@ -1,6 +1,11 @@
 import { DEFAULT_TENANT_CONFIG } from "@/lib/config/tenantConfig";
 
-export type MatchScoringWeights = typeof DEFAULT_TENANT_CONFIG.scoring.matcher.weights;
+export type MatchScoringWeights = {
+  skills: number;
+  seniority: number;
+  location: number;
+  candidateSignals: number;
+};
 
 export type CandidateSignalWeights = {
   recentActivity: number;
