@@ -20,7 +20,11 @@ function serialize(release: Awaited<ReturnType<typeof getBenchmarkRelease>>) {
   };
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { releaseId: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ releaseId: string }> },
+) {
+  const { releaseId } = await params;
   const user = await getCurrentUser(request);
 
   if (!user || !isAdminRole(user.role)) {
@@ -28,8 +32,8 @@ export async function PUT(request: NextRequest, { params }: { params: { releaseI
   }
 
   try {
-    await publishBenchmarkRelease(params.releaseId);
-    const release = await getBenchmarkRelease(params.releaseId);
+    await publishBenchmarkRelease(releaseId);
+    const release = await getBenchmarkRelease(releaseId);
     return NextResponse.json({ release: serialize(release) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to publish release";
