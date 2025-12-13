@@ -1,6 +1,12 @@
-import { AgentRunStatus, JobCandidateStatus, PrismaClient } from '@prisma/client';
+import {
+  AgentRunStatus,
+  JobCandidateStatus,
+  PrismaClient,
+  type Prisma,
+} from '@prisma/client';
 
 import { FEATURE_FLAGS, setFeatureFlag } from '../src/lib/featureFlags';
+import { defaultTenantGuardrails } from '../src/lib/guardrails/defaultTenantConfig';
 import { withTenantContext } from '../src/lib/tenant';
 
 const ADMIN_USER_ID = 'admin-user';
@@ -44,7 +50,7 @@ async function seedSystemMode(
   prisma: PrismaClient,
   tenantId: string,
   mode: string,
-  metadata: Record<string, unknown> = {},
+  metadata: Prisma.InputJsonValue = {},
 ) {
   await prisma.systemMode.upsert({
     where: { tenantId },
@@ -101,12 +107,20 @@ async function seedTenantConfig(prisma: PrismaClient, tenantId: string, preset: 
     where: { tenantId },
     update: {
       preset,
+      scoring: defaultTenantGuardrails.scoring,
+      explain: defaultTenantGuardrails.explain,
+      safety: defaultTenantGuardrails.safety,
+      llm: defaultTenantGuardrails.llm,
       networkLearningOptIn: false,
       networkLearning: { enabled: false },
     },
     create: {
       tenantId,
       preset,
+      scoring: defaultTenantGuardrails.scoring,
+      explain: defaultTenantGuardrails.explain,
+      safety: defaultTenantGuardrails.safety,
+      llm: defaultTenantGuardrails.llm,
       networkLearningOptIn: false,
       networkLearning: { enabled: false },
     },

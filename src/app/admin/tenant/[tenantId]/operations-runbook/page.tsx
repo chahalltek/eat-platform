@@ -27,6 +27,11 @@ const MODE_DEFINITIONS = {
     summary: "Looser guardrails, exploratory behavior, larger shortlists",
     usage: "Experimentation, tuning, demos",
   },
+  demo: {
+    label: "Demo",
+    summary: "Limited agents with safe defaults for demos and test data",
+    usage: "Showcase flows without full production surface area",
+  },
   fire_drill: {
     label: "Fire Drill",
     summary: "Only essential agents active, strictest guardrails, no LLM-dependent features",

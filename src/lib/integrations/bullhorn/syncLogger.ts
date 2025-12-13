@@ -1,6 +1,7 @@
 import { finishAgentRunError, finishAgentRunSuccess, startAgentRun } from '@/lib/agentRunLog';
 
-import type { SyncLogger, SyncSummary } from './sync';
+import type { SyncLogger } from './sync';
+import type { SyncSummary } from './types';
 
 const AGENT_PREFIX = 'ATS_SYNC';
 

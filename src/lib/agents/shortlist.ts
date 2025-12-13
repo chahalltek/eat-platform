@@ -52,6 +52,7 @@ export async function runShortlist(
 
   // User identity is derived from auth; recruiterId in payload is ignored.
   const requestedShortlistLimit = shortlistLimit ?? null;
+  let shortlistLimitForMetrics: number | null = requestedShortlistLimit;
 
   const timer = startTiming({
     workload: "shortlist",
@@ -118,6 +119,7 @@ export async function runShortlist(
       const guardrailSafety =
         (tenantConfig as GuardrailsConfig).safety ?? guardrailsPresets.balanced.safety;
       const shortlistMaxCandidates = fireDrillThresholds.shortlistMaxCandidates as number | undefined;
+      shortlistLimitForMetrics = shortlistMaxCandidates ?? requestedShortlistLimit;
 
       const shortlistConfig: GuardrailsConfig = {
         scoring: { ...(tenantConfig.scoring as Record<string, unknown>), thresholds: fireDrillThresholds },
@@ -206,7 +208,7 @@ export async function runShortlist(
           shortlistSize: shortlistedCandidates.length,
           totalMatches: matches.length,
           strategy: shortlistConfig.shortlist?.strategy ?? "quality",
-          shortlistLimit: shortlistMaxCandidates ?? requestedShortlistLimit ?? null,
+          shortlistLimit: shortlistLimitForMetrics,
         },
       });
 
@@ -228,7 +230,7 @@ export async function runShortlist(
     timer.end({
       cache: { hit: false },
       inputSizes: {
-        shortlistLimit: shortlistMaxCandidates ?? requestedShortlistLimit,
+        shortlistLimit: shortlistLimitForMetrics,
         totalMatches: result.totalMatches,
         shortlisted: result.shortlistedCandidates.length,
       },

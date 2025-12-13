@@ -75,9 +75,8 @@ async function loadLearningSignals(bypassCache: boolean) {
   sinceDate.setUTCHours(0, 0, 0, 0);
   sinceDate.setUTCDate(sinceDate.getUTCDate() - (WINDOW_DAYS - 1));
 
-  const rawQuery =
-    typeof Prisma?.sql === "function"
-      ? Prisma.sql`
+  const sinceParam = bypassCache ? sinceDate : sinceDate.toISOString();
+  const rawQuery = Prisma.sql`
     SELECT
       time_to_fill_days as "timeToFillDays",
       open_roles as "openRoles",
@@ -85,17 +84,7 @@ async function loadLearningSignals(bypassCache: boolean) {
       confidence,
       captured_at as "capturedAt"
     FROM "LearningAggregate"
-    WHERE captured_at >= ${sinceDate}
-  `
-      : `
-    SELECT
-      time_to_fill_days as "timeToFillDays",
-      open_roles as "openRoles",
-      active_candidates as "activeCandidates",
-      confidence,
-      captured_at as "capturedAt"
-    FROM "LearningAggregate"
-    WHERE captured_at >= ${sinceDate.toISOString()}
+    WHERE captured_at >= ${sinceParam}
   `;
 
   if (bypassCache) {

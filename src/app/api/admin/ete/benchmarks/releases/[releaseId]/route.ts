@@ -6,9 +6,20 @@ import { getCurrentUser } from "@/lib/auth/user";
 
 export const dynamic = "force-dynamic";
 
-type BenchmarkReleaseResponse = ReturnType<typeof serializeReleaseWithMetrics>;
+type SerializedBenchmarkMetric =
+  | (BenchmarkReleaseWithMetrics["metrics"] extends Array<infer Metric> ? Metric : never)
+  | never;
 
-function serializeReleaseWithMetrics(release: BenchmarkReleaseWithMetrics) {
+type BenchmarkReleaseResponse = Omit<
+  BenchmarkReleaseWithMetrics,
+  "createdAt" | "publishedAt" | "metrics"
+> & {
+  createdAt: string;
+  publishedAt: string | null;
+  metrics: Array<Omit<SerializedBenchmarkMetric, "createdAt"> & { createdAt: string }>;
+};
+
+function serializeReleaseWithMetrics(release: BenchmarkReleaseWithMetrics): BenchmarkReleaseResponse {
   return {
     ...release,
     createdAt: release.createdAt.toISOString(),
@@ -17,7 +28,7 @@ function serializeReleaseWithMetrics(release: BenchmarkReleaseWithMetrics) {
       ...metric,
       createdAt: metric.createdAt.toISOString(),
     })),
-  } satisfies BenchmarkReleaseResponse;
+  };
 }
 
 export async function GET(

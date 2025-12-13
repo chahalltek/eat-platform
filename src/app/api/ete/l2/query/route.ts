@@ -24,7 +24,9 @@ const bodySchema = z.object({
     .optional(),
 });
 
-const AGENT_HANDLERS: Record<L2Question, ((input: L2Input) => Promise<L2Result>) | null> = {
+type L2Handler = (input: L2Input, options?: { bypassCache?: boolean }) => Promise<L2Result>;
+
+const AGENT_HANDLERS: Record<L2Question, L2Handler | null> = {
   RISKIEST_REQS: runRiskiestReqs,
   SCARCITY_HOTSPOTS: runScarcityHotspots,
   PRESET_RECOMMENDATIONS: null,
@@ -51,7 +53,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Question not yet supported" }, { status: 501 });
   }
 
-  const result = await handler({ tenantId: roleCheck.user.tenantId, scope: parsed.data.scope }, {
+  const tenantId = roleCheck.user.tenantId;
+
+  if (!tenantId) {
+    return NextResponse.json({ error: "Tenant missing" }, { status: 400 });
+  }
+
+  const result = await handler({ tenantId, scope: parsed.data.scope }, {
     bypassCache: isAdminRole(roleCheck.user.role),
   });
 

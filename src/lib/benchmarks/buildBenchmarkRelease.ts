@@ -55,6 +55,8 @@ type BenchmarkPrisma = Pick<
   "learningAggregate" | "benchmarkRelease" | "benchmarkMetric" | "$transaction"
 >;
 
+type BenchmarkTransactionClient = Omit<BenchmarkPrisma, "$transaction">;
+
 type BuildOptions = {
   version: string;
   windowDays: number;
@@ -110,10 +112,10 @@ function mapAggregatesToMetrics(
 
 async function runTransaction<T>(
   client: BenchmarkPrisma,
-  callback: (tx: BenchmarkPrisma) => Promise<T>,
+  callback: (tx: BenchmarkTransactionClient) => Promise<T>,
 ) {
   if (typeof client.$transaction === "function") {
-    return client.$transaction((tx) => callback(tx as BenchmarkPrisma)) as Promise<T>;
+    return client.$transaction((tx) => callback(tx as BenchmarkTransactionClient)) as Promise<T>;
   }
 
   return callback(client);

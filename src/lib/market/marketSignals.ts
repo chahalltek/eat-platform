@@ -72,9 +72,8 @@ async function loadLearningAggregate(bypassCache: boolean) {
   sinceDate.setUTCHours(0, 0, 0, 0);
   sinceDate.setUTCDate(sinceDate.getUTCDate() - (ROLLING_WINDOW_DAYS - 1));
 
-  const rawQuery =
-    typeof Prisma?.sql === "function"
-      ? Prisma.sql`
+  const sinceParam = bypassCache ? sinceDate : sinceDate.toISOString();
+  const rawQuery = Prisma.sql`
     SELECT
       role_family as "roleFamily",
       region,
@@ -85,20 +84,7 @@ async function loadLearningAggregate(bypassCache: boolean) {
       active_candidates as "activeCandidates",
       captured_at as "capturedAt"
     FROM "LearningAggregate"
-    WHERE captured_at >= ${sinceDate}
-  `
-      : `
-    SELECT
-      role_family as "roleFamily",
-      region,
-      normalized_skill as "normalizedSkill",
-      confidence,
-      time_to_fill_days as "timeToFillDays",
-      open_roles as "openRoles",
-      active_candidates as "activeCandidates",
-      captured_at as "capturedAt"
-    FROM "LearningAggregate"
-    WHERE captured_at >= ${sinceDate.toISOString()}
+    WHERE captured_at >= ${sinceParam}
   `;
 
   const rows = await prisma.$queryRaw<LearningAggregateRow[]>(rawQuery);

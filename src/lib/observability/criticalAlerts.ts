@@ -46,7 +46,7 @@ const DEFAULT_OPTIONS: Required<Omit<AlertEvaluationOptions, "now">> = {
   minimumBenchmarkMetrics: 1,
 };
 
-async function findRepeatedJobFailures(jobFailureThreshold: number) {
+async function findRepeatedJobFailures(jobFailureThreshold: number): Promise<CriticalAlert[]> {
   const failedStates = await prisma.asyncJobState.findMany({
     where: { status: "failed" },
     orderBy: { updatedAt: "desc" },
@@ -79,7 +79,7 @@ async function findRepeatedJobFailures(jobFailureThreshold: number) {
     }));
 }
 
-async function evaluateForecastFreshness(now: Date, forecastMaxAgeHours: number) {
+async function evaluateForecastFreshness(now: Date, forecastMaxAgeHours: number): Promise<CriticalAlert[]> {
   const horizon = new Date(now.getTime() - forecastMaxAgeHours * 60 * 60 * 1000);
   const latestMatch: Pick<MatchResult, "createdAt"> | null = await prisma.matchResult.findFirst({
     orderBy: { createdAt: "desc" },
@@ -110,7 +110,7 @@ async function evaluateForecastFreshness(now: Date, forecastMaxAgeHours: number)
   ];
 }
 
-async function evaluateBenchmarkCompleteness(minimumBenchmarkMetrics: number) {
+async function evaluateBenchmarkCompleteness(minimumBenchmarkMetrics: number): Promise<CriticalAlert[]> {
   const latestRelease: (BenchmarkRelease & { metrics: BenchmarkMetric[] }) | null =
     await prisma.benchmarkRelease.findFirst({
       where: { status: "published" },
@@ -170,12 +170,20 @@ export async function collectCriticalAlerts(options: AlertEvaluationOptions = {}
     evaluateBenchmarkCompleteness(settings.minimumBenchmarkMetrics),
   ]);
 
-  const alerts = [...jobFailureAlerts, ...forecastAlerts, ...benchmarkAlerts];
+  const alerts: CriticalAlert[] = [...jobFailureAlerts, ...forecastAlerts, ...benchmarkAlerts];
+
+  const buildAlertKey = (alert: CriticalAlert) => {
+    const jobName = (alert.context as { jobName?: unknown }).jobName;
+
+    if (typeof jobName === "string" && jobName.trim()) {
+      return `${alert.type}:${jobName}`;
+    }
+
+    return `${alert.type}:${JSON.stringify(alert.context)}`;
+  };
 
   const deduped = alerts.reduce<CriticalAlert[]>((acc, alert) => {
-    const duplicate = acc.find(
-      (candidate) => candidate.type === alert.type && candidate.context.jobName === alert.context.jobName,
-    );
+    const duplicate = acc.find((candidate) => buildAlertKey(candidate) === buildAlertKey(alert));
 
     if (!duplicate) {
       acc.push(alert);

@@ -1,3 +1,4 @@
+import type { NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client';
 
 import { prisma, isTableAvailable } from '@/lib/prisma';
@@ -31,7 +32,7 @@ type CreateSnapshotInput = {
   audience: (typeof INSIGHT_AUDIENCES)[number];
 };
 
-export async function assertAdminAccess(request?: Request) {
+export async function assertAdminAccess(request?: NextRequest) {
   const user = await getCurrentUser(request);
   const tenantId = (await getCurrentTenantId(request)) ?? DEFAULT_TENANT_ID;
   const userTenant = (user?.tenantId ?? DEFAULT_TENANT_ID).trim();
