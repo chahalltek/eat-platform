@@ -724,6 +724,7 @@ model MatchFeedback {
   matchSignals      Json?
   guardrailsPreset  String?
   guardrailsConfig  Json?
+  guardrailsConfigHash String?
   systemMode        String?
   createdAt         DateTime      @default(now())
 

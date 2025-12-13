@@ -219,6 +219,7 @@ export async function POST(req: Request) {
         shortlistStrategy,
         guardrailsPreset,
         guardrailsConfig: guardrailsConfigSnapshot,
+        guardrailsConfigHash,
         systemMode: mode.mode,
         outcome,
       },
@@ -239,6 +240,7 @@ export async function POST(req: Request) {
         shortlistStrategy,
         guardrailsPreset,
         guardrailsConfig: guardrailsConfigSnapshot,
+        guardrailsConfigHash,
         systemMode: mode.mode,
       },
     });
@@ -253,6 +255,7 @@ export async function POST(req: Request) {
       confidenceScore: feedbackEntry.confidenceScore,
       guardrailsPreset: feedbackEntry.guardrailsPreset,
       guardrailsConfig: feedbackEntry.guardrailsConfig,
+      guardrailsConfigHash: feedbackEntry.guardrailsConfigHash,
       shortlistStrategy: feedbackEntry.shortlistStrategy,
       systemMode: feedbackEntry.systemMode,
       recommendationConfidence,
