@@ -302,10 +302,9 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     .map(([size, jobs]) => ({ size: Number(size), jobs }))
     .sort((a, b) => a.size - b.size);
 
-  const failureLookup = failedRuns.reduce<Record<string, Prisma.Prisma__AgentRunLogGroupByOutputType>>((acc, run) => {
-    acc[run.agentName] = run;
+  const failureLookup = failedRuns.reduce<Record<string, Prisma.AgentRunLogGroupByOutputType>>((acc, run) => {
     return acc;
-  }, {});
+  }, {})
 
   const errorRateByAgent = totalRuns
     .map((run) => {
