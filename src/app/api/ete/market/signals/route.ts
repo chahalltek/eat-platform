@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/user";
 import { getMarketSignals } from "@/lib/learning/marketSignals";
+import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser(request);
@@ -14,7 +15,9 @@ export async function GET(request: NextRequest) {
   const roleFamily = searchParams.get("roleFamily");
   const region = searchParams.get("region");
 
-  const signals = await getMarketSignals({ roleFamily, region });
+  const mode = user.tenantId ? await loadTenantMode(user.tenantId) : null;
+
+  const signals = await getMarketSignals({ roleFamily, region, systemMode: mode?.mode });
 
   return NextResponse.json(signals);
 }

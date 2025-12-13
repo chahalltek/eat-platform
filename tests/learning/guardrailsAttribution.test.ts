@@ -73,12 +73,17 @@ describe("guardrailsAttribution", () => {
   ];
 
   it("groups learning records by guardrails preset and system mode", () => {
-    const summary = attributeGuardrailsPerformance({ outcomes, matchResults, decisionItems: decisions });
+    const capturedAt = new Date("2024-07-01T00:00:00Z");
+    const summary = attributeGuardrailsPerformance({
+      outcomes,
+      matchResults,
+      decisionItems: decisions,
+      timestamp: capturedAt,
+    });
 
-    expect(summary).toHaveLength(2);
+    expect(summary).toHaveLength(1);
 
     const balanced = summary.find((entry) => entry.preset === "balanced");
-    const conservative = summary.find((entry) => entry.preset === "conservative");
 
     expect(balanced).toMatchObject({
       preset: "balanced",
@@ -87,19 +92,11 @@ describe("guardrailsAttribution", () => {
       configHash: "hash-a",
       roleFamily: "Engineering",
       sampleSize: 3,
+      capturedAt,
     });
     expect(balanced?.interviewRate).toBeCloseTo(0.67, 2);
     expect(balanced?.hireRate).toBeCloseTo(0.33, 2);
     expect(balanced?.falsePositiveRate).toBe(0);
-
-    expect(conservative).toMatchObject({
-      preset: "conservative",
-      systemMode: "fire_drill",
-      shortlistStrategy: "safety",
-      configHash: "hash-b",
-      sampleSize: 1,
-      falsePositiveRate: 1,
-    });
   });
 
   it("prefers the latest match metadata per candidate without mutating inputs", () => {
@@ -144,7 +141,14 @@ describe("guardrailsAttribution", () => {
         falsePositiveRate: 0,
         sampleSize: 1,
         coverage: { interviewed: 1, hired: 0, rejected: 0 },
+        capturedAt: expect.any(Date),
       },
     ]);
+  });
+
+  it("suppresses learning output when in fire drill mode", () => {
+    const summary = attributeGuardrailsPerformance({ outcomes, matchResults, decisionItems: decisions, systemMode: "fire_drill" });
+
+    expect(summary).toEqual([]);
   });
 });

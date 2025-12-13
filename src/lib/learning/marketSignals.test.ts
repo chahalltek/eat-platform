@@ -69,7 +69,8 @@ describe("getMarketSignals", () => {
   });
 
   it("builds aggregated market signals with the benchmark label", async () => {
-    const result = await getMarketSignals({ roleFamily: "Data", region: "US" });
+    const timestamp = new Date("2024-07-04T00:00:00Z");
+    const result = await getMarketSignals({ roleFamily: "Data", region: "US", timestamp, systemMode: "pilot" });
 
     expect(prisma.$queryRaw).toHaveBeenCalledOnce();
     expect(result.label).toBe("Market benchmark (aggregated)");
@@ -104,6 +105,8 @@ describe("getMarketSignals", () => {
         activeCandidates: 26,
       },
     ]);
+    expect(result.systemMode).toBe("pilot");
+    expect(result.capturedAt).toBe(timestamp);
   });
 
   it("caches the aggregate rows for a day", async () => {
@@ -111,5 +114,16 @@ describe("getMarketSignals", () => {
     await getMarketSignals({ region: "US" });
 
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns empty learning payloads in fire drill mode", async () => {
+    const result = await getMarketSignals({ systemMode: "fire_drill" });
+
+    expect(result.skillScarcity).toEqual([]);
+    expect(result.confidenceByRegion).toEqual([]);
+    expect(result.timeToFillBenchmarks).toEqual([]);
+    expect(result.oversuppliedRoles).toEqual([]);
+    expect(result.systemMode).toBe("fire_drill");
+    expect(result.capturedAt).toBeInstanceOf(Date);
   });
 });

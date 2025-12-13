@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import type { SystemModeName } from "@/lib/modes/systemModes";
 
 export type MarketSignals = {
   label: string;
@@ -34,6 +35,8 @@ export type MarketSignals = {
     openRoles: number;
     activeCandidates: number;
   }[];
+  systemMode: SystemModeName;
+  capturedAt: Date;
 };
 
 type LearningAggregateRow = {
@@ -171,10 +174,31 @@ function detectOversupplied(rows: LearningAggregateRow[]) {
 export async function getMarketSignals({
   roleFamily,
   region,
+  systemMode = "production",
+  timestamp,
 }: {
   roleFamily?: string | null;
   region?: string | null;
+  systemMode?: SystemModeName;
+  timestamp?: Date;
 }): Promise<MarketSignals> {
+  const capturedAt = timestamp ?? new Date();
+
+  if (systemMode === "fire_drill") {
+    return {
+      label: LABEL,
+      windowDays: ROLLING_WINDOW_DAYS,
+      roleFamily: roleFamily ?? undefined,
+      region: region ?? undefined,
+      skillScarcity: [],
+      confidenceByRegion: [],
+      timeToFillBenchmarks: [],
+      oversuppliedRoles: [],
+      systemMode,
+      capturedAt,
+    } satisfies MarketSignals;
+  }
+
   const aggregateRows = await loadLearningAggregate();
   const filtered = aggregateRows.filter((row) => {
     if (roleFamily && row.roleFamily !== roleFamily) return false;
@@ -191,6 +215,8 @@ export async function getMarketSignals({
     confidenceByRegion: calculateConfidenceDistribution(filtered),
     timeToFillBenchmarks: calculateTimeToFill(filtered),
     oversuppliedRoles: detectOversupplied(filtered),
+    systemMode,
+    capturedAt,
   };
 }
 

@@ -1,6 +1,8 @@
 import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/lib/prisma";
 import { guardrailsPresets } from "./presets";
 import { loadTenantGuardrails } from "@/lib/tenant/guardrails";
+import { loadTenantMode } from "@/lib/modes/loadTenantMode";
+import type { SystemModeName } from "@/lib/modes/systemModes";
 
 export type RecommendationStatus = "pending" | "applied" | "dismissed";
 
@@ -13,6 +15,8 @@ export type GuardrailRecommendation = {
   confidence: "low" | "medium" | "high";
   signals: string[];
   status: RecommendationStatus;
+  systemMode: SystemModeName;
+  generatedAt: Date;
 };
 
 type TelemetrySnapshot = {
@@ -49,12 +53,18 @@ export class GuardrailRecommendationEngine {
   constructor(private store: RecommendationStore = defaultStore) {}
 
   async generate(tenantId: string): Promise<GuardrailRecommendation[]> {
-    const [guardrails, telemetry] = await Promise.all([
+    const [mode, guardrails, telemetry] = await Promise.all([
+      loadTenantMode(tenantId),
       loadTenantGuardrails(tenantId),
       this.collectTelemetry(tenantId),
     ]);
 
-    const drafts = this.buildRecommendations(guardrails.scoring.thresholds, guardrails.safety, telemetry);
+    if (mode.mode === "fire_drill") {
+      return [];
+    }
+
+    const generatedAt = new Date();
+    const drafts = this.buildRecommendations(guardrails.scoring.thresholds, guardrails.safety, telemetry, mode.mode, generatedAt);
     const merged = await this.mergeWithStore(tenantId, drafts);
 
     await this.store.save(tenantId, merged);
@@ -91,8 +101,12 @@ export class GuardrailRecommendationEngine {
     thresholds: { minMatchScore: number; shortlistMinScore: number; shortlistMaxCandidates: number },
     safety: { confidenceBands?: { high: number; medium: number } | undefined },
     telemetry: TelemetrySnapshot,
+    systemMode: SystemModeName,
+    generatedAt: Date,
   ): GuardrailRecommendation[] {
     const recommendations: GuardrailRecommendation[] = [];
+
+    const forceLowConfidence = systemMode === "pilot";
 
     if (telemetry.falsePositiveRate > 0.25 || telemetry.mqiTrend < -5) {
       const from = thresholds.minMatchScore;
@@ -103,9 +117,11 @@ export class GuardrailRecommendationEngine {
         summary: "Raise the minimum match score used for shortlist decisions.",
         rationale: `MQI dropped by ${telemetry.mqiTrend.toFixed(1)} points and ${(telemetry.falsePositiveRate * 100).toFixed(1)}% of recent feedback called out false positives.`,
         suggestedChange: `Increase minMatchScore from ${from}% to ${to}% to prioritize higher-signal candidates.`,
-        confidence: telemetry.falsePositiveRate > 0.35 ? "high" : "medium",
+        confidence: forceLowConfidence ? "low" : telemetry.falsePositiveRate > 0.35 ? "high" : "medium",
         signals: ["MQI trend", "Feedback false-positive rate"],
         status: "pending",
+        systemMode,
+        generatedAt,
       });
     }
 
@@ -119,9 +135,11 @@ export class GuardrailRecommendationEngine {
         summary: "Lower the maximum candidates allowed on a shortlist to cut down review noise.",
         rationale: `Shortlists are overfilled ${(telemetry.shortlistPressure * 100).toFixed(0)}% of the time and average match scores are dipping to ${telemetry.averageMatchScore.toFixed(1)}%.`,
         suggestedChange: `Reduce shortlistMaxCandidates from ${from} to ${to} to keep reviews focused on the highest quality profiles.`,
-        confidence: "medium",
+        confidence: forceLowConfidence ? "low" : "medium",
         signals: ["Shortlist overfill rate", "Average match quality"],
         status: "pending",
+        systemMode,
+        generatedAt,
       });
     }
 
@@ -138,9 +156,11 @@ export class GuardrailRecommendationEngine {
         summary: "Tighten confidence thresholds so low-signal matches are flagged sooner.",
         rationale: `${(lowShare * 100).toFixed(0)}% of recent matches are falling into the low confidence bucket, increasing reviewer load.`,
         suggestedChange: `Increase confidence bands from high=${fromHigh}, medium=${fromMedium} to high=${highTo}, medium=${mediumTo}.`,
-        confidence: "high",
+        confidence: forceLowConfidence ? "low" : "high",
         signals: ["Confidence distribution", "Reviewer burden"],
         status: "pending",
+        systemMode,
+        generatedAt,
       });
     }
 
@@ -151,9 +171,11 @@ export class GuardrailRecommendationEngine {
         summary: "Metrics are stable; no tuning required right now.",
         rationale: `MQI is steady and false positives are under control across ${telemetry.sampleSize} recent signals.`,
         suggestedChange: "No configuration change recommended.",
-        confidence: "medium",
+        confidence: forceLowConfidence ? "low" : "medium",
         signals: ["MQI trend", "Feedback stability"],
         status: "pending",
+        systemMode,
+        generatedAt,
       });
     }
 

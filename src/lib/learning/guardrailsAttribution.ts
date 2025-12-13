@@ -34,6 +34,7 @@ export type LearningRecord = HiringOutcomeRecord & {
   guardrailsConfigHash?: string | null;
   shortlistStrategy?: string | null;
   systemMode?: string | null;
+  capturedAt: Date;
 };
 
 export type GuardrailsAttribution = {
@@ -51,6 +52,7 @@ export type GuardrailsAttribution = {
     hired: number;
     rejected: number;
   };
+  capturedAt: Date;
 };
 
 const INTERVIEW_STATUSES = new Set(["interviewed", "offered"]);
@@ -82,26 +84,38 @@ export function buildLearningRecords(params: {
   outcomes: HiringOutcomeRecord[];
   matchResults?: MatchAttribution[];
   decisionItems?: DecisionStreamLink[];
+  systemMode?: string | null;
+  timestamp?: Date;
 }): LearningRecord[] {
+  const activeMode = params.systemMode?.trim();
+  if (activeMode === "fire_drill") return [];
+
+  const capturedAt = params.timestamp ?? new Date();
   const matchIndex = buildIndex(params.matchResults ?? []);
   const decisionIndex = buildIndex((params.decisionItems ?? []).filter((item) => item.action !== "removed"));
 
-  return params.outcomes.map((outcome) => {
-    const key = `${outcome.jobId}::${outcome.candidateId}`;
-    const match = matchIndex[key];
-    const decision = decisionIndex[key];
+  return params.outcomes
+    .map((outcome) => {
+      const key = `${outcome.jobId}::${outcome.candidateId}`;
+      const match = matchIndex[key];
+      const decision = decisionIndex[key];
 
-    return {
-      ...outcome,
-      decisionStreamId: match?.decisionStreamId ?? decision?.decisionStreamId,
-      matchResultId: match?.matchResultId,
-      guardrailsPreset: match?.guardrailsPreset,
-      guardrailsConfigHash: match?.guardrailsConfigHash,
-      shortlistStrategy: match?.shortlistStrategy,
-      systemMode: match?.systemMode,
-      roleFamily: match?.roleFamily ?? outcome.roleFamily,
-    } satisfies LearningRecord;
-  });
+      const systemMode = match?.systemMode ?? activeMode ?? null;
+      if (systemMode === "fire_drill") return null;
+
+      return {
+        ...outcome,
+        decisionStreamId: match?.decisionStreamId ?? decision?.decisionStreamId,
+        matchResultId: match?.matchResultId,
+        guardrailsPreset: match?.guardrailsPreset,
+        guardrailsConfigHash: match?.guardrailsConfigHash,
+        shortlistStrategy: match?.shortlistStrategy,
+        systemMode,
+        roleFamily: match?.roleFamily ?? outcome.roleFamily,
+        capturedAt,
+      } satisfies LearningRecord;
+    })
+    .filter((record): record is LearningRecord => record !== null);
 }
 
 function safeRate(numerator: number, denominator: number) {
@@ -118,7 +132,11 @@ export function attributeGuardrailsPerformance(params: {
   outcomes: HiringOutcomeRecord[];
   matchResults?: MatchAttribution[];
   decisionItems?: DecisionStreamLink[];
+  systemMode?: string | null;
+  timestamp?: Date;
 }): GuardrailsAttribution[] {
+  if (params.systemMode === "fire_drill") return [];
+
   const learningRecords = buildLearningRecords(params);
   const groups = new Map<string, LearningRecord[]>();
 
@@ -157,6 +175,7 @@ export function attributeGuardrailsPerformance(params: {
       falsePositiveRate: safeRate(rejected, shortlisted),
       sampleSize: shortlisted,
       coverage: { interviewed, hired, rejected },
+      capturedAt: records[0]?.capturedAt ?? new Date(),
     });
   }
 

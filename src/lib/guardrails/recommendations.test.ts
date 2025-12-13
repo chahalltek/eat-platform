@@ -22,6 +22,11 @@ vi.mock("@/lib/tenant/guardrails", () => ({
   })),
 }));
 
+vi.mock("@/lib/modes/loadTenantMode", () => ({
+  loadTenantMode: vi.fn(async () => ({ mode: "production", guardrailsPreset: "balanced", agentsEnabled: [], source: "database" })),
+}));
+
+import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { guardrailRecommendationEngine, GuardrailRecommendationEngine } from "./recommendations";
 
 describe("GuardrailRecommendationEngine", () => {
@@ -64,6 +69,8 @@ describe("GuardrailRecommendationEngine", () => {
     expect(ids).toContain("raise-confidence-bands");
     const summary = recommendations.find((rec) => rec.id === "increase-min-match-score")?.suggestedChange;
     expect(summary).toContain("minMatchScore");
+    expect(recommendations.every((rec) => rec.systemMode === "production")).toBe(true);
+    expect(recommendations.every((rec) => rec.generatedAt instanceof Date)).toBe(true);
   });
 
   it("persists manual review decisions across recomputes", async () => {
@@ -78,6 +85,31 @@ describe("GuardrailRecommendationEngine", () => {
 
     const second = await engine.generate("tenant-2");
     expect(second[0].status).toBe("dismissed");
+  });
+
+  it("forces low-confidence recommendations in pilot mode", async () => {
+    loadTenantMode.mockResolvedValueOnce({ mode: "pilot", guardrailsPreset: "conservative", agentsEnabled: [], source: "database" });
+    vi.mocked(prisma.prisma.matchQualitySnapshot.findMany).mockResolvedValueOnce([
+      { mqi: 60 },
+      { mqi: 68 },
+    ] as never);
+    vi.mocked(prisma.prisma.matchFeedback.findMany).mockResolvedValueOnce([
+      { direction: "UP", matchScore: 70, confidenceScore: 82 },
+    ] as never);
+
+    const recommendations = await guardrailRecommendationEngine.generate("tenant-3");
+
+    expect(recommendations.length).toBeGreaterThan(0);
+    expect(recommendations.every((rec) => rec.confidence === "low")).toBe(true);
+    expect(recommendations.every((rec) => rec.systemMode === "pilot")).toBe(true);
+  });
+
+  it("returns no learning output in fire drill mode", async () => {
+    loadTenantMode.mockResolvedValueOnce({ mode: "fire_drill", guardrailsPreset: "conservative", agentsEnabled: [], source: "database" });
+
+    const recommendations = await guardrailRecommendationEngine.generate("tenant-4");
+
+    expect(recommendations).toEqual([]);
   });
 });
 
