@@ -1,7 +1,17 @@
 import { getAppConfig } from "@/lib/config/configValidator";
 import { DEPLOYMENT_MODES, type DeploymentMode } from "@/lib/deployment/deploymentModes";
 
-const FALLBACKS = {
+type BrandingPreset = {
+  name: string;
+  description: string;
+  tagline: string;
+  logoHorizontal: string;
+  logoMark: string;
+  accentColor: string;
+  headerText: string;
+};
+
+const FALLBACKS: BrandingPreset = {
   name: "EDGE Talent Engine",
   description: "EDGE Talent Engine – Precision and Matching. Explainable Decisions. Faster recruiting.",
   tagline: "Employment Access Technology",
@@ -9,9 +19,9 @@ const FALLBACKS = {
   logoMark: "/branding/ete-logo-mark.png",
   accentColor: "#4f46e5",
   headerText: "EDGE Talent Engine",
-} as const;
+};
 
-const DEPLOYMENT_BRANDING_PRESETS: Record<DeploymentMode, typeof FALLBACKS> = {
+const DEPLOYMENT_BRANDING_PRESETS: Record<DeploymentMode, BrandingPreset> = {
   [DEPLOYMENT_MODES.INTERNAL_STRSI]: FALLBACKS,
   [DEPLOYMENT_MODES.MANAGED_SERVICE]: {
     ...FALLBACKS,
