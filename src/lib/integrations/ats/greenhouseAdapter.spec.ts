@@ -46,7 +46,7 @@ const applications = [
 ];
 
 describe('GreenhouseAdapter', () => {
-  it('ingests jobs and shortlists through the adapter contract', async () => {
+  it('ingests jobs and candidates through the adapter contract', async () => {
     const client = new MockGreenhouseClient({ jobs: [job], applications });
     const store = new InMemoryAtsEventStore();
     const adapter = new GreenhouseAdapter(client, store);
@@ -60,15 +60,18 @@ describe('GreenhouseAdapter', () => {
       status: 'open',
     });
 
-    const shortlist = await adapter.ingestShortlist('42');
-    expect(shortlist.job.id).toBe('42');
-    expect(shortlist.candidates).toHaveLength(2);
-    expect(shortlist.candidates[0]).toMatchObject({
+    const adaIngest = await adapter.ingestCandidate('42', '2001');
+    const graceIngest = await adapter.ingestCandidate('42', '2002');
+
+    expect(adaIngest.job.id).toBe('42');
+    expect(adaIngest.candidate).toMatchObject({
       id: '2001',
       fullName: 'Ada Lovelace',
       stage: 'Phone Screen',
       source: 'Referral',
     });
+
+    expect(graceIngest.candidate).toMatchObject({ id: '2002', fullName: 'Grace Hopper' });
   });
 
   it('pushes shortlists and records provider ids', async () => {

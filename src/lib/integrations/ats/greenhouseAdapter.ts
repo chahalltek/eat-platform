@@ -3,6 +3,7 @@ import type {
   AtsCandidateSummary,
   AtsEventStore,
   AtsJob,
+  CandidateIngestResult,
   AtsWebhookEnvelope,
   OutcomeReceipt,
   ShortlistIngestResult,
@@ -72,6 +73,29 @@ export class GreenhouseAdapter implements AtsAdapter {
   async ingestJob(jobId: string): Promise<AtsJob> {
     const raw = await this.client.fetchJob(jobId);
     return mapJob(raw);
+  }
+
+  async ingestCandidate(jobId: string, candidateId: string): Promise<CandidateIngestResult> {
+    const [job, applications] = await Promise.all([
+      this.ingestJob(jobId),
+      this.client.fetchApplications(jobId),
+    ]);
+
+    const application = applications.find(
+      (candidateApplication) =>
+        String(candidateApplication.candidate.id) === candidateId ||
+        String(candidateApplication.id) === candidateId,
+    );
+
+    if (!application) {
+      throw new Error(`Candidate ${candidateId} not found for job ${jobId}`);
+    }
+
+    return {
+      job,
+      candidate: mapCandidate(application),
+      receivedAt: new Date(),
+    };
   }
 
   async ingestShortlist(jobId: string): Promise<ShortlistIngestResult> {

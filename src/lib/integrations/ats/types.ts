@@ -21,6 +21,12 @@ export interface AtsCandidateSummary {
   source?: string | null;
 }
 
+export interface CandidateIngestResult {
+  job: AtsJob;
+  candidate: AtsCandidateSummary;
+  receivedAt: Date;
+}
+
 export interface ShortlistIngestResult {
   job: AtsJob;
   candidates: AtsCandidateSummary[];
@@ -69,7 +75,7 @@ export interface OutcomeReceipt {
 export interface AtsAdapter {
   provider: AtsProvider;
   ingestJob(jobId: string): Promise<AtsJob>;
-  ingestShortlist(jobId: string): Promise<ShortlistIngestResult>;
+  ingestCandidate(jobId: string, candidateId: string): Promise<CandidateIngestResult>;
   pushShortlist(payload: ShortlistPushPayload): Promise<ShortlistPushResult>;
   receiveOutcome(envelope: AtsWebhookEnvelope): Promise<OutcomeReceipt>;
 }
