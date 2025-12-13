@@ -906,3 +906,32 @@ model LearningAggregate {
   @@index([signalType, windowDays])
   @@index([roleFamily, industry, region])
 }
+
+model BenchmarkRelease {
+  id          String   @id @default(cuid())
+  version     String
+  status      String   @default("draft")
+  windowDays  Int
+  createdAt   DateTime @default(now())
+  publishedAt DateTime?
+
+  metrics BenchmarkMetric[]
+}
+
+model BenchmarkMetric {
+  id               String             @id @default(cuid())
+  releaseId        String
+  roleFamily       String
+  industry         String?
+  region           String?
+  metricKey        String
+  metricValue      Float
+  sampleSize       Int
+  methodologyNotes String?
+  createdAt        DateTime           @default(now())
+
+  release BenchmarkRelease @relation(fields: [releaseId], references: [id])
+
+  @@index([releaseId])
+  @@index([releaseId, roleFamily, metricKey])
+}
