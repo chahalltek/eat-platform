@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
+import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
 import { prisma } from "@/lib/prisma";
 import { MatchRunner } from "./MatchRunner";
 import { FreshnessIndicator } from "../FreshnessIndicator";
@@ -50,12 +51,12 @@ export default async function JobDetail({
   ]);
 
   const job = await prisma.jobReq
-    .findUnique({
-      where: { id: params.jobId },
-      include: {
-        customer: { select: { name: true } },
-        skills: {
-          orderBy: [
+      .findUnique({
+        where: { id: params.jobId },
+        include: {
+          customer: { select: { name: true } },
+          skills: {
+            orderBy: [
             { required: "desc" },
             { name: "asc" },
           ],
@@ -89,6 +90,7 @@ export default async function JobDetail({
 
   const requiredSkills = job.skills.filter((skill) => skill.required);
   const niceToHaveSkills = job.skills.filter((skill) => !skill.required);
+  const marketInsights = await getJobPredictiveSignals(job.id, job.tenantId);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 space-y-8">
@@ -167,6 +169,55 @@ export default async function JobDetail({
         <div className="sm:col-span-2">
           <div className="text-xs uppercase tracking-wide text-gray-500">Raw Description</div>
           <div className="mt-1 whitespace-pre-line text-gray-800">{job.rawDescription}</div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-5 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Market Insights</p>
+            <h2 className="text-xl font-semibold text-gray-900">Role outlook</h2>
+            <p className="text-sm text-gray-700">Advisory signals only—no blocking checks.</p>
+          </div>
+          <Link
+            href="/admin/guardrails"
+            className="text-sm font-semibold text-indigo-700 hover:text-indigo-900"
+          >
+            Adjust Guardrails
+          </Link>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-md border border-indigo-100 bg-white/60 p-4 text-indigo-900">
+            <div className="text-xs font-semibold uppercase tracking-wide">Difficulty</div>
+            <div className="text-lg font-semibold">{marketInsights.difficultyLabel}</div>
+            <p className="text-sm text-indigo-800">{marketInsights.difficultyReason}</p>
+          </div>
+          <div className="rounded-md border border-amber-100 bg-amber-50 p-4 text-amber-900">
+            <div className="text-xs font-semibold uppercase tracking-wide">Scarcity</div>
+            <div className="text-lg font-semibold">{marketInsights.skillScarcityIndex}/100</div>
+            <p className="text-sm text-amber-800">{marketInsights.scarcityWarning}</p>
+          </div>
+          <div className="rounded-md border border-slate-100 bg-white/60 p-4 text-slate-900">
+            <div className="text-xs font-semibold uppercase tracking-wide">Median time-to-fill</div>
+            <div className="text-lg font-semibold">{marketInsights.timeToFillBandLabel}</div>
+            <p className="text-sm text-slate-700">{marketInsights.timeToFillBandHint}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 rounded-md border border-indigo-100 bg-white/70 p-4 text-sm text-indigo-900 sm:grid-cols-2">
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-indigo-500" aria-hidden />
+            <p>
+              This job is more restrictive than {marketInsights.restrictivenessPercentile}% of similar roles.
+            </p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-amber-500" aria-hidden />
+            <p>
+              Reducing must-haves could improve fill probability by ~{marketInsights.fillProbabilityLiftPercent}%.
+            </p>
+          </div>
         </div>
       </div>
 

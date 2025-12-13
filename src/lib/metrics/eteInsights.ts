@@ -735,8 +735,22 @@ export async function getJobPredictiveSignals(jobId: string, tenantId: string) {
   const skillAvailabilityMap = buildSkillAvailabilityMap(skillCounts);
   const job = jobs.find((entry) => entry.id === jobId);
 
+  const requiredSkillCounts = jobs.map((entry) =>
+    entry.skills.reduce((sum, skill) => sum + (skill.required ? 1 : 0), 0),
+  );
+
   if (!job) {
-    return { estimatedTimeToFillDays: 0, skillScarcityIndex: 0 };
+    return {
+      estimatedTimeToFillDays: 0,
+      skillScarcityIndex: 0,
+      restrictivenessPercentile: 0,
+      fillProbabilityLiftPercent: 0,
+      difficultyLabel: 'Unknown',
+      difficultyReason: 'Not enough data to score this role.',
+      scarcityWarning: 'No scarcity data available.',
+      timeToFillBandLabel: 'Unknown',
+      timeToFillBandHint: 'Collect more matches to estimate time-to-fill.',
+    };
   }
 
   const { estimatedTimeToFillDays, scarcityIndex } = estimateJobPredictiveSignals({
@@ -745,7 +759,128 @@ export async function getJobPredictiveSignals(jobId: string, tenantId: string) {
     skillAvailabilityMap,
   });
 
-  return { estimatedTimeToFillDays, skillScarcityIndex: scarcityIndex };
+  const restrictivenessPercentile = calculateRestrictivenessPercentile(
+    requiredSkillCounts,
+    job.skills.reduce((sum, skill) => sum + (skill.required ? 1 : 0), 0),
+  );
+
+  const fillProbabilityLiftPercent = calculateFillProbabilityLift(
+    requiredSkillCounts,
+    job.skills.reduce((sum, skill) => sum + (skill.required ? 1 : 0), 0),
+  );
+
+  const { label: difficultyLabel, reason: difficultyReason } = resolveDifficultyIndicator(
+    estimatedTimeToFillDays,
+    scarcityIndex,
+  );
+
+  const { label: timeToFillBandLabel, hint: timeToFillBandHint } = resolveTimeToFillBand(
+    estimatedTimeToFillDays,
+  );
+
+  const scarcityWarning = resolveScarcityWarning(scarcityIndex);
+
+  return {
+    estimatedTimeToFillDays,
+    skillScarcityIndex: scarcityIndex,
+    restrictivenessPercentile,
+    fillProbabilityLiftPercent,
+    difficultyLabel,
+    difficultyReason,
+    scarcityWarning,
+    timeToFillBandLabel,
+    timeToFillBandHint,
+  };
+}
+
+function calculateRestrictivenessPercentile(requiredCounts: number[], targetCount: number) {
+  if (requiredCounts.length === 0) return 0;
+
+  const lessOrEqual = requiredCounts.filter((count) => count <= targetCount).length;
+  return Math.min(100, Math.round((lessOrEqual / requiredCounts.length) * 100));
+}
+
+function calculateFillProbabilityLift(requiredCounts: number[], targetCount: number) {
+  if (requiredCounts.length === 0) return 0;
+
+  const sorted = [...requiredCounts].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const median =
+    sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+
+  if (targetCount <= median) return 8;
+
+  const lift = (targetCount - median) * 6 + 8;
+  return Math.min(50, Math.max(8, Math.round(lift)));
+}
+
+function resolveDifficultyIndicator(estimatedTimeToFillDays: number, scarcityIndex: number) {
+  if (estimatedTimeToFillDays === 0 && scarcityIndex === 0) {
+    return { label: 'Unknown', reason: 'Not enough data to score this role.' };
+  }
+
+  if (scarcityIndex >= 80 || estimatedTimeToFillDays >= 40) {
+    return {
+      label: 'Hard to fill',
+      reason: 'High scarcity and long predicted time-to-fill.',
+    };
+  }
+
+  if (scarcityIndex >= 60 || estimatedTimeToFillDays >= 28) {
+    return {
+      label: 'Challenging',
+      reason: 'Demand is outpacing supply for this profile.',
+    };
+  }
+
+  return {
+    label: 'Standard',
+    reason: 'Market indicators look typical for similar roles.',
+  };
+}
+
+function resolveTimeToFillBand(estimatedTimeToFillDays: number) {
+  if (!Number.isFinite(estimatedTimeToFillDays) || estimatedTimeToFillDays <= 0) {
+    return {
+      label: 'Unknown',
+      hint: 'Collect more match results to estimate time-to-fill.',
+    };
+  }
+
+  if (estimatedTimeToFillDays <= 14) {
+    return {
+      label: 'Fast (<2 weeks)',
+      hint: 'Straightforward requirements with strong pipeline velocity.',
+    };
+  }
+
+  if (estimatedTimeToFillDays <= 30) {
+    return {
+      label: 'Typical (2–4 weeks)',
+      hint: 'Comparable to the median for similar roles.',
+    };
+  }
+
+  return {
+    label: 'Extended (4+ weeks)',
+    hint: 'Expect a longer search window; consider relaxing constraints.',
+  };
+}
+
+function resolveScarcityWarning(scarcityIndex: number) {
+  if (!Number.isFinite(scarcityIndex) || scarcityIndex <= 0) {
+    return 'Scarcity signals are unavailable for this role.';
+  }
+
+  if (scarcityIndex >= 80) {
+    return 'Severe skill scarcity detected. Broaden location or loosen must-haves.';
+  }
+
+  if (scarcityIndex >= 60) {
+    return 'High scarcity: consider reducing hard requirements or adjusting compensation.';
+  }
+
+  return 'Talent supply looks stable relative to demand.';
 }
 
 function getMetaObject(value: Prisma.JsonValue | null | unknown): Record<string, unknown> {
