@@ -1,6 +1,7 @@
 import type { BenchmarkMetric, BenchmarkRelease, LearningAggregate, PrismaClient } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { startTiming } from "@/lib/observability/timing";
 
 export type BenchmarkMetricKey =
   | "median_time_to_fill"
@@ -125,31 +126,58 @@ export async function buildBenchmarkRelease({
 }: BuildOptions): Promise<BenchmarkReleaseWithMetrics> {
   const trimmedVersion = version.trim();
 
-  return runTransaction(client, async (tx) => {
-    const aggregates = await tx.learningAggregate.findMany({ where: { windowDays } });
-    const metrics = mapAggregatesToMetrics(aggregates, minimumSampleSize);
+  const timer = startTiming({
+    workload: "benchmark_aggregation",
+    inputSizes: { windowDays, minimumSampleSize },
+    meta: { version: trimmedVersion },
+  });
 
-    const release = await tx.benchmarkRelease.create({
-      data: {
-        version: trimmedVersion,
+  let aggregateCount = 0;
+  let metricCount = 0;
+
+  try {
+    const release = await runTransaction(client, async (tx) => {
+      const aggregates = await tx.learningAggregate.findMany({ where: { windowDays } });
+      aggregateCount = aggregates.length;
+      const metrics = mapAggregatesToMetrics(aggregates, minimumSampleSize);
+
+      const release = await tx.benchmarkRelease.create({
+        data: {
+          version: trimmedVersion,
+          windowDays,
+          status: "draft",
+        },
+      });
+
+      if (metrics.length > 0) {
+        await tx.benchmarkMetric.createMany({
+          data: metrics.map((metric) => ({ ...metric, releaseId: release.id })),
+        });
+      }
+
+      const persistedMetrics = await tx.benchmarkMetric.findMany({
+        where: { releaseId: release.id },
+        orderBy: { createdAt: "asc" },
+      });
+      metricCount = persistedMetrics.length;
+
+      return { ...release, metrics: persistedMetrics } satisfies BenchmarkReleaseWithMetrics;
+    });
+
+    timer.end({
+      cache: { hit: false },
+      inputSizes: {
         windowDays,
-        status: "draft",
+        minimumSampleSize,
+        aggregates: aggregateCount,
+        metricsPersisted: metricCount,
       },
     });
 
-    if (metrics.length > 0) {
-      await tx.benchmarkMetric.createMany({
-        data: metrics.map((metric) => ({ ...metric, releaseId: release.id })),
-      });
-    }
-
-    const persistedMetrics = await tx.benchmarkMetric.findMany({
-      where: { releaseId: release.id },
-      orderBy: { createdAt: "asc" },
-    });
-
-    return { ...release, metrics: persistedMetrics } satisfies BenchmarkReleaseWithMetrics;
-  });
+    return release;
+  } finally {
+    timer.end({ cache: { hit: false } });
+  }
 }
 
 export async function listBenchmarkReleases(client: BenchmarkPrisma = prisma) {

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { startTiming } from "@/lib/observability/timing";
 
 type TimeToFillRiskJob = {
   id: string;
@@ -184,29 +185,49 @@ export function evaluateTimeToFillRisks(jobs: TimeToFillRiskJob[]): TimeToFillRi
 }
 
 export async function getTimeToFillRisksForTenant(tenantId: string) {
-  const jobs = await prisma.jobReq.findMany({
-    where: { tenantId },
-    select: {
-      id: true,
-      title: true,
-      createdAt: true,
-      matchResults: {
-        select: {
-          createdAt: true,
-          shortlisted: true,
-          candidateSignalScore: true,
+  const timer = startTiming({ workload: "forecasting_jobs", meta: { tenantId } });
+
+  try {
+    const jobs = await prisma.jobReq.findMany({
+      where: { tenantId },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        matchResults: {
+          select: {
+            createdAt: true,
+            shortlisted: true,
+            candidateSignalScore: true,
+          },
         },
-      },
-      jobCandidates: {
-        select: {
-          stages: {
-            select: { enteredAt: true },
-            orderBy: { enteredAt: "asc" },
+        jobCandidates: {
+          select: {
+            stages: {
+              select: { enteredAt: true },
+              orderBy: { enteredAt: "asc" },
+            },
           },
         },
       },
-    },
-  });
+    });
 
-  return evaluateTimeToFillRisks(jobs as TimeToFillRiskJob[]);
+    const totalMatches = jobs.reduce((sum, job) => sum + job.matchResults.length, 0);
+    const totalJobCandidates = jobs.reduce((sum, job) => sum + job.jobCandidates.length, 0);
+
+    const risks = evaluateTimeToFillRisks(jobs as TimeToFillRiskJob[]);
+
+    timer.end({
+      cache: { hit: false },
+      inputSizes: {
+        jobs: jobs.length,
+        matchSamples: totalMatches,
+        jobCandidates: totalJobCandidates,
+      },
+    });
+
+    return risks;
+  } finally {
+    timer.end({ cache: { hit: false } });
+  }
 }

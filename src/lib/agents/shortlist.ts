@@ -10,6 +10,7 @@ import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { prisma } from "@/lib/prisma";
 import { setShortlistState } from "@/lib/matching/shortlist";
 import { recordMetricEvent } from "@/lib/metrics/events";
+import { startTiming } from "@/lib/observability/timing";
 
 export type RunShortlistInput = {
   jobId: string;
@@ -52,21 +53,27 @@ export async function runShortlist(
   // User identity is derived from auth; recruiterId in payload is ignored.
   const requestedShortlistLimit = shortlistLimit ?? null;
 
-  const [result, agentRunId] = await withAgentRun<RunShortlistResult>(
-    {
-      agentName: AGENT_KILL_SWITCHES.RANKER,
-      recruiterId: user.id,
-      inputSnapshot: { jobId, shortlistLimit: requestedShortlistLimit },
-      sourceType: "agent",
-      sourceTag: "shortlist",
-      ...retryMetadata,
-    },
-    async () => {
-      const job = await prisma.job.findUnique({
-        where: { id: jobId },
-        include: {
-          matches: {
-            include: {
+  const timer = startTiming({
+    workload: "shortlist",
+    inputSizes: { shortlistLimit: requestedShortlistLimit },
+    meta: { jobId },
+  });
+  try {
+    const [result, agentRunId] = await withAgentRun<RunShortlistResult>(
+      {
+        agentName: AGENT_KILL_SWITCHES.RANKER,
+        recruiterId: user.id,
+        inputSnapshot: { jobId, shortlistLimit: requestedShortlistLimit },
+        sourceType: "agent",
+        sourceTag: "shortlist",
+        ...retryMetadata,
+      },
+      async () => {
+        const job = await prisma.job.findUnique({
+          where: { id: jobId },
+          include: {
+            matches: {
+              include: {
               candidate: true,
             },
           },
@@ -123,6 +130,10 @@ export async function runShortlist(
       };
 
       if (job.matches.length === 0) {
+        timer.end({
+          cache: { hit: false },
+          inputSizes: { shortlistLimit: requestedShortlistLimit, totalMatches: 0, shortlisted: 0 },
+        });
         return {
           result: { jobId, shortlistedCandidates: [], totalMatches: 0, strategy: shortlistConfig.shortlist?.strategy ?? "quality" },
           outputSnapshot: { shortlistedCandidates: [] },
@@ -211,8 +222,21 @@ export async function runShortlist(
           shortlistedCandidates: shortlistedCandidates.map(({ rawMatch: _raw, ...rest }) => rest),
         },
       };
-    },
-  );
+      },
+    );
 
-  return { ...result, agentRunId };
+    timer.end({
+      cache: { hit: false },
+      inputSizes: {
+        shortlistLimit: shortlistMaxCandidates ?? requestedShortlistLimit,
+        totalMatches: result.totalMatches,
+        shortlisted: result.shortlistedCandidates.length,
+      },
+      meta: { strategy: result.strategy },
+    });
+
+    return { ...result, agentRunId };
+  } finally {
+    timer.end({ cache: { hit: false } });
+  }
 }
