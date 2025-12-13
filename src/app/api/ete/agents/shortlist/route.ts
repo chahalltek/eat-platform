@@ -141,15 +141,20 @@ export async function POST(req: NextRequest) {
     },
   } satisfies Parameters<typeof buildShortlist>[0]["config"];
 
-  const shortlistedCandidateIds = buildShortlist({ matches, config: shortlistConfig, strategy: shortlistStrategy });
+  const shortlistOutput = buildShortlist({ matches, config: shortlistConfig, strategy: shortlistStrategy });
+  const shortlistedCandidateIds = shortlistOutput.shortlistedCandidateIds;
 
   const scoredShortlisted = shortlistedCandidateIds
     .map((candidateId) => matches.find((match) => match.candidateId === candidateId))
     .filter((match): match is NonNullable<typeof match> => Boolean(match));
 
-  const cutoffScore = scoredShortlisted.length
-    ? scoredShortlisted[scoredShortlisted.length - 1]?.score ?? null
-    : null;
+  const cutoffScore =
+    shortlistOutput.cutoffScore ??
+    (scoredShortlisted.length ? scoredShortlisted[scoredShortlisted.length - 1]?.score ?? null : null);
+
+  if (shortlistOutput.notes?.length) {
+    notes.push(...shortlistOutput.notes);
+  }
 
   if (confidenceMissingNoted) {
     notes.push("Confidence unavailable; using match score only.");
