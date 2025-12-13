@@ -303,12 +303,13 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     .sort((a, b) => a.size - b.size);
 
   const failureLookup = failedRuns.reduce<Record<string, Prisma.AgentRunLogGroupByOutputType>>((acc, run) => {
+    acc[run.agentName] = run;
     return acc;
-  }, {})
+  }, {});
 
   const errorRateByAgent = totalRuns
     .map((run) => {
-      const failed = failureLookup[run.agentName]?._count._all ?? 0;
+      const failed = failureLookup[run.agentName]?._count?._all ?? 0;
       const total = run._count._all;
       return {
         agentName: run.agentName,
