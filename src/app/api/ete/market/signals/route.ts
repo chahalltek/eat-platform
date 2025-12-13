@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/user";
+import { isAdminRole } from "@/lib/auth/roles";
 import { getMarketSignals } from "@/lib/market/marketSignals";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 
@@ -17,7 +18,12 @@ export async function GET(request: NextRequest) {
 
   const mode = user.tenantId ? await loadTenantMode(user.tenantId) : null;
 
-  const signals = await getMarketSignals({ roleFamily, region, systemMode: mode?.mode });
+  const signals = await getMarketSignals({
+    roleFamily,
+    region,
+    systemMode: mode?.mode,
+    bypassCache: isAdminRole(user.role),
+  });
 
   return NextResponse.json(signals);
 }

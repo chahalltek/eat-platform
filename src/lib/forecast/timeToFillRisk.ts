@@ -1,3 +1,9 @@
+import {
+  intelligenceCache,
+  intelligenceCacheKeys,
+  INTELLIGENCE_CACHE_TTLS,
+  invalidateForecastCachesForTenant,
+} from "@/lib/cache/intelligenceCache";
 import { prisma } from "@/lib/prisma";
 import { startTiming } from "@/lib/observability/timing";
 
@@ -184,6 +190,7 @@ export function evaluateTimeToFillRisks(jobs: TimeToFillRiskJob[]): TimeToFillRi
   });
 }
 
+<<<<<<< ours
 export async function getTimeToFillRisksForTenant(tenantId: string) {
   const timer = startTiming({ workload: "forecasting_jobs", meta: { tenantId } });
 
@@ -230,4 +237,57 @@ export async function getTimeToFillRisksForTenant(tenantId: string) {
   } finally {
     timer.end({ cache: { hit: false } });
   }
+=======
+export async function getTimeToFillRisksForTenant(
+  tenantId: string,
+  { bypassCache = false }: { bypassCache?: boolean } = {},
+) {
+  const cacheKey = intelligenceCacheKeys.forecasts(tenantId);
+
+  if (bypassCache) {
+    invalidateForecastCachesForTenant(tenantId);
+  }
+
+  return intelligenceCache.getOrCreate(
+    [cacheKey],
+    INTELLIGENCE_CACHE_TTLS.forecastsMs,
+    async () => {
+      const jobs = await prisma.jobReq.findMany({
+        where: { tenantId },
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          matchResults: {
+            select: {
+              createdAt: true,
+              shortlisted: true,
+              candidateSignalScore: true,
+            },
+          },
+          jobCandidates: {
+            select: {
+              stages: {
+                select: { enteredAt: true },
+                orderBy: { enteredAt: "asc" },
+              },
+            },
+          },
+        },
+      });
+
+      return evaluateTimeToFillRisks(jobs as TimeToFillRiskJob[]);
+    },
+    { bypassCache },
+  );
+}
+
+export const __testing = {
+  invalidateForecastCachesForTenant,
+};
+
+export function refreshTimeToFillRisksForTenant(tenantId: string) {
+  invalidateForecastCachesForTenant(tenantId);
+  return getTimeToFillRisksForTenant(tenantId, { bypassCache: true });
+>>>>>>> theirs
 }

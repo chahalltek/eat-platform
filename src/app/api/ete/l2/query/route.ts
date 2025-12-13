@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { requireRole } from "@/lib/auth/requireRole";
-import { USER_ROLES } from "@/lib/auth/roles";
+import { isAdminRole, USER_ROLES } from "@/lib/auth/roles";
 import { runRiskiestReqs } from "@/lib/agents/l2/riskiestReqs";
 import { runScarcityHotspots } from "@/lib/agents/l2/scarcityHotspots";
 import type { L2Input, L2Question, L2Result } from "@/lib/agents/l2/types";
@@ -51,7 +51,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Question not yet supported" }, { status: 501 });
   }
 
-  const result = await handler({ tenantId: roleCheck.user.tenantId, scope: parsed.data.scope });
+  const result = await handler({ tenantId: roleCheck.user.tenantId, scope: parsed.data.scope }, {
+    bypassCache: isAdminRole(roleCheck.user.role),
+  });
 
   return NextResponse.json(result);
 }

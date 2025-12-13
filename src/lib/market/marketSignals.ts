@@ -1,5 +1,10 @@
 import { Prisma } from "@prisma/client";
 
+import {
+  intelligenceCache,
+  intelligenceCacheKeys,
+  INTELLIGENCE_CACHE_TTLS,
+} from "@/lib/cache/intelligenceCache";
 import { prisma } from "@/lib/prisma";
 import type { SystemModeName } from "@/lib/modes/systemModes";
 
@@ -50,27 +55,26 @@ type LearningAggregateRow = {
   capturedAt: Date;
 };
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ROLLING_WINDOW_DAYS = 90;
 const LABEL = "Market benchmark (aggregated)";
 
-let cachedAggregate: { fetchedAt: number; rows: LearningAggregateRow[] } | null = null;
+async function loadLearningAggregate(bypassCache: boolean) {
+  const cacheKey = intelligenceCacheKeys.marketSignals({
+    roleFamily: "learning-aggregate",
+    region: "learning-aggregate",
+    systemMode: "aggregate-source",
+  });
 
-function cacheValid(cache: typeof cachedAggregate) {
-  if (!cache) return false;
-  return Date.now() - cache.fetchedAt < CACHE_TTL_MS;
-}
-
-async function loadLearningAggregate() {
-  if (cacheValid(cachedAggregate)) {
-    return cachedAggregate!.rows;
-  }
+  const cached = intelligenceCache.get<LearningAggregateRow[]>(cacheKey);
+  if (cached && !bypassCache) return cached;
 
   const sinceDate = new Date();
   sinceDate.setUTCHours(0, 0, 0, 0);
   sinceDate.setUTCDate(sinceDate.getUTCDate() - (ROLLING_WINDOW_DAYS - 1));
 
-  const rows = await prisma.$queryRaw<LearningAggregateRow[]>(Prisma.sql`
+  const rawQuery =
+    typeof Prisma?.sql === "function"
+      ? Prisma.sql`
     SELECT
       role_family as "roleFamily",
       region,
@@ -82,9 +86,24 @@ async function loadLearningAggregate() {
       captured_at as "capturedAt"
     FROM "LearningAggregate"
     WHERE captured_at >= ${sinceDate}
-  `);
+  `
+      : `
+    SELECT
+      role_family as "roleFamily",
+      region,
+      normalized_skill as "normalizedSkill",
+      confidence,
+      time_to_fill_days as "timeToFillDays",
+      open_roles as "openRoles",
+      active_candidates as "activeCandidates",
+      captured_at as "capturedAt"
+    FROM "LearningAggregate"
+    WHERE captured_at >= ${sinceDate.toISOString()}
+  `;
 
-  cachedAggregate = { fetchedAt: Date.now(), rows };
+  const rows = await prisma.$queryRaw<LearningAggregateRow[]>(rawQuery);
+
+  intelligenceCache.set(cacheKey, rows, INTELLIGENCE_CACHE_TTLS.marketSignalsMs);
   return rows;
 }
 
@@ -176,11 +195,13 @@ export async function getMarketSignals({
   region,
   systemMode = "production",
   timestamp,
+  bypassCache = false,
 }: {
   roleFamily?: string | null;
   region?: string | null;
   systemMode?: SystemModeName;
   timestamp?: Date;
+  bypassCache?: boolean;
 }): Promise<MarketSignals> {
   const capturedAt = timestamp ?? new Date();
 
@@ -199,29 +220,36 @@ export async function getMarketSignals({
     } satisfies MarketSignals;
   }
 
-  const aggregateRows = await loadLearningAggregate();
+  const aggregateRows = await loadLearningAggregate(bypassCache);
   const filtered = aggregateRows.filter((row) => {
     if (roleFamily && row.roleFamily !== roleFamily) return false;
     if (region && row.region !== region) return false;
     return true;
   });
 
-  return {
-    label: LABEL,
-    windowDays: ROLLING_WINDOW_DAYS,
-    roleFamily: roleFamily ?? undefined,
-    region: region ?? undefined,
-    skillScarcity: calculateScarcity(filtered),
-    confidenceByRegion: calculateConfidenceDistribution(filtered),
-    timeToFillBenchmarks: calculateTimeToFill(filtered),
-    oversuppliedRoles: detectOversupplied(filtered),
-    systemMode,
-    capturedAt,
-  };
+  const cacheKey = intelligenceCacheKeys.marketSignals({ systemMode, roleFamily, region });
+
+  return intelligenceCache.getOrCreate(
+    [cacheKey],
+    INTELLIGENCE_CACHE_TTLS.marketSignalsMs,
+    async () => ({
+      label: LABEL,
+      windowDays: ROLLING_WINDOW_DAYS,
+      roleFamily: roleFamily ?? undefined,
+      region: region ?? undefined,
+      skillScarcity: calculateScarcity(filtered),
+      confidenceByRegion: calculateConfidenceDistribution(filtered),
+      timeToFillBenchmarks: calculateTimeToFill(filtered),
+      oversuppliedRoles: detectOversupplied(filtered),
+      systemMode,
+      capturedAt,
+    }),
+    { bypassCache },
+  );
 }
 
 export const __testing = {
   resetCache: () => {
-    cachedAggregate = null;
+    intelligenceCache.invalidateByPrefix(["market-signals"]);
   },
 };

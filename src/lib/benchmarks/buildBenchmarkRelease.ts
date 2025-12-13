@@ -1,5 +1,6 @@
 import type { BenchmarkMetric, BenchmarkRelease, LearningAggregate, PrismaClient } from "@prisma/client";
 
+import { intelligenceCache } from "@/lib/cache/intelligenceCache";
 import { prisma } from "@/lib/prisma";
 import { startTiming } from "@/lib/observability/timing";
 
@@ -164,6 +165,7 @@ export async function buildBenchmarkRelease({
       return { ...release, metrics: persistedMetrics } satisfies BenchmarkReleaseWithMetrics;
     });
 
+<<<<<<< ours
     timer.end({
       cache: { hit: false },
       inputSizes: {
@@ -178,6 +180,14 @@ export async function buildBenchmarkRelease({
   } finally {
     timer.end({ cache: { hit: false } });
   }
+=======
+    intelligenceCache.invalidateByPrefix(["benchmark-release"]);
+    intelligenceCache.invalidateByPrefix(["copilot-evidence"]);
+    intelligenceCache.invalidateByPrefix(["l2"]);
+
+    return { ...release, metrics: persistedMetrics } satisfies BenchmarkReleaseWithMetrics;
+  });
+>>>>>>> theirs
 }
 
 export async function listBenchmarkReleases(client: BenchmarkPrisma = prisma) {

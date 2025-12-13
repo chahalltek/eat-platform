@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/user";
+import { isAdminRole } from "@/lib/auth/roles";
 import { getTimeToFillRisksForTenant } from "@/lib/forecast/timeToFillRisk";
 
 export async function GET(request: NextRequest) {
@@ -10,7 +11,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const risks = await getTimeToFillRisksForTenant(user.tenantId ?? "default-tenant");
+  const risks = await getTimeToFillRisksForTenant(user.tenantId ?? "default-tenant", {
+    bypassCache: isAdminRole(user.role),
+  });
 
   return NextResponse.json({ generatedAt: new Date().toISOString(), risks });
 }

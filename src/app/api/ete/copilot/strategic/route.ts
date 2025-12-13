@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireRole } from "@/lib/auth/requireRole";
-import { USER_ROLES } from "@/lib/auth/roles";
+import { isAdminRole, USER_ROLES } from "@/lib/auth/roles";
 import { gatherEvidence } from "@/lib/copilot/gatherEvidence";
 import {
   generateStrategicCopilotResponse,
@@ -44,7 +44,11 @@ export async function POST(request: NextRequest) {
     scope,
   };
 
-  const evidencePack = await gatherEvidence({ tenantId: copilotRequest.tenantId, scope: copilotRequest.scope });
+  const evidencePack = await gatherEvidence({
+    tenantId: copilotRequest.tenantId,
+    scope: copilotRequest.scope,
+    bypassCache: isAdminRole(roleCheck.user.role),
+  });
   const response = await generateStrategicCopilotResponse({ request: copilotRequest, evidencePack });
 
   try {

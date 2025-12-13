@@ -1,3 +1,4 @@
+import { intelligenceCache, intelligenceCacheKeys, INTELLIGENCE_CACHE_TTLS } from "@/lib/cache/intelligenceCache";
 import { getTimeToFillRisksForTenant, type TimeToFillRisk } from "@/lib/forecast/timeToFillRisk";
 
 import type { L2Input, L2Result } from "./types";
@@ -38,33 +39,45 @@ function buildRationale(risk: TimeToFillRisk) {
   return rationale;
 }
 
-export async function runRiskiestReqs(input: L2Input): Promise<L2Result> {
-  const risks = await getTimeToFillRisksForTenant(input.tenantId);
+export async function runRiskiestReqs(
+  input: L2Input,
+  { bypassCache = false }: { bypassCache?: boolean } = {},
+): Promise<L2Result> {
+  const cacheKey = intelligenceCacheKeys.l2("RISKIEST_REQS", input.tenantId, JSON.stringify(input.scope ?? {}));
 
-  const items = risks
-    .map((risk) => {
-      const score = computeRiskScore(risk);
-      const rationale = buildRationale(risk);
+  return intelligenceCache.getOrCreate(
+    [cacheKey],
+    INTELLIGENCE_CACHE_TTLS.l2QueriesMs,
+    async () => {
+      const risks = await getTimeToFillRisksForTenant(input.tenantId, { bypassCache });
+
+      const items = risks
+        .map((risk) => {
+          const score = computeRiskScore(risk);
+          const rationale = buildRationale(risk);
+
+          return {
+            title: risk.jobTitle ?? "Untitled req",
+            score,
+            rationale,
+            references: [
+              { type: "job_req", id: risk.jobId, label: risk.jobTitle ?? risk.jobId },
+              { type: "signal", label: "Time-to-fill risk forecast" },
+              { type: "signal", label: "Confidence health" },
+            ],
+          } satisfies L2Result["items"][number];
+        })
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return a.title.localeCompare(b.title);
+        });
 
       return {
-        title: risk.jobTitle ?? "Untitled req",
-        score,
-        rationale,
-        references: [
-          { type: "job_req", id: risk.jobId, label: risk.jobTitle ?? risk.jobId },
-          { type: "signal", label: "Time-to-fill risk forecast" },
-          { type: "signal", label: "Confidence health" },
-        ],
-      } satisfies L2Result["items"][number];
-    })
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.title.localeCompare(b.title);
-    });
-
-  return {
-    question: "RISKIEST_REQS",
-    generatedAt: new Date().toISOString(),
-    items,
-  } satisfies L2Result;
+        question: "RISKIEST_REQS",
+        generatedAt: new Date().toISOString(),
+        items,
+      } satisfies L2Result;
+    },
+    { bypassCache },
+  );
 }

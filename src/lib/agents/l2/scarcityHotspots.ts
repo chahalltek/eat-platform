@@ -1,3 +1,4 @@
+import { intelligenceCache, intelligenceCacheKeys, INTELLIGENCE_CACHE_TTLS } from "@/lib/cache/intelligenceCache";
 import { getMarketSignals } from "@/lib/market/marketSignals";
 
 import type { L2Input, L2Result } from "./types";
@@ -18,49 +19,63 @@ function calculateScore({
   return Math.round((scarcityWeight + demandWeight + velocityDrag) * 100) / 100;
 }
 
-export async function runScarcityHotspots(input: L2Input): Promise<L2Result> {
-  const signals = await getMarketSignals({
-    roleFamily: input.scope?.roleFamily,
-    region: input.scope?.region,
-  });
+export async function runScarcityHotspots(
+  input: L2Input,
+  { bypassCache = false }: { bypassCache?: boolean } = {},
+): Promise<L2Result> {
+  const cacheKey = intelligenceCacheKeys.l2("SCARCITY_HOTSPOTS", input.tenantId, JSON.stringify(input.scope ?? {}));
 
-  const items = signals.skillScarcity
-    .map((entry) => {
-      const timeToFill = signals.timeToFillBenchmarks.find(
-        (benchmark) => benchmark.roleFamily === entry.roleFamily && (!input.scope?.region || benchmark.region === input.scope.region),
-      );
-      const score = calculateScore({
-        scarcityIndex: entry.scarcityIndex,
-        demand: entry.demand,
-        p90Days: timeToFill?.p90Days ?? null,
+  return intelligenceCache.getOrCreate(
+    [cacheKey],
+    INTELLIGENCE_CACHE_TTLS.l2QueriesMs,
+    async () => {
+      const signals = await getMarketSignals({
+        roleFamily: input.scope?.roleFamily,
+        region: input.scope?.region,
+        bypassCache,
       });
-      const confidenceSamples = signals.confidenceByRegion.reduce((sum, region) => sum + region.total, 0);
-      const rationale = [
-        `Scarcity index ${entry.scarcityIndex} driven by demand ${entry.demand} vs supply ${entry.supply}.`,
-        timeToFill
-          ? `P90 time-to-fill at ${timeToFill.p90Days}d indicates sustained pressure.`
-          : "Limited benchmark samples; using aggregate scarcity signal.",
-        `Confidence mix tracked across ${confidenceSamples} recent observations.`,
-      ];
+
+      const items = signals.skillScarcity
+        .map((entry) => {
+          const timeToFill = signals.timeToFillBenchmarks.find(
+            (benchmark) =>
+              benchmark.roleFamily === entry.roleFamily && (!input.scope?.region || benchmark.region === input.scope.region),
+          );
+          const score = calculateScore({
+            scarcityIndex: entry.scarcityIndex,
+            demand: entry.demand,
+            p90Days: timeToFill?.p90Days ?? null,
+          });
+          const confidenceSamples = signals.confidenceByRegion.reduce((sum, region) => sum + region.total, 0);
+          const rationale = [
+            `Scarcity index ${entry.scarcityIndex} driven by demand ${entry.demand} vs supply ${entry.supply}.`,
+            timeToFill
+              ? `P90 time-to-fill at ${timeToFill.p90Days}d indicates sustained pressure.`
+              : "Limited benchmark samples; using aggregate scarcity signal.",
+            `Confidence mix tracked across ${confidenceSamples} recent observations.`,
+          ];
+
+          return {
+            title: `${entry.roleFamily} (${entry.demand} open roles)`,
+            score,
+            rationale,
+            references: [
+              { type: "market_signal", label: signals.label },
+              { type: "benchmark", label: `${entry.roleFamily} ${signals.region ?? "all regions"}` },
+            ],
+          } satisfies L2Result["items"][number];
+        })
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return a.title.localeCompare(b.title);
+        });
 
       return {
-        title: `${entry.roleFamily} (${entry.demand} open roles)`,
-        score,
-        rationale,
-        references: [
-          { type: "market_signal", label: signals.label },
-          { type: "benchmark", label: `${entry.roleFamily} ${signals.region ?? "all regions"}` },
-        ],
-      } satisfies L2Result["items"][number];
-    })
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.title.localeCompare(b.title);
-    });
-
-  return {
-    question: "SCARCITY_HOTSPOTS",
-    generatedAt: new Date().toISOString(),
-    items,
-  } satisfies L2Result;
+        question: "SCARCITY_HOTSPOTS",
+        generatedAt: new Date().toISOString(),
+        items,
+      } satisfies L2Result;
+    },
+    { bypassCache },
+  );
 }
