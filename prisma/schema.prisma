@@ -946,6 +946,14 @@ model LearningAggregate {
   @@index([roleFamily, industry, region])
 }
 
+model EteIndexSnapshot {
+  id         String   @id @default(cuid())
+  period     String   @unique // "2026-Q1"
+  value      Float
+  components Json
+  createdAt  DateTime @default(now())
+}
+
 model BenchmarkRelease {
   id          String   @id @default(cuid())
   version     String
