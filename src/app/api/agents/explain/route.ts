@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import type { Prisma, UsageEventType } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import type { UsageEventType } from "@prisma/client";
 
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
