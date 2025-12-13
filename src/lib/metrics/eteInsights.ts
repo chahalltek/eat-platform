@@ -90,6 +90,23 @@ export type LearningPauseIndicator = {
   impact: string;
 };
 
+export type DecisionStream = {
+  stream: string;
+  totalReviews: number;
+  jobsTouched: number;
+  averageReviewed: number;
+  positive: number;
+  negative: number;
+  approvalRate: number;
+};
+
+export type FeedbackOutcome = {
+  outcome: string;
+  total: number;
+  positive: number;
+  negative: number;
+};
+
 export type EteInsightsMetrics = {
   pipelineRuns: TimeSeriesBucket[];
   matchRunsByMode: ModeBreakdown[];
@@ -106,6 +123,8 @@ export type EteInsightsMetrics = {
   roleFamilyInsights: RoleFamilyInsight[];
   optimizationBacklog: OptimizationBacklogItem[];
   learningPauses: LearningPauseIndicator[];
+  decisionStreams: DecisionStream[];
+  feedbackOutcomes: FeedbackOutcome[];
 };
 
 function buildDateBuckets(days: number): Record<string, TimeSeriesBucket> {
@@ -211,6 +230,7 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     jobPredictiveInputs,
     candidateSkillCounts,
     recruiterBehaviorEvents,
+    feedbackEntries,
   ] = await Promise.all([
     prisma.agentRun.findMany({
       where: { tenantId, startedAt: { gte: sinceDate } },
@@ -269,6 +289,10 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
         },
       },
       select: { eventType: true, meta: true },
+    }),
+    prisma.matchFeedback.findMany({
+      where: { tenantId, createdAt: { gte: sinceDate } },
+      select: { outcome: true, feedback: true, jobReqId: true },
     }),
   ]);
 
@@ -497,6 +521,63 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     },
   ];
 
+  const feedbackOutcomeMap = feedbackEntries.reduce<
+    Record<
+      string,
+      { positive: number; negative: number; total: number; jobIds: Set<string> }
+    >
+  >((acc, entry) => {
+    const stream = entry.outcome?.trim() || 'UNKNOWN';
+    const record = acc[stream] ?? {
+      positive: 0,
+      negative: 0,
+      total: 0,
+      jobIds: new Set<string>(),
+    };
+
+    if (entry.feedback === 'positive') {
+      record.positive += 1;
+    } else if (entry.feedback === 'negative') {
+      record.negative += 1;
+    }
+
+    record.total += 1;
+
+    if (entry.jobReqId) {
+      record.jobIds.add(entry.jobReqId);
+    }
+
+    acc[stream] = record;
+    return acc;
+  }, {});
+
+  const feedbackOutcomes = Object.entries(feedbackOutcomeMap)
+    .map(([outcome, record]) => ({
+      outcome,
+      positive: record.positive,
+      negative: record.negative,
+      total: record.total,
+    }))
+    .sort((a, b) => b.total - a.total || a.outcome.localeCompare(b.outcome));
+
+  const decisionStreams: DecisionStream[] = Object.entries(feedbackOutcomeMap)
+    .map(([stream, record]) => {
+      const jobsTouched = record.jobIds.size;
+      const averageReviewed = jobsTouched > 0 ? record.total / jobsTouched : record.total;
+      const approvalRate = record.total > 0 ? record.positive / record.total : 0;
+
+      return {
+        stream,
+        totalReviews: record.total,
+        jobsTouched,
+        averageReviewed,
+        positive: record.positive,
+        negative: record.negative,
+        approvalRate,
+      } satisfies DecisionStream;
+    })
+    .sort((a, b) => b.totalReviews - a.totalReviews || a.stream.localeCompare(b.stream));
+
   return {
     pipelineRuns,
     matchRunsByMode: matchRunsByModeList,
@@ -513,6 +594,8 @@ export async function getEteInsightsMetrics(tenantId: string): Promise<EteInsigh
     roleFamilyInsights,
     optimizationBacklog,
     learningPauses,
+    decisionStreams,
+    feedbackOutcomes,
   };
 }
 

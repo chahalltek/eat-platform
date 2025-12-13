@@ -3,12 +3,16 @@ import {
   ArrowTrendingUpIcon,
   BeakerIcon,
   ChartBarIcon,
+  ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
   ClockIcon,
   ExclamationTriangleIcon,
+  HandThumbDownIcon,
+  HandThumbUpIcon,
   PauseCircleIcon,
   ShieldCheckIcon,
   SignalIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
@@ -338,6 +342,170 @@ function TrendBadge({ value }: { value: number }) {
   );
 }
 
+function DecisionStreams({
+  streams,
+}: {
+  streams: Awaited<ReturnType<typeof getEteInsightsMetrics>>["decisionStreams"];
+}) {
+  const formatLabel = (label: string) => label.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
+            <ChatBubbleLeftRightIcon className="h-4 w-4" aria-hidden />
+            Decision streams
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">How feedback flows</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Avg. candidates reviewed per stream and approval mix.</p>
+        </div>
+        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+          Read-only
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {streams.length === 0 ? (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">No feedback captured in this window.</p>
+        ) : (
+          streams.map((stream) => {
+            const totalVotes = stream.positive + stream.negative;
+            const positivePct = totalVotes > 0 ? (stream.positive / totalVotes) * 100 : 0;
+            const negativePct = totalVotes > 0 ? (stream.negative / totalVotes) * 100 : 0;
+
+            return (
+              <div
+                key={stream.stream}
+                className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/60"
+              >
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                    <span>{formatLabel(stream.stream)}</span>
+                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-100">
+                      {stream.totalReviews} feedback
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                    <ClockIcon className="h-4 w-4" aria-hidden />
+                    Avg reviewed per job: {stream.averageReviewed.toFixed(1)}
+                    <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                      {stream.jobsTouched} jobs
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-sm font-medium">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-200">
+                    <HandThumbUpIcon className="h-4 w-4" aria-hidden />
+                    <span>{stream.positive} 👍</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-200">
+                    <HandThumbDownIcon className="h-4 w-4" aria-hidden />
+                    <span>{stream.negative} 👎</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                    <TrendBadge value={(stream.approvalRate * 100 - 50) / 10} />
+                    <span className="font-semibold">{(stream.approvalRate * 100).toFixed(1)}% 👍 rate</span>
+                  </div>
+                </div>
+
+                <div className="flex h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                  <div className="h-full bg-emerald-500" style={{ width: `${positivePct}%` }} aria-label="Positive ratio" />
+                  <div className="h-full bg-amber-500" style={{ width: `${negativePct}%` }} aria-label="Negative ratio" />
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FeedbackSignalsCard({
+  outcomes,
+}: {
+  outcomes: Awaited<ReturnType<typeof getEteInsightsMetrics>>["feedbackOutcomes"];
+}) {
+  return (
+    <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm dark:border-indigo-900/60 dark:bg-zinc-900">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
+            <SignalIcon className="h-4 w-4" aria-hidden />
+            Feedback signals
+          </div>
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Outcome view</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Admins can review feedback and outcomes; automation stays off.</p>
+        </div>
+        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">
+          Signals only
+        </span>
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <table className="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
+          <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-[0.1em] text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-300">
+            <tr>
+              <th className="px-4 py-3">Outcome</th>
+              <th className="px-4 py-3">👍</th>
+              <th className="px-4 py-3">👎</th>
+              <th className="px-4 py-3">Total</th>
+              <th className="px-4 py-3 text-right">👍 ratio</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-900">
+            {outcomes.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">
+                  No feedback outcomes yet.
+                </td>
+              </tr>
+            ) : (
+              outcomes.map((row) => {
+                const ratio = row.total > 0 ? (row.positive / row.total) * 100 : 0;
+                return (
+                  <tr key={row.outcome} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                    <td className="px-4 py-3 font-medium capitalize text-zinc-900 dark:text-zinc-50">{row.outcome.toLowerCase()}</td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{row.positive}</td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{row.negative}</td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{row.total}</td>
+                    <td className="px-4 py-3 text-right text-zinc-700 dark:text-zinc-200">{ratio.toFixed(1)}%</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xs text-indigo-700 dark:text-indigo-200">
+        Clear separation: these signals are visible for admins; no automated tuning is triggered.
+      </p>
+    </div>
+  );
+}
+
+function OptimizationPlaceholder() {
+  return (
+    <div className="flex h-full flex-col gap-3 rounded-2xl border border-dashed border-zinc-300 bg-white p-6 text-left shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-400">
+          <SparklesIcon className="h-4 w-4" aria-hidden />
+          Optimization
+        </div>
+        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+          Coming soon
+        </span>
+      </div>
+      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Optimization suggestions coming soon</h3>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        We are collecting decision and feedback signals now. Automations stay paused until optimization workflows are ready.
+      </p>
+    </div>
+  );
+}
+
 function MatchQualityTimeline({
   data,
 }: {
@@ -653,6 +821,13 @@ export default async function EteInsightsPage() {
           <BehaviorInsightsCard insights={metrics.recruiterBehavior} />
 
           <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <DecisionStreams streams={metrics.decisionStreams} />
+            </div>
+            <FeedbackSignalsCard outcomes={metrics.feedbackOutcomes} />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
             <EstimateTrendChart
               title="Estimated time-to-fill (est.)"
               description="Average forecast for jobs created each day"
@@ -684,7 +859,10 @@ export default async function EteInsightsPage() {
             <RoleFamilyInsights data={metrics.roleFamilyInsights} />
           </div>
 
-          <OptimizationBacklog data={metrics.optimizationBacklog} />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <OptimizationBacklog data={metrics.optimizationBacklog} />
+            <OptimizationPlaceholder />
+          </div>
         </div>
       </main>
     </ETEClientLayout>
