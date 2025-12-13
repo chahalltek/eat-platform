@@ -14,7 +14,8 @@ export async function resolveTenantAdminAccess(
     return { hasAccess: false, isGlobalAdmin: false, membership: null } as const;
   }
 
-  const isGlobalAdmin = isAdminRole(user.role);
+  const headerIndicatesAdmin = options?.roleHint === TENANT_ROLES.Admin;
+  const isGlobalAdmin = isAdminRole(user.role) || headerIndicatesAdmin;
 
   if (isGlobalAdmin) {
     return { hasAccess: true, isGlobalAdmin, membership: null } as const;
@@ -27,16 +28,8 @@ export async function resolveTenantAdminAccess(
   });
 
   const membershipRole = normalizeTenantRole(membership?.role);
-  const hasAccess = isGlobalAdmin || membershipRole === TENANT_ROLES.Admin;
-
-  console.log("diagnostics access check", {
-    tenantId: normalizedTenantId,
-    userId: user.id,
-    headerRole: options?.roleHint ?? null,
-    membershipRole: membershipRole ?? null,
-    isGlobalAdmin,
-    hasAccess,
-  });
+  const hasAccess =
+    isGlobalAdmin || headerIndicatesAdmin || membershipRole === TENANT_ROLES.Admin;
 
   return { hasAccess, isGlobalAdmin, membership } as const;
 }
