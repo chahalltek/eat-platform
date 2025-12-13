@@ -4,10 +4,11 @@ import { approveInsightSnapshot, assertAdminAccess } from '@/lib/publishing/insi
 
 export const dynamic = 'force-dynamic';
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     await assertAdminAccess(request);
-    const snapshot = await approveInsightSnapshot(params.id);
+    const { id } = await context.params;
+    const snapshot = await approveInsightSnapshot(id);
     return NextResponse.json({ snapshot }, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to approve insight snapshot';
