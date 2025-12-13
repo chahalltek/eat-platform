@@ -141,13 +141,18 @@ function bucketByDay(records: Date[], days = DAYS_OF_HISTORY) {
 }
 
 function averageBucketByDay(records: { date: Date; value: number }[], days = DAYS_OF_HISTORY): AverageSeriesBucket[] {
-  const buckets = buildDateBuckets(days) as Record<string, AverageSeriesBucket & { total: number }>;
-
-  for (const key of Object.keys(buckets)) {
-    buckets[key].value = 0;
-    buckets[key].samples = 0;
-    buckets[key].total = 0;
-  }
+  const buckets = Object.entries(buildDateBuckets(days)).reduce<
+    Record<string, AverageSeriesBucket & { total: number }>
+  >((acc, [key, bucket]) => {
+    acc[key] = {
+      date: bucket.date,
+      label: bucket.label,
+      value: 0,
+      samples: 0,
+      total: 0,
+    };
+    return acc;
+  }, {});
 
   for (const record of records) {
     const dateKey = new Date(record.date).toISOString().slice(0, 10);
