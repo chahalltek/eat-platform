@@ -1,4 +1,4 @@
-import type { PrismaClient, UsageEventType } from '@prisma/client';
+import type { Prisma, PrismaClient, UsageEventType } from '@prisma/client';
 
 import * as PrismaService from '@/lib/prisma';
 
@@ -6,7 +6,7 @@ export type UsageEventPayload = {
   tenantId: string;
   eventType: UsageEventType;
   count?: number;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
   occurredAt?: Date;
 };
 
