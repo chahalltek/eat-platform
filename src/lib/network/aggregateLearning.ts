@@ -41,6 +41,9 @@ export async function runLearningAggregation(options?: {
   minimumSampleSize?: number;
   referenceDate?: Date;
 }) {
+  const isLearningSignalType = (value: string): value is LearningSignalType =>
+    value === "skill_scarcity" || value === "confidence_dist" || value === "time_to_fill";
+
   const minimumSampleSize = options?.minimumSampleSize ?? DEFAULT_MINIMUM_SAMPLE_SIZE;
   const referenceDate = options?.referenceDate ?? new Date();
   const aggregationWeek = startOfWeek(referenceDate);
@@ -62,11 +65,15 @@ export async function runLearningAggregation(options?: {
     (signal) => signal.sampleSize >= minimumSampleSize && tenantIds.includes(signal.tenantId),
   );
 
-  if (eligibleSignals.length === 0) {
+  const typedSignals = eligibleSignals.filter((signal): signal is typeof signal & { signalType: LearningSignalType } =>
+    isLearningSignalType(signal.signalType),
+  );
+
+  if (typedSignals.length === 0) {
     return {
       created: 0,
       tenantsConsidered: tenantIds.length,
-      signalsEvaluated: rawSignals.length,
+      signalsEvaluated: typedSignals.length,
     } satisfies AggregationResult;
   }
 
@@ -83,7 +90,7 @@ export async function runLearningAggregation(options?: {
     }
   >();
 
-  for (const signal of eligibleSignals) {
+  for (const signal of typedSignals) {
     const key = [
       signal.roleFamily,
       signal.industry ?? "",
@@ -148,6 +155,6 @@ export async function runLearningAggregation(options?: {
   return {
     created: aggregates.length,
     tenantsConsidered: tenantIds.length,
-    signalsEvaluated: eligibleSignals.length,
+    signalsEvaluated: typedSignals.length,
   } satisfies AggregationResult;
 }
