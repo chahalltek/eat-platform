@@ -8,7 +8,6 @@ import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScor
 import { categorizeConfidence } from "./confidence";
 import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
 import { prisma } from "@/lib/prisma";
-import { ShortlistActions } from "./ShortlistActions";
 
 export default async function JobMatchesPage({
   params,
@@ -220,10 +219,7 @@ export default async function JobMatchesPage({
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-          <ShortlistActions jobId={job.id} matches={matchRows} />
-        </div>
-        <JobMatchesTable matches={matchRows} jobTitle={job.title} />
+        <JobMatchesTable matches={matchRows} jobTitle={job.title} jobId={job.id} />
       </div>
     </div>
   );

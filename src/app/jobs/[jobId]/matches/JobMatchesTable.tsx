@@ -12,10 +12,14 @@ import { JobCandidateStatus } from "@prisma/client";
 import { MatchFeedbackControls } from "./MatchFeedbackControls";
 import { JobCandidateStatusControl } from "./JobCandidateStatusControl";
 import { OutreachGenerator } from "./OutreachGenerator";
+import { ShortlistActions } from "./ShortlistActions";
 import type { CandidateSignalBreakdown } from "@/lib/matching/candidateSignals";
 import { normalizeMatchExplanation } from "@/lib/matching/explanation";
 import { LOW_CONFIDENCE_THRESHOLD, categorizeConfidence } from "./confidence";
 import { logRecruiterBehavior } from "@/lib/metrics/recruiterBehaviorClient";
+import { buildJustification } from "@/lib/agents/justificationEngine";
+import type { JustificationInput } from "@/lib/agents/justificationEngine";
+import type { ConfidenceBand } from "@/lib/agents/confidenceEngine.v2";
 
 export type MatchRow = {
   id: string;
@@ -55,7 +59,9 @@ const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
   return values.some((value) => value.toString().toLowerCase().includes(query));
 };
 
-export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jobTitle: string }) {
+type JustificationState = "idle" | "loading" | "success" | "error";
+
+export function JobMatchesTable({ matches, jobTitle, jobId }: { matches: MatchRow[]; jobTitle: string; jobId: string }) {
   const [shortlistState, setShortlistState] = useState<Map<string, ShortlistState>>(
     () =>
       new Map(
@@ -75,6 +81,7 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
   const [isExplainOpen, setIsExplainOpen] = useState(false);
   const [isExplainLoading, setIsExplainLoading] = useState(false);
   const [explainError, setExplainError] = useState<string | null>(null);
+  const [justificationStates, setJustificationStates] = useState<Record<string, JustificationState>>({});
 
   const shortlistStateFor = useCallback(
     (matchId: string): ShortlistState => {
@@ -253,6 +260,71 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
     return scopedMatches;
   }, [hideLowConfidence, matchesWithShortlist, showShortlistedOnly]);
 
+  const setJustificationState = useCallback((matchId: string, state: JustificationState) => {
+    setJustificationStates((current) => ({ ...current, [matchId]: state }));
+  }, []);
+
+  const buildJustificationInput = useCallback(
+    (match: MatchRow): JustificationInput => {
+      const confidenceBand = (match.confidenceCategory ?? categorizeConfidence(match.confidenceScore))?.toUpperCase() as
+        | ConfidenceBand
+        | undefined;
+
+      return {
+        job: {
+          id: match.jobId,
+          title: match.jobTitle ?? match.jobId,
+          skills: (match.jobSkills ?? []).map((skill) => ({ name: skill })),
+          location: match.candidateLocation,
+          seniorityLevel: match.jobCandidateStatus,
+        },
+        candidate: {
+          id: match.candidateId,
+          name: match.candidateName,
+          location: match.candidateLocation,
+          seniorityLevel: match.category,
+          skills: (match.keySkills ?? []).map((skill) => ({ name: skill })),
+        },
+        match: {
+          candidateId: match.candidateId,
+          score: typeof match.score === "number" ? match.score : 0,
+          signals: {
+            mustHaveSkillsCoverage: 0.5,
+            niceToHaveSkillsCoverage: 0.5,
+            experienceAlignment: 0.5,
+            locationAlignment: match.candidateLocation ? 0.6 : 0.5,
+          },
+        },
+        confidence:
+          confidenceBand && typeof match.confidenceScore === "number"
+            ? { band: confidenceBand, reasons: match.confidenceReasons ?? [], candidateId: match.candidateId, score: match.confidenceScore }
+            : undefined,
+        explanation: match.explanation as JustificationInput["explanation"],
+      };
+    },
+    [],
+  );
+
+  const handleCopyJustification = useCallback(
+    async (match: MatchRow) => {
+      setJustificationState(match.id, "loading");
+
+      try {
+        if (!navigator?.clipboard?.writeText) {
+          throw new Error("Clipboard API not available");
+        }
+
+        const justification = buildJustification(buildJustificationInput(match));
+        await navigator.clipboard.writeText(`${justification.subject}\n\n${justification.body}`);
+        setJustificationState(match.id, "success");
+      } catch (error) {
+        console.error("Failed to copy justification", error);
+        setJustificationState(match.id, "error");
+      }
+    },
+    [buildJustificationInput, setJustificationState],
+  );
+
   const columns = useMemo<ETETableColumn<MatchRow>[]>(
     () => [
       {
@@ -398,11 +470,30 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
           </button>
         ),
       },
+      {
+        id: "justification",
+        header: "Justification",
+        enableSorting: false,
+        cell: ({ row }) => {
+          const status = justificationStates[row.original.id] ?? "idle";
+          return (
+            <button
+              type="button"
+              onClick={() => void handleCopyJustification(row.original)}
+              className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100"
+            >
+              {status === "success" ? "Copied" : status === "loading" ? "Copying…" : "Copy justification"}
+            </button>
+          );
+        },
+      },
     ],
     [
+      handleCopyJustification,
       handleExplain,
       handleShortlistSave,
       handleShortlistToggle,
+      justificationStates,
       savingShortlists,
       shortlistErrors,
       shortlistStateFor,
@@ -412,6 +503,9 @@ export function JobMatchesTable({ matches, jobTitle }: { matches: MatchRow[]; jo
 
   return (
     <>
+      <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+        <ShortlistActions jobId={jobId} matches={filteredMatches} />
+      </div>
       <StandardTable
         data={filteredMatches}
         columns={columns}

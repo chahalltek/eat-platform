@@ -15,13 +15,55 @@ type ExportState = "idle" | "loading" | "success" | "error";
 
 export function ShortlistActions({ jobId, matches }: Props) {
   const shortlisted = useMemo(
-    () => matches.filter((match) => match.jobCandidateStatus === JobCandidateStatus.SHORTLISTED),
+    () =>
+      matches
+        .filter((match) => match.shortlisted ?? match.jobCandidateStatus === JobCandidateStatus.SHORTLISTED)
+        .map((match) => ({
+          ...match,
+          confidenceBand: match.confidenceCategory ?? null,
+        })),
     [matches],
   );
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [exportState, setExportState] = useState<ExportState>("idle");
 
-  async function handleExportShortlist() {
+  const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+
+  function formatPercent(value?: number | null) {
+    if (typeof value !== "number") return "—";
+    return `${Math.round(value)}%`;
+  }
+
+  function deriveStrengths(match: MatchRow): string[] {
+    const explanation = match.explanation as { topReasons?: string[] } | undefined;
+    const reasons = explanation?.topReasons ?? [];
+    const skills = match.keySkills ?? [];
+    const combined = [...reasons, ...skills.map((skill) => `${skill} coverage`)];
+
+    while (combined.length < 3) {
+      combined.push("Relevant strengths recorded by the matcher.");
+    }
+
+    return combined.slice(0, 3);
+  }
+
+  function deriveRisks(match: MatchRow): string[] {
+    const explanation = match.explanation as { riskAreas?: string[] } | undefined;
+    const risks = explanation?.riskAreas ?? [];
+
+    if (risks.length === 0) {
+      return ["No critical risks recorded", "Confirm details during outreach"];
+    }
+
+    const padded = [...risks];
+    while (padded.length < 2) {
+      padded.push("Confirm role expectations in follow-up.");
+    }
+
+    return padded.slice(0, 2);
+  }
+
+  async function handleDownloadCsv() {
     setExportState("loading");
 
     if (shortlisted.length === 0) {
@@ -29,33 +71,45 @@ export function ShortlistActions({ jobId, matches }: Props) {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/agents/shortlist/export?jobReqId=${encodeURIComponent(jobId)}`);
+    const headers = [
+      "Candidate",
+      "Score",
+      "Confidence",
+      "Top strength 1",
+      "Top strength 2",
+      "Top strength 3",
+      "Risk 1",
+      "Risk 2",
+    ];
 
-      if (!response.ok) {
-        throw new Error("Export failed");
-      }
+    const rows = shortlisted.map((match) => {
+      const strengths = deriveStrengths(match);
+      const risks = deriveRisks(match);
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `shortlist_${jobId}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      return [
+        match.candidateName ?? "Name not provided",
+        formatPercent(match.score),
+        match.confidenceCategory ?? "—",
+        strengths[0],
+        strengths[1],
+        strengths[2],
+        risks[0],
+        risks[1],
+      ];
+    });
 
-      setExportState("success");
-    } catch (error) {
-      console.error("Failed to export shortlist", error);
-      setExportState("error");
-    }
-  }
+    const csvLines = [headers.map(escapeCsv).join(","), ...rows.map((row) => row.map(escapeCsv).join(","))];
+    const blob = new Blob([csvLines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `shortlist_${jobId}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-  function formatPercent(value?: number | null) {
-    if (typeof value !== "number") return "—";
-    return `${Math.round(value)}%`;
+    setExportState("success");
   }
 
   async function handleCopyShortlist() {
@@ -117,11 +171,11 @@ export function ShortlistActions({ jobId, matches }: Props) {
         </button>
         <button
           type="button"
-          onClick={handleExportShortlist}
+          onClick={handleDownloadCsv}
           disabled={shortlisted.length === 0 || exportState === "loading"}
           className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
         >
-          {exportState === "loading" ? "Exporting…" : "Export shortlist"}
+          {exportState === "loading" ? "Preparing…" : "Download shortlist CSV"}
         </button>
       </div>
     </div>

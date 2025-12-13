@@ -75,7 +75,7 @@ function RunMatcherView() {
       {matches.length === 0 ? (
         <p>No matches yet</p>
       ) : (
-        <JobMatchesTable matches={matches} jobTitle="Test job" />
+        <JobMatchesTable matches={matches} jobTitle="Test job" jobId="job-123" />
       )}
     </div>
   );
@@ -244,6 +244,7 @@ describe("Refactored table views", () => {
           },
         ]}
         jobTitle="Job title"
+        jobId="job-1"
       />,
     );
 
