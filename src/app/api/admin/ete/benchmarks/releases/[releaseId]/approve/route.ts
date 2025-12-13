@@ -20,16 +20,20 @@ function serialize(release: Awaited<ReturnType<typeof getBenchmarkRelease>>) {
   };
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { releaseId: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ releaseId: string }> }
+) {
   const user = await getCurrentUser(request);
+  const { releaseId } = await params;
 
   if (!user || !isAdminRole(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
-    await approveBenchmarkRelease(params.releaseId);
-    const release = await getBenchmarkRelease(params.releaseId);
+    await approveBenchmarkRelease(releaseId);
+    const release = await getBenchmarkRelease(releaseId);
     return NextResponse.json({ release: serialize(release) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to approve release";
