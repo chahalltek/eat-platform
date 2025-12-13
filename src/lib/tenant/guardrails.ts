@@ -4,6 +4,7 @@ import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/lib/prisma
 
 export const guardrailsSchema = z
   .object({
+    preset: z.enum(["conservative", "balanced", "aggressive"]).nullable().optional(),
     scoring: z.object({
       strategy: z.enum(["simple", "weighted"]),
       weights: z.object({
@@ -50,6 +51,7 @@ export const guardrailsSchema = z
 export type TenantGuardrails = z.infer<typeof guardrailsSchema>;
 
 type PartialTenantGuardrails = {
+  preset?: TenantGuardrails["preset"];
   scoring?: Partial<TenantGuardrails["scoring"]>;
   explain?: Partial<TenantGuardrails["explain"]>;
   safety?: Partial<TenantGuardrails["safety"]>;
@@ -58,6 +60,7 @@ type PartialTenantGuardrails = {
 };
 
 export const defaultTenantGuardrails: TenantGuardrails = {
+  preset: null,
   scoring: {
     strategy: "weighted",
     weights: {
@@ -97,6 +100,7 @@ function mergeGuardrails(
   override: PartialTenantGuardrails | null | undefined,
 ): TenantGuardrails {
   return guardrailsSchema.parse({
+    preset: override?.preset ?? defaultTenantGuardrails.preset,
     scoring: {
       strategy: override?.scoring?.strategy ?? defaultTenantGuardrails.scoring.strategy,
       weights: {
@@ -161,6 +165,7 @@ export async function loadTenantGuardrails(tenantId: string): Promise<TenantGuar
     storedGuardrails ??
     (record
       ? {
+          preset: (record as { preset?: TenantGuardrails["preset"] }).preset,
           scoring: record.scoring as Partial<TenantGuardrails["scoring"]> | undefined,
           explain: record.explain as Partial<TenantGuardrails["explain"]> | undefined,
           safety: record.safety as Partial<TenantGuardrails["safety"]> | undefined,
@@ -193,6 +198,7 @@ export async function saveTenantGuardrails(tenantId: string, payload: unknown) {
     where: { tenantId },
     create: {
       tenantId,
+      preset: parsed.preset,
       scoring: parsed.scoring,
       explain: parsed.explain,
       safety: parsed.safety,
@@ -200,6 +206,7 @@ export async function saveTenantGuardrails(tenantId: string, payload: unknown) {
       networkLearning: parsed.networkLearning,
     },
     update: {
+      preset: parsed.preset,
       scoring: parsed.scoring,
       explain: parsed.explain,
       safety: parsed.safety,
