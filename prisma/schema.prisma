@@ -949,4 +949,20 @@ model InsightSnapshot {
 
   @@index([releaseId])
   @@index([status])
+<<<<<<< ours
+=======
+}
+
+model CopilotAudit {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  query     String
+  response  Json
+  evidence  Json
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+>>>>>>> theirs
 }
