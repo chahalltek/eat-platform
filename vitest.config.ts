@@ -5,6 +5,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    setupFiles: ["./vitest.setup.ts"],
+    restoreMocks: true,
+    clearMocks: true,
+    mockReset: true,
     include: ["**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
