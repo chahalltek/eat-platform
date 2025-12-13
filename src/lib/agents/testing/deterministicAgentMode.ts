@@ -19,7 +19,7 @@ type CallLLMParams = {
 
 type DeterministicAgentMode = {
   restore: () => void;
-  llmMock: ReturnType<typeof vi.fn<[(params: CallLLMParams) => Promise<string>]>>;
+  llmMock: ReturnType<typeof vi.fn<(params: CallLLMParams) => Promise<string>>>;
 };
 
 export function enableDeterministicAgentMode(
