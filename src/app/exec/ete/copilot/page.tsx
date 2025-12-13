@@ -1,40 +1,17 @@
-import Link from "next/link";
-
 import { ETEClientLayout } from "@/components/ETEClientLayout";
-import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
+import { canUseStrategicCopilot } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
+import { ExecAccessDenied } from "../ExecAccessDenied";
 import { StrategicCopilotClient } from "./StrategicCopilotClient";
 
 export const dynamic = "force-dynamic";
 
-function AccessDenied() {
-  return (
-    <ETEClientLayout>
-      <main className="mx-auto max-w-4xl px-6 py-12">
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
-          <h1 className="text-xl font-semibold">Access limited to execs and admins</h1>
-          <p className="mt-2 text-sm text-amber-800">
-            The ETE Strategic Copilot is available to executive and admin roles only.
-          </p>
-          <div className="mt-4">
-            <Link href="/" className="text-sm font-medium text-amber-900 underline">
-              Return to home
-            </Link>
-          </div>
-        </div>
-      </main>
-    </ETEClientLayout>
-  );
-}
-
 export default async function StrategicCopilotPage() {
   const user = await getCurrentUser();
-  const role = normalizeRole(user?.role);
-  const allowed =
-    role === USER_ROLES.ADMIN || role === USER_ROLES.SYSTEM_ADMIN || role === USER_ROLES.MANAGER;
+  const allowed = user && canUseStrategicCopilot(user, user.tenantId);
 
   if (!user || !allowed) {
-    return <AccessDenied />;
+    return <ExecAccessDenied />;
   }
 
   const displayName = user.displayName ?? user.email ?? "You";

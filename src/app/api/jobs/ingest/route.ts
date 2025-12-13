@@ -7,8 +7,9 @@ import { getCurrentTenantId } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { recordMetricEvent } from "@/lib/metrics/events";
 import { onJobChanged } from "@/lib/orchestration/triggers";
-
-// TODO: Enforce RBAC/tenant ownership before allowing job ingestion.
+import { getCurrentUser } from "@/lib/auth/user";
+import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 
 const jobSkillSchema = z.object({
   name: z.string().min(1, "Skill name is required"),
@@ -44,7 +45,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: issues }, { status: 400 });
   }
 
-  const tenantId = await getCurrentTenantId();
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const role = normalizeRole(user.role);
+
+  if (!role || (role !== USER_ROLES.ADMIN && role !== USER_ROLES.SYSTEM_ADMIN)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const requestTenantId = await getCurrentTenantId();
+  const isSystemAdmin = role === USER_ROLES.SYSTEM_ADMIN;
+  const tenantId = isSystemAdmin ? requestTenantId : user.tenantId ?? requestTenantId ?? DEFAULT_TENANT_ID;
+
+  if (!isSystemAdmin && user.tenantId && user.tenantId !== requestTenantId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const jobReq = await ingestJob({ ...parsed.data }, prisma);
 

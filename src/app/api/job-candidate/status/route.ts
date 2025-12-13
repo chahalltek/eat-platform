@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 
 import { JobCandidateStatus } from "@prisma/client";
 
-import { isAdminRole } from "@/lib/auth/roles";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { isAdminRole, normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { recordAuditEvent } from "@/lib/audit/trail";
 import { getClientIp } from "@/lib/request/ip";
 import { prisma } from "@/lib/prisma";
-
-// TODO: Add tenant/role-based authorization before allowing status changes.
 
 function parseRequestBody(body: unknown) {
   const { jobCandidateId, status } = (body ?? {}) as {
@@ -41,6 +40,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const role = normalizeRole(user.role);
+
+  if (!role) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userTenantId = user.tenantId ?? DEFAULT_TENANT_ID;
+  const isSystemAdmin = role === USER_ROLES.SYSTEM_ADMIN;
+  const isAdmin = isAdminRole(role);
+
   let body: unknown;
 
   try {
@@ -67,7 +76,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "JobCandidate not found" }, { status: 404 });
     }
 
-    if (!isAdminRole(user.role) && jobCandidate.userId && jobCandidate.userId !== user.id) {
+    if (!isSystemAdmin && jobCandidate.tenantId !== userTenantId) {
+      await recordAuditEvent({
+        action: "JOB_CANDIDATE_STATUS_DENIED",
+        resource: "JobCandidate",
+        resourceId: jobCandidateId,
+        userId: user.id,
+        metadata: { attemptedStatus: parsedStatus, tenantId: jobCandidate.tenantId },
+        ip: ipAddress,
+      });
+
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (!isAdmin && jobCandidate.userId && jobCandidate.userId !== user.id) {
       await recordAuditEvent({
         action: "JOB_CANDIDATE_STATUS_DENIED",
         resource: "JobCandidate",

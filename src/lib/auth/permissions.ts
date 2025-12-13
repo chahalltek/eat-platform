@@ -12,7 +12,9 @@ type Permission =
   | "VIEW_ENVIRONMENT"
   | "VIEW_QUALITY_METRICS"
   | "VIEW_AGENT_LOGS"
-  | "MANAGE_TENANTS";
+  | "MANAGE_TENANTS"
+  | "VIEW_EXEC_INTELLIGENCE"
+  | "USE_STRATEGIC_COPILOT";
 
 const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
   [USER_ROLES.ADMIN]: new Set([
@@ -24,6 +26,8 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "VIEW_QUALITY_METRICS",
     "VIEW_AGENT_LOGS",
     "MANAGE_TENANTS",
+    "VIEW_EXEC_INTELLIGENCE",
+    "USE_STRATEGIC_COPILOT",
   ]),
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS"]),
   [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES"]),
@@ -38,7 +42,10 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "VIEW_QUALITY_METRICS",
     "VIEW_AGENT_LOGS",
     "MANAGE_TENANTS",
+    "VIEW_EXEC_INTELLIGENCE",
+    "USE_STRATEGIC_COPILOT",
   ]),
+  [USER_ROLES.EXEC]: new Set<Permission>(["VIEW_EXEC_INTELLIGENCE", "USE_STRATEGIC_COPILOT"]),
 };
 
 function getUserRole(user: PermissionUser) {
@@ -114,4 +121,12 @@ export function canViewAgentLogs(user: PermissionUser, tenantId?: string | null)
 
 export function canManageTenants(user: PermissionUser) {
   return hasPermission(user, "MANAGE_TENANTS");
+}
+
+export function canAccessExecIntelligence(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "VIEW_EXEC_INTELLIGENCE") && hasTenantAccess(user, tenantId);
+}
+
+export function canUseStrategicCopilot(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "USE_STRATEGIC_COPILOT") && hasTenantAccess(user, tenantId);
 }

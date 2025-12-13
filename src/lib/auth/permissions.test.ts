@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { DEFAULT_TENANT_ID } from "./config";
 import {
+  canAccessExecIntelligence,
   canManageFeatureFlags,
   canManagePrompts,
   canManageTenants,
@@ -10,6 +11,7 @@ import {
   canViewCandidates,
   canViewEnvironment,
   canViewQualityMetrics,
+  canUseStrategicCopilot,
 } from "./permissions";
 import { USER_ROLES } from "./roles";
 
@@ -122,5 +124,33 @@ describe("RBAC permission matrix", () => {
     expect(canViewEnvironment(invalidUser)).toBe(false);
     expect(canViewQualityMetrics(invalidUser)).toBe(false);
     expect(canManageTenants(invalidUser)).toBe(false);
+  });
+
+  it("limits exec intelligence to execs and admins within their tenant", () => {
+    const tenant = "tenant-a";
+
+    expect(canAccessExecIntelligence(buildUser(USER_ROLES.EXEC, tenant), tenant)).toBe(true);
+    expect(canAccessExecIntelligence(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
+    expect(canAccessExecIntelligence(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), tenant)).toBe(true);
+
+    expect(canAccessExecIntelligence(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(false);
+    expect(canAccessExecIntelligence(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
+
+    expect(canAccessExecIntelligence(buildUser(USER_ROLES.EXEC, tenant), "tenant-b")).toBe(false);
+    expect(canAccessExecIntelligence(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
+  });
+
+  it("restricts strategic copilot usage to exec and admin roles with tenant alignment", () => {
+    const tenant = "tenant-a";
+
+    expect(canUseStrategicCopilot(buildUser(USER_ROLES.EXEC, tenant), tenant)).toBe(true);
+    expect(canUseStrategicCopilot(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
+    expect(canUseStrategicCopilot(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), tenant)).toBe(true);
+
+    expect(canUseStrategicCopilot(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(false);
+    expect(canUseStrategicCopilot(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
+
+    expect(canUseStrategicCopilot(buildUser(USER_ROLES.EXEC, tenant), "tenant-b")).toBe(false);
+    expect(canUseStrategicCopilot(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
   });
 });

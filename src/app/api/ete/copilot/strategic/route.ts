@@ -10,7 +10,7 @@ import {
 } from "@/lib/copilot/strategicCopilot";
 
 export async function POST(request: NextRequest) {
-  const roleCheck = await requireRole(request, [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.MANAGER]);
+  const roleCheck = await requireRole(request, [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.EXEC]);
 
   if (!roleCheck.ok) {
     return roleCheck.response;

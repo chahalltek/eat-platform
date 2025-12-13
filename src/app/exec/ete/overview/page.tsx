@@ -2,6 +2,9 @@ import { ArrowTopRightOnSquareIcon, BoltIcon, ChartBarIcon, SparklesIcon } from 
 import Link from "next/link";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
+import { canAccessExecIntelligence } from "@/lib/auth/permissions";
+import { getCurrentUser } from "@/lib/auth/user";
+import { ExecAccessDenied } from "../ExecAccessDenied";
 import { RiskAlertsPanel } from "./RiskAlertsPanel";
 
 const marketSignals = [
@@ -55,7 +58,14 @@ const copilotPrompts = [
   },
 ];
 
-export default function ExecEteOverviewPage() {
+export default async function ExecEteOverviewPage() {
+  const user = await getCurrentUser();
+  const allowed = user && canAccessExecIntelligence(user, user.tenantId);
+
+  if (!user || !allowed) {
+    return <ExecAccessDenied />;
+  }
+
   return (
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-10">
       <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
