@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 import { POST } from "./route";
 
@@ -19,7 +19,7 @@ describe("POST /api/admin/ete/seed-sample-data", () => {
   it("returns 401 when the user is not authenticated", async () => {
     getCurrentUser.mockResolvedValue(null);
 
-    const request = new NextRequest("http://localhost/api/admin/ete/seed-sample-data");
+    const request = makeRequest({ method: "POST", url: "http://localhost/api/admin/ete/seed-sample-data" });
     const response = await POST(request as unknown as Request);
 
     expect(response.status).toBe(401);
@@ -30,7 +30,7 @@ describe("POST /api/admin/ete/seed-sample-data", () => {
     getCurrentUser.mockResolvedValue({ role: "RECRUITER", tenantId: "tenant-a" });
     getCurrentTenantId.mockResolvedValue("tenant-a");
 
-    const request = new NextRequest("http://localhost/api/admin/ete/seed-sample-data");
+    const request = makeRequest({ method: "POST", url: "http://localhost/api/admin/ete/seed-sample-data" });
     const response = await POST(request as unknown as Request);
 
     expect(response.status).toBe(403);
@@ -42,7 +42,7 @@ describe("POST /api/admin/ete/seed-sample-data", () => {
     getCurrentTenantId.mockResolvedValue("tenant-a");
     seedEatSampleData.mockResolvedValue({ jobReqId: "job-1", candidateIds: ["c1", "c2", "c3"] });
 
-    const request = new NextRequest("http://localhost/api/admin/ete/seed-sample-data");
+    const request = makeRequest({ method: "POST", url: "http://localhost/api/admin/ete/seed-sample-data" });
     const response = await POST(request as unknown as Request);
 
     expect(response.status).toBe(200);

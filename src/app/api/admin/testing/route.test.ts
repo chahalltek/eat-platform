@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockComputeMatchScore = vi.hoisted(() => vi.fn());
@@ -27,10 +27,7 @@ describe("POST /api/admin/testing", () => {
   });
 
   const buildRequest = (body: unknown = {}) =>
-    new NextRequest("http://localhost/api/admin/testing", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+    makeRequest({ method: "POST", url: "http://localhost/api/admin/testing", json: body });
 
   it("rejects unauthenticated callers", async () => {
     mockGetCurrentUser.mockResolvedValue(null);

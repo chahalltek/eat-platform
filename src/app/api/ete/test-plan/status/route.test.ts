@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockCanManageFeatureFlags = vi.hoisted(() => vi.fn());
@@ -45,9 +45,9 @@ describe("/api/ete/test-plan/status", () => {
     mockIsValidTestPlanItemId.mockReturnValue(true);
   });
 
-  const buildGetRequest = () => new NextRequest("http://localhost/api/ete/test-plan/status");
+  const buildGetRequest = () => makeRequest({ method: "GET", url: "http://localhost/api/ete/test-plan/status" });
   const buildPostRequest = (body: unknown) =>
-    new NextRequest("http://localhost/api/ete/test-plan/status", { method: "POST", body: JSON.stringify(body) });
+    makeRequest({ method: "POST", url: "http://localhost/api/ete/test-plan/status", json: body });
 
   it("rejects unauthenticated callers", async () => {
     mockGetCurrentUser.mockResolvedValue(null);

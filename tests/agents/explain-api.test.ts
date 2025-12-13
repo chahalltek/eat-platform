@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as explainPost } from "@/app/api/agents/explain/route";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
   mockGetTenantScopedPrismaClient,
@@ -213,7 +213,7 @@ describe("EXPLAIN agent API", () => {
     mockRequireRole.mockResolvedValueOnce({ ok: false, response: new Response(null, { status: 403 }) });
 
     const response = await explainPost(
-      new NextRequest(new Request("http://localhost/api/agents/explain", { method: "POST", body: "{}" })),
+      makeRequest({ method: "POST", url: "http://localhost/api/agents/explain", json: {} }),
     );
 
     expect(response.status).toBe(403);
@@ -222,13 +222,11 @@ describe("EXPLAIN agent API", () => {
 
   it("scopes match lookups to the tenant and records agent runs", async () => {
     const response = await explainPost(
-      new NextRequest(
-        new Request("http://localhost/api/agents/explain", {
-          method: "POST",
-          body: JSON.stringify({ matchId: "match-1" }),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/explain",
+        json: { matchId: "match-1" },
+      }),
     );
 
     const body = await response.json();
@@ -266,13 +264,11 @@ describe("EXPLAIN agent API", () => {
 
   it("reuses a cached explanation when fingerprints match", async () => {
     const firstResponse = await explainPost(
-      new NextRequest(
-        new Request("http://localhost/api/agents/explain", {
-          method: "POST",
-          body: JSON.stringify({ matchId: "match-1" }),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/explain",
+        json: { matchId: "match-1" },
+      }),
     );
 
     expect(firstResponse.status).toBe(200);
@@ -283,13 +279,11 @@ describe("EXPLAIN agent API", () => {
     mockMatchFindFirst.mockResolvedValueOnce({ ...mockMatch, explanation: persistedPayload });
 
     const response = await explainPost(
-      new NextRequest(
-        new Request("http://localhost/api/agents/explain", {
-          method: "POST",
-          body: JSON.stringify({ matchId: "match-1" }),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/explain",
+        json: { matchId: "match-1" },
+      }),
     );
 
     const body = await response.json();
@@ -312,13 +306,11 @@ describe("EXPLAIN agent API", () => {
     mockMatchFindFirst.mockResolvedValueOnce({ ...mockMatch, explanation: JSON.stringify(persisted) });
 
     const response = await explainPost(
-      new NextRequest(
-        new Request("http://localhost/api/agents/explain", {
-          method: "POST",
-          body: JSON.stringify({ matchId: "match-1", force: true }),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/explain",
+        json: { matchId: "match-1", force: true },
+      }),
     );
 
     expect(response.status).toBe(200);
@@ -335,13 +327,11 @@ describe("EXPLAIN agent API", () => {
     mockGetAgentAvailability.mockResolvedValueOnce(fireDrillAvailability);
 
     const response = await explainPost(
-      new NextRequest(
-        new Request("http://localhost/api/agents/explain", {
-          method: "POST",
-          body: JSON.stringify({ matchId: "match-1" }),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/explain",
+        json: { matchId: "match-1" },
+      }),
     );
 
     const body = await response.json();
@@ -356,13 +346,11 @@ describe("EXPLAIN agent API", () => {
     mockIsEnabled.mockReturnValueOnce(false);
 
     const response = await explainPost(
-      new NextRequest(
-        new Request("http://localhost/api/agents/explain", {
-          method: "POST",
-          body: JSON.stringify({ matchId: "match-1" }),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/explain",
+        json: { matchId: "match-1" },
+      }),
     );
 
     expect(response.status).toBe(403);

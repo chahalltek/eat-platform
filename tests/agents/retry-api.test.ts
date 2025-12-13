@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as retryPost } from "@/app/api/agents/runs/[id]/retry/route";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
   mockRunRina,
@@ -40,9 +40,8 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-function buildRequest(runId: string) {
-  return new NextRequest(new Request(`http://localhost/api/agents/runs/${runId}/retry`, { method: "POST" }));
-}
+const buildRequest = (runId: string) =>
+  makeRequest({ method: "POST", url: `http://localhost/api/agents/runs/${runId}/retry` });
 
 describe("agent retry API", () => {
   beforeEach(() => {

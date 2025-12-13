@@ -1,8 +1,8 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as explainJobPost } from "@/app/api/jobs/[jobId]/explain/route";
 import { POST as shortlistJobPost } from "@/app/api/jobs/[jobId]/shortlist/route";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const { mockRunExplainForJob, mockRunShortlist } = vi.hoisted(() => {
   return {
@@ -54,13 +54,11 @@ describe("EXPLAIN and SHORTLIST job endpoints", () => {
 
   it("returns explain results for a job's matches", async () => {
     const response = await explainJobPost(
-      new NextRequest(
-        new Request("http://localhost/api/jobs/job-123/explain", {
-          method: "POST",
-          body: JSON.stringify(explainBody),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/jobs/job-123/explain",
+        json: explainBody,
+      }),
       { params: { jobId: "job-123" } },
     );
 
@@ -80,13 +78,11 @@ describe("EXPLAIN and SHORTLIST job endpoints", () => {
 
   it("returns shortlist metadata for the job", async () => {
     const response = await shortlistJobPost(
-      new NextRequest(
-        new Request("http://localhost/api/jobs/job-123/shortlist", {
-          method: "POST",
-          body: JSON.stringify(shortlistBody),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/jobs/job-123/shortlist",
+        json: shortlistBody,
+      }),
       { params: { jobId: "job-123" } },
     );
 

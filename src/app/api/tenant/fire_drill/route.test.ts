@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
 
@@ -38,7 +38,7 @@ vi.mock("@/lib/auth/permissions", () => ({
 import { POST } from "./route";
 
 describe("POST /api/tenant/fire_drill", () => {
-  const buildRequest = () => new NextRequest("http://localhost/api/tenant/fire_drill");
+  const buildRequest = () => makeRequest({ method: "POST", url: "http://localhost/api/tenant/fire_drill" });
 
   beforeEach(() => {
     vi.clearAllMocks();

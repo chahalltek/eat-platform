@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockGetRisks = vi.hoisted(() => vi.fn());
@@ -15,7 +15,8 @@ vi.mock("@/lib/forecast/timeToFillRisk", () => ({
 import { GET } from "./route";
 
 describe("GET /api/ete/forecast/time-to-fill", () => {
-  const buildRequest = () => new NextRequest("http://localhost/api/ete/forecast/time-to-fill");
+  const buildRequest = () =>
+    makeRequest({ method: "GET", url: "http://localhost/api/ete/forecast/time-to-fill" });
 
   it("rejects unauthenticated requests", async () => {
     mockGetCurrentUser.mockResolvedValue(null);

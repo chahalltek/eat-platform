@@ -1,8 +1,8 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as shortlistPost } from "@/app/api/ete/agents/shortlist/route";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const { mockRequireRole, mockGetAgentAvailability, mockEnforceKillSwitch, mockLoadTenantConfig, mockPrisma } = vi.hoisted(() => {
   return {
@@ -27,15 +27,12 @@ vi.mock("@/lib/agents/killSwitch", () => ({
 vi.mock("@/lib/guardrails/tenantConfig", () => ({ loadTenantConfig: mockLoadTenantConfig }));
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 
-function buildRequest(body: unknown) {
-  return new NextRequest(
-    new Request("http://localhost/api/ete/agents/shortlist", {
-      method: "POST",
-      body: JSON.stringify(body),
-      headers: { "content-type": "application/json" },
-    }),
-  );
-}
+const buildRequest = (body: unknown) =>
+  makeRequest({
+    method: "POST",
+    url: "http://localhost/api/ete/agents/shortlist",
+    json: body,
+  });
 
 describe("ETE SHORTLIST agent endpoint", () => {
   beforeEach(() => {

@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockGetMarketSignals = vi.hoisted(() => vi.fn());
@@ -20,7 +20,8 @@ vi.mock("@/lib/modes/loadTenantMode", () => ({
 import { GET } from "./route";
 
 describe("GET /api/ete/market/signals", () => {
-  const buildRequest = (search = "") => new NextRequest(`http://localhost/api/ete/market/signals${search}`);
+  const buildRequest = (search = "") =>
+    makeRequest({ method: "GET", url: `http://localhost/api/ete/market/signals${search}` });
 
   it("rejects unauthenticated callers", async () => {
     mockGetCurrentUser.mockResolvedValue(null);

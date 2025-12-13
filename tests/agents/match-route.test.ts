@@ -1,8 +1,8 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as matchPost } from "@/app/api/agents/match/route";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
   mockGetTenantScopedPrismaClient,
@@ -155,13 +155,11 @@ describe("/api/agents/match", () => {
 
   it("runs the matcher for the resolved tenant", async () => {
     const response = await matchPost(
-      new NextRequest(
-        new Request("http://localhost/api/agents/match", {
-          method: "POST",
-          body: JSON.stringify(requestPayload),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/match",
+        json: requestPayload,
+      }),
     );
 
     expect(response.status).toBe(200);
@@ -185,13 +183,11 @@ describe("/api/agents/match", () => {
     );
 
     const response = await matchPost(
-      new NextRequest(
-        new Request("http://localhost/api/agents/match", {
-          method: "POST",
-          body: JSON.stringify(requestPayload),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/match",
+        json: requestPayload,
+      }),
     );
 
     expect(response.status).toBe(403);

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockGetCurrentTenantId = vi.hoisted(() => vi.fn());
@@ -24,7 +24,7 @@ describe("POST /api/tenant/export", () => {
     vi.clearAllMocks();
   });
 
-  const buildRequest = () => new NextRequest("http://localhost/api/tenant/export", { method: "POST" });
+  const buildRequest = () => makeRequest({ method: "POST", url: "http://localhost/api/tenant/export" });
 
   it("blocks unauthenticated requests", async () => {
     mockGetCurrentUser.mockResolvedValue(null);

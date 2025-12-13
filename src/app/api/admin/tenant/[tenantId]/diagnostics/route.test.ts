@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockBuildTenantDiagnostics = vi.hoisted(() => vi.fn());
@@ -31,7 +31,8 @@ describe("GET /api/admin/tenant/[tenantId]/diagnostics", () => {
     mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
   });
 
-  const buildRequest = () => new NextRequest("http://localhost/api/admin/tenant/tenant-a/diagnostics");
+  const buildRequest = () =>
+    makeRequest({ method: "GET", url: "http://localhost/api/admin/tenant/tenant-a/diagnostics" });
 
   it("rejects unauthenticated callers", async () => {
     mockGetCurrentUser.mockResolvedValue(null);

@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 import { GET, PATCH } from "./route";
 
@@ -24,7 +24,7 @@ describe("/api/admin/tenants/[tenantId]", () => {
 
   it("blocks non-admin access", async () => {
     getCurrentUser.mockResolvedValue({ role: "recruiter" });
-    const request = new NextRequest("http://localhost/api/admin/tenants/tenant-1");
+    const request = makeRequest({ method: "GET", url: "http://localhost/api/admin/tenants/tenant-1" });
 
     const response = await GET(request, params);
 
@@ -49,7 +49,7 @@ describe("/api/admin/tenants/[tenantId]", () => {
       ],
     });
 
-    const request = new NextRequest("http://localhost/api/admin/tenants/tenant-1");
+    const request = makeRequest({ method: "GET", url: "http://localhost/api/admin/tenants/tenant-1" });
     const response = await GET(request, params);
     const payload = await response.json();
 
@@ -62,7 +62,7 @@ describe("/api/admin/tenants/[tenantId]", () => {
     getCurrentUser.mockResolvedValue({ role: "ADMIN" });
     getTenantPlanDetail.mockRejectedValue(new MockNotFound("not found"));
 
-    const request = new NextRequest("http://localhost/api/admin/tenants/tenant-1");
+    const request = makeRequest({ method: "GET", url: "http://localhost/api/admin/tenants/tenant-1" });
     const response = await GET(request, params);
 
     expect(response.status).toBe(404);
@@ -70,7 +70,7 @@ describe("/api/admin/tenants/[tenantId]", () => {
 
   it("requires planId when updating", async () => {
     getCurrentUser.mockResolvedValue({ role: "ADMIN" });
-    const request = new NextRequest("http://localhost/api/admin/tenants/tenant-1", { method: "PATCH", body: "{}" });
+    const request = makeRequest({ method: "PATCH", url: "http://localhost/api/admin/tenants/tenant-1", body: "{}" });
     const response = await PATCH(request, params);
 
     expect(response.status).toBe(400);
@@ -89,10 +89,10 @@ describe("/api/admin/tenants/[tenantId]", () => {
       trialEndsAt: null,
     });
 
-    const request = new NextRequest("http://localhost/api/admin/tenants/tenant-1", {
+    const request = makeRequest({
       method: "PATCH",
-      body: JSON.stringify({ planId: "plan-b", isTrial: false }),
-      headers: { "content-type": "application/json" },
+      url: "http://localhost/api/admin/tenants/tenant-1",
+      json: { planId: "plan-b", isTrial: false },
     });
 
     const response = await PATCH(request, params);
@@ -110,10 +110,10 @@ describe("/api/admin/tenants/[tenantId]", () => {
     getCurrentUser.mockResolvedValue({ role: "ADMIN" });
     updateTenantPlan.mockRejectedValue(new MockValidation("bad date"));
 
-    const request = new NextRequest("http://localhost/api/admin/tenants/tenant-1", {
+    const request = makeRequest({
       method: "PATCH",
-      body: JSON.stringify({ planId: "plan-b", trialEndsAt: "not-a-date" }),
-      headers: { "content-type": "application/json" },
+      url: "http://localhost/api/admin/tenants/tenant-1",
+      json: { planId: "plan-b", trialEndsAt: "not-a-date" },
     });
 
     const response = await PATCH(request, params);

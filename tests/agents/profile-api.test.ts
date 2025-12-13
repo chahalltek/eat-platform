@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as profilePost } from "@/app/api/agents/profile/route";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const { mockCallLLM, mockCandidateCreate, mockWithAgentRun, createdSkills } = vi.hoisted(() => {
   const createdSkills: Array<{ candidateId: string; name: string } & Record<string, unknown>> = [];
@@ -106,13 +106,11 @@ describe("PROFILE agent API", () => {
   it("persists candidates and skills from mocked LLM output", async () => {
     mockCallLLM.mockResolvedValue(JSON.stringify(llmResponse));
 
-    const request = new NextRequest(
-      new Request("http://localhost/api/agents/profile", {
-        method: "POST",
-        body: JSON.stringify({ rawResumeText: "Jane's resume", sourceType: "upload", sourceTag: "career-site" }),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/agents/profile",
+      json: { rawResumeText: "Jane's resume", sourceType: "upload", sourceTag: "career-site" },
+    });
 
     const response = await profilePost(request);
     const body = await response.json();
@@ -139,13 +137,11 @@ describe("PROFILE agent API", () => {
       role: "SALES",
     });
 
-    const request = new NextRequest(
-      new Request("http://localhost/api/agents/profile", {
-        method: "POST",
-        body: JSON.stringify({ rawResumeText: "text", sourceType: "upload" }),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/agents/profile",
+      json: { rawResumeText: "text", sourceType: "upload" },
+    });
 
     const response = await profilePost(request);
 

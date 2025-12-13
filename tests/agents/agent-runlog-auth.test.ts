@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { POST as rinaPost } from "@/app/api/agents/rina/route";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
   mockAgentRunLogCreate,
@@ -124,13 +124,11 @@ describe("Agent run logging", () => {
       sourceTag: "test-tag",
     };
 
-    const request = new NextRequest(
-      new Request("http://localhost/api/agents/rina", {
-        method: "POST",
-        body: JSON.stringify(requestBody),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/agents/rina",
+      json: requestBody,
+    });
 
     const response = await rinaPost(request);
 

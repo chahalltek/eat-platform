@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 import { GET } from "./route";
 
@@ -17,7 +17,7 @@ describe("GET /api/admin/tenants", () => {
   it("returns 403 for non-admin users", async () => {
     getCurrentUser.mockResolvedValue({ role: "recruiter" });
 
-    const request = new NextRequest("http://localhost/api/admin/tenants");
+    const request = makeRequest({ method: "GET", url: "http://localhost/api/admin/tenants" });
     const response = await GET(request);
 
     expect(response.status).toBe(403);
@@ -38,7 +38,7 @@ describe("GET /api/admin/tenants", () => {
       },
     ]);
 
-    const request = new NextRequest("http://localhost/api/admin/tenants");
+    const request = makeRequest({ method: "GET", url: "http://localhost/api/admin/tenants" });
     const response = await GET(request);
     const payload = await response.json();
 

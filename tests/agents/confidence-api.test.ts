@@ -1,8 +1,8 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as confidencePost } from "@/app/api/jobs/[jobId]/confidence/route";
 import { runConfidence } from "@/lib/agents/confidence";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 vi.mock("@/lib/agents/confidence", async () => {
   const actual = await vi.importActual<typeof import("@/lib/agents/confidence")>(
@@ -40,13 +40,11 @@ describe("CONFIDENCE agent API", () => {
     mockRequireRole.mockResolvedValueOnce({ ok: false, response: new Response(null, { status: 401 }) });
 
     const response = await confidencePost(
-      new NextRequest(
-        new Request("http://localhost/api/jobs/job-123/confidence", {
-          method: "POST",
-          body: JSON.stringify(requestBody),
-          headers: { "content-type": "application/json" },
-        }),
-      ),
+      makeRequest({
+        method: "POST",
+        url: "http://localhost/api/jobs/job-123/confidence",
+        json: requestBody,
+      }),
       context,
     );
 
@@ -55,13 +53,11 @@ describe("CONFIDENCE agent API", () => {
   });
 
   it("passes tenant context to the confidence agent and returns results", async () => {
-    const req = new NextRequest(
-      new Request("http://localhost/api/jobs/job-123/confidence", {
-        method: "POST",
-        body: JSON.stringify(requestBody),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const req = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/jobs/job-123/confidence",
+      json: requestBody,
+    });
 
     const response = await confidencePost(req, context);
     const body = await response.json();

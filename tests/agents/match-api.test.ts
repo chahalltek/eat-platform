@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as matchPost } from "@/app/api/jobs/[jobId]/matcher/route";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
   mockAgentRunLogCreate,
@@ -108,13 +108,11 @@ describe("MATCH agent API", () => {
   });
 
   it("returns matches and records a successful agent run", async () => {
-    const request = new NextRequest(
-      new Request("http://localhost/api/jobs/job-1/matcher", {
-        method: "POST",
-        body: JSON.stringify({ recruiterId: "recruiter-1", topN: 2 }),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/jobs/job-1/matcher",
+      json: { recruiterId: "recruiter-1", topN: 2 },
+    });
 
     const response = await matchPost(request, { params: { jobId: "job-1" } });
     const payload = await response.json();
@@ -156,13 +154,11 @@ describe("MATCH agent API", () => {
   it("marks failed runs when matching errors", async () => {
     mockMatchJobToAllCandidates.mockRejectedValue(new Error("matching failed"));
 
-    const request = new NextRequest(
-      new Request("http://localhost/api/jobs/job-err/matcher", {
-        method: "POST",
-        body: JSON.stringify({ recruiterId: "recruiter-1" }),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/jobs/job-err/matcher",
+      json: { recruiterId: "recruiter-1" },
+    });
 
     const response = await matchPost(request, { params: { jobId: "job-err" } });
 
@@ -176,13 +172,11 @@ describe("MATCH agent API", () => {
   it("fails when no authenticated user is available", async () => {
     mockGetCurrentUser.mockResolvedValueOnce(null);
 
-    const request = new NextRequest(
-      new Request("http://localhost/api/jobs/job-1/matcher", {
-        method: "POST",
-        body: JSON.stringify({ recruiterId: "recruiter-1", topN: 2 }),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/jobs/job-1/matcher",
+      json: { recruiterId: "recruiter-1", topN: 2 },
+    });
 
     const response = await matchPost(request, { params: { jobId: "job-1" } });
 

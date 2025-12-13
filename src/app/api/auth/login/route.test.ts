@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 import { GET, POST } from "./route";
 
@@ -27,13 +27,11 @@ describe("POST /api/auth/login", () => {
   });
 
   const buildRequest = (body: Record<string, unknown>) =>
-    new NextRequest("http://localhost/api/auth/login", {
+    makeRequest({
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        origin: "http://localhost",
-      },
-      body: JSON.stringify(body),
+      url: "http://localhost/api/auth/login",
+      json: body,
+      headers: { origin: "http://localhost" },
     });
 
   it("authenticates with the configured password", async () => {
@@ -105,7 +103,7 @@ describe("POST /api/auth/login", () => {
 
 describe("GET /api/auth/login", () => {
   it("redirects to the login page", async () => {
-    const response = await GET(new NextRequest("http://localhost/api/auth/login"));
+    const response = await GET(makeRequest({ method: "GET", url: "http://localhost/api/auth/login" }));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost/login");

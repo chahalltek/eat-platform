@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as intakePost } from "@/app/api/agents/intake/route";
+import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
   mockAgentRunLogCreate,
@@ -113,13 +113,11 @@ describe("INTAKE agent API", () => {
       }),
     );
 
-    const request = new NextRequest(
-      new Request("http://localhost/api/agents/intake", {
-        method: "POST",
-        body: JSON.stringify({ rawJobText: "A role" }),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/agents/intake",
+      json: { rawJobText: "A role" },
+    });
 
     const response = await intakePost(request);
     const body = await response.json();
@@ -142,13 +140,11 @@ describe("INTAKE agent API", () => {
   it("marks failed runs when parsing fails", async () => {
     mockCallLLM.mockResolvedValue("not-json");
 
-    const request = new NextRequest(
-      new Request("http://localhost/api/agents/intake", {
-        method: "POST",
-        body: JSON.stringify({ rawJobText: "bad" }),
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/agents/intake",
+      json: { rawJobText: "bad" },
+    });
 
     const response = await intakePost(request);
 
@@ -167,13 +163,11 @@ describe("INTAKE agent API", () => {
         role: "SALES",
       });
 
-      const request = new NextRequest(
-        new Request("http://localhost/api/agents/intake", {
-          method: "POST",
-          body: JSON.stringify({ rawJobText: "A role" }),
-          headers: { "content-type": "application/json" },
-        }),
-      );
+      const request = makeRequest({
+        method: "POST",
+        url: "http://localhost/api/agents/intake",
+        json: { rawJobText: "A role" },
+      });
 
       const response = await intakePost(request);
 
