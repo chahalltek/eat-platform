@@ -1,83 +1,110 @@
-import { guardrailsPresets, type GuardrailsConfig, type ShortlistStrategy } from "@/lib/guardrails/presets";
-import type { ConfidenceBand } from "./confidenceEngine";
-import type { MatchResult } from "./matchEngine";
+import type { GuardrailsConfig } from "@/lib/guardrails/presets";
+import type { MatchSignals } from "./matchEngine";
 
-export type { ShortlistStrategy };
+export type ShortlistStrategy = "quality" | "strict" | "fast" | "diversity";
 
-type ShortlistMatch = {
+export type ShortlistInput = {
+  matches: Array<{
+    candidateId: string;
+    score: number;
+    confidenceBand?: "HIGH" | "MEDIUM" | "LOW";
+    signals?: MatchSignals;
+  }>;
+  config: GuardrailsConfig;
+  strategy?: ShortlistStrategy;
+};
+
+export type ShortlistOutput = {
+  shortlistedCandidateIds: string[];
+  cutoffScore?: number;
+  notes?: string[];
+};
+
+type ConfidenceBand = "HIGH" | "MEDIUM" | "LOW";
+
+type NormalizedMatch = {
   candidateId: string;
   score: number;
   confidenceBand: ConfidenceBand;
-  signals: MatchResult["signals"];
+  signals?: MatchSignals;
 };
 
-const CONFIDENCE_ORDER: Record<ConfidenceBand, number> = {
+const CONFIDENCE_PRIORITY: Record<ConfidenceBand, number> = {
   HIGH: 3,
   MEDIUM: 2,
   LOW: 1,
 };
 
-function normalizeThreshold(value: number | undefined, fallback: number): number {
-  if (typeof value !== "number" || Number.isNaN(value)) return fallback;
+const SCORE_SIMILARITY_EPSILON = 0.5;
+const SIGNAL_SIMILARITY_TOLERANCE = 0.05;
 
-  return value <= 1 ? value * 100 : value;
-}
-
-function resolveThresholds(config: GuardrailsConfig) {
-  const thresholds = (config.scoring as { thresholds?: { minMatchScore?: number; shortlistMinScore?: number } } | undefined)
-    ?.thresholds;
-  const presetThresholds = guardrailsPresets.balanced.scoring.thresholds as { minMatchScore?: number; shortlistMinScore?: number };
-
-  return {
-    minMatchScore: normalizeThreshold(thresholds?.minMatchScore, normalizeThreshold(presetThresholds.minMatchScore, 0)),
-    shortlistMinScore: normalizeThreshold(
-      thresholds?.shortlistMinScore,
-      normalizeThreshold(presetThresholds.shortlistMinScore, normalizeThreshold(thresholds?.minMatchScore, 0)),
-    ),
-  };
-}
-
-function resolveMaxCandidates(config: GuardrailsConfig) {
-  const shortlist = (config.shortlist as { maxCandidates?: number } | undefined) ?? {};
-  const thresholds = (config.scoring as { thresholds?: { shortlistMaxCandidates?: number } } | undefined)?.thresholds ?? {};
-  const presetThresholds = guardrailsPresets.balanced.scoring.thresholds as { shortlistMaxCandidates?: number };
-
+function resolveStrategy(input: ShortlistInput): ShortlistStrategy {
   return (
-    shortlist.maxCandidates ??
-    thresholds.shortlistMaxCandidates ??
-    presetThresholds.shortlistMaxCandidates ??
-    Number.POSITIVE_INFINITY
+    input.strategy ??
+    ((input.config.shortlist as { strategy?: ShortlistStrategy } | undefined)?.strategy ?? "quality")
   );
 }
 
-function baseFilter(match: ShortlistMatch, minScore: number) {
-  return match.score >= minScore;
+function resolveMaxCandidates(config: GuardrailsConfig): number {
+  const shortlistMax = (config.shortlist as { maxCandidates?: number } | undefined)?.maxCandidates;
+  const thresholdsMax =
+    (config.scoring as { thresholds?: { shortlistMaxCandidates?: number } } | undefined)?.thresholds
+      ?.shortlistMaxCandidates;
+
+  const numeric = shortlistMax ?? thresholdsMax;
+  if (typeof numeric === "number" && numeric > 0) {
+    return Math.floor(numeric);
+  }
+
+  return Number.POSITIVE_INFINITY;
 }
 
-function strictFilter(match: ShortlistMatch, minScore: number, minMatchScore: number) {
-  return match.confidenceBand === "HIGH" && match.score >= minScore && match.score >= minMatchScore;
+function normalizeConfidenceBand(band?: ConfidenceBand): ConfidenceBand {
+  return band ?? "LOW";
 }
 
-function sortByQuality(a: ShortlistMatch, b: ShortlistMatch) {
-  if (b.score !== a.score) return b.score - a.score;
-
-  return CONFIDENCE_ORDER[b.confidenceBand] - CONFIDENCE_ORDER[a.confidenceBand];
+function toNormalizedMatches(matches: ShortlistInput["matches"]): NormalizedMatch[] {
+  return matches.map((match) => ({
+    candidateId: match.candidateId,
+    score: match.score,
+    confidenceBand: normalizeConfidenceBand(match.confidenceBand),
+    signals: match.signals,
+  }));
 }
 
-function sortByScore(a: ShortlistMatch, b: ShortlistMatch) {
-  return b.score - a.score;
+function compareQuality(a: NormalizedMatch, b: NormalizedMatch): number {
+  const scoreDiff = b.score - a.score;
+  if (Math.abs(scoreDiff) > SCORE_SIMILARITY_EPSILON) return scoreDiff;
+
+  const confidenceDiff = CONFIDENCE_PRIORITY[b.confidenceBand] - CONFIDENCE_PRIORITY[a.confidenceBand];
+  if (confidenceDiff !== 0) return confidenceDiff;
+
+  return a.candidateId.localeCompare(b.candidateId);
 }
 
-function areSignalsSimilar(
-  aSignals: MatchResult["signals"],
-  bSignals: MatchResult["signals"],
-  tolerance = 0.05,
-) {
-  const keys = new Set([...Object.keys(aSignals ?? {}), ...Object.keys(bSignals ?? {})]);
+function compareScoreOnly(a: NormalizedMatch, b: NormalizedMatch): number {
+  const scoreDiff = b.score - a.score;
+  if (scoreDiff !== 0) return scoreDiff;
+
+  return a.candidateId.localeCompare(b.candidateId);
+}
+
+function resolveShortlistMinScore(config: GuardrailsConfig): number {
+  const minScore =
+    (config.scoring as { thresholds?: { shortlistMinScore?: number } } | undefined)?.thresholds
+      ?.shortlistMinScore ?? -Infinity;
+
+  return typeof minScore === "number" && !Number.isNaN(minScore) ? minScore : -Infinity;
+}
+
+function signalsAreSimilar(a?: MatchSignals, b?: MatchSignals, tolerance = SIGNAL_SIMILARITY_TOLERANCE): boolean {
+  if (!a || !b) return false;
+
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
 
   for (const key of keys) {
-    const aValue = (aSignals as Record<string, number | undefined>)[key] ?? 0;
-    const bValue = (bSignals as Record<string, number | undefined>)[key] ?? 0;
+    const aValue = (a as Record<string, number | undefined>)[key] ?? 0;
+    const bValue = (b as Record<string, number | undefined>)[key] ?? 0;
 
     if (Math.abs(aValue - bValue) > tolerance) {
       return false;
@@ -87,55 +114,92 @@ function areSignalsSimilar(
   return true;
 }
 
-export function buildShortlist(input: {
-  matches: ShortlistMatch[];
-  config: GuardrailsConfig;
-  strategy?: ShortlistStrategy;
-}): string[] {
-  const thresholds = resolveThresholds(input.config);
-  const maxCandidates = resolveMaxCandidates(input.config);
-  const strategy = input.strategy ?? ((input.config.shortlist as { strategy?: ShortlistStrategy } | undefined)?.strategy ?? "quality");
+function buildQualityShortlist(matches: NormalizedMatch[], maxCandidates: number): ShortlistOutput {
+  const ordered = [...matches].sort(compareQuality).slice(0, maxCandidates);
+  return {
+    shortlistedCandidateIds: ordered.map((match) => match.candidateId),
+    cutoffScore: ordered.at(-1)?.score,
+    notes: ["strategy=quality"],
+  };
+}
 
-  const minScore = Math.max(thresholds.minMatchScore, thresholds.shortlistMinScore);
+function buildStrictShortlist(matches: NormalizedMatch[], minScore: number, maxCandidates: number): ShortlistOutput {
+  const filtered = matches
+    .filter((match) => match.confidenceBand === "HIGH" && match.score >= minScore)
+    .sort(compareQuality)
+    .slice(0, maxCandidates);
 
-  const eligible = input.matches.filter((match) => baseFilter(match, minScore));
+  return {
+    shortlistedCandidateIds: filtered.map((match) => match.candidateId),
+    cutoffScore: filtered.at(-1)?.score,
+    notes: ["strategy=strict", `minScore=${Number.isFinite(minScore) ? minScore : "none"}`],
+  };
+}
 
-  if (eligible.length === 0 || maxCandidates <= 0) {
-    return [];
+function buildFastShortlist(matches: NormalizedMatch[], maxCandidates: number): ShortlistOutput {
+  const ordered = [...matches].sort(compareScoreOnly).slice(0, maxCandidates);
+  return {
+    shortlistedCandidateIds: ordered.map((match) => match.candidateId),
+    cutoffScore: ordered.at(-1)?.score,
+    notes: ["strategy=fast"],
+  };
+}
+
+function buildDiversityShortlist(matches: NormalizedMatch[], maxCandidates: number): ShortlistOutput {
+  const ordered = [...matches].sort(compareQuality);
+  const selected: NormalizedMatch[] = [];
+
+  for (const match of ordered) {
+    if (selected.length >= maxCandidates) break;
+
+    if (selected.length === 0) {
+      selected.push(match);
+      continue;
+    }
+
+    const hasSimilarSignals = selected.some((existing) => signalsAreSimilar(existing.signals, match.signals));
+
+    if (hasSimilarSignals) continue;
+
+    const lastSelected = selected[selected.length - 1];
+    const isTooCloseInScore =
+      lastSelected.confidenceBand === match.confidenceBand &&
+      Math.abs(lastSelected.score - match.score) < SCORE_SIMILARITY_EPSILON;
+
+    if (isTooCloseInScore) continue;
+
+    selected.push(match);
   }
 
-  const sortedForDiversity = [...eligible].sort(sortByQuality);
+  const trimmed = selected.slice(0, maxCandidates);
+
+  return {
+    shortlistedCandidateIds: trimmed.map((match) => match.candidateId),
+    cutoffScore: trimmed.at(-1)?.score,
+    notes: ["strategy=diversity"],
+  };
+}
+
+export function buildShortlist(input: ShortlistInput): ShortlistOutput {
+  const strategy = resolveStrategy(input);
+  const maxCandidates = resolveMaxCandidates(input.config);
+  const normalizedMatches = toNormalizedMatches(input.matches);
+
+  if (maxCandidates <= 0 || normalizedMatches.length === 0) {
+    return { shortlistedCandidateIds: [] };
+  }
 
   if (strategy === "strict") {
-    return eligible
-      .filter((match) => strictFilter(match, thresholds.shortlistMinScore, thresholds.minMatchScore))
-      .sort(sortByQuality)
-      .slice(0, maxCandidates)
-      .map((match) => match.candidateId);
+    return buildStrictShortlist(normalizedMatches, resolveShortlistMinScore(input.config), maxCandidates);
   }
 
   if (strategy === "fast") {
-    return eligible.sort(sortByScore).slice(0, maxCandidates).map((match) => match.candidateId);
+    return buildFastShortlist(normalizedMatches, maxCandidates);
   }
 
   if (strategy === "diversity") {
-    const epsilon = 1;
-    const selected: ShortlistMatch[] = [];
-
-    for (const match of sortedForDiversity) {
-      if (selected.length >= maxCandidates) break;
-
-      const isDuplicate = selected.some(
-        (existing) => Math.abs(existing.score - match.score) < epsilon && areSignalsSimilar(existing.signals, match.signals),
-      );
-
-      if (!isDuplicate) {
-        selected.push(match);
-      }
-    }
-
-    return selected.map((match) => match.candidateId);
+    return buildDiversityShortlist(normalizedMatches, maxCandidates);
   }
 
-  return eligible.sort(sortByQuality).slice(0, maxCandidates).map((match) => match.candidateId);
+  return buildQualityShortlist(normalizedMatches, maxCandidates);
 }

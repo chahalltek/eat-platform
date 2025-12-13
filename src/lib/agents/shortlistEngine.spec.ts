@@ -18,7 +18,7 @@ describe("buildShortlist", () => {
 
     const shortlist = buildShortlist({ matches, config: baseConfig });
 
-    expect(shortlist).toEqual(["b", "a", "c"]);
+    expect(shortlist.shortlistedCandidateIds).toEqual(["b", "a", "c"]);
   });
 
   it("filters to strict matches when strategy is strict", () => {
@@ -34,7 +34,7 @@ describe("buildShortlist", () => {
       strategy: "strict",
     });
 
-    expect(shortlist).toEqual(["b"]);
+    expect(shortlist.shortlistedCandidateIds).toEqual(["b", "c"]);
   });
 
   it("uses fast strategy to return top scores without extra filtering", () => {
@@ -49,7 +49,7 @@ describe("buildShortlist", () => {
       config: { ...baseConfig, shortlist: { strategy: "fast", maxCandidates: 2 } },
     });
 
-    expect(shortlist).toEqual(["c", "a"]);
+    expect(shortlist.shortlistedCandidateIds).toEqual(["c", "a"]);
   });
 
   it("avoids near-duplicates in diversity mode", () => {
@@ -64,6 +64,6 @@ describe("buildShortlist", () => {
       config: { ...baseConfig, shortlist: { strategy: "diversity", maxCandidates: 2 } },
     });
 
-    expect(shortlist).toEqual(["a", "c"]);
+    expect(shortlist.shortlistedCandidateIds).toEqual(["a", "c"]);
   });
 });
