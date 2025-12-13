@@ -161,6 +161,8 @@ function BehaviorInsightsCard({
   const explanationTotals = Object.entries(insights.explanationOpensByConfidence);
   const overrideTotals = Object.entries(insights.shortlistOverrides.byConfidence);
 
+  const surfacedSummary = `${insights.candidatesSurfaced} surfaced • ${insights.candidateOpens} opened • ${insights.candidatesIgnored} ignored`;
+
   const explanationSummary =
     explanationTotals.length === 0
       ? "No expansions captured"
@@ -192,11 +194,24 @@ function BehaviorInsightsCard({
         </span>
       </div>
 
-      <dl className="mt-4 grid gap-4 md:grid-cols-2">
-        <div className="space-y-1 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-          <dt className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Candidate opens</dt>
-          <dd className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{insights.candidateOpens}</dd>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Times recruiters expanded matches or confidence details.</p>
+      <dl className="mt-4 grid gap-4 lg:grid-cols-4">
+        <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <dt className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Viewed vs surfaced</dt>
+          <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{surfacedSummary}</dd>
+          <div className="flex h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div
+              className="h-full bg-indigo-500 transition-all"
+              style={{
+                width: `${Math.min(
+                  insights.candidatesSurfaced > 0
+                    ? (insights.candidateOpens / insights.candidatesSurfaced) * 100
+                    : 0,
+                  100,
+                )}%`,
+              }}
+            />
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Aggregated opens vs surfaced matches. No individual scores.</p>
         </div>
         <div className="space-y-1 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
           <dt className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Explanation expands</dt>
@@ -219,6 +234,21 @@ function BehaviorInsightsCard({
           <p className="text-xs text-zinc-500 dark:text-zinc-400">Decision dwell time between opening reasoning and closing.</p>
         </div>
       </dl>
+
+      <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-200">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-300">Insights</p>
+        {insights.insights.length === 0 ? (
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">No behavior signals captured yet.</p>
+        ) : (
+          <ul className="mt-2 list-disc space-y-2 pl-4 text-sm">
+            {insights.insights.map((note) => (
+              <li key={note} className="text-zinc-700 dark:text-zinc-200">
+                {note}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

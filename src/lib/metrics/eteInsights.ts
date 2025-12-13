@@ -38,6 +38,8 @@ export type ErrorRateByAgent = {
 export type RecruiterBehaviorInsights = {
   windowDays: number;
   candidateOpens: number;
+  candidatesSurfaced: number;
+  candidatesIgnored: number;
   explanationOpensByConfidence: Record<string, number>;
   shortlistOverrides: {
     total: number;
@@ -46,6 +48,7 @@ export type RecruiterBehaviorInsights = {
     byConfidence: Record<string, number>;
   };
   averageDecisionMs: number;
+  insights: string[];
 };
 
 export type MatchQualityTrend = {
@@ -753,6 +756,17 @@ function getMetaObject(value: Prisma.JsonValue | null | unknown): Record<string,
   return value as Record<string, unknown>;
 }
 
+function getNumericMeta(meta: Record<string, unknown>, keys: string[], fallback: number | null = null) {
+  for (const key of keys) {
+    const value = meta[key];
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
 function normalizeConfidenceBand(value: unknown) {
   if (typeof value !== 'string') return 'UNKNOWN';
   const trimmed = value.trim();
@@ -776,6 +790,7 @@ function summarizeRecruiterBehavior(
   const decisionDurations: number[] = [];
 
   let candidateOpens = 0;
+  let candidatesSurfaced = 0;
   let toShortlist = 0;
   let removedFromShortlist = 0;
 
@@ -783,9 +798,17 @@ function summarizeRecruiterBehavior(
     const meta = getMetaObject(event.meta);
     const details = getMetaObject(meta.details);
     const confidenceBand = normalizeConfidenceBand(meta.confidence);
+    const surfaced = getNumericMeta(details, ['surfaced', 'presented', 'totalSurfaced'], null);
+    const surfacedFromMeta = getNumericMeta(meta, ['surfaced', 'presented', 'totalSurfaced'], null);
 
     if (event.eventType === 'RECRUITER_BEHAVIOR_CANDIDATE_OPEN') {
       candidateOpens += 1;
+
+      if (surfaced !== null || surfacedFromMeta !== null) {
+        candidatesSurfaced += Math.max(surfaced ?? surfacedFromMeta ?? 0, 1);
+      } else {
+        candidatesSurfaced += 1;
+      }
     }
 
     if (event.eventType === 'RECRUITER_BEHAVIOR_EXPLANATION_EXPANDED') {
@@ -813,17 +836,57 @@ function summarizeRecruiterBehavior(
       if (duration !== null && Number.isFinite(duration)) {
         decisionDurations.push(duration);
       }
+
+      if (surfaced !== null || surfacedFromMeta !== null) {
+        candidatesSurfaced += Math.max(surfaced ?? surfacedFromMeta ?? 0, 1);
+      }
     }
   }
+
+  candidatesSurfaced = Math.max(candidatesSurfaced, candidateOpens);
+  const candidatesIgnored = Math.max(candidatesSurfaced - candidateOpens, 0);
 
   const averageDecisionMs =
     decisionDurations.length > 0
       ? decisionDurations.reduce((sum, entry) => sum + entry, 0) / decisionDurations.length
       : 0;
 
+  const insights: string[] = [];
+
+  if (candidatesSurfaced > 0) {
+    const viewRate = candidateOpens / candidatesSurfaced;
+    const viewedPct = Math.round(viewRate * 100);
+    insights.push(
+      viewRate >= 0.65
+        ? `${viewedPct}% of surfaced matches are opened; current defaults are keeping curiosity high.`
+        : `${viewedPct}% of surfaced matches are opened; consider gentler filters or clearer cues to lift opens.`,
+    );
+  }
+
+  if (candidateOpens > 0 && candidatesIgnored > candidateOpens * 0.5) {
+    insights.push('Most surfaced matches are skipped; reinforce top picks in the first fold.');
+  }
+
+  const explanationTopEntry = Object.entries(explanationByConfidence).sort((a, b) => b[1] - a[1])[0];
+  if (explanationTopEntry) {
+    insights.push(`Explanations are expanded most for ${explanationTopEntry[0]} confidence matches.`);
+  }
+
+  const overrideTopEntry = Object.entries(overrideConfidence).sort((a, b) => b[1] - a[1])[0];
+  if (overrideTopEntry) {
+    insights.push(`Shortlist overrides skew toward ${overrideTopEntry[0]} confidence recommendations.`);
+  }
+
+  if (averageDecisionMs > 0) {
+    const seconds = (averageDecisionMs / 1000).toFixed(1);
+    insights.push(`Typical decision dwell time is ${seconds}s; streamline defaults instead of nudging individuals.`);
+  }
+
   return {
     windowDays,
     candidateOpens,
+    candidatesSurfaced,
+    candidatesIgnored,
     explanationOpensByConfidence: explanationByConfidence,
     shortlistOverrides: {
       total: toShortlist + removedFromShortlist,
@@ -832,5 +895,6 @@ function summarizeRecruiterBehavior(
       byConfidence: overrideConfidence,
     },
     averageDecisionMs,
+    insights,
   } satisfies RecruiterBehaviorInsights;
 }
