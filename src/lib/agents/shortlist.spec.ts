@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runShortlist } from "@/lib/agents/shortlist";
+import { enableDeterministicAgentMode } from "./testing/deterministicAgentMode";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
+
+const shortlistFixtures = vi.hoisted(() =>
+  require("../../../tests/fixtures/agents/shortlist-quality.json") as {
+    job: unknown;
+    fireDrillJob: unknown;
+  },
+);
 
 const mockJobFindUnique = vi.fn();
 const mockWithAgentRun = vi.fn(async (_meta, fn) => {
@@ -41,6 +49,10 @@ vi.mock("@/lib/matching/shortlist", () => ({
   setShortlistState: (...args: unknown[]) => mockSetShortlistState(...args),
 }));
 
+vi.mock("@/lib/metrics/events", () => ({
+  recordMetricEvent: vi.fn(),
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     job: { findUnique: (...args: unknown[]) => mockJobFindUnique(...args) },
@@ -49,10 +61,15 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 describe("runShortlist", () => {
+  let deterministic: ReturnType<typeof enableDeterministicAgentMode>;
   const guardrails = {
     ...guardrailsPresets.balanced,
     shortlist: { strategy: "quality", maxCandidates: 2 },
   } as const;
+
+  beforeAll(() => {
+    deterministic = enableDeterministicAgentMode();
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -64,16 +81,12 @@ describe("runShortlist", () => {
     });
   });
 
+  afterAll(() => {
+    deterministic.restore();
+  });
+
   it("uses quality strategy ordering and thresholds", async () => {
-    mockJobFindUnique.mockResolvedValue({
-      id: "job-1",
-      tenantId: "tenant-1",
-      matches: [
-        { candidateId: "cand-1", matchScore: 80, confidence: 90 },
-        { candidateId: "cand-2", matchScore: 70, confidence: 75 },
-        { candidateId: "cand-3", matchScore: 60, confidence: 95 },
-      ],
-    });
+    mockJobFindUnique.mockResolvedValue(shortlistFixtures.job);
 
     const result = await runShortlist({ jobId: "job-1" }, {}, guardrails);
 
@@ -90,14 +103,7 @@ describe("runShortlist", () => {
       source: "database",
     });
 
-    mockJobFindUnique.mockResolvedValue({
-      id: "job-1",
-      tenantId: "tenant-1",
-      matches: [
-        { candidateId: "cand-1", matchScore: 85, confidence: 90 },
-        { candidateId: "cand-2", matchScore: 90, confidence: 60 },
-      ],
-    });
+    mockJobFindUnique.mockResolvedValue(shortlistFixtures.fireDrillJob);
 
     const result = await runShortlist({ jobId: "job-1" }, {}, guardrails);
 

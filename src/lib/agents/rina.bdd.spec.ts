@@ -7,8 +7,15 @@ import {
   formatBDDTitle,
   runAgentBehavior,
 } from '@/lib/agents/testing/agentTestRunner';
-import { MockOpenAIAdapter } from '@/lib/llm/mockOpenAIAdapter';
+import { enableDeterministicAgentMode } from './testing/deterministicAgentMode';
 import { prisma } from '@/lib/prisma';
+import fixture from '../../../tests/fixtures/agents/rina-bdd.json';
+
+const { mockCallLLM } = vi.hoisted(() => ({
+  mockCallLLM: vi.fn(),
+}));
+
+vi.mock('@/lib/llm', () => ({ callLLM: mockCallLLM }));
 
 vi.mock('@/lib/prisma', () => {
   return {
@@ -46,11 +53,21 @@ vi.mock('@/lib/agents/agentRun', () => {
 });
 
 describe('RINA agent (BDD)', () => {
-  const mockAdapter = new MockOpenAIAdapter();
+  const llmFixture = JSON.stringify(fixture.llmResponse);
+  let deterministic: ReturnType<typeof enableDeterministicAgentMode>;
+
+  beforeAll(() => {
+    deterministic = enableDeterministicAgentMode({ llmFixtures: { RINA: llmFixture } });
+    mockCallLLM.mockImplementation(deterministic.llmMock);
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAdapter.reset();
+    mockCallLLM.mockImplementation(deterministic.llmMock);
+  });
+
+  afterAll(() => {
+    deterministic.restore();
   });
 
   it(
@@ -60,42 +77,10 @@ describe('RINA agent (BDD)', () => {
       then: 'the candidate is persisted and the structured output matches snapshot',
     }),
     async () => {
-      const resumeText = `Jane Doe\nFrontend Engineer\nEmail: jane@example.com\nSkills: React, TypeScript`;
-
-      const llmResponse = {
-        fullName: 'Jane Doe',
-        email: 'jane@example.com',
-        phone: null,
-        location: null,
-        currentTitle: 'Frontend Engineer',
-        currentCompany: null,
-        totalExperienceYears: 5,
-        seniorityLevel: 'mid',
-        summary: 'Frontend engineer focused on React and TypeScript.',
-        skills: [
-          {
-            name: 'React',
-            normalizedName: 'React',
-            proficiency: 'advanced',
-            yearsOfExperience: 4,
-          },
-          {
-            name: 'TypeScript',
-            normalizedName: 'TypeScript',
-            proficiency: 'advanced',
-            yearsOfExperience: 3,
-          },
-        ],
-        parsingConfidence: 0.92,
-        warnings: [],
-      };
-
-      mockAdapter.enqueue(JSON.stringify(llmResponse));
-
       const candidateCreate = vi.mocked(prisma.candidate.create);
       candidateCreate.mockResolvedValue({
         id: 'candidate-123',
-        ...llmResponse,
+        ...fixture.llmResponse,
       });
 
       const spec: AgentBehaviorSpec<RinaInput, { candidateId: string; agentRunId: string }> = {
@@ -105,11 +90,11 @@ describe('RINA agent (BDD)', () => {
           then: 'the candidate is persisted and the structured output matches snapshot',
         },
         given: {
-          rawResumeText: resumeText,
+          rawResumeText: fixture.rawResumeText,
           sourceType: 'upload',
           sourceTag: 'career-site',
         },
-        when: (input) => runRina(input, undefined, mockAdapter),
+        when: (input) => runRina(input),
         snapshot: (result) => result,
         then: ({ result, snapshot }) => {
           expect(result.candidateId).toBe('candidate-123');

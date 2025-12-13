@@ -2,8 +2,15 @@
 
 import { runRua } from '@/lib/agents/rua';
 import { RUA_PROMPT_VERSION, RUA_SYSTEM_PROMPT } from '@/lib/agents/contracts/ruaContract';
+import { enableDeterministicAgentMode } from './testing/deterministicAgentMode';
 import { prisma } from '@/lib/prisma';
-import { MockOpenAIAdapter } from '@/lib/llm/mockOpenAIAdapter';
+import fixture from '../../../tests/fixtures/agents/rua-invalid-llm.json';
+
+const { mockCallLLM } = vi.hoisted(() => ({
+  mockCallLLM: vi.fn(),
+}));
+
+vi.mock('@/lib/llm', () => ({ callLLM: mockCallLLM }));
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -37,40 +44,31 @@ vi.mock('@/lib/agents/agentRun', () => ({
 }));
 
 describe('RUA contract enforcement', () => {
-  const mockAdapter = new MockOpenAIAdapter();
+  const llmFixture = JSON.stringify(fixture.llmResponse);
+  let deterministic: ReturnType<typeof enableDeterministicAgentMode>;
+
+  beforeAll(() => {
+    deterministic = enableDeterministicAgentMode({ llmFixtures: { RUA: llmFixture } });
+    mockCallLLM.mockImplementation(deterministic.llmMock);
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAdapter.reset();
+    mockCallLLM.mockImplementation(deterministic.llmMock);
+  });
+
+  afterAll(() => {
+    deterministic.restore();
   });
 
   it('throws when the LLM output breaks the schema', async () => {
-    mockAdapter.enqueue(
-      JSON.stringify({
-        clientName: null,
-        title: 'Backend Engineer',
-        seniorityLevel: null,
-        location: null,
-        remoteType: null,
-        employmentType: null,
-        responsibilitiesSummary: null,
-        teamContext: null,
-        priority: null,
-        status: null,
-        ambiguityScore: 2,
-        skills: [
-          { name: 'Node.js', normalizedName: 'Node.js', isMustHave: true },
-        ],
-      }),
-    );
-
     await expect(
       runRua(
         {
-          rawJobText: 'An open role',
+          rawJobText: fixture.rawJobText,
         },
         undefined,
-        mockAdapter,
+        undefined,
       ),
     ).rejects.toThrow(/schema validation/);
 

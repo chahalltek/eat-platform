@@ -1,0 +1,30 @@
+{
+  "rawResumeText": "Jane Doe\nFrontend Engineer\nEmail: jane@example.com\nSkills: React, TypeScript",
+  "llmResponse": {
+    "fullName": "Jane Doe",
+    "email": "jane@example.com",
+    "phone": null,
+    "location": null,
+    "currentTitle": "Frontend Engineer",
+    "currentCompany": null,
+    "totalExperienceYears": 5,
+    "seniorityLevel": "mid",
+    "summary": "Frontend engineer focused on React and TypeScript.",
+    "skills": [
+      {
+        "name": "React",
+        "normalizedName": "React",
+        "proficiency": "advanced",
+        "yearsOfExperience": 4
+      },
+      {
+        "name": "TypeScript",
+        "normalizedName": "TypeScript",
+        "proficiency": "advanced",
+        "yearsOfExperience": 3
+      }
+    ],
+    "parsingConfidence": 0.92,
+    "warnings": []
+  }
+}

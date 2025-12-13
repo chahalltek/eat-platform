@@ -1,0 +1,19 @@
+{
+  "job": {
+    "id": "job-1",
+    "tenantId": "tenant-1",
+    "matches": [
+      { "candidateId": "cand-1", "matchScore": 80, "confidence": 90 },
+      { "candidateId": "cand-2", "matchScore": 70, "confidence": 75 },
+      { "candidateId": "cand-3", "matchScore": 60, "confidence": 95 }
+    ]
+  },
+  "fireDrillJob": {
+    "id": "job-1",
+    "tenantId": "tenant-1",
+    "matches": [
+      { "candidateId": "cand-1", "matchScore": 85, "confidence": 90 },
+      { "candidateId": "cand-2", "matchScore": 90, "confidence": 60 }
+    ]
+  }
+}

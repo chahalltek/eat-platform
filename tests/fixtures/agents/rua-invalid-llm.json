@@ -1,0 +1,19 @@
+{
+  "rawJobText": "An open role",
+  "llmResponse": {
+    "clientName": null,
+    "title": "Backend Engineer",
+    "seniorityLevel": null,
+    "location": null,
+    "remoteType": null,
+    "employmentType": null,
+    "responsibilitiesSummary": null,
+    "teamContext": null,
+    "priority": null,
+    "status": null,
+    "ambiguityScore": 2,
+    "skills": [
+      { "name": "Node.js", "normalizedName": "Node.js", "isMustHave": true }
+    ]
+  }
+}
