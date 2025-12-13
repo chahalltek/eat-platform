@@ -190,54 +190,6 @@ export function evaluateTimeToFillRisks(jobs: TimeToFillRiskJob[]): TimeToFillRi
   });
 }
 
-<<<<<<< ours
-export async function getTimeToFillRisksForTenant(tenantId: string) {
-  const timer = startTiming({ workload: "forecasting_jobs", meta: { tenantId } });
-
-  try {
-    const jobs = await prisma.jobReq.findMany({
-      where: { tenantId },
-      select: {
-        id: true,
-        title: true,
-        createdAt: true,
-        matchResults: {
-          select: {
-            createdAt: true,
-            shortlisted: true,
-            candidateSignalScore: true,
-          },
-        },
-        jobCandidates: {
-          select: {
-            stages: {
-              select: { enteredAt: true },
-              orderBy: { enteredAt: "asc" },
-            },
-          },
-        },
-      },
-    });
-
-    const totalMatches = jobs.reduce((sum, job) => sum + job.matchResults.length, 0);
-    const totalJobCandidates = jobs.reduce((sum, job) => sum + job.jobCandidates.length, 0);
-
-    const risks = evaluateTimeToFillRisks(jobs as TimeToFillRiskJob[]);
-
-    timer.end({
-      cache: { hit: false },
-      inputSizes: {
-        jobs: jobs.length,
-        matchSamples: totalMatches,
-        jobCandidates: totalJobCandidates,
-      },
-    });
-
-    return risks;
-  } finally {
-    timer.end({ cache: { hit: false } });
-  }
-=======
 export async function getTimeToFillRisksForTenant(
   tenantId: string,
   { bypassCache = false }: { bypassCache?: boolean } = {},
@@ -252,31 +204,51 @@ export async function getTimeToFillRisksForTenant(
     [cacheKey],
     INTELLIGENCE_CACHE_TTLS.forecastsMs,
     async () => {
-      const jobs = await prisma.jobReq.findMany({
-        where: { tenantId },
-        select: {
-          id: true,
-          title: true,
-          createdAt: true,
-          matchResults: {
-            select: {
-              createdAt: true,
-              shortlisted: true,
-              candidateSignalScore: true,
+      const timer = startTiming({ workload: "forecasting_jobs", meta: { tenantId } });
+
+      try {
+        const jobs = await prisma.jobReq.findMany({
+          where: { tenantId },
+          select: {
+            id: true,
+            title: true,
+            createdAt: true,
+            matchResults: {
+              select: {
+                createdAt: true,
+                shortlisted: true,
+                candidateSignalScore: true,
+              },
             },
-          },
-          jobCandidates: {
-            select: {
-              stages: {
-                select: { enteredAt: true },
-                orderBy: { enteredAt: "asc" },
+            jobCandidates: {
+              select: {
+                stages: {
+                  select: { enteredAt: true },
+                  orderBy: { enteredAt: "asc" },
+                },
               },
             },
           },
-        },
-      });
+        });
 
-      return evaluateTimeToFillRisks(jobs as TimeToFillRiskJob[]);
+        const totalMatches = jobs.reduce((sum, job) => sum + job.matchResults.length, 0);
+        const totalJobCandidates = jobs.reduce((sum, job) => sum + job.jobCandidates.length, 0);
+
+        const risks = evaluateTimeToFillRisks(jobs as TimeToFillRiskJob[]);
+
+        timer.end({
+          cache: { hit: false },
+          inputSizes: {
+            jobs: jobs.length,
+            matchSamples: totalMatches,
+            jobCandidates: totalJobCandidates,
+          },
+        });
+
+        return risks;
+      } finally {
+        timer.end({ cache: { hit: false } });
+      }
     },
     { bypassCache },
   );
@@ -289,5 +261,4 @@ export const __testing = {
 export function refreshTimeToFillRisksForTenant(tenantId: string) {
   invalidateForecastCachesForTenant(tenantId);
   return getTimeToFillRisksForTenant(tenantId, { bypassCache: true });
->>>>>>> theirs
 }

@@ -165,7 +165,10 @@ export async function buildBenchmarkRelease({
       return { ...release, metrics: persistedMetrics } satisfies BenchmarkReleaseWithMetrics;
     });
 
-<<<<<<< ours
+    intelligenceCache.invalidateByPrefix(["benchmark-release"]);
+    intelligenceCache.invalidateByPrefix(["copilot-evidence"]);
+    intelligenceCache.invalidateByPrefix(["l2"]);
+
     timer.end({
       cache: { hit: false },
       inputSizes: {
@@ -180,14 +183,6 @@ export async function buildBenchmarkRelease({
   } finally {
     timer.end({ cache: { hit: false } });
   }
-=======
-    intelligenceCache.invalidateByPrefix(["benchmark-release"]);
-    intelligenceCache.invalidateByPrefix(["copilot-evidence"]);
-    intelligenceCache.invalidateByPrefix(["l2"]);
-
-    return { ...release, metrics: persistedMetrics } satisfies BenchmarkReleaseWithMetrics;
-  });
->>>>>>> theirs
 }
 
 export async function listBenchmarkReleases(client: BenchmarkPrisma = prisma) {
