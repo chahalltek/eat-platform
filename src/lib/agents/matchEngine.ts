@@ -9,6 +9,7 @@ export type Skill = {
 
 export type Job = {
   id: string;
+  title?: string | null;
   location?: string | null;
   seniorityLevel?: string | null;
   minExperienceYears?: number | null;
