@@ -37,6 +37,7 @@ const PRESET_VALUES: Record<"Conservative" | "Balanced" | "Aggressive", TenantGu
       excludeInternalCandidates: true,
     },
     llm: defaultTenantGuardrails.llm,
+    networkLearning: defaultTenantGuardrails.networkLearning,
   },
   Balanced: {
     scoring: {
@@ -62,6 +63,7 @@ const PRESET_VALUES: Record<"Conservative" | "Balanced" | "Aggressive", TenantGu
       excludeInternalCandidates: false,
     },
     llm: defaultTenantGuardrails.llm,
+    networkLearning: defaultTenantGuardrails.networkLearning,
   },
   Aggressive: {
     scoring: {
@@ -87,6 +89,7 @@ const PRESET_VALUES: Record<"Conservative" | "Balanced" | "Aggressive", TenantGu
       excludeInternalCandidates: false,
     },
     llm: defaultTenantGuardrails.llm,
+    networkLearning: defaultTenantGuardrails.networkLearning,
   },
 };
 
@@ -263,6 +266,12 @@ export function GuardrailsEditor({ tenantId }: { tenantId: string }) {
   function updateSafety(key: keyof TenantGuardrails["safety"], value: boolean) {
     setConfig((current) => (current ? { ...current, safety: { ...current.safety, [key]: value } } : current));
     setActivePreset(null);
+  }
+
+  function updateNetworkLearning(enabled: boolean) {
+    setConfig((current) =>
+      current ? { ...current, networkLearning: { ...current.networkLearning, enabled } } : current,
+    );
   }
 
   function updateStrategy(value: TenantGuardrails["scoring"]["strategy"]) {
@@ -535,6 +544,37 @@ export function GuardrailsEditor({ tenantId }: { tenantId: string }) {
               <span className="text-sm text-zinc-700">Enabled</span>
             </label>
           </div>
+        </div>
+      </ETECard>
+
+      <ETECard className="gap-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Network learning</p>
+          <h2 className="text-xl font-semibold text-zinc-900">Contribute anonymized benchmarks</h2>
+          <p className="text-sm text-zinc-600">
+            Toggle whether this tenant contributes to network-wide learning. Only aggregated performance metrics (like
+            shortlist and hire rates by role family and region) are shared. No resumes, names, emails, phone numbers,
+            or job descriptions ever leave this tenant.
+          </p>
+        </div>
+
+        <div className="flex items-start justify-between rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-zinc-900">Contribute anonymized learning to network benchmarks</p>
+            <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-600">
+              <li>Shares only k-anonymized aggregates (no individual candidate or job data).</li>
+              <li>Never exports resumes, names, contact details, or raw scoring inputs.</li>
+            </ul>
+          </div>
+          <label className="flex items-center gap-2 text-sm font-medium text-zinc-800">
+            <input
+              type="checkbox"
+              checked={config.networkLearning.enabled}
+              onChange={(event) => updateNetworkLearning(event.target.checked)}
+              className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            {config.networkLearning.enabled ? "Opted in" : "Opted out"}
+          </label>
         </div>
       </ETECard>
 

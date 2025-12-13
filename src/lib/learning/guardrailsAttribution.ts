@@ -86,9 +86,12 @@ export function buildLearningRecords(params: {
   decisionItems?: DecisionStreamLink[];
   systemMode?: string | null;
   timestamp?: Date;
+  networkLearningEnabled?: boolean;
 }): LearningRecord[] {
   const activeMode = params.systemMode?.trim();
-  if (activeMode === "fire_drill") return [];
+  const optedIn = Boolean(params.networkLearningEnabled);
+
+  if (!optedIn || activeMode === "fire_drill") return [];
 
   const capturedAt = params.timestamp ?? new Date();
   const matchIndex = buildIndex(params.matchResults ?? []);
@@ -134,8 +137,9 @@ export function attributeGuardrailsPerformance(params: {
   decisionItems?: DecisionStreamLink[];
   systemMode?: string | null;
   timestamp?: Date;
+  networkLearningEnabled?: boolean;
 }): GuardrailsAttribution[] {
-  if (params.systemMode === "fire_drill") return [];
+  if (params.systemMode === "fire_drill" || !params.networkLearningEnabled) return [];
 
   const learningRecords = buildLearningRecords(params);
   const groups = new Map<string, LearningRecord[]>();

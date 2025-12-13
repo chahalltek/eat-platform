@@ -36,6 +36,11 @@ export const guardrailsSchema = z
       maxTokens: z.number().int().positive().optional(),
       verbosityCap: z.number().int().positive().optional(),
     }),
+    networkLearning: z
+      .object({
+        enabled: z.boolean().default(false),
+      })
+      .default({ enabled: false }),
   })
   .refine((value) => value.scoring.thresholds.shortlistMinScore >= value.scoring.thresholds.minMatchScore, {
     message: "Shortlist min score must be greater than or equal to min match score",
@@ -49,6 +54,7 @@ type PartialTenantGuardrails = {
   explain?: Partial<TenantGuardrails["explain"]>;
   safety?: Partial<TenantGuardrails["safety"]>;
   llm?: Partial<TenantGuardrails["llm"]>;
+  networkLearning?: Partial<TenantGuardrails["networkLearning"]>;
 };
 
 export const defaultTenantGuardrails: TenantGuardrails = {
@@ -81,6 +87,9 @@ export const defaultTenantGuardrails: TenantGuardrails = {
     allowedAgents: ["EXPLAIN", "RINA", "RUA", "OUTREACH", "INTAKE"],
     maxTokens: 600,
     verbosityCap: 2000,
+  },
+  networkLearning: {
+    enabled: false,
   },
 };
 
@@ -115,6 +124,10 @@ function mergeGuardrails(
       ...defaultTenantGuardrails.llm,
       ...(override?.llm ?? {}),
       allowedAgents: override?.llm?.allowedAgents ?? defaultTenantGuardrails.llm.allowedAgents,
+    },
+    networkLearning: {
+      ...defaultTenantGuardrails.networkLearning,
+      ...(override?.networkLearning ?? {}),
     },
   });
 }
@@ -152,6 +165,7 @@ export async function loadTenantGuardrails(tenantId: string): Promise<TenantGuar
           explain: record.explain as Partial<TenantGuardrails["explain"]> | undefined,
           safety: record.safety as Partial<TenantGuardrails["safety"]> | undefined,
           llm: (record as { llm?: Partial<TenantGuardrails["llm"]> }).llm,
+          networkLearning: (record as { networkLearning?: Partial<TenantGuardrails["networkLearning"]> }).networkLearning,
         }
       : null);
   try {
@@ -183,12 +197,14 @@ export async function saveTenantGuardrails(tenantId: string, payload: unknown) {
       explain: parsed.explain,
       safety: parsed.safety,
       llm: parsed.llm,
+      networkLearning: parsed.networkLearning,
     },
     update: {
       scoring: parsed.scoring,
       explain: parsed.explain,
       safety: parsed.safety,
       llm: parsed.llm,
+      networkLearning: parsed.networkLearning,
     },
   });
 

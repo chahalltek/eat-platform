@@ -19,6 +19,7 @@ vi.mock("@/lib/tenant/guardrails", () => ({
     explain: { level: "compact", includeWeights: true },
     safety: { requireMustHaves: true, excludeInternalCandidates: false, confidenceBands: { high: 0.75, medium: 0.55 } },
     llm: { provider: "openai", model: "gpt-4.1-mini", allowedAgents: ["EXPLAIN"], maxTokens: 600, verbosityCap: 2000 },
+    networkLearning: { enabled: false },
   })),
 }));
 

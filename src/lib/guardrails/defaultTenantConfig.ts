@@ -32,4 +32,7 @@ export const defaultTenantGuardrails = {
     maxTokens: 600,
     verbosityCap: 2000,
   },
+  networkLearning: {
+    enabled: false,
+  },
 };

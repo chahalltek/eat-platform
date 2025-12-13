@@ -64,6 +64,7 @@ describe('schema tenancy', () => {
     expect(tenantConfigBlock).toContain('scoring');
     expect(tenantConfigBlock).toContain('explain');
     expect(tenantConfigBlock).toContain('safety');
+    expect(tenantConfigBlock).toContain('networkLearning');
     expect(tenantConfigBlock).toContain('@unique');
 
     expect(tenantModeBlock).toContain('tenantId');

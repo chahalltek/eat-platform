@@ -39,6 +39,7 @@ function normalizePreset(preset: string | null | undefined): GuardrailsPresetNam
 export type TenantGuardrailsConfig = GuardrailsConfig & {
   preset: GuardrailsPresetName | null;
   llm: Record<string, unknown>;
+  networkLearning: { enabled: boolean };
 };
 
 const balancedPreset = guardrailsPresets.balanced;
@@ -59,6 +60,10 @@ export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardra
     (storedConfig as { shortlist?: unknown } | undefined)?.shortlist ?? undefined,
   );
   const llm = mergeConfig(presetConfig.llm ?? {}, (storedConfig as { llm?: unknown } | undefined)?.llm ?? undefined);
+  const networkLearning = mergeConfig(
+    presetConfig.networkLearning ?? { enabled: false },
+    (storedConfig as { networkLearning?: unknown } | undefined)?.networkLearning ?? undefined,
+  );
 
   return {
     scoring,
@@ -67,5 +72,8 @@ export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardra
     shortlist,
     llm,
     preset,
+    networkLearning: {
+      enabled: Boolean((networkLearning as { enabled?: unknown }).enabled),
+    },
   } satisfies TenantGuardrailsConfig;
 }

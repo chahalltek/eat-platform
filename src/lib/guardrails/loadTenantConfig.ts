@@ -5,6 +5,14 @@ function coerceGuardrailSection(value: unknown) {
   return value && typeof value === "object" ? value : {};
 }
 
+function coerceNetworkLearning(value: unknown) {
+  if (value && typeof value === "object" && value !== null && "enabled" in value) {
+    return { enabled: Boolean((value as { enabled?: unknown }).enabled) };
+  }
+
+  return { ...defaultTenantGuardrails.networkLearning };
+}
+
 function mergeSafetySection(value: unknown) {
   const safetyOverrides = coerceGuardrailSection(value) as Record<string, unknown>;
   const bandOverrides = coerceGuardrailSection(safetyOverrides.confidenceBands);
@@ -38,6 +46,7 @@ export async function loadTenantConfig(tenantId: string) {
     explain: { ...defaultTenantGuardrails.explain, ...coerceGuardrailSection(existing.explain) },
     safety: mergeSafetySection(existing.safety),
     llm: { ...defaultTenantGuardrails.llm, ...coerceGuardrailSection((existing as { llm?: unknown }).llm) },
+    networkLearning: coerceNetworkLearning((existing as { networkLearning?: unknown }).networkLearning),
     _source: "db" as const,
   };
 }

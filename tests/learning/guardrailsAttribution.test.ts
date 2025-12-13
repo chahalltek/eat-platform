@@ -79,6 +79,7 @@ describe("guardrailsAttribution", () => {
       matchResults,
       decisionItems: decisions,
       timestamp: capturedAt,
+      networkLearningEnabled: true,
     });
 
     expect(summary).toHaveLength(1);
@@ -116,7 +117,12 @@ describe("guardrailsAttribution", () => {
     const clonedMatches = typeof structuredClone === "function"
       ? structuredClone(duplicateMetadata)
       : JSON.parse(JSON.stringify(duplicateMetadata));
-    const merged = buildLearningRecords({ outcomes, matchResults: duplicateMetadata, decisionItems: decisions });
+    const merged = buildLearningRecords({
+      outcomes,
+      matchResults: duplicateMetadata,
+      decisionItems: decisions,
+      networkLearningEnabled: true,
+    });
 
     const mergedRecord = merged.find((record) => record.candidateId === "cand-1");
     expect(mergedRecord?.guardrailsPreset).toBe("balanced");
@@ -127,7 +133,7 @@ describe("guardrailsAttribution", () => {
   });
 
   it("handles missing guardrail metadata deterministically", () => {
-    const records = attributeGuardrailsPerformance({ outcomes: outcomes.slice(0, 1) });
+    const records = attributeGuardrailsPerformance({ outcomes: outcomes.slice(0, 1), networkLearningEnabled: true });
 
     expect(records).toEqual([
       {
@@ -147,7 +153,19 @@ describe("guardrailsAttribution", () => {
   });
 
   it("suppresses learning output when in fire drill mode", () => {
-    const summary = attributeGuardrailsPerformance({ outcomes, matchResults, decisionItems: decisions, systemMode: "fire_drill" });
+    const summary = attributeGuardrailsPerformance({
+      outcomes,
+      matchResults,
+      decisionItems: decisions,
+      systemMode: "fire_drill",
+      networkLearningEnabled: true,
+    });
+  
+    expect(summary).toEqual([]);
+  });
+
+  it("suppresses learning output unless tenants opt in", () => {
+    const summary = attributeGuardrailsPerformance({ outcomes, matchResults, decisionItems: decisions });
 
     expect(summary).toEqual([]);
   });

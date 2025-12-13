@@ -281,6 +281,34 @@ export function GuardrailsForm({ tenantId }: { tenantId: string }) {
         </div>
       </section>
 
+      <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-zinc-900">Network learning</h3>
+          <p className="text-sm text-zinc-600">
+            Decide whether anonymized performance signals from this tenant help train network benchmarks.
+          </p>
+        </div>
+        <div className="flex items-start justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-zinc-800">Contribute anonymized learning to network benchmarks</p>
+            <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-600">
+              <li>Shares only aggregated shortlist, interview, and hire rates by role family or region.</li>
+              <li>Never sends resumes, names, contact details, raw feedback, or job descriptions.</li>
+            </ul>
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-zinc-800">
+            <input
+              type="checkbox"
+              checked={form.networkLearning.enabled}
+              disabled={disabled}
+              onChange={(event) => updateField(["networkLearning", "enabled"], event.target.checked)}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+            />
+            {form.networkLearning.enabled ? "Opted in" : "Opted out"}
+          </label>
+        </div>
+      </section>
+
       <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="space-y-1">
           <h3 className="text-base font-semibold text-zinc-900">LLM provider controls</h3>
