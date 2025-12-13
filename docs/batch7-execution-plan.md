@@ -64,3 +64,38 @@ Forecast hiring pressure using Bullhorn signals, not replacing them.
 - ❌ No candidate-level forecasts
 - ❌ No stage predictions
 - ✅ Job-level risk only
+
+### 🌊 Wave 2 — Strategic recommendations (exec-grade, not ops)
+This wave only starts **after** Wave 1 forecasts are live and trusted by stakeholders.
+
+🎟️ **Ticket 36 (revised) — ETE-STRAT-2201-A**
+**Hiring strategy recommendations (Bullhorn-additive)**
+
+**Goal**
+Turn job-level forecasts into executive-ready decisions leaders can approve. Recommendations remain advisory and cannot change Bullhorn stages or candidate records.
+
+**Inputs (read only)**
+- Wave 1 job-level risk forecasts
+- Bullhorn req metadata (job family, location, priority)
+- Historical close velocity benchmarks by role family
+- Market scarcity signals and MQI trends
+
+**Outputs (advisory only)**
+- 🧭 Strategic actions leaders can approve, not operational steps recruiters perform
+- 📄 Recommendation packet per job with rationale, expected impact window (30/60/90 days), and confidence
+- 🔒 No mutations to Bullhorn states, candidates, or workflows
+
+**Examples**
+- "Consider opening sourcing earlier for this req"
+- "Recommend relaxing must-have Terraform certification; market scarcity high"
+- "High likelihood of delayed close based on market benchmarks; suggest executive escalation" 
+
+**Explicitly not**
+- "Move candidate to stage X"
+- "Email candidate"
+- "Change workflow"
+
+**Guardrails**
+- Must be explainable and cite which forecast or benchmark drives each recommendation
+- Default to opt-in: leaders approve recommendations before recruiters see them
+- Provide confidence levels and impact horizon; avoid prescriptive sequencing
