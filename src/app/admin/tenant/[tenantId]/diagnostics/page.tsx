@@ -77,6 +77,11 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "2-digit", year: "numeric" }).format(date);
 }
 
+function formatDateTime(value: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString();
+}
+
 function formatGuardrailsPreset(preset: TenantDiagnostics["guardrailsPreset"]) {
   if (!preset) return "Custom (no preset selected)";
   return preset[0].toUpperCase() + preset.slice(1);
@@ -85,6 +90,12 @@ function formatGuardrailsPreset(preset: TenantDiagnostics["guardrailsPreset"]) {
 function mapLlmStatus(status: TenantDiagnostics["llm"]["status"]): Status {
   if (status === "ready") return "ok";
   if (status === "disabled") return "off";
+  return "warn";
+}
+
+function mapAtsStatus(status: TenantDiagnostics["ats"]["status"]): Status {
+  if (status === "success") return "ok";
+  if (status === "running") return "warn";
   return "warn";
 }
 
@@ -168,6 +179,38 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
           <TenantTestTable tenantId={requestedTenant} />
 
           <section className="grid gap-4 md:grid-cols-2">
+            <DiagnosticCard
+              title="ATS sync"
+              status={mapAtsStatus(diagnostics.ats.status)}
+              description="Latest ATS ingestion status and retry schedule."
+            >
+              <div className="space-y-2 text-sm">
+                <p className="font-medium text-zinc-900 dark:text-zinc-50">Provider: {diagnostics.ats.provider}</p>
+                <p className="text-xs text-zinc-700 dark:text-zinc-200">
+                  Last sync: {diagnostics.ats.lastRunAt ? formatDateTime(diagnostics.ats.lastRunAt) : "No runs yet"}
+                </p>
+                {diagnostics.ats.summary ? (
+                  <p className="text-xs text-zinc-700 dark:text-zinc-200">
+                    Synced {diagnostics.ats.summary.jobsSynced} jobs / {diagnostics.ats.summary.candidatesSynced} candidates /
+                    {" "}
+                    {diagnostics.ats.summary.placementsSynced} placements
+                  </p>
+                ) : (
+                  <p className="text-xs text-zinc-500">No ATS records have been synchronized yet.</p>
+                )}
+                {diagnostics.ats.errorMessage ? (
+                  <p className="text-xs text-amber-700">Last error: {diagnostics.ats.errorMessage}</p>
+                ) : (
+                  <p className="text-xs text-zinc-500">No sync errors detected.</p>
+                )}
+                {diagnostics.ats.nextAttemptAt ? (
+                  <p className="text-xs text-zinc-700 dark:text-zinc-200">
+                    Next retry at {formatDateTime(diagnostics.ats.nextAttemptAt)} (retry {diagnostics.ats.retryCount})
+                  </p>
+                ) : null}
+              </div>
+            </DiagnosticCard>
+
             <DiagnosticCard
               title="System mode"
               status={diagnostics.fireDrill.enabled ? "warn" : "ok"}

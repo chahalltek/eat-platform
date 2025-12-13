@@ -47,12 +47,16 @@ export async function finishAgentRunSuccess({
   tokensPrompt,
   tokensCompletion,
   durationMs,
+  retryCount,
+  retryPayload,
 }: {
   runId: string;
   output?: unknown;
   tokensPrompt?: number;
   tokensCompletion?: number;
   durationMs?: number;
+  retryCount?: number;
+  retryPayload?: unknown;
 }) {
   const normalizedOutput = normalizeJsonValue(output);
 
@@ -62,9 +66,12 @@ export async function finishAgentRunSuccess({
       status: AgentRunStatus.SUCCESS,
       output: normalizedOutput,
       outputSnapshot: normalizedOutput,
+      errorMessage: null,
       tokensPrompt,
       tokensCompletion,
       durationMs,
+      retryCount,
+      retryPayload: normalizeJsonValue(retryPayload),
       finishedAt: new Date(),
     },
   });
@@ -74,10 +81,14 @@ export async function finishAgentRunError({
   runId,
   errorMessage,
   durationMs,
+  retryCount,
+  retryPayload,
 }: {
   runId: string;
   errorMessage?: string;
   durationMs?: number;
+  retryCount?: number;
+  retryPayload?: unknown;
 }) {
   await prisma.agentRunLog.update({
     where: { id: runId },
@@ -85,6 +96,8 @@ export async function finishAgentRunError({
       status: AgentRunStatus.FAILED,
       errorMessage,
       durationMs,
+      retryCount,
+      retryPayload: normalizeJsonValue(retryPayload),
       finishedAt: new Date(),
     },
   });

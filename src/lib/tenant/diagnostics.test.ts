@@ -16,7 +16,7 @@ const mockLoadTenantGuardrails = vi.hoisted(() => vi.fn());
 const prismaMock = vi.hoisted(() => ({
   tenant: { findUnique: vi.fn() },
   securityEventLog: { count: vi.fn() },
-  agentRunLog: { count: vi.fn() },
+  agentRunLog: { count: vi.fn(), findFirst: vi.fn() },
 }));
 
 vi.mock("@/lib/config/configValidator", () => ({
@@ -82,6 +82,7 @@ describe("buildTenantDiagnostics", () => {
     });
     prismaMock.securityEventLog.count.mockResolvedValue(5);
     prismaMock.agentRunLog.count.mockResolvedValue(0);
+    prismaMock.agentRunLog.findFirst.mockResolvedValue(null);
     prismaMock.tenant.findUnique.mockResolvedValue({
       id: "tenant-a",
       dataRetentionDays: 45,
@@ -171,6 +172,32 @@ describe("buildTenantDiagnostics", () => {
       suggested: false,
       reason: null,
       windowMinutes: 30,
+    });
+    expect(diagnostics.ats.status).toBe("unknown");
+  });
+
+  it("maps the latest ATS sync run into diagnostics", async () => {
+    prismaMock.agentRunLog.findFirst.mockResolvedValue({
+      agentName: "ATS_SYNC.BULLHORN",
+      status: "FAILED",
+      startedAt: new Date("2024-03-01T00:00:00Z"),
+      finishedAt: new Date("2024-03-01T00:03:00Z"),
+      errorMessage: "Webhook timeout",
+      retryCount: 2,
+      retryPayload: { nextAttemptAt: "2024-03-01T00:05:00.000Z" },
+      outputSnapshot: { jobsSynced: 0, candidatesSynced: 1, placementsSynced: 0 },
+    });
+
+    const diagnostics = await buildTenantDiagnostics("tenant-a");
+
+    expect(diagnostics.ats).toEqual({
+      provider: "bullhorn",
+      status: "failed",
+      lastRunAt: "2024-03-01T00:03:00.000Z",
+      nextAttemptAt: "2024-03-01T00:05:00.000Z",
+      errorMessage: "Webhook timeout",
+      retryCount: 2,
+      summary: { jobsSynced: 0, candidatesSynced: 1, placementsSynced: 0 },
     });
   });
 

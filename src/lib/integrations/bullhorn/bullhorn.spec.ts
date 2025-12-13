@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BullhornClient } from './client';
 import { mapBullhornCandidate, mapBullhornJob, mapBullhornPlacement } from './mappings';
 import { MockBullhornApi } from './mockApi';
-import { InMemorySyncStore, syncBullhorn } from './sync';
+import { InMemorySyncLogger, InMemorySyncStore, syncBullhorn } from './sync';
 import type { BullhornCandidate, BullhornJob, BullhornPlacement } from './types';
 
 describe('Bullhorn connector', () => {
@@ -102,6 +102,50 @@ describe('Bullhorn connector', () => {
       candidateId: '301',
       status: 'Submitted',
     });
+  });
+
+  it('retries failed sync attempts and records the last outcome', async () => {
+    const mockApi = new MockBullhornApi({ jobs, candidates, placements });
+
+    const client = new BullhornClient({
+      clientId: 'client-id',
+      clientSecret: 'client-secret',
+      redirectUri: 'https://example.com/callback',
+      baseUrl: 'https://mock.bullhorn.local',
+      authBaseUrl: 'https://mock.bullhorn.local',
+      httpClient: mockApi.handler,
+    });
+
+    await client.exchangeCodeForToken('abc123');
+
+    let failOnce = true;
+    const logger = new InMemorySyncLogger();
+    const store = new InMemorySyncStore();
+
+    const summary = await syncBullhorn({
+      fetchJobs: async () => {
+        if (failOnce) {
+          failOnce = false;
+          throw new Error('temporary outage');
+        }
+
+        return client.getJobs();
+      },
+      fetchCandidates: () => client.getCandidates(),
+      fetchPlacements: () => client.getPlacements(),
+      store,
+      tenantId: 'tenant-retry',
+      logger,
+      retryDelaysMs: [0, 0, 0],
+    });
+
+    expect(summary.jobsSynced).toBe(1);
+    expect(logger.attempts[0]).toMatchObject({
+      status: 'success',
+      retryCount: 1,
+    });
+    expect(logger.attempts[0]?.summary).toMatchObject({ jobsSynced: 1, candidatesSynced: 1, placementsSynced: 1 });
+    expect(logger.attempts[0]?.errorMessage).toBeNull();
   });
 
   it('keeps sync idempotent by upserting records', async () => {

@@ -71,6 +71,19 @@ export type TenantDiagnostics = {
     verbosityCap: number | null;
     fireDrillOverride: boolean;
   };
+  ats: {
+    provider: string;
+    status: "success" | "failed" | "running" | "unknown";
+    lastRunAt: string | null;
+    nextAttemptAt: string | null;
+    errorMessage: string | null;
+    retryCount: number;
+    summary: {
+      jobsSynced: number;
+      candidatesSynced: number;
+      placementsSynced: number;
+    } | null;
+  };
 };
 
 function isSsoConfigured(config: ReturnType<typeof getAppConfig>) {
@@ -184,6 +197,85 @@ function mapRateLimits(plan: SubscriptionPlan | null) {
     default: config,
     override: overrides?.[action as keyof typeof overrides] ?? null,
   }));
+}
+
+type SyncSummary = TenantDiagnostics["ats"]["summary"];
+
+function parseSyncSummary(output: unknown): SyncSummary {
+  if (!output || typeof output !== "object") return null;
+
+  const candidate = output as Record<string, unknown>;
+  const jobsSynced = Number(candidate.jobsSynced);
+  const candidatesSynced = Number(candidate.candidatesSynced);
+  const placementsSynced = Number(candidate.placementsSynced);
+
+  if ([jobsSynced, candidatesSynced, placementsSynced].some((value) => Number.isNaN(value))) {
+    return null;
+  }
+
+  return { jobsSynced, candidatesSynced, placementsSynced };
+}
+
+function parseRetryPayload(value: unknown): { nextAttemptAt: string | null } {
+  if (!value || typeof value !== "object") return { nextAttemptAt: null };
+
+  const payload = value as { nextAttemptAt?: unknown };
+  const nextAttemptAt =
+    typeof payload.nextAttemptAt === "string" && payload.nextAttemptAt ? payload.nextAttemptAt : null;
+
+  return { nextAttemptAt };
+}
+
+async function loadLatestAtsSync(tenantId: string): Promise<TenantDiagnostics["ats"]> {
+  try {
+    const lastSync = await prisma.agentRunLog.findFirst({
+      where: { tenantId, agentName: { contains: "ATS_SYNC", mode: "insensitive" } },
+      orderBy: { startedAt: "desc" },
+    });
+
+    if (!lastSync) {
+      return {
+        provider: "bullhorn",
+        status: "unknown",
+        lastRunAt: null,
+        nextAttemptAt: null,
+        errorMessage: null,
+        retryCount: 0,
+        summary: null,
+      } as const;
+    }
+
+    const status =
+      lastSync.status === AgentRunStatus.SUCCESS
+        ? "success"
+        : lastSync.status === AgentRunStatus.RUNNING
+          ? "running"
+          : "failed";
+
+    const nextAttemptAt = parseRetryPayload(lastSync.retryPayload).nextAttemptAt;
+    const provider = lastSync.agentName?.split?.(".")?.[1]?.toLowerCase?.() ?? "bullhorn";
+
+    return {
+      provider,
+      status,
+      lastRunAt: (lastSync.finishedAt ?? lastSync.startedAt)?.toISOString() ?? null,
+      nextAttemptAt,
+      errorMessage: lastSync.errorMessage ?? null,
+      retryCount: lastSync.retryCount ?? 0,
+      summary: parseSyncSummary(lastSync.outputSnapshot),
+    } as const;
+  } catch (error) {
+    console.error("Unable to load ATS sync diagnostics", error);
+    return {
+      provider: "bullhorn",
+      status: "unknown",
+      lastRunAt: null,
+      nextAttemptAt: null,
+      errorMessage: "Unable to load ATS sync diagnostics",
+      retryCount: 0,
+      summary: null,
+    } as const;
+  }
 }
 
 async function resolveEnabledFlags(tenantId: string) {
@@ -364,7 +456,18 @@ function buildGuardrailsStatus(guardrails: TenantDiagnostics["guardrails"], fire
 }
 
 export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDiagnostics> {
-  const [config, plan, tenant, auditEventCount, flags, guardrails, fireDrill, tenantMode, tenantGuardrails] = await Promise.all([
+  const [
+    config,
+    plan,
+    tenant,
+    auditEventCount,
+    flags,
+    guardrails,
+    fireDrill,
+    tenantMode,
+    tenantGuardrails,
+    atsSync,
+  ] = await Promise.all([
     getAppConfig(),
     getTenantPlan(tenantId),
     prisma.tenant.findUnique({ where: { id: tenantId }, include: { config: true } }),
@@ -374,6 +477,7 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     evaluateFireDrillStatus(tenantId),
     loadTenantMode(tenantId),
     loadTenantGuardrails(tenantId),
+    loadLatestAtsSync(tenantId),
   ]);
 
   if (!tenant) {
@@ -417,5 +521,6 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
       confidencePassingScore: guardrails.confidencePassingScore,
     },
     llm: mapLlmDiagnostics(tenantGuardrails.llm, fireDrill.enabled),
+    ats: atsSync,
   } satisfies TenantDiagnostics;
 }

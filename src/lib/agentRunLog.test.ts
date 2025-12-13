@@ -57,6 +57,8 @@ describe("agentRunLog helper", () => {
       tokensCompletion: 10,
       tokensPrompt: 5,
       durationMs: 200,
+      retryCount: 1,
+      retryPayload: { nextAttemptAt: "2024-02-01T00:00:00.000Z" },
     });
 
     expect(mockAgentRunLogUpdate).toHaveBeenCalledWith({
@@ -68,6 +70,9 @@ describe("agentRunLog helper", () => {
         tokensPrompt: 5,
         tokensCompletion: 10,
         durationMs: 200,
+        retryCount: 1,
+        retryPayload: { nextAttemptAt: "2024-02-01T00:00:00.000Z" },
+        errorMessage: null,
         finishedAt: expect.any(Date),
       }),
     });
@@ -78,6 +83,8 @@ describe("agentRunLog helper", () => {
       runId: "run-3",
       errorMessage: "Something went wrong",
       durationMs: 500,
+      retryCount: 2,
+      retryPayload: { nextAttemptAt: "2024-02-01T01:00:00.000Z" },
     });
 
     expect(mockAgentRunLogUpdate).toHaveBeenCalledWith({
@@ -86,6 +93,8 @@ describe("agentRunLog helper", () => {
         status: AgentRunStatus.FAILED,
         errorMessage: "Something went wrong",
         durationMs: 500,
+        retryCount: 2,
+        retryPayload: { nextAttemptAt: "2024-02-01T01:00:00.000Z" },
         finishedAt: expect.any(Date),
       }),
     });
