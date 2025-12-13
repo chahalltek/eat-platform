@@ -58,6 +58,9 @@ export async function middleware(request: NextRequest) {
   const { session, error: sessionError } = await getValidatedSession(request);
   const searchParams = request.nextUrl.searchParams;
   const requestPath = request.nextUrl.pathname;
+  const headerUserId = request.headers.get(USER_HEADER)?.trim();
+  const headerRole = request.headers.get(ROLE_HEADER)?.trim();
+  const headerTenantId = request.headers.get(TENANT_HEADER)?.trim();
 
   if (
     isPublicDemoMode() &&
@@ -92,7 +95,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  if (!session) {
+  if (!session && !headerUserId) {
     if (requestPath.startsWith('/api')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -101,12 +104,13 @@ export async function middleware(request: NextRequest) {
   }
 
   const queryUserId = searchParams.get(USER_QUERY_PARAM)?.trim();
-  const resolvedUserId = queryUserId || session.userId || DEFAULT_USER_ID;
+  const resolvedUserId = queryUserId || session?.userId || headerUserId || DEFAULT_USER_ID;
 
   const queryTenantId = searchParams.get(TENANT_QUERY_PARAM)?.trim();
-  const resolvedTenantId = session.tenantId || queryTenantId || DEFAULT_TENANT_ID;
+  const resolvedTenantId =
+    session?.tenantId || queryTenantId || headerTenantId || DEFAULT_TENANT_ID;
 
-  const normalizedRole = normalizeRole(session.role ?? DEFAULT_USER_ROLE);
+  const normalizedRole = normalizeRole(session?.role ?? headerRole ?? DEFAULT_USER_ROLE);
 
   if (!normalizedRole) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
