@@ -1,4 +1,5 @@
 import {
+  BanknotesIcon,
   BoltIcon,
   ExclamationTriangleIcon,
   PlayCircleIcon,
@@ -143,12 +144,20 @@ export default async function AdminHealthPage() {
               Operational visibility across agents, errors, user activity, and infrastructure at a glance.
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
-          >
-            <SignalIcon className="h-5 w-5" aria-hidden /> View observability
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+            <Link
+              href="/admin/cost"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-800 hover:shadow-lg dark:border-emerald-900/60 dark:bg-zinc-900 dark:text-emerald-200"
+            >
+              <BanknotesIcon className="h-5 w-5" aria-hidden /> Cost drivers
+            </Link>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+            >
+              <SignalIcon className="h-5 w-5" aria-hidden /> View observability
+            </Link>
+          </div>
         </header>
 
         <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">

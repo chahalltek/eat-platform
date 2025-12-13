@@ -4,6 +4,7 @@ import {
   INTELLIGENCE_CACHE_TTLS,
   invalidateForecastCachesForTenant,
 } from "@/lib/cache/intelligenceCache";
+import { recordCostEvent } from "@/lib/cost/events";
 import { prisma } from "@/lib/prisma";
 import { startTiming } from "@/lib/observability/timing";
 
@@ -205,6 +206,7 @@ export async function getTimeToFillRisksForTenant(
     INTELLIGENCE_CACHE_TTLS.forecastsMs,
     async () => {
       const timer = startTiming({ workload: "forecasting_jobs", meta: { tenantId } });
+      let observedDurationMs: number | undefined;
 
       try {
         const jobs = await prisma.jobReq.findMany({
@@ -236,7 +238,7 @@ export async function getTimeToFillRisksForTenant(
 
         const risks = evaluateTimeToFillRisks(jobs as TimeToFillRiskJob[]);
 
-        timer.end({
+        const result = timer.end({
           cache: { hit: false },
           inputSizes: {
             jobs: jobs.length,
@@ -245,9 +247,27 @@ export async function getTimeToFillRisksForTenant(
           },
         });
 
+        observedDurationMs = result?.durationMs ?? observedDurationMs;
+
         return risks;
       } finally {
-        timer.end({ cache: { hit: false } });
+        const fallback = timer.end({ cache: { hit: false } });
+        observedDurationMs = observedDurationMs ?? fallback?.durationMs;
+
+        if (observedDurationMs !== undefined) {
+          void recordCostEvent({
+            tenantId,
+            driver: "FORECAST_RUNTIME",
+            value: observedDurationMs,
+            unit: "ms",
+            sku: "forecasting_jobs",
+            feature: "time_to_fill_risk",
+            metadata: {
+              cacheKey,
+              cacheBypass: bypassCache,
+            },
+          });
+        }
       }
     },
     { bypassCache },

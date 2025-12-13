@@ -6,6 +6,7 @@ import { getCurrentTenantId } from '@/lib/tenant';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
 import { AIFailureError } from '@/lib/errors';
 import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
+import { recordCostEvent } from '@/lib/cost/events';
 
 type CallLLMParams = {
   systemPrompt: string;
@@ -70,7 +71,7 @@ export async function callLLM({
   });
 
   try {
-    return await adapter.chatCompletion({
+    const response = await adapter.chatCompletion({
       model: resolvedModel,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -79,6 +80,18 @@ export async function callLLM({
       temperature: 0.2,
       maxTokens: llmControls.maxTokens,
     });
+
+    void recordCostEvent({
+      tenantId,
+      driver: 'LLM_CALL',
+      value: 1,
+      unit: 'call',
+      sku: resolvedModel,
+      feature: agent,
+      metadata: { userId },
+    });
+
+    return response;
   } catch (err) {
     if (isRateLimitError(err)) {
       throw err;

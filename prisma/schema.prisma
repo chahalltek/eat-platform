@@ -15,6 +15,12 @@ enum UsageEventType {
   COPILOT_CALL
 }
 
+enum CostDriverType {
+  LLM_CALL
+  FORECAST_RUNTIME
+  AGGREGATION_RUNTIME
+}
+
 enum TenantDeletionMode {
   SOFT_DELETE
   HARD_DELETE
@@ -185,6 +191,22 @@ model UsageEvent {
 
   @@index([tenantId, occurredAt])
   @@index([tenantId, eventType, occurredAt])
+}
+
+model CostEvent {
+  id         String         @id @default(cuid())
+  tenantId   String?
+  driver     CostDriverType
+  value      Float
+  unit       String
+  sku        String?
+  feature    String?
+  metadata   Json?
+  occurredAt DateTime       @default(now())
+  createdAt  DateTime       @default(now())
+
+  @@index([tenantId, occurredAt])
+  @@index([driver, occurredAt])
 }
 
 model FeatureFlag {

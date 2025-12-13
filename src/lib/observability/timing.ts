@@ -34,13 +34,15 @@ export function recordTiming(entry: TimingLogEntry) {
   console.info(payload);
 }
 
+export type TimingResult = { durationMs: number };
+
 export function startTiming(metadata: TimingMetadata) {
   const startedAt = performance.now();
   let ended = false;
 
   return {
     end: (overrides: Partial<TimingMetadata> = {}) => {
-      if (ended) return;
+      if (ended) return { durationMs: 0 } satisfies TimingResult;
       ended = true;
 
       const durationMs = performance.now() - startedAt;
@@ -48,6 +50,8 @@ export function startTiming(metadata: TimingMetadata) {
       const meta = { ...(metadata.meta ?? {}), ...(overrides.meta ?? {}) };
 
       recordTiming({ ...metadata, ...overrides, inputSizes, meta, durationMs });
+
+      return { durationMs } satisfies TimingResult;
     },
   } as const;
 }
