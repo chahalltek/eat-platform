@@ -1,4 +1,4 @@
-export type GuardrailsPresetName = "conservative" | "balanced" | "aggressive";
+export type GuardrailsPresetName = "conservative" | "balanced" | "aggressive" | "demo-safe";
 
 type ConfidenceBands = { high: number; medium: number };
 
@@ -10,6 +10,7 @@ export type GuardrailsConfig = {
   safety: { confidenceBands?: ConfidenceBands } & Record<string, unknown>;
   shortlist?: { strategy?: ShortlistStrategy; maxCandidates?: number } & Record<string, unknown>;
   llm?: Record<string, unknown>;
+  networkLearning?: { enabled?: boolean } & Record<string, unknown>;
 };
 
 export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> = {
@@ -28,8 +29,8 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
         shortlistMaxCandidates: 3,
       },
     },
-     shortlist: {
-     strategy: "quality",
+    shortlist: {
+      strategy: "quality",
     },
     explain: {
       level: "detailed",
@@ -47,6 +48,7 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
       maxTokens: 600,
       verbosityCap: 2000,
     },
+    networkLearning: { enabled: true },
   },
   balanced: {
     scoring: {
@@ -63,8 +65,8 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
         shortlistMaxCandidates: 5,
       },
     },
-     shortlist: {
-     strategy: "quality",
+    shortlist: {
+      strategy: "quality",
     },
     explain: {
       level: "standard",
@@ -82,6 +84,7 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
       maxTokens: 600,
       verbosityCap: 2000,
     },
+    networkLearning: { enabled: true },
   },
   aggressive: {
     scoring: {
@@ -98,7 +101,7 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
         shortlistMaxCandidates: 10,
       },
     },
-      shortlist: {
+    shortlist: {
       strategy: "quality",
     },
     explain: {
@@ -117,5 +120,45 @@ export const guardrailsPresets: Record<GuardrailsPresetName, GuardrailsConfig> =
       maxTokens: 600,
       verbosityCap: 2000,
     },
+    networkLearning: { enabled: true },
+  },
+  "demo-safe": {
+    scoring: {
+      strategy: "weighted",
+      weights: {
+        mustHaveSkills: 0.55,
+        niceToHaveSkills: 0.15,
+        experience: 0.2,
+        location: 0.1,
+      },
+      thresholds: {
+        minMatchScore: 0.7,
+        shortlistMinScore: 0.8,
+        shortlistMaxCandidates: 3,
+      },
+    },
+    shortlist: {
+      strategy: "strict",
+      maxCandidates: 3,
+    },
+    explain: {
+      level: "compact",
+      includeWeights: true,
+    },
+    safety: {
+      requireMustHaves: true,
+      excludeInternalCandidates: true,
+      confidenceBands: { high: 0.8, medium: 0.6 },
+      blockExternalWrites: true,
+    },
+    llm: {
+      provider: "openai",
+      model: "gpt-4.1-mini",
+      allowedAgents: ["EXPLAIN", "RINA", "RUA"],
+      maxTokens: 400,
+      verbosityCap: 1200,
+      dryRun: true,
+    },
+    networkLearning: { enabled: false },
   },
 };

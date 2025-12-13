@@ -1,4 +1,4 @@
-export type SystemModeName = 'pilot' | 'production' | 'sandbox' | 'preprod' | 'fire_drill';
+export type SystemModeName = 'pilot' | 'production' | 'sandbox' | 'preprod' | 'fire_drill' | 'demo';
 
 export const SYSTEM_MODES: ReadonlyArray<SystemModeName> = [
   'pilot',
@@ -6,6 +6,7 @@ export const SYSTEM_MODES: ReadonlyArray<SystemModeName> = [
   'sandbox',
   'preprod',
   'fire_drill',
+  'demo',
 ] as const;
 
 export const DEFAULT_SYSTEM_MODE: SystemModeName = 'fire_drill';

@@ -31,7 +31,7 @@ function mergeConfig(base: JsonObject, override?: unknown): JsonObject {
 function normalizePreset(preset: string | null | undefined): GuardrailsPresetName | null {
   if (!preset) return null;
 
-  const names: GuardrailsPresetName[] = ["conservative", "balanced", "aggressive"];
+  const names: GuardrailsPresetName[] = ["conservative", "balanced", "aggressive", "demo-safe"];
 
   return names.includes(preset as GuardrailsPresetName) ? (preset as GuardrailsPresetName) : null;
 }

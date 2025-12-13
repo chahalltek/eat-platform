@@ -7,6 +7,7 @@ export const SYSTEM_MODES = {
   PILOT: 'pilot',
   PRODUCTION: 'production',
   SANDBOX: 'sandbox',
+  DEMO: 'demo',
 } as const;
 
 export type SystemModeName = (typeof SYSTEM_MODES)[keyof typeof SYSTEM_MODES];
@@ -51,6 +52,10 @@ const MODE_PRESETS: Record<SystemModeName, { guardrailsPreset: string; agentEnab
   [SYSTEM_MODES.SANDBOX]: {
     guardrailsPreset: 'default-lenient',
     agentEnablement: { basic: true, shortlist: true, agents: true },
+  },
+  [SYSTEM_MODES.DEMO]: {
+    guardrailsPreset: 'demo-safe',
+    agentEnablement: { basic: true, shortlist: true, agents: false },
   },
 };
 

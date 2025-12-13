@@ -9,7 +9,8 @@ async function main() {
   await seedDemoTenant(prisma, {
     tenantId: DEMO_TENANT_ID,
     tenantName: 'Demo Tenant',
-    tenantMode: 'sandbox',
+    tenantMode: 'demo',
+    systemMode: 'demo',
     resetTenantData: true,
   });
 

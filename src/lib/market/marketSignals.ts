@@ -184,7 +184,7 @@ export async function getMarketSignals({
 }): Promise<MarketSignals> {
   const capturedAt = timestamp ?? new Date();
 
-  if (systemMode === "fire_drill") {
+  if (systemMode === "fire_drill" || systemMode === "demo") {
     return {
       label: LABEL,
       windowDays: ROLLING_WINDOW_DAYS,

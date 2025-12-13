@@ -19,7 +19,7 @@ export class TenantNotFoundError extends Error {
   }
 }
 
-export type GuardrailsPreset = "conservative" | "balanced" | "aggressive" | "custom" | null;
+export type GuardrailsPreset = "conservative" | "balanced" | "aggressive" | "demo-safe" | "custom" | null;
 
 export type TenantDiagnostics = {
   tenantId: string;

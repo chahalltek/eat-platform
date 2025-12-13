@@ -2,6 +2,12 @@ import { BullhornClient } from '@/lib/integrations/bullhorn/client';
 import { InMemorySyncStore, syncBullhorn } from '@/lib/integrations/bullhorn/sync';
 import { createBullhornSyncLogger } from '@/lib/integrations/bullhorn/syncLogger';
 
+const systemMode = process.env.SYSTEM_MODE?.toLowerCase();
+if (systemMode === 'demo') {
+  console.log('Skipping Bullhorn sync: demo mode enforces read-only guardrails.');
+  process.exit(0);
+}
+
 async function main() {
   const client = new BullhornClient({
     clientId: process.env.BULLHORN_CLIENT_ID ?? 'demo-client',

@@ -273,7 +273,7 @@ export async function captureWeeklyMatchQualitySnapshots(
   options?: { windows?: number[]; referenceDate?: Date },
 ) {
   const mode = await loadTenantMode(tenantId);
-  if (mode.mode === "fire_drill") {
+  if (mode.mode === "fire_drill" || mode.mode === "demo") {
     return [] as MatchQualitySnapshotPayload[];
   }
 

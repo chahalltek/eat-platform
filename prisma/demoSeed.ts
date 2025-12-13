@@ -40,6 +40,19 @@ async function seedTenantMode(prisma: PrismaClient, tenantId: string, mode: stri
   });
 }
 
+async function seedSystemMode(
+  prisma: PrismaClient,
+  tenantId: string,
+  mode: string,
+  metadata: Record<string, unknown> = {},
+) {
+  await prisma.systemMode.upsert({
+    where: { tenantId },
+    update: { mode, metadata },
+    create: { tenantId, mode, metadata },
+  });
+}
+
 async function seedUsers(prisma: PrismaClient, tenantId: string) {
   const users = [
     {
@@ -79,6 +92,23 @@ async function seedTenantMemberships(prisma: PrismaClient, tenantId: string) {
       userId: ADMIN_USER_ID,
       tenantId,
       role: 'ADMIN',
+    },
+  });
+}
+
+async function seedTenantConfig(prisma: PrismaClient, tenantId: string, preset: string) {
+  await prisma.tenantConfig.upsert({
+    where: { tenantId },
+    update: {
+      preset,
+      networkLearningOptIn: false,
+      networkLearning: { enabled: false },
+    },
+    create: {
+      tenantId,
+      preset,
+      networkLearningOptIn: false,
+      networkLearning: { enabled: false },
     },
   });
 }
@@ -453,20 +483,156 @@ async function seedMatchesAndOutreach(prisma: PrismaClient, tenantId: string) {
   }
 }
 
+async function seedLearningAggregates(prisma: PrismaClient) {
+  const aggregates = [
+    {
+      roleFamily: 'Engineering',
+      region: 'US',
+      signalType: 'time_to_fill',
+      value: 42,
+      sampleSize: 240,
+      windowDays: 90,
+    },
+    {
+      roleFamily: 'Data',
+      region: 'US',
+      signalType: 'scarcity_index',
+      value: 1.35,
+      sampleSize: 180,
+      windowDays: 90,
+    },
+    {
+      roleFamily: 'Sales',
+      region: 'EMEA',
+      signalType: 'time_to_fill',
+      value: 35,
+      sampleSize: 120,
+      windowDays: 90,
+    },
+  ];
+
+  await prisma.learningAggregate.deleteMany({
+    where: {
+      OR: aggregates.map((entry) => ({
+        roleFamily: entry.roleFamily,
+        region: entry.region,
+        signalType: entry.signalType,
+      })),
+    },
+  });
+  await prisma.learningAggregate.createMany({ data: aggregates });
+}
+
+async function seedBenchmarkRelease(prisma: PrismaClient) {
+  const releaseId = '2026-Q1';
+
+  await prisma.benchmarkRelease.upsert({
+    where: { id: releaseId },
+    update: { status: 'published', publishedAt: new Date('2026-02-15T00:00:00Z') },
+    create: {
+      id: releaseId,
+      version: '2026-Q1',
+      status: 'published',
+      windowDays: 90,
+      publishedAt: new Date('2026-02-15T00:00:00Z'),
+    },
+  });
+
+  const metrics = [
+    {
+      releaseId,
+      roleFamily: 'Engineering',
+      region: 'US',
+      metricKey: 'time-to-fill',
+      metricValue: 42,
+      sampleSize: 240,
+      methodologyNotes: 'Aggregated for demo guardrails; no tenant-level leakage.',
+    },
+    {
+      releaseId,
+      roleFamily: 'Data',
+      region: 'US',
+      metricKey: 'scarcity-index',
+      metricValue: 1.35,
+      sampleSize: 180,
+      methodologyNotes: 'Precomputed for demo stability.',
+    },
+    {
+      releaseId,
+      roleFamily: 'Sales',
+      region: 'EMEA',
+      metricKey: 'market-heatmap',
+      metricValue: 0.85,
+      sampleSize: 120,
+      methodologyNotes: 'Regional heatmap derived from anonymized demo signals.',
+    },
+  ];
+
+  await prisma.benchmarkMetric.deleteMany({ where: { releaseId } });
+  await prisma.benchmarkMetric.createMany({ data: metrics });
+
+  return releaseId;
+}
+
+async function seedInsightSnapshots(prisma: PrismaClient, releaseId: string) {
+  await prisma.insightSnapshot.deleteMany({ where: { releaseId } });
+
+  await prisma.insightSnapshot.create({
+    data: {
+      releaseId,
+      title: 'Demo hiring velocity stays predictable',
+      subtitle: 'Precomputed benchmarks keep demo tenants stable and ready.',
+      audience: 'public',
+      status: 'published',
+      publishedAt: new Date('2026-02-20T00:00:00Z'),
+      contentJson: {
+        headline: 'Median time-to-fill sits at 42 days for demo engineering roles',
+        subtitle: 'Guardrails freeze learning to avoid cross-tenant noise while keeping insights fresh.',
+        chart: {
+          type: 'line',
+          units: 'days',
+          series: [
+            { label: '2025-Q4', value: 45, sampleSize: 200 },
+            { label: '2026-Q1', value: 42, sampleSize: 240 },
+          ],
+        },
+        interpretation: [
+          'Demo mode uses pre-aggregated signals; no tenant resumes or reqs are streamed into learning.',
+          'Benchmarks refresh with seeded data only, ensuring no cleanup after live demos.',
+        ],
+        methodology:
+          'Aggregated for demo use only with learning paused and external writes disabled; no tenant-specific data stored.',
+        meta: {
+          releaseId,
+          metricKey: 'time-to-fill',
+          filters: { roleFamily: 'Engineering', region: 'US' },
+          templateKey: 'time-to-fill',
+        },
+      },
+    },
+  });
+}
+
 export type SeedTenantOptions = {
   tenantId: string;
   tenantName?: string;
   tenantMode?: string;
+  systemMode?: string;
   resetTenantData?: boolean;
 };
 
 export async function seedDemoTenant(prisma: PrismaClient, options: SeedTenantOptions) {
-  const { tenantId, tenantMode = 'pilot', tenantName = 'Demo Tenant' } = options;
+  const { tenantId, tenantMode = 'pilot', systemMode = 'demo', tenantName = 'Demo Tenant' } = options;
 
   await seedTenant(prisma, tenantId, tenantName);
   await seedTenantMode(prisma, tenantId, tenantMode);
+  await seedSystemMode(prisma, tenantId, systemMode, {
+    guardrailsPreset: 'demo-safe',
+    agentEnablement: { basic: true, shortlist: true, agents: false },
+  });
   await seedUsers(prisma, tenantId);
   await seedTenantMemberships(prisma, tenantId);
+  await seedTenantConfig(prisma, tenantId, 'demo-safe');
 
   if (options.resetTenantData ?? true) {
     await resetTenantData(prisma, tenantId);
@@ -477,6 +643,9 @@ export async function seedDemoTenant(prisma: PrismaClient, options: SeedTenantOp
   await seedAgentFlags(prisma, tenantId);
   await seedAgentRuns(prisma, tenantId);
   await seedMatchesAndOutreach(prisma, tenantId);
+  await seedLearningAggregates(prisma);
+  const releaseId = await seedBenchmarkRelease(prisma);
+  await seedInsightSnapshots(prisma, releaseId);
 
   await withTenantContext(tenantId, async () => {
     await Promise.all(Object.values(FEATURE_FLAGS).map((flagName) => setFeatureFlag(flagName, false)));
