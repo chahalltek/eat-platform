@@ -4,10 +4,14 @@ import { assertAdminAccess, publishInsightSnapshot } from '@/lib/publishing/insi
 
 export const dynamic = 'force-dynamic';
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     await assertAdminAccess(request);
-    const snapshot = await publishInsightSnapshot(params.id);
+    const { id } = await params;
+    const snapshot = await publishInsightSnapshot(id);
     return NextResponse.json({ snapshot }, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to publish insight snapshot';
