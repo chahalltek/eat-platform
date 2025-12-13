@@ -125,7 +125,6 @@ export async function POST(req: NextRequest) {
         candidateId: match.candidateId,
         score,
         confidenceBand,
-        signals: {},
       };
     });
 
