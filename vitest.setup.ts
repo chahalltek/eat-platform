@@ -72,17 +72,22 @@ vi.mock("@/lib/prisma", async () => {
   };
 });
 
-vi.mock("@/lib/auth/requireRole", () => ({
-  requireRecruiterOrAdmin: vi.fn(async () => ({
-    ok: true,
-    user: { id: "test-user", role: "RECRUITER" },
-  })),
-  requireHiringManagerOrAdmin: vi.fn(async () => ({
-    ok: true,
-    user: { id: "test-user", role: "MANAGER" },
-  })),
-  requireRole: vi.fn(async () => ({
-    ok: true,
-    user: { id: "test-user", role: "RECRUITER" },
-  })),
-}));
+vi.mock("@/lib/auth/requireRole", async () => {
+  const actual = await vi.importActual<any>("@/lib/auth/requireRole");
+
+  return {
+    ...actual,
+    requireRecruiterOrAdmin: vi.fn(async () => ({
+      ok: true,
+      user: { id: "test-user", role: "RECRUITER" },
+    })),
+    requireHiringManagerOrAdmin: vi.fn(async () => ({
+      ok: true,
+      user: { id: "test-user", role: "MANAGER" },
+    })),
+    requireRole: vi.fn(async () => ({
+      ok: true,
+      user: { id: "test-user", role: "RECRUITER" },
+    })),
+  };
+});
