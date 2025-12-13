@@ -11,9 +11,7 @@ import { getConfidenceBand } from "@/lib/agents/confidenceEngine";
 
 const feedbackSchema = z.object({
   matchId: z.string().trim().min(1, "matchId is required"),
-  direction: z.enum(["UP", "DOWN"]).optional(),
-  outcome: z.enum(["SCREENED", "INTERVIEWED", "OFFERED", "HIRED", "REJECTED"]),
-  source: z.enum(["RECRUITER", "HIRING_MANAGER"]).optional(),
+  feedback: z.enum(["positive", "negative"]),
 });
 
 type ConfidenceDetails = {
@@ -115,7 +113,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid feedback", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { matchId, direction, outcome, source } = parsed.data;
+  const { matchId, feedback } = parsed.data;
 
   try {
     const match = await prisma.matchResult.findUnique({
@@ -172,9 +170,12 @@ export async function POST(req: Request) {
         : match.reasons ?? null,
     );
 
-    const outcomeSource = source ?? (typeof user.role === "string" ? user.role.toUpperCase() : null);
+    const outcome = "FEEDBACK";
+    const outcomeSource = typeof user.role === "string" ? user.role.toUpperCase() : null;
 
     const recommendationConfidence = mode.mode === "pilot" ? "low" : "normal";
+
+    const direction = feedback === "positive" ? "UP" : "DOWN";
 
     const matchSignals: Prisma.InputJsonObject = {
       score: match.score,
@@ -198,12 +199,19 @@ export async function POST(req: Request) {
       recommendationConfidence,
     };
 
-    const feedback = await prisma.matchFeedback.upsert({
+    const feedbackEntry = await prisma.matchFeedback.upsert({
       where: {
-        tenantId_matchResultId_outcome: { tenantId, matchResultId: match.id, outcome },
+        tenantId_jobReqId_candidateId_userId: {
+          tenantId,
+          jobReqId: match.jobReqId,
+          candidateId: match.candidateId,
+          userId: user.id,
+        },
       },
       update: {
+        matchResultId: match.id,
         direction,
+        feedback,
         outcomeSource,
         matchSignals,
         matchScore: match.score,
@@ -212,6 +220,7 @@ export async function POST(req: Request) {
         guardrailsPreset,
         guardrailsConfig: guardrailsConfigSnapshot,
         systemMode: mode.mode,
+        outcome,
       },
       create: {
         tenantId,
@@ -220,6 +229,7 @@ export async function POST(req: Request) {
         candidateId: match.candidateId,
         jobCandidateId: match.jobCandidateId,
         userId: user.id,
+        feedback,
         direction,
         outcome,
         outcomeSource,
@@ -234,16 +244,17 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({
-      id: feedback.id,
-      direction: feedback.direction,
-      outcome: feedback.outcome,
-      outcomeSource: feedback.outcomeSource,
-      matchScore: feedback.matchScore,
-      confidenceScore: feedback.confidenceScore,
-      guardrailsPreset: feedback.guardrailsPreset,
-      guardrailsConfig: feedback.guardrailsConfig,
-      shortlistStrategy: feedback.shortlistStrategy,
-      systemMode: feedback.systemMode,
+      id: feedbackEntry.id,
+      feedback: feedbackEntry.feedback,
+      direction: feedbackEntry.direction,
+      outcome: feedbackEntry.outcome,
+      outcomeSource: feedbackEntry.outcomeSource,
+      matchScore: feedbackEntry.matchScore,
+      confidenceScore: feedbackEntry.confidenceScore,
+      guardrailsPreset: feedbackEntry.guardrailsPreset,
+      guardrailsConfig: feedbackEntry.guardrailsConfig,
+      shortlistStrategy: feedbackEntry.shortlistStrategy,
+      systemMode: feedbackEntry.systemMode,
       recommendationConfidence,
     });
   } catch (error) {

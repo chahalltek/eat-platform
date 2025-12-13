@@ -702,6 +702,7 @@ model JobCandidateFeedback {
 }
 
 model MatchFeedback {
+<<<<<<< ours
   id                String        @id @default(cuid())
   tenantId          String        @default("default-tenant")
   matchResult       MatchResult   @relation(fields: [matchResultId], references: [id])
@@ -717,6 +718,24 @@ model MatchFeedback {
   outcomeSource     String?
   matchScore        Int?
   confidenceScore   Int?
+=======
+  id             String        @id @default(cuid())
+  tenantId       String        @default("default-tenant")
+  matchResult    MatchResult   @relation(fields: [matchResultId], references: [id])
+  matchResultId  String
+  jobReqId       String
+  candidateId    String
+  jobCandidate   JobCandidate? @relation(fields: [jobCandidateId], references: [id])
+  jobCandidateId String?
+  user           User          @relation(fields: [userId], references: [id])
+  userId         String
+  feedback         String
+  direction        String?
+  outcome          String
+  outcomeSource    String?
+  matchScore       Int?
+  confidenceScore  Int?
+>>>>>>> theirs
   shortlistStrategy String?
   matchSignals      Json?
   guardrailsPreset  String?
@@ -727,6 +746,11 @@ model MatchFeedback {
   @@unique([tenantId, matchResultId, outcome])
   @@index([tenantId, matchResultId])
   @@index([tenantId, jobReqId])
+<<<<<<< ours
+=======
+  @@unique([tenantId, jobReqId, candidateId, userId])
+  @@unique([tenantId, matchResultId, outcome])
+>>>>>>> theirs
 }
 
 model MatchQualitySnapshot {
