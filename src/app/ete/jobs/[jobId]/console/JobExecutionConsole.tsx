@@ -121,14 +121,16 @@ function ResultsTable({
   candidates,
   expandedId,
   explainUnavailable,
-  onToggle,
   showFireDrillBadge,
+  onToggle,
+  showShortlistedOnly,
 }: {
   candidates: JobConsoleCandidate[];
   expandedId: string | null;
   explainUnavailable: boolean;
-  onToggle: (id: string) => void;
   showFireDrillBadge: boolean;
+  onToggle: (id: string) => void;
+  showShortlistedOnly: boolean;
 }) {
   if (candidates.length === 0) {
     return (
@@ -138,9 +140,13 @@ function ResultsTable({
             <span className="h-2 w-2 rounded-full bg-indigo-400" aria-hidden />
             No candidates yet
           </div>
-          <h3 className="text-xl font-semibold text-slate-900">Waiting for a MATCH run</h3>
+          <h3 className="text-xl font-semibold text-slate-900">
+            {showShortlistedOnly ? "Waiting for shortlist results" : "Waiting for a MATCH run"}
+          </h3>
           <p className="max-w-lg text-sm leading-relaxed text-slate-600">
-            Kick off MATCH to pull candidates into the console. Confidence, explanations, and shortlist actions will unlock as soon as results arrive.
+            {showShortlistedOnly
+              ? "No shortlisted candidates to show yet. Run SHORTLIST to see recommendations."
+              : "Kick off MATCH to pull candidates into the console. Confidence, explanations, and shortlist actions will unlock as soon as results arrive."}
           </p>
           <div className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm">
             <span className="h-2 w-2 animate-pulse rounded-full bg-white" aria-hidden />
@@ -178,29 +184,40 @@ function ResultsTable({
                     <td className="px-4 py-3">
                       <ConfidenceBadge band={candidate.confidenceBand} />
                     </td>
-                    <td className="px-4 py-3">
-                      {candidate.shortlisted ? (
-                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                          Yes
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                          No
-                        </span>
+                  <td className="px-4 py-3">
+                    <span
+                      className={clsx(
+                        "inline-flex h-7 w-7 items-center justify-center rounded-full ring-1",
+                        candidate.shortlisted
+                          ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                          : "bg-slate-50 text-slate-400 ring-slate-200",
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {showFireDrillBadge ? (
-                          <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-100">
-                            Fire Drill mode
-                          </span>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => onToggle(candidate.candidateId)}
-                          disabled={explainUnavailable && !candidate.explanation}
-                          title={explainUnavailable && !candidate.explanation ? "EXPLAIN disabled in current mode." : undefined}
+                      aria-label={candidate.shortlisted ? "Shortlisted" : "Not shortlisted"}
+                    >
+                      {candidate.shortlisted ? "✓" : ""}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {showFireDrillBadge ? (
+                        <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-100">
+                          Fire Drill mode
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-md bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200"
+                        title="Copy justification"
+                        disabled
+                      >
+                        Copy justification
+                        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Soon</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onToggle(candidate.candidateId)}
+                        disabled={explainUnavailable && !candidate.explanation}
+                        title={explainUnavailable && !candidate.explanation ? "EXPLAIN disabled in current mode." : undefined}
                           className={clsx(
                             "text-sm font-semibold underline decoration-indigo-200 underline-offset-4",
                             explainUnavailable && !candidate.explanation
@@ -275,59 +292,119 @@ function ExecutionToolbar({
   onRun,
   disabled,
   running,
+  shortlistStrategy,
+  onShortlistStrategyChange,
 }: {
   onRun: (agent: AgentName) => void;
   disabled: Record<AgentName, boolean>;
   running: AgentName | null;
+  shortlistStrategy: "quality" | "strict" | "fast";
+  onShortlistStrategyChange: (strategy: "quality" | "strict" | "fast") => void;
 }) {
   const buttonClasses = {
     MATCH: "bg-slate-900 text-white",
     CONFIDENCE: "bg-indigo-50 text-indigo-900 ring-1 ring-indigo-200",
     EXPLAIN: "bg-slate-100 text-slate-900",
-    SHORTLIST: "bg-emerald-600 text-white",
   } as const;
 
-  const labels: Record<AgentName, string> = {
+  const labels: Record<Exclude<AgentName, "SHORTLIST">, string> = {
     MATCH: "Run MATCH",
     CONFIDENCE: "Run CONFIDENCE",
     EXPLAIN: "Run EXPLAIN",
-    SHORTLIST: "Run SHORTLIST",
   };
 
   return (
-    <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-      {(Object.keys(labels) as AgentName[]).map((agent) => {
-        const isRunning = running === agent;
-        const isDisabled = disabled[agent] || Boolean(running);
+    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+      <div className="flex flex-wrap gap-3">
+        {(Object.keys(labels) as Exclude<AgentName, "SHORTLIST">[]).map((agent) => {
+          const isRunning = running === agent;
+          const isDisabled = disabled[agent] || Boolean(running);
 
-        return (
+          return (
+            <button
+              key={agent}
+              type="button"
+              onClick={() => onRun(agent)}
+              disabled={isDisabled}
+              title={disabled[agent] ? "Disabled in current mode." : undefined}
+              className={clsx(
+                "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition",
+                isDisabled ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-md",
+                buttonClasses[agent],
+              )}
+            >
+              <span className="relative flex items-center gap-2">
+                {isRunning ? (
+                  <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
+                    <span className="relative flex h-2 w-2 items-center justify-center">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60" aria-hidden />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-current" aria-hidden />
+                    </span>
+                    Running
+                  </span>
+                ) : null}
+                <span>{labels[agent]}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl bg-white p-4 ring-1 ring-emerald-100 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Shortlist strategy</p>
+          <p className="text-sm text-slate-600">Choose how aggressive the shortlist should be before running the agent.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {["quality", "strict", "fast"].map((option) => (
+              <label
+                key={option}
+                className={clsx(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] ring-1 transition",
+                  shortlistStrategy === option
+                    ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                    : "bg-slate-50 text-slate-600 ring-slate-200 hover:bg-slate-100",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="shortlist-strategy"
+                  value={option}
+                  checked={shortlistStrategy === option}
+                  onChange={() => onShortlistStrategyChange(option as "quality" | "strict" | "fast")}
+                  className="sr-only"
+                />
+                {option}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col items-start gap-2 sm:items-end">
           <button
-            key={agent}
             type="button"
-            onClick={() => onRun(agent)}
-            disabled={isDisabled}
-            title={disabled[agent] ? "Disabled in current mode." : undefined}
+            onClick={() => onRun("SHORTLIST")}
+            disabled={disabled.SHORTLIST || Boolean(running)}
+            title={disabled.SHORTLIST ? "Shortlist agent disabled in this mode." : undefined}
             className={clsx(
-              "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition",
-              isDisabled ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-md",
-              buttonClasses[agent],
+              "inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition",
+              disabled.SHORTLIST || Boolean(running) ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-md",
             )}
           >
             <span className="relative flex items-center gap-2">
-              {isRunning ? (
+              {running === "SHORTLIST" ? (
                 <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
                   <span className="relative flex h-2 w-2 items-center justify-center">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60" aria-hidden />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-current" aria-hidden />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60" aria-hidden />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-white" aria-hidden />
                   </span>
                   Running
                 </span>
               ) : null}
-              <span>{labels[agent]}</span>
+              <span>Run Shortlist!</span>
             </span>
           </button>
-        );
-      })}
+          <p className="text-[11px] text-slate-500">Default strategy is quality-focused.</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -347,6 +424,8 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [shortlistStrategy, setShortlistStrategy] = useState<"quality" | "strict" | "fast">("quality");
+  const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
 
@@ -382,6 +461,11 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       SHORTLIST: !(stateByAgent.get("SHORTLIST") ?? false),
     } satisfies Record<AgentName, boolean>;
   }, [agentState]);
+
+  const visibleCandidates = useMemo(
+    () => (showShortlistedOnly ? candidates.filter((candidate) => candidate.shortlisted) : candidates),
+    [candidates, showShortlistedOnly],
+  );
 
   const explainUnavailable = disabled.EXPLAIN;
   const isFireDrillMode = modeLabel.toLowerCase().includes("fire drill");
@@ -474,7 +558,11 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       }
 
       if (agent === "SHORTLIST") {
-        const res = await fetch(`/api/jobs/${jobId}/shortlist`, { method: "POST" });
+        const res = await fetch(`/api/jobs/${jobId}/shortlist`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ strategy: shortlistStrategy }),
+        });
         if (!res.ok) throw new Error(`SHORTLIST failed with ${res.status}`);
         const payload = (await res.json()) as {
           shortlistedCandidates: Array<{ candidateId: string }>;
@@ -487,7 +575,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           prev.map((row) => ({ ...row, shortlisted: shortlistedIds.has(row.candidateId) })),
         );
 
-        setMessage("Shortlist updated.");
+        setMessage(`Shortlist updated using ${shortlistStrategy} strategy.`);
         setLastUpdated(new Date());
       }
     } catch (err) {
@@ -553,7 +641,13 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           </div>
         </div>
 
-        <ExecutionToolbar onRun={runAgent} disabled={disabled} running={runningAgent || (isPending ? runningAgent : null)} />
+        <ExecutionToolbar
+          onRun={runAgent}
+          disabled={disabled}
+          running={runningAgent || (isPending ? runningAgent : null)}
+          shortlistStrategy={shortlistStrategy}
+          onShortlistStrategyChange={setShortlistStrategy}
+        />
 
         <div className="flex flex-col gap-1 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
           {runningAgent ? (
@@ -588,7 +682,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       </div>
 
       <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Results</p>
             <h3 className="text-lg font-semibold text-slate-900">Latest candidate runs</h3>
@@ -596,12 +690,33 @@ export function JobExecutionConsole(props: JobConsoleProps) {
               Run MATCH to populate scores, CONFIDENCE to classify reliability, EXPLAIN for recruiter-friendly summaries, and SHORTLIST to flag recommendations.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowShortlistedOnly((prev) => !prev)}
+            className={clsx(
+              "inline-flex items-center gap-2 self-start rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] ring-1",
+              showShortlistedOnly
+                ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                : "bg-slate-50 text-slate-700 ring-slate-200 hover:bg-slate-100",
+            )}
+            aria-pressed={showShortlistedOnly}
+          >
+            <span
+              className={clsx(
+                "h-2 w-2 rounded-full",
+                showShortlistedOnly ? "bg-emerald-600" : "bg-slate-400",
+              )}
+              aria-hidden
+            />
+            Show shortlisted only
+          </button>
         </div>
 
         <ResultsTable
-          candidates={candidates}
+          candidates={visibleCandidates}
           expandedId={expandedId}
           explainUnavailable={explainUnavailable}
+          showShortlistedOnly={showShortlistedOnly}
           showFireDrillBadge={isFireDrillMode}
           onToggle={(id) => setExpandedId((prev) => (prev === id ? null : id))}
         />
