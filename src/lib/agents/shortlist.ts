@@ -152,8 +152,8 @@ export async function runShortlist(
           };
         });
 
-      const shortlistedCandidateIds = buildShortlist({ matches, config: shortlistConfig });
-      const shortlistedCandidates = shortlistedCandidateIds
+      const shortlistOutput = buildShortlist({ matches, config: shortlistConfig });
+      const shortlistedCandidates = shortlistOutput.shortlistedCandidateIds
         .map((candidateId, index) => {
           const match = matches.find((entry) => entry.candidateId === candidateId);
           if (!match) return null;
@@ -172,7 +172,9 @@ export async function runShortlist(
         RunShortlistResult["shortlistedCandidates"][number] & { rawMatch: (typeof job.matches)[number] }>
         ;
 
-      const cutoffScore = shortlistedCandidates.length ? shortlistedCandidates[shortlistedCandidates.length - 1]?.score : undefined;
+      const cutoffScore =
+        shortlistOutput.cutoffScore ??
+        (shortlistedCandidates.length ? shortlistedCandidates[shortlistedCandidates.length - 1]?.score : undefined);
       const shortlistedByCandidate = new Map(shortlistedCandidates.map((entry) => [entry.candidateId, entry]));
 
       await prisma.$transaction(async (tx) => {
