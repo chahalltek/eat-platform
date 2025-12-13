@@ -50,6 +50,7 @@ model User {
 
   agentRuns             AgentRunLog[]
   jobCandidates         JobCandidate[]
+  decisionStreams       DecisionStream[]
   identities            UserIdentity[]
   securityEvents        SecurityEventLog[]
   matchHistories        MatchHistory[]
@@ -163,7 +164,7 @@ model AuditLog {
   id        String   @id @default(cuid())
   tenantId  String   @default("default-tenant")
   actorId   String?
-  action    String   // "MODE_CHANGED", "GUARDRAILS_UPDATED", "AGENT_FLAG_TOGGLED"
+  action    String // "MODE_CHANGED", "GUARDRAILS_UPDATED", "AGENT_FLAG_TOGGLED"
   meta      Json?
   createdAt DateTime @default(now())
 
@@ -172,13 +173,13 @@ model AuditLog {
 }
 
 model UsageEvent {
-  id        String         @id @default(cuid())
-  tenantId  String         @default("default-tenant")
-  eventType UsageEventType
-  count     Int            @default(1)
-  metadata  Json?
-  occurredAt DateTime      @default(now())
-  createdAt DateTime       @default(now())
+  id         String         @id @default(cuid())
+  tenantId   String         @default("default-tenant")
+  eventType  UsageEventType
+  count      Int            @default(1)
+  metadata   Json?
+  occurredAt DateTime       @default(now())
+  createdAt  DateTime       @default(now())
 
   @@index([tenantId, occurredAt])
   @@index([tenantId, eventType, occurredAt])
@@ -284,6 +285,7 @@ model Candidate {
   candidateMatches     CandidateMatch[]
   matchResults         MatchResult[]
   jobCandidates        JobCandidate[]
+  decisionItems        DecisionItem[]
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
   jobPostingMatches    JobPostingMatch[]
@@ -344,6 +346,7 @@ model JobReq {
   matches              Match[]
   matchResults         MatchResult[]
   jobCandidates        JobCandidate[]
+  decisionStreams      DecisionStream[]
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
 
@@ -546,24 +549,55 @@ model JobCandidate {
   @@index([tenantId, candidateId])
 }
 
+model DecisionStream {
+  id            String    @id @default(cuid())
+  tenantId      String    @default("default-tenant")
+  job           JobReq    @relation(fields: [jobId], references: [id])
+  jobId         String
+  createdBy     String
+  createdByUser User      @relation(fields: [createdBy], references: [id])
+  status        String    @default("active") // "active" | "finalized"
+  createdAt     DateTime  @default(now())
+  finalizedAt   DateTime?
+
+  items DecisionItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, jobId, createdBy, status])
+}
+
+model DecisionItem {
+  id               String         @id @default(cuid())
+  tenantId         String         @default("default-tenant")
+  decisionStream   DecisionStream @relation(fields: [decisionStreamId], references: [id])
+  decisionStreamId String
+  candidate        Candidate      @relation(fields: [candidateId], references: [id])
+  candidateId      String
+  action           String // "viewed" | "shortlisted" | "removed" | "favorited"
+  createdAt        DateTime       @default(now())
+
+  @@index([tenantId, decisionStreamId])
+  @@index([tenantId, candidateId])
+}
+
 model MatchResult {
-  id                       String       @id @default(cuid())
-  tenantId                 String       @default("default-tenant")
-  candidate                Candidate    @relation(fields: [candidateId], references: [id])
+  id                       String          @id @default(cuid())
+  tenantId                 String          @default("default-tenant")
+  candidate                Candidate       @relation(fields: [candidateId], references: [id])
   candidateId              String
-  jobReq                   JobReq       @relation(fields: [jobReqId], references: [id])
+  jobReq                   JobReq          @relation(fields: [jobReqId], references: [id])
   jobReqId                 String
   score                    Int
   reasons                  Json?
-  createdAt                DateTime     @default(now())
+  createdAt                DateTime        @default(now())
   skillScore               Int?
   seniorityScore           Int?
   locationScore            Int?
-  agentRun                 AgentRunLog? @relation(fields: [agentRunId], references: [id])
+  agentRun                 AgentRunLog?    @relation(fields: [agentRunId], references: [id])
   agentRunId               String?
   candidateSignalScore     Int?
   candidateSignalBreakdown Json?
-  shortlisted              Boolean      @default(false)
+  shortlisted              Boolean         @default(false)
   shortlistReason          String?
   feedbackEntries          MatchFeedback[]
 
@@ -668,40 +702,40 @@ model JobCandidateFeedback {
 }
 
 model MatchFeedback {
-  id             String        @id @default(cuid())
-  tenantId       String        @default("default-tenant")
-  matchResult    MatchResult   @relation(fields: [matchResultId], references: [id])
-  matchResultId  String
-  jobReqId       String
-  candidateId    String
-  jobCandidate   JobCandidate? @relation(fields: [jobCandidateId], references: [id])
-  jobCandidateId String?
-  user           User?         @relation(fields: [userId], references: [id])
-  userId         String?
-  direction        String?
-  outcome          String
-  outcomeSource    String?
-  matchScore       Int?
-  confidenceScore  Int?
+  id                String        @id @default(cuid())
+  tenantId          String        @default("default-tenant")
+  matchResult       MatchResult   @relation(fields: [matchResultId], references: [id])
+  matchResultId     String
+  jobReqId          String
+  candidateId       String
+  jobCandidate      JobCandidate? @relation(fields: [jobCandidateId], references: [id])
+  jobCandidateId    String?
+  user              User?         @relation(fields: [userId], references: [id])
+  userId            String?
+  direction         String?
+  outcome           String
+  outcomeSource     String?
+  matchScore        Int?
+  confidenceScore   Int?
   shortlistStrategy String?
-  matchSignals     Json?
-  guardrailsPreset String?
-  guardrailsConfig Json?
-  systemMode       String?
-  createdAt        DateTime      @default(now())
+  matchSignals      Json?
+  guardrailsPreset  String?
+  guardrailsConfig  Json?
+  systemMode        String?
+  createdAt         DateTime      @default(now())
 
+  @@unique([tenantId, matchResultId, outcome])
   @@index([tenantId, matchResultId])
   @@index([tenantId, jobReqId])
-  @@unique([tenantId, matchResultId, outcome])
 }
 
 model MatchQualitySnapshot {
-  id        String   @id @default(cuid())
-  tenantId  String   @default("default-tenant")
-  scope     String
-  scopeRef  String?
+  id         String   @id @default(cuid())
+  tenantId   String   @default("default-tenant")
+  scope      String
+  scopeRef   String?
   windowDays Int
-  mqi       Float
+  mqi        Float
   components Json
   capturedAt DateTime @default(now())
 

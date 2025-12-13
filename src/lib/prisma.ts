@@ -52,6 +52,8 @@ const TENANTED_MODELS = new Set([
   'EatTestPlanStatus',
   'TenantConfig',
   'TenantMode',
+  'DecisionStream',
+  'DecisionItem',
 ]);
 
 function withTenantWhere(where: Record<string, any> | undefined, tenantId: string) {
