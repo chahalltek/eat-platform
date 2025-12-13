@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
 
     const availability = await getAgentAvailability(tenantId);
     const guardrails = (await loadTenantConfig(tenantId)) ?? guardrailsPresets.conservative;
-    const guardrailsSnapshot = JSON.parse(JSON.stringify(guardrails)) as Prisma.InputJsonValue;
+     const guardrailsSnapshot = JSON.parse(JSON.stringify(guardrails)) as Prisma.JsonValue;
     const isFireDrill = availability.mode.mode === "fire_drill";
 
     const job = "jobReq" in match ? match.jobReq : match.job;
