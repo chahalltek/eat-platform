@@ -94,28 +94,28 @@ export function buildLearningRecords(params: {
   const matchIndex = buildIndex(params.matchResults ?? []);
   const decisionIndex = buildIndex((params.decisionItems ?? []).filter((item) => item.action !== "removed"));
 
-  return params.outcomes
-    .map((outcome) => {
-      const key = `${outcome.jobId}::${outcome.candidateId}`;
-      const match = matchIndex[key];
-      const decision = decisionIndex[key];
+  return params.outcomes.flatMap((outcome) => {
+    const key = `${outcome.jobId}::${outcome.candidateId}`;
+    const match = matchIndex[key];
+    const decision = decisionIndex[key];
 
-      const systemMode = match?.systemMode ?? activeMode ?? null;
-      if (systemMode === "fire_drill") return null;
+    const systemMode = match?.systemMode ?? activeMode ?? null;
+    if (systemMode === "fire_drill") return [];
 
-      return {
-        ...outcome,
-        decisionStreamId: match?.decisionStreamId ?? decision?.decisionStreamId,
-        matchResultId: match?.matchResultId,
-        guardrailsPreset: match?.guardrailsPreset,
-        guardrailsConfigHash: match?.guardrailsConfigHash,
-        shortlistStrategy: match?.shortlistStrategy,
-        systemMode,
-        roleFamily: match?.roleFamily ?? outcome.roleFamily,
-        capturedAt,
-      } satisfies LearningRecord;
-    })
-    .filter((record): record is LearningRecord => record !== null);
+    const record: LearningRecord = {
+      ...outcome,
+      decisionStreamId: match?.decisionStreamId ?? decision?.decisionStreamId,
+      matchResultId: match?.matchResultId,
+      guardrailsPreset: match?.guardrailsPreset,
+      guardrailsConfigHash: match?.guardrailsConfigHash,
+      shortlistStrategy: match?.shortlistStrategy,
+      systemMode,
+      roleFamily: match?.roleFamily ?? outcome.roleFamily,
+      capturedAt,
+    };
+
+    return [record];
+  });
 }
 
 function safeRate(numerator: number, denominator: number) {
