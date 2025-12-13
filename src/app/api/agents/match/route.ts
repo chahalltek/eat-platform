@@ -126,6 +126,8 @@ export async function POST(req: NextRequest) {
       };
     }
 
+    const guardrailsJson = structuredClone(guardrailsConfig) as Prisma.JsonObject;
+
     const scoringConfig = (guardrailsConfig.scoring ?? {}) as {
       strategy?: string;
       thresholds?: { minMatchScore?: number };
@@ -257,7 +259,7 @@ export async function POST(req: NextRequest) {
 
         const breakdown: Prisma.JsonObject = {
           matchScore,
-          guardrails: guardrailsConfig,
+          guardrails: guardrailsJson,
           candidateSignals: candidateSignals.breakdown ?? null,
         };
 
