@@ -4,10 +4,14 @@ import { assertAdminAccess, buildSnapshotCsv, getInsightSnapshotById } from '@/l
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     await assertAdminAccess(request);
-    const snapshot = await getInsightSnapshotById(params.id);
+    const { id } = await params;
+    const snapshot = await getInsightSnapshotById(id);
 
     if (!snapshot) {
       return NextResponse.json({ error: 'Snapshot not found' }, { status: 404 });
