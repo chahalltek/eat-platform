@@ -63,7 +63,7 @@ export default async function ExecEteOverviewPage() {
   const user = await getCurrentUser();
   const allowed = user && canAccessExecIntelligence(user, user.tenantId);
 
-  if (!user || !allowed) {
+ if (!user || !allowed || !user.tenantId) {
     return <ExecAccessDenied />;
   }
 
