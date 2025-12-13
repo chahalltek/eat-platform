@@ -95,7 +95,8 @@ export async function runPipelineStep<T extends Prisma.InputJsonValue = Prisma.I
       jobId: options.jobId ?? options.input?.jobId ?? null,
       mode: options.mode ?? options.input?.mode ?? null,
       status: 'running',
-      promptMeta: options.promptMeta ?? null,
+      promptMeta:
+        options.promptMeta === undefined ? undefined : options.promptMeta ?? Prisma.JsonNull,
       input: inputPayload,
       startedAt,
     },
