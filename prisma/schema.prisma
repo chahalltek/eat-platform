@@ -907,6 +907,7 @@ model LearningAggregate {
   @@index([roleFamily, industry, region])
 }
 
+<<<<<<< ours
 model BenchmarkRelease {
   id          String   @id @default(cuid())
   version     String
@@ -934,4 +935,19 @@ model BenchmarkMetric {
 
   @@index([releaseId])
   @@index([releaseId, roleFamily, metricKey])
+=======
+model InsightSnapshot {
+  id          String   @id @default(cuid())
+  releaseId   String
+  title       String
+  subtitle    String?
+  audience    String   // "internal" | "client" | "public"
+  status      String   // "draft" | "approved" | "published"
+  contentJson Json
+  createdAt   DateTime @default(now())
+  publishedAt DateTime?
+
+  @@index([releaseId])
+  @@index([status])
+>>>>>>> theirs
 }
