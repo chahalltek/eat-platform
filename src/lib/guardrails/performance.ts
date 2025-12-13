@@ -83,19 +83,20 @@ function extractGuardrailConfig(record: GuardrailFeedbackRecord): GuardrailThres
   const preset = (record.guardrailsPreset as GuardrailsPresetName | null) ?? null;
   const baseConfig: GuardrailsConfig | null = preset ? guardrailsPresets[preset] ?? null : null;
 
-  const mergedConfig = isRecord(guardrailConfig)
+  const guardrailConfigRecord = isRecord(guardrailConfig) ? guardrailConfig : null;
+  const guardrailScoring = guardrailConfigRecord && isRecord(guardrailConfigRecord.scoring) ? guardrailConfigRecord.scoring : null;
+
+  const mergedConfig = baseConfig && guardrailConfigRecord
     ? ({
         ...baseConfig,
         scoring: {
-          ...(baseConfig?.scoring ?? {}),
-          ...(isRecord((guardrailConfig as Record<string, unknown>).scoring)
-            ? (guardrailConfig as Record<string, unknown>).scoring
-            : {}),
+          ...(baseConfig.scoring ?? {}),
+          ...(guardrailScoring ?? {}),
         },
       } as GuardrailsConfig)
-    : baseConfig;
+    : baseConfig ?? null;
 
-  return parseThresholds(mergedConfig ?? guardrailConfig);
+  return parseThresholds(mergedConfig ?? guardrailConfigRecord);
 }
 
 function calculateRate(numerator: number, denominator: number): number {
