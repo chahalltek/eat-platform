@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 
+import { prisma } from "@/lib/prisma";
+
 import { DEFAULT_TENANT_ID } from "./config";
 import { getSessionClaims } from "./session";
 import { normalizeRole, type UserRole } from "./roles";
@@ -84,53 +86,84 @@ async function resolveUserFromHeaders(req?: NextRequest) {
   };
 }
 
+async function resolveUserFromDatabase(userId: string | null | undefined) {
+  if (!userId) {
+    return null;
+  }
+
+  try {
+    return await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, email: true, displayName: true, tenantId: true },
+    });
+  } catch (error) {
+    console.warn("Failed to load user for identity resolution", error);
+    return null;
+  }
+}
+
+async function resolveUserFromSession(req: NextRequest | undefined) {
+  const session = await resolveSession(req);
+  if (!session) {
+    return { user: null, roles: [] as UserRole[], tenantId: DEFAULT_TENANT_ID };
+  }
+
+  const [databaseUser, resolvedTenantId] = await Promise.all([
+    normalizeRole(session.role) ? null : resolveUserFromDatabase(session.userId),
+    resolveTenantId(req, session.tenantId ?? null),
+  ]);
+
+  const roleSource = session.role ?? databaseUser?.role ?? null;
+  const roles = resolveRoles(roleSource);
+  const tenantId = databaseUser?.tenantId ?? resolvedTenantId;
+  const email = session.email ?? databaseUser?.email ?? null;
+  const displayName = session.displayName ?? session.email ?? databaseUser?.displayName ?? databaseUser?.email ?? null;
+
+  return {
+    user: {
+      id: session.userId,
+      email,
+      displayName,
+      role: roles[0] ?? roleSource,
+      tenantId,
+    },
+    roles,
+    tenantId,
+  };
+}
+
 function createLocalIdentityProvider(): IdentityProvider {
   return {
     async getCurrentUser(req?: NextRequest) {
-      const session = await resolveSession(req);
-      if (session) {
-        return {
-          id: session.userId,
-          email: session.email ?? null,
-          displayName: session.displayName ?? session.email ?? null,
-          role: session.role ?? null,
-          tenantId: session.tenantId ?? DEFAULT_TENANT_ID,
-        };
-      }
+      const { user } = await resolveUserFromSession(req);
+      if (user) return user;
 
       return resolveUserFromHeaders(req);
     },
 
     async getUserRoles(req?: NextRequest) {
-      const session = await resolveSession(req);
-      if (session) {
-        return resolveRoles(session.role);
-      }
+      const { roles } = await resolveUserFromSession(req);
+      if (roles.length) return roles;
 
       const fromHeaders = await resolveUserFromHeaders(req);
       return resolveRoles(fromHeaders?.role);
     },
 
     async getUserTenantId(req?: NextRequest) {
-      const session = await resolveSession(req);
-      return resolveTenantId(req, session?.tenantId ?? null);
+      const { tenantId } = await resolveUserFromSession(req);
+      return tenantId;
     },
 
     async getUserClaims(req?: NextRequest) {
-      const session = await resolveSession(req);
+      const { user, roles, tenantId } = await resolveUserFromSession(req);
 
-      if (session) {
-        const [roles, tenantId] = await Promise.all([
-          resolveRoles(session.role),
-          resolveTenantId(req, session.tenantId ?? null),
-        ]);
-
+      if (user) {
         return {
-          userId: session.userId,
+          userId: user.id,
           tenantId,
           roles,
-          email: session.email ?? null,
-          displayName: session.displayName ?? session.email ?? null,
+          email: user.email ?? null,
+          displayName: user.displayName ?? user.email ?? null,
         };
       }
 
@@ -140,15 +173,15 @@ function createLocalIdentityProvider(): IdentityProvider {
         return { userId: null, tenantId: DEFAULT_TENANT_ID, roles: [], email: null, displayName: null };
       }
 
-      const [roles, tenantId] = await Promise.all([
+      const [fallbackRoles, fallbackTenantId] = await Promise.all([
         resolveRoles(fromHeaders.role),
         resolveTenantId(req, fromHeaders.tenantId ?? null),
       ]);
 
       return {
         userId: fromHeaders.id,
-        tenantId,
-        roles,
+        tenantId: fallbackTenantId,
+        roles: fallbackRoles,
         email: fromHeaders.email,
         displayName: fromHeaders.displayName ?? fromHeaders.email,
       };

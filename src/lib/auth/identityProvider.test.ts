@@ -14,9 +14,10 @@ import {
 import { USER_ROLES, isAdminRole, normalizeRole } from "./roles";
 import { createSessionCookie, SESSION_COOKIE_NAME } from "./session";
 
-const { cookiesMock, headersMock } = vi.hoisted(() => ({
+const { cookiesMock, headersMock, prismaMock } = vi.hoisted(() => ({
   cookiesMock: vi.fn(),
   headersMock: vi.fn(),
+  prismaMock: { user: { findUnique: vi.fn() } },
 }));
 
 vi.mock("next/headers", () => ({
@@ -24,9 +25,14 @@ vi.mock("next/headers", () => ({
   headers: headersMock,
 }));
 
+vi.mock("@/lib/prisma", () => ({
+  prisma: prismaMock,
+}));
+
 describe("identity provider abstraction", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    prismaMock.user.findUnique.mockReset();
     resetIdentityProvider();
   });
 
@@ -103,6 +109,46 @@ describe("identity provider abstraction", () => {
     expect(user?.id).toBe("session-user");
     expect(claims.userId).toBe("session-user");
     expect(tenantId).toBe("tenant-session");
+  });
+
+  it("falls back to the database role when the session role is missing", async () => {
+    const cookie = await createSessionCookie({
+      id: "db-role-user",
+      email: "session@example.com",
+    });
+
+    cookiesMock.mockReturnValue({
+      get: (name: string) => (name === SESSION_COOKIE_NAME ? { value: cookie.value } : undefined),
+    });
+
+    headersMock.mockReturnValue(new Headers());
+
+    prismaMock.user.findUnique.mockResolvedValue({
+      role: USER_ROLES.ADMIN,
+      email: "db@example.com",
+      displayName: "DB Admin",
+      tenantId: "tenant-from-db",
+    });
+
+    const user = await getCurrentUser();
+    const roles = await getUserRoles();
+    const claims = await getUserClaims();
+
+    expect(user).toEqual({
+      id: "db-role-user",
+      email: "session@example.com",
+      displayName: "session@example.com",
+      role: USER_ROLES.ADMIN,
+      tenantId: "tenant-from-db",
+    });
+    expect(roles).toEqual([USER_ROLES.ADMIN]);
+    expect(claims).toEqual({
+      userId: "db-role-user",
+      tenantId: "tenant-from-db",
+      roles: [USER_ROLES.ADMIN],
+      email: "session@example.com",
+      displayName: "session@example.com",
+    });
   });
 
   it("allows swapping identity providers for future adapters", async () => {
