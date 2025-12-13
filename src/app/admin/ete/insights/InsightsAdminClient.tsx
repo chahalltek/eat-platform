@@ -1,12 +1,16 @@
 'use client';
 
 import type React from 'react';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import type { BenchmarkRelease } from '@/lib/publishing/releaseRegistry';
 import type { InsightSnapshotRecord } from '@/lib/publishing/insightSnapshots';
 
 const AUDIENCE_OPTIONS: InsightSnapshotRecord['audience'][] = ['internal', 'client', 'public'];
+const EXPORT_FORMATS = [
+  { value: 'markdown', label: 'Markdown (.md)' },
+  { value: 'pdf-json', label: 'PDF-ready JSON' },
+];
 
 function formatDate(value: string | null) {
   if (!value) return '—';
@@ -51,6 +55,10 @@ export function InsightsAdminClient({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [exportState, setExportState] = useState({
+    snapshotId: initialSnapshots[0]?.id ?? '',
+    format: EXPORT_FORMATS[0]?.value ?? 'markdown',
+  });
 
   const initialReleaseId = releases[0]?.id ?? '';
   const [formState, setFormState] = useState<SnapshotFormState>({
@@ -78,7 +86,12 @@ export function InsightsAdminClient({
       throw new Error('Unable to refresh snapshot list');
     }
     const data = await response.json();
-    setSnapshots(data.snapshots ?? []);
+    const refreshed = data.snapshots ?? [];
+    setSnapshots(refreshed);
+
+    if (refreshed.length && !refreshed.some((snapshot: InsightSnapshotRecord) => snapshot.id === exportState.snapshotId)) {
+      setExportState((prev) => ({ ...prev, snapshotId: refreshed[0].id }));
+    }
   }
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
@@ -134,6 +147,30 @@ export function InsightsAdminClient({
     } catch (actionError) {
       setError((actionError as Error).message);
     }
+  }
+
+  useEffect(() => {
+    if (!snapshots.length) {
+      setExportState((prev) => ({ ...prev, snapshotId: '' }));
+      return;
+    }
+
+    const hasSelection = snapshots.some((snapshot) => snapshot.id === exportState.snapshotId);
+    if (!hasSelection) {
+      setExportState((prev) => ({ ...prev, snapshotId: snapshots[0]?.id ?? '' }));
+    }
+  }, [snapshots, exportState.snapshotId]);
+
+  function handleExport(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!exportState.snapshotId) return;
+
+    const basePath = `/api/admin/ete/insights/${exportState.snapshotId}`;
+    const href =
+      exportState.format === 'markdown' ? `${basePath}/export.markdown` : `${basePath}/export.pdf.json`;
+
+    window.location.href = href;
   }
 
   return (
@@ -275,6 +312,70 @@ export function InsightsAdminClient({
       </div>
 
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Export insight content</h2>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Select an existing snapshot and download Markdown or PDF-ready JSON artifacts with data provenance baked in.
+        </p>
+
+        <form onSubmit={handleExport} className="mt-4 grid gap-4 md:grid-cols-3">
+          <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-200 md:col-span-2">
+            Snapshot
+            <select
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              value={exportState.snapshotId}
+              onChange={(event) =>
+                setExportState((prev) => ({
+                  ...prev,
+                  snapshotId: event.target.value,
+                }))
+              }
+              disabled={snapshots.length === 0 || Boolean(storageError)}
+            >
+              {snapshots.length === 0 ? <option value="">No snapshots available</option> : null}
+              {snapshots.map((snapshot) => (
+                <option key={snapshot.id} value={snapshot.id}>
+                  {snapshot.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            Format
+            <select
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              value={exportState.format}
+              onChange={(event) =>
+                setExportState((prev) => ({
+                  ...prev,
+                  format: event.target.value,
+                }))
+              }
+            >
+              {EXPORT_FORMATS.map((format) => (
+                <option key={format.value} value={format.value}>
+                  {format.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="md:col-span-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div className="text-sm text-zinc-600 dark:text-zinc-400">
+              Markdown renders headlines, interpretation, and methodology; PDF JSON preserves chart data and provenance.
+            </div>
+            <button
+              type="submit"
+              disabled={!exportState.snapshotId || Boolean(storageError)}
+              className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Export content
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Snapshot queue</h2>
@@ -346,6 +447,18 @@ export function InsightsAdminClient({
                           href={`/api/admin/ete/insights/${snapshot.id}/export.json`}
                         >
                           JSON
+                        </a>
+                        <a
+                          className="text-xs font-semibold text-indigo-700 underline dark:text-indigo-300"
+                          href={`/api/admin/ete/insights/${snapshot.id}/export.markdown`}
+                        >
+                          Markdown
+                        </a>
+                        <a
+                          className="text-xs font-semibold text-indigo-700 underline dark:text-indigo-300"
+                          href={`/api/admin/ete/insights/${snapshot.id}/export.pdf.json`}
+                        >
+                          PDF JSON
                         </a>
                       </div>
                     </td>
