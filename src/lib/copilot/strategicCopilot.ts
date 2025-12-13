@@ -116,10 +116,15 @@ function describeEvidenceGaps(pack: EvidencePack) {
   return caveats;
 }
 
-function coerceConfidence(value: string | undefined, evidenceCount: number, caveats: string[]) {
+function coerceConfidence(
+  value: string | undefined,
+  evidenceCount: number,
+  caveats: string[],
+  missingEvidenceCount: number,
+) {
   const normalized = value === "high" || value === "medium" || value === "low" ? value : "medium";
 
-  if (evidenceCount <= 1 || caveats.length >= 3) {
+  if (evidenceCount <= 1 || caveats.length >= 3 || missingEvidenceCount > 0) {
     return "low" as const;
   }
 
@@ -217,7 +222,7 @@ export async function generateStrategicCopilotResponse({
 
   const bullets = normalizeBullets(parsed?.bullets);
   const caveats = sanitizeCaveats(parsed?.caveats, missingEvidence);
-  const confidence = coerceConfidence(parsed?.confidence, evidence.length, caveats);
+  const confidence = coerceConfidence(parsed?.confidence, evidence.length, caveats, missingEvidence.length);
   const answer = parsed?.answer?.trim().length ? parsed.answer.trim() : fallbackAnswer;
 
   return {

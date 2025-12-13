@@ -11,9 +11,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+<<<<<<< ours
   const risks = await getTimeToFillRisksForTenant(user.tenantId ?? "default-tenant", {
     bypassCache: isAdminRole(user.role),
   });
+=======
+  try {
+    const risks = await getTimeToFillRisksForTenant(user.tenantId ?? "default-tenant");
+>>>>>>> theirs
 
-  return NextResponse.json({ generatedAt: new Date().toISOString(), risks });
+    return NextResponse.json({ generatedAt: new Date().toISOString(), risks });
+  } catch (error) {
+    console.error("[forecast] Unable to build time-to-fill risks", error);
+    return NextResponse.json(
+      { error: "Forecasts are unavailable right now.", risks: [] },
+      { status: 503 },
+    );
+  }
 }

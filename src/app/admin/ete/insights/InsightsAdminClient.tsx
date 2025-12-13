@@ -40,10 +40,12 @@ export function InsightsAdminClient({
   initialSnapshots,
   releases,
   storageError,
+  benchmarksUnavailable,
 }: {
   initialSnapshots: InsightSnapshotRecord[];
   releases: BenchmarkRelease[];
   storageError?: string | null;
+  benchmarksUnavailable?: boolean;
 }) {
   const [snapshots, setSnapshots] = useState(initialSnapshots);
   const [error, setError] = useState<string | null>(null);
@@ -163,6 +165,9 @@ export function InsightsAdminClient({
         {storageError ? (
           <p className="mt-3 text-sm text-amber-700">{storageError}</p>
         ) : null}
+        {benchmarksUnavailable ? (
+          <p className="mt-3 text-sm text-amber-700">Benchmark data unavailable. Publish a release to enable insights.</p>
+        ) : null}
       </div>
 
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -179,6 +184,7 @@ export function InsightsAdminClient({
               value={formState.releaseId}
               onChange={(event) => setFormState((prev) => ({ ...prev, releaseId: event.target.value }))}
               required
+              disabled={benchmarksUnavailable}
             >
               <option value="" disabled>
                 Select a published release
@@ -255,7 +261,9 @@ export function InsightsAdminClient({
             </div>
             <button
               type="submit"
-              disabled={isSubmitting || !formState.releaseId || Boolean(storageError)}
+              disabled={
+                isSubmitting || !formState.releaseId || Boolean(storageError) || Boolean(benchmarksUnavailable)
+              }
               className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? 'Creating…' : 'Generate snapshot'}

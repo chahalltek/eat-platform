@@ -39,6 +39,7 @@ export default async function InsightsPage() {
   }
 
   const releases = await listPublishedBenchmarkReleases();
+  const benchmarksUnavailable = releases.length === 0;
 
   let snapshots = [] as Awaited<ReturnType<typeof listInsightSnapshots>>;
   let storageError: string | null = null;
@@ -52,7 +53,12 @@ export default async function InsightsPage() {
   return (
     <ETEClientLayout>
       <main className="mx-auto max-w-6xl px-6 py-10">
-        <InsightsAdminClient initialSnapshots={snapshots} releases={releases} storageError={storageError} />
+        <InsightsAdminClient
+          initialSnapshots={snapshots}
+          releases={releases}
+          storageError={storageError}
+          benchmarksUnavailable={benchmarksUnavailable}
+        />
       </main>
     </ETEClientLayout>
   );

@@ -39,4 +39,17 @@ describe("GET /api/ete/forecast/time-to-fill", () => {
     expect(body.risks).toEqual([{ jobId: "job-123", riskFlags: ["Flag"] }]);
     expect(body.generatedAt).toBeDefined();
   });
+
+  it("degrades gracefully when forecasting fails", async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: "user-1", tenantId: "tenant-abc" });
+    mockGetRisks.mockRejectedValue(new Error("forecasting offline"));
+
+    const response = await GET(buildRequest());
+
+    expect(response.status).toBe(503);
+
+    const body = await response.json();
+    expect(body.risks).toEqual([]);
+    expect(body.error).toBe("Forecasts are unavailable right now.");
+  });
 });

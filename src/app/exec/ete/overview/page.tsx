@@ -1,14 +1,8 @@
-import {
-  ArrowTopRightOnSquareIcon,
-  BoltIcon,
-  ChartBarIcon,
-  ExclamationTriangleIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowTopRightOnSquareIcon, BoltIcon, ChartBarIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
+import { RiskAlertsPanel } from "./RiskAlertsPanel";
 
 const marketSignals = [
   {
@@ -25,24 +19,6 @@ const marketSignals = [
     title: "Enterprise GTM demand up",
     change: "+9% recruiter-sourced opps for AM/CSM",
     highlight: "Signals from L2 forecasts point to Q4 territory expansions.",
-  },
-];
-
-const riskAlerts = [
-  {
-    label: "Critical searches",
-    detail: "Director, Product Design and Head of Enterprise CS",
-    impact: "At risk of slipping 3+ weeks based on funnel velocity",
-  },
-  {
-    label: "Geo sensitivity",
-    detail: "NYC engineering candidates trending 18% slower to accept",
-    impact: "Consider remote-eligible approvals to widen pool",
-  },
-  {
-    label: "Capacity",
-    detail: "Two pods above 90% load; interviews bunching Tue/Wed",
-    impact: "Realign screen coverage or add contractor sourcing",
   },
 ];
 
@@ -144,34 +120,7 @@ export default function ExecEteOverviewPage() {
           </div>
         </div>
 
-        <div className="lg:col-span-2 space-y-4 rounded-3xl border border-rose-100 bg-rose-50/70 p-6 shadow-sm dark:border-rose-900/50 dark:bg-rose-950/30">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700 dark:text-rose-200">Top hiring risks</p>
-              <h2 className="text-lg font-semibold text-rose-900 dark:text-rose-50">Forecasted slippage</h2>
-              <p className="text-sm text-rose-900/80 dark:text-rose-100/80">From L2 forecasts and recent funnel health.</p>
-            </div>
-            <ShieldCheckIcon className="h-6 w-6 text-rose-700 dark:text-rose-200" aria-hidden />
-          </div>
-          <div className="space-y-3">
-            {riskAlerts.map((risk) => (
-              <div key={risk.label} className="space-y-1 rounded-2xl bg-white/70 p-4 ring-1 ring-rose-100 shadow-sm dark:bg-rose-950/60 dark:ring-rose-900/60">
-                <div className="flex items-center gap-2 text-sm font-semibold text-rose-900 dark:text-rose-100">
-                  <ExclamationTriangleIcon className="h-5 w-5" aria-hidden />
-                  {risk.label}
-                </div>
-                <p className="text-sm text-rose-900/80 dark:text-rose-100/80">{risk.detail}</p>
-                <p className="text-[13px] font-medium text-rose-800 dark:text-rose-200">{risk.impact}</p>
-              </div>
-            ))}
-          </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-rose-800 underline decoration-rose-200 decoration-2 underline-offset-4 hover:text-rose-900 dark:text-rose-100 dark:hover:text-rose-50"
-          >
-            Open risk dashboard
-          </Link>
-        </div>
+        <RiskAlertsPanel />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-5">
