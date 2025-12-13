@@ -874,6 +874,23 @@ model MetricEvent {
   @@index([createdAt])
 }
 
+model AsyncJobState {
+  id        String   @id @default(cuid())
+  jobName   String   @unique
+  jobType   String
+  status    String   @default("idle")
+  retries   Int      @default(0)
+  lastError String?
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([jobType])
+  @@index([status])
+  @@index([nextRunAt])
+}
+
 model TenantLearningSignal {
   id         String   @id @default(cuid())
   tenantId   String   @default("default-tenant")

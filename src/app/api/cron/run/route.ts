@@ -25,6 +25,11 @@ export async function POST(req: Request) {
     return NextResponse.json(runResult);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const jobState =
+      typeof error === "object" && error && "jobState" in error
+        ? (error as { jobState?: unknown }).jobState
+        : undefined;
+
+    return NextResponse.json({ error: message, jobState }, { status: 500 });
   }
 }

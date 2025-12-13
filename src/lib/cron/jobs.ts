@@ -10,9 +10,12 @@ export type CronJobResult = {
   details?: Record<string, unknown>;
 };
 
+export type CronJobCategory = "aggregation" | "forecasting" | "benchmark" | "backfill" | "governance" | "health";
+
 export type CronJob = {
   name: string;
   description?: string;
+  jobType: CronJobCategory;
   run: () => Promise<CronJobResult>;
 };
 
@@ -20,6 +23,7 @@ export const cronJobs: Record<string, CronJob> = {
   "daily-health-check": {
     name: "daily-health-check",
     description: "Collects basic metrics to confirm the platform is healthy.",
+    jobType: "health",
     run: async () => {
       const [userCount, candidateCount, jobReqCount, matchResultCount] = await Promise.all([
         prisma.user.count(),
@@ -43,11 +47,13 @@ export const cronJobs: Record<string, CronJob> = {
   "tenant-data-retention": {
     name: "tenant-data-retention",
     description: "Applies tenant-level data retention and deletion rules.",
+    jobType: "backfill",
     run: () => runTenantRetentionJob(prismaAdmin),
   },
   "compliance-scan": {
     name: "compliance-scan",
     description: "Runs TS-A6 COMPLY to classify data, enforce retention, and log access events.",
+    jobType: "governance",
     run: async () => {
       const result = await runScheduledComplianceScan(prismaAdmin);
 
@@ -60,6 +66,7 @@ export const cronJobs: Record<string, CronJob> = {
   "match-quality-snapshot": {
     name: "match-quality-snapshot",
     description: "Captures weekly Match Quality Index snapshots for each tenant.",
+    jobType: "benchmark",
     run: async () => {
       const tenants = await prisma.tenant.findMany({ select: { id: true } });
 
@@ -78,6 +85,7 @@ export const cronJobs: Record<string, CronJob> = {
   "learning-aggregate": {
     name: "learning-aggregate",
     description: "Aggregates privacy-safe learning signals across opted-in tenants (weekly).",
+    jobType: "aggregation",
     run: async () => {
       const result = await runLearningAggregation();
 
