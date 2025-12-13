@@ -263,7 +263,7 @@ export async function POST(req: NextRequest) {
           candidateSignals: candidateSignals.breakdown ?? null,
         };
 
-        const explanation = matchScore.explanation.exportableText.join(" ");
+        const explanation = matchScore.explanation.exportableText;
         const existingResult = existingResultByCandidate.get(candidate.id);
         const existingMatch = existingMatchByCandidate.get(candidate.id);
 
