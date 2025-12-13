@@ -1,0 +1,70 @@
+{
+  "meta": {
+    "releaseId": "2026-Q1",
+    "releaseTitle": "ETE Benchmark 2026-Q1",
+    "status": "published",
+    "generatedAt": "2026-03-01T00:00:00.000Z",
+    "publishedAt": "2026-03-01T00:00:00.000Z",
+    "dataNotice": "No tenant-identifiable data used; all sources are aggregated and publication-approved."
+  },
+  "sections": {
+    "executiveSummary": {
+      "title": "Executive Summary",
+      "summary": "ETE Benchmark 2026-Q1 synthesizes benchmarked scarcity, hiring velocity, and risk signals without tenant-identifiable data.",
+      "highlights": [
+        "Data roles show rising scarcity in national benchmarks (2026-Q1) (latest: 3.2 index)",
+        "Median time-to-fill is lengthening for target roles (2026-Q1) (latest: 47.0 days)",
+        "Market heatmap highlights emerging hubs (2026-Q1) (latest: 61.0 index)",
+        "Applied AI segments: median 52 days (tightening, high confidence).",
+        "Technical program management: median 44 days (stable, medium confidence).",
+        "Report is reproducible each quarter using published benchmark releases and aggregated intelligence."
+      ],
+      "footnotes": [
+        "All figures shown are pre-aggregated and publication-approved."
+      ]
+    },
+    "marketOverview": {
+      "title": "Market Overview",
+      "summary": "Market signals anchored to 2026-Q1 benchmarks across scarcity, velocity, and regional dynamics.",
+      "highlights": [
+        "market-heatmap: Regional concentration and growth indicators derived from benchmark signals.",
+        "scarcity-index: Demand signals for technical roles using benchmark scarcity index.",
+        "time-to-fill: Operational speed benchmarked across opted-in tenants."
+      ],
+      "footnotes": [
+        "Snapshot interpretations rely on benchmark aggregates only."
+      ]
+    },
+    "scarcityAndVelocity": {
+      "title": "Scarcity & Velocity Trends",
+      "summary": "Aggregated benchmark movements for talent scarcity and hiring velocity with quarterly comparisons.",
+      "highlights": [
+        "scarcity-index for Data is 3.2 (120 samples).",
+        "time-to-fill now tracks at 47.0 (240 samples)."
+      ],
+      "footnotes": [
+        "Trends exclude tenant-level identifiers and rely on suppression thresholds."
+      ]
+    },
+    "riskSignals": {
+      "title": "Risk Signals",
+      "summary": "Forward-looking risk views based on aggregated forecasts and confidence-weighted velocity changes.",
+      "highlights": [
+        "Applied AI 90d: 52 days (tightening; high confidence).",
+        "Technical program management 60d: 44 days (stable; medium confidence)."
+      ],
+      "footnotes": [
+        "Forecasts are aggregated; no tenant or candidate data is surfaced."
+      ]
+    },
+    "leadershipActions": {
+      "title": "What This Means for Leaders",
+      "summary": "Recommended focus areas derived from benchmarks, snapshots, and forward-looking signals.",
+      "highlights": [
+        "Prioritize roles flagged in scarcity index: Data roles show rising scarcity in national benchmarks (2026-Q1).",
+        "Mitigate hiring delays in tightening segments (Applied AI).",
+        "Align quarterly workforce plans to benchmarked velocity and apply suppression rules for all exports."
+      ]
+    }
+  }
+}
