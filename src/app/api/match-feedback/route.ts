@@ -56,10 +56,12 @@ function sanitizeInputJsonValue(value: unknown): Prisma.InputJsonValue {
   }
 
   if (typeof value === "object") {
-    return Object.entries(value).reduce<Prisma.InputJsonObject>((acc, [key, entry]) => {
-      acc[key] = sanitizeInputJsonValue(entry);
-      return acc;
-    }, {} as Prisma.InputJsonObject);
+    const sanitizedEntries = Object.entries(value).map(([key, entry]) => [
+      key,
+      sanitizeInputJsonValue(entry),
+    ]);
+
+    return Object.fromEntries(sanitizedEntries) as Prisma.InputJsonObject;
   }
 
   return Prisma.JsonNull as unknown as Prisma.InputJsonValue;
