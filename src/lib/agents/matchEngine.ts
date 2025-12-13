@@ -19,6 +19,7 @@ export type Job = {
 
 export type Candidate = {
   id: string;
+  name?: string | null;
   location?: string | null;
   totalExperienceYears?: number | null;
   seniorityLevel?: string | null;
