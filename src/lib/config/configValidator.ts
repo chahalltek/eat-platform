@@ -27,6 +27,14 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_ETE_APP_TAGLINE: z.string().optional(),
   NEXT_PUBLIC_ETE_BRAND_LOGO_HORIZONTAL: z.string().url().optional(),
   NEXT_PUBLIC_ETE_BRAND_LOGO_MARK: z.string().url().optional(),
+  NEXT_PUBLIC_ETE_BRAND_ACCENT_COLOR: z
+    .string()
+    .regex(
+      /^#(?:[0-9a-fA-F]{3}){1,2}(?:[0-9a-fA-F]{2})?$/,
+      "NEXT_PUBLIC_ETE_BRAND_ACCENT_COLOR must be a hex color (e.g. #4f46e5)",
+    )
+    .optional(),
+  NEXT_PUBLIC_ETE_BRAND_HEADER_TEXT: z.string().optional(),
   DEFAULT_FEATURE_FLAGS: z.string().optional(),
 });
 

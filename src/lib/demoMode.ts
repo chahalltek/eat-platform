@@ -1,5 +1,6 @@
-import type { SystemExecutionState, SystemStatusMap } from "./systemStatus";
+import { getDeploymentMode, DEPLOYMENT_MODES } from "./deployment/deploymentModes";
 import type { SystemMode } from "./systemMode";
+import type { SystemExecutionState, SystemStatusMap } from "./systemStatus";
 
 const DEMO_FLAG = "ETE_PUBLIC_DEMO";
 const DEMO_MUTATION_ALLOWLIST = ["/api/auth/login", "/api/auth/logout"] as const;
@@ -19,8 +20,11 @@ const redactedStatusMap: SystemStatusMap = {
   tenantConfig: { status: "healthy" },
 };
 
-export function isPublicDemoMode() {
-  return (process.env[DEMO_FLAG] ?? "").toLowerCase() === "true";
+export function isPublicDemoMode(env: NodeJS.ProcessEnv = process.env) {
+  const deploymentMode = getDeploymentMode(env);
+  const explicitDemoFlag = (env[DEMO_FLAG] ?? "").toLowerCase() === "true";
+
+  return deploymentMode === DEPLOYMENT_MODES.DEMO || explicitDemoFlag;
 }
 
 export function isReadOnlyHttpMethod(method: string) {
