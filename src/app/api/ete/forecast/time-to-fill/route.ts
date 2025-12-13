@@ -11,14 +11,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-<<<<<<< ours
-  const risks = await getTimeToFillRisksForTenant(user.tenantId ?? "default-tenant", {
-    bypassCache: isAdminRole(user.role),
-  });
-=======
   try {
-    const risks = await getTimeToFillRisksForTenant(user.tenantId ?? "default-tenant");
->>>>>>> theirs
+    const risks = await getTimeToFillRisksForTenant(user.tenantId ?? "default-tenant", {
+      bypassCache: isAdminRole(user.role),
+    });
 
     return NextResponse.json({ generatedAt: new Date().toISOString(), risks });
   } catch (error) {
