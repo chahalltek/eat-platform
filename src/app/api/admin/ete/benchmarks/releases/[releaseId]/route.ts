@@ -20,14 +20,19 @@ function serializeReleaseWithMetrics(release: BenchmarkReleaseWithMetrics) {
   } satisfies BenchmarkReleaseResponse;
 }
 
-export async function GET(request: NextRequest, { params }: { params: { releaseId: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ releaseId: string }> }
+) {
+  const { releaseId } = await params;
+
   const user = await getCurrentUser(request);
 
   if (!user || !isAdminRole(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const release = await getBenchmarkRelease(params.releaseId);
+  const release = await getBenchmarkRelease(releaseId);
 
   if (!release) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
