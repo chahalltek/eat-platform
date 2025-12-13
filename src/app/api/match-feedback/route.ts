@@ -46,7 +46,7 @@ function isInputJsonValue(value: unknown): value is Prisma.InputJsonValue {
 }
 
 function sanitizeInputJsonValue(value: unknown): Prisma.InputJsonValue {
-  if (value === null) return Prisma.JsonNull;
+  if (value === null) return Prisma.JsonNull as unknown as Prisma.InputJsonValue;
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
     return value;
   }
@@ -62,7 +62,7 @@ function sanitizeInputJsonValue(value: unknown): Prisma.InputJsonValue {
     }, {} as Prisma.InputJsonObject);
   }
 
-  return Prisma.JsonNull;
+  return Prisma.JsonNull as unknown as Prisma.InputJsonValue;
 }
 
 function hashGuardrails(config: Prisma.InputJsonValue) {
