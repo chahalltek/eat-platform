@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import clsx from "clsx";
 
 import { StatusPill } from "@/components/StatusPill";
 import { categorizeConfidence } from "@/app/jobs/[jobId]/matches/confidence";
 import type { Explanation } from "@/lib/agents/explainEngine";
+import {
+  createDecisionStream,
+  logDecisionStreamItem,
+  type DecisionStreamAction,
+  type DecisionStreamItem,
+} from "@/lib/metrics/decisionStreamClient";
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -117,6 +123,51 @@ function ConfidenceBadge({ band }: { band: JobConsoleCandidate["confidenceBand"]
   );
 }
 
+type DecisionSnapshot = { favorited: boolean; removed: boolean; shortlisted: boolean };
+
+const DEFAULT_DECISION_STATE: DecisionSnapshot = { favorited: false, removed: false, shortlisted: false };
+
+function DecisionActions({
+  state,
+  onDecision,
+}: {
+  state: DecisionSnapshot;
+  onDecision: (action: DecisionStreamAction) => void;
+}) {
+  const buttons: Array<{ label: string; action: DecisionStreamAction; active: boolean; tone: string }> = [
+    { label: "Shortlist", action: "SHORTLISTED", active: state.shortlisted, tone: "emerald" },
+    { label: "Remove", action: "REMOVED", active: state.removed, tone: "rose" },
+    { label: "Favorite", action: "FAVORITED", active: state.favorited, tone: "amber" },
+  ];
+
+  const toneClasses: Record<string, string> = {
+    emerald: "bg-emerald-50 text-emerald-800 ring-emerald-200 hover:bg-emerald-100",
+    rose: "bg-rose-50 text-rose-800 ring-rose-200 hover:bg-rose-100",
+    amber: "bg-amber-50 text-amber-800 ring-amber-200 hover:bg-amber-100",
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-2" aria-label="Decision actions">
+      {buttons.map((button) => (
+        <button
+          key={button.action}
+          type="button"
+          onClick={() => onDecision(button.action)}
+          className={clsx(
+            "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ring-1",
+            toneClasses[button.tone],
+            button.active ? "opacity-100" : "opacity-80",
+          )}
+          aria-pressed={button.active}
+        >
+          {button.action === "FAVORITED" ? "⭐" : <span className="h-2 w-2 rounded-full bg-current" aria-hidden />}
+          {button.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ResultsTable({
   candidates,
   expandedId,
@@ -124,6 +175,9 @@ function ResultsTable({
   showFireDrillBadge,
   onToggle,
   showShortlistedOnly,
+  decisionStates,
+  onDecision,
+  onViewed,
 }: {
   candidates: JobConsoleCandidate[];
   expandedId: string | null;
@@ -131,6 +185,9 @@ function ResultsTable({
   showFireDrillBadge: boolean;
   onToggle: (id: string) => void;
   showShortlistedOnly: boolean;
+  decisionStates: Record<string, DecisionSnapshot>;
+  onDecision: (candidate: JobConsoleCandidate, action: DecisionStreamAction) => void;
+  onViewed: (candidate: JobConsoleCandidate) => void;
 }) {
   if (candidates.length === 0) {
     return (
@@ -177,7 +234,16 @@ function ResultsTable({
               return (
                 <>
                   <tr key={candidate.candidateId} className="hover:bg-slate-50/70">
-                    <td className="px-4 py-3 font-semibold text-slate-900">{candidate.candidateName}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">
+                      <Link
+                        href={`/candidates/${candidate.candidateId}`}
+                        target="_blank"
+                        className="text-indigo-700 underline decoration-indigo-200 underline-offset-4 hover:text-indigo-900"
+                        onClick={() => onViewed(candidate)}
+                      >
+                        {candidate.candidateName}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3">
                       {typeof candidate.score === "number" ? `${candidate.score}%` : <span className="text-slate-500">—</span>}
                     </td>
@@ -199,6 +265,10 @@ function ResultsTable({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <DecisionActions
+                        state={decisionStates[candidate.candidateId] ?? DEFAULT_DECISION_STATE}
+                        onDecision={(action) => onDecision(candidate, action)}
+                      />
                       {showFireDrillBadge ? (
                         <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-100">
                           Fire Drill mode
@@ -426,8 +496,25 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [shortlistStrategy, setShortlistStrategy] = useState<"quality" | "strict" | "fast">("quality");
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
+  const [decisionStreamId, setDecisionStreamId] = useState<string | null>(null);
+  const [decisionStates, setDecisionStates] = useState<Record<string, DecisionSnapshot>>({});
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const streamId = await createDecisionStream(jobId);
+      if (!cancelled && streamId) {
+        setDecisionStreamId(streamId);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId]);
 
   useEffect(() => {
     try {
@@ -469,6 +556,63 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 
   const explainUnavailable = disabled.EXPLAIN;
   const isFireDrillMode = modeLabel.toLowerCase().includes("fire drill");
+
+  const logDecision = useCallback(
+    (item: Omit<DecisionStreamItem, "streamId" | "jobId">) => {
+      void logDecisionStreamItem({
+        ...item,
+        jobId,
+        streamId: decisionStreamId,
+      });
+    },
+    [decisionStreamId, jobId],
+  );
+
+  const handleDecision = useCallback(
+    (candidate: JobConsoleCandidate, action: DecisionStreamAction) => {
+      const labels: Record<DecisionStreamAction, string> = {
+        VIEWED: "Viewed (new tab)",
+        SHORTLISTED: "Shortlisted",
+        REMOVED: "Removed from consideration",
+        FAVORITED: "Favorited",
+      };
+
+      setDecisionStates((prev) => {
+        const current = prev[candidate.candidateId] ?? DEFAULT_DECISION_STATE;
+        const next: DecisionSnapshot = {
+          ...current,
+          shortlisted: action === "SHORTLISTED" ? true : action === "REMOVED" ? false : current.shortlisted,
+          removed: action === "REMOVED" ? true : action === "SHORTLISTED" ? false : current.removed,
+          favorited: action === "FAVORITED" ? !current.favorited : current.favorited,
+        };
+
+        return { ...prev, [candidate.candidateId]: next };
+      });
+
+      if (action === "SHORTLISTED") {
+        setCandidates((prev) => prev.map((row) => (row.candidateId === candidate.candidateId ? { ...row, shortlisted: true } : row)));
+      }
+
+      if (action === "REMOVED") {
+        setCandidates((prev) => prev.map((row) => (row.candidateId === candidate.candidateId ? { ...row, shortlisted: false } : row)));
+      }
+
+      logDecision({
+        action,
+        candidateId: candidate.candidateId,
+        label: labels[action],
+        details: { candidateName: candidate.candidateName },
+      });
+    },
+    [logDecision],
+  );
+
+  const handleViewed = useCallback(
+    (candidate: JobConsoleCandidate) => {
+      handleDecision(candidate, "VIEWED");
+    },
+    [handleDecision],
+  );
 
   function normalizeBand(category?: string | null): JobConsoleCandidate["confidenceBand"] {
     if (!category) return null;
@@ -719,6 +863,9 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           showShortlistedOnly={showShortlistedOnly}
           showFireDrillBadge={isFireDrillMode}
           onToggle={(id) => setExpandedId((prev) => (prev === id ? null : id))}
+          decisionStates={decisionStates}
+          onDecision={handleDecision}
+          onViewed={handleViewed}
         />
       </div>
     </div>
