@@ -2,6 +2,7 @@ import { runScheduledComplianceScan } from "@/lib/agents/comply";
 import { captureWeeklyMatchQualitySnapshots } from "@/lib/learning/matchQuality";
 import { prisma } from "@/lib/prisma";
 import { prismaAdmin } from "@/lib/prismaAdmin";
+import { runLearningAggregation } from "@/lib/network/aggregateLearning";
 import { runTenantRetentionJob } from "@/lib/retention";
 
 export type CronJobResult = {
@@ -71,6 +72,18 @@ export const cronJobs: Record<string, CronJob> = {
       return {
         message: "Match Quality snapshots captured",
         details: { tenantsProcessed: tenants.length, snapshotsCreated },
+      } satisfies CronJobResult;
+    },
+  },
+  "learning-aggregate": {
+    name: "learning-aggregate",
+    description: "Aggregates privacy-safe learning signals across opted-in tenants (weekly).",
+    run: async () => {
+      const result = await runLearningAggregation();
+
+      return {
+        message: "Learning aggregates captured",
+        details: result,
       } satisfies CronJobResult;
     },
   },

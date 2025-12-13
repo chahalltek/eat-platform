@@ -101,6 +101,7 @@ model TenantConfig {
   explain   Json
   safety    Json
   llm       Json?
+  networkLearningOptIn Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -870,4 +871,37 @@ model MetricEvent {
   @@index([tenantId])
   @@index([tenantId, eventType])
   @@index([createdAt])
+}
+
+model TenantLearningSignal {
+  id         String   @id @default(cuid())
+  tenantId   String   @default("default-tenant")
+  roleFamily String
+  industry   String?
+  region     String?
+  signalType String
+  value      Float
+  sampleSize Int
+  windowDays Int
+  capturedAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, signalType])
+  @@index([capturedAt])
+}
+
+model LearningAggregate {
+  id         String   @id @default(cuid())
+  roleFamily String
+  industry   String?
+  region     String?
+  signalType String
+  value      Float
+  sampleSize Int
+  windowDays Int
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([signalType, windowDays])
+  @@index([roleFamily, industry, region])
 }
