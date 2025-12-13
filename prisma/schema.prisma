@@ -102,11 +102,7 @@ model TenantConfig {
   safety    Json
   llm       Json?
   networkLearningOptIn Boolean @default(false)
-<<<<<<< ours
-  networkLearning      Json?
-=======
   networkLearning Json?
->>>>>>> theirs
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
