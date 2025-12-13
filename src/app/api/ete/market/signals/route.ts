@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/user";
-import { getMarketSignals } from "@/lib/learning/marketSignals";
+import { getMarketSignals } from "@/lib/market/marketSignals";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 
 export async function GET(request: NextRequest) {

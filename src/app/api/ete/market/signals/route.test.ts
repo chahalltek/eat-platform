@@ -9,7 +9,7 @@ vi.mock("@/lib/auth/user", () => ({
   getCurrentUser: mockGetCurrentUser,
 }));
 
-vi.mock("@/lib/learning/marketSignals", () => ({
+vi.mock("@/lib/market/marketSignals", () => ({
   getMarketSignals: mockGetMarketSignals,
 }));
 
