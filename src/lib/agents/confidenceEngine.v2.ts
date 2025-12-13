@@ -83,6 +83,8 @@ const collectNormalizedSignals = (
   const normalized: Partial<Record<keyof ConfidenceSignals, number>> = {};
 
   (Object.keys(signalLabels) as Array<keyof ConfidenceSignals>).forEach((key) => {
+    if (key === "candidateId") return;
+
     const value = normalize(signals[key]);
     if (value !== null) {
       normalized[key] = value;
