@@ -49,9 +49,16 @@ function deriveConfidenceCategory(score: number): "HIGH" | "MEDIUM" | "LOW" {
 
 function toConfidenceBand(
   source: unknown,
+  candidateId: string,
   fallbackScore?: number,
   fallbackReasons?: unknown,
-): { score: number; category: "HIGH" | "MEDIUM" | "LOW"; band: "HIGH" | "MEDIUM" | "LOW"; reasons: string[] } {
+): {
+  candidateId: string;
+  score: number;
+  category: "HIGH" | "MEDIUM" | "LOW";
+  band: "HIGH" | "MEDIUM" | "LOW";
+  reasons: string[];
+} {
   const data = (source ?? {}) as Record<string, unknown>;
   const score = typeof data.score === "number" ? data.score : typeof fallbackScore === "number" ? fallbackScore : 0;
   const reasons = Array.isArray(data.reasons)
@@ -63,7 +70,7 @@ function toConfidenceBand(
     ? data.category
     : deriveConfidenceCategory(score);
 
-  return { score, category, band: category, reasons };
+  return { score, category, band: category, reasons, candidateId };
 }
 
 function toJobSkills(
@@ -277,6 +284,7 @@ export async function POST(req: NextRequest) {
       | null;
     const confidenceBand = toConfidenceBand(
       breakdown?.confidence,
+      candidate.id,
       "confidence" in match && typeof match.confidence === "number" ? match.confidence : undefined,
       "confidenceReasons" in match ? (match.confidenceReasons as unknown) : undefined,
     );
