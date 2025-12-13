@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { recordMetricEvent } from "@/lib/metrics/events";
 
@@ -37,10 +38,11 @@ export async function POST(req: NextRequest) {
 
   const { action, details, ...rest } = parsed.data;
   const eventType = ACTION_MAP[action];
+  const tenantId = (roleCheck.user.tenantId ?? DEFAULT_TENANT_ID).trim();
 
   try {
     await recordMetricEvent({
-      tenantId: roleCheck.user.tenantId,
+      tenantId,
       eventType,
       entityId: rest.matchId ?? rest.candidateId ?? rest.jobId ?? null,
       meta: {
