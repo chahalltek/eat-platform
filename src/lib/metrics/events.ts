@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 
 export type MetricEventType =
@@ -17,7 +19,7 @@ export type MetricEventPayload = {
   tenantId: string;
   eventType: MetricEventType | (string & {});
   entityId?: string | null;
-  meta?: Record<string, unknown> | null;
+  meta?: Prisma.InputJsonValue | null;
 };
 
 export async function recordMetricEvent({ tenantId, eventType, entityId, meta }: MetricEventPayload) {
