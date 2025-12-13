@@ -11,6 +11,7 @@ import { JobCandidateStatus } from "@prisma/client";
 
 import { MatchFeedbackControls } from "./MatchFeedbackControls";
 import { JobCandidateStatusControl } from "./JobCandidateStatusControl";
+import { HiringOutcomeControl } from "./HiringOutcomeControl";
 import { OutreachGenerator } from "./OutreachGenerator";
 import { ShortlistActions } from "./ShortlistActions";
 import type { CandidateSignalBreakdown } from "@/lib/matching/candidateSignals";
@@ -20,6 +21,7 @@ import { logRecruiterBehavior } from "@/lib/metrics/recruiterBehaviorClient";
 import { buildJustification } from "@/lib/agents/justificationEngine";
 import type { JustificationInput } from "@/lib/agents/justificationEngine";
 import type { ConfidenceBand } from "@/lib/agents/confidenceEngine.v2";
+import { type HiringOutcomeStatus } from "@/lib/hiringOutcomes";
 
 export type MatchRow = {
   id: string;
@@ -34,6 +36,8 @@ export type MatchRow = {
   jobCandidateId?: string;
   jobCandidateStatus?: JobCandidateStatus;
   jobCandidateNotes?: string | null;
+  hiringOutcomeStatus?: HiringOutcomeStatus;
+  hiringOutcomeSource?: string | null;
   explanation?: unknown;
   skillScore?: number | null;
   seniorityScore?: number | null;
@@ -428,6 +432,18 @@ export function JobMatchesTable({ matches, jobTitle, jobId }: { matches: MatchRo
         enableSorting: false,
         cell: ({ row }) => (
           <MatchFeedbackControls matchId={row.original.id} candidateName={row.original.candidateName} />
+        ),
+      },
+      {
+        id: "outcome",
+        header: "Outcome",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <HiringOutcomeControl
+            jobId={row.original.jobId}
+            candidateId={row.original.candidateId}
+            initialStatus={row.original.hiringOutcomeStatus}
+          />
         ),
       },
       {

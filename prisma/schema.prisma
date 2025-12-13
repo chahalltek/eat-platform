@@ -289,6 +289,7 @@ model Candidate {
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
   jobPostingMatches    JobPostingMatch[]
+  hiringOutcomes       HiringOutcome[]
 
   @@index([tenantId])
   @@index([tenantId, deletedAt])
@@ -349,6 +350,7 @@ model JobReq {
   decisionStreams      DecisionStream[]
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
+  hiringOutcomes       HiringOutcome[]
 
   @@index([tenantId])
   @@index([tenantId, customerId])
@@ -788,6 +790,23 @@ model JobCandidateStage {
   enteredAt      DateTime     @default(now())
 
   @@index([tenantId, jobCandidateId])
+}
+
+model HiringOutcome {
+  id               String    @id @default(cuid())
+  tenantId         String    @default("default-tenant")
+  job              JobReq    @relation(fields: [jobId], references: [id])
+  jobId            String
+  candidate        Candidate @relation(fields: [candidateId], references: [id])
+  candidateId      String
+  candidateIdString String?
+  status           String
+  source           String
+  createdAt        DateTime  @default(now())
+
+  @@unique([tenantId, jobId, candidateId])
+  @@index([tenantId, jobId])
+  @@index([tenantId, candidateId])
 }
 
 model OutreachAction {

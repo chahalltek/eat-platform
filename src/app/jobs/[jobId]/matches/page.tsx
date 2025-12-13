@@ -8,6 +8,7 @@ import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScor
 import { categorizeConfidence } from "./confidence";
 import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
 import { prisma } from "@/lib/prisma";
+import { type HiringOutcomeStatus } from "@/lib/hiringOutcomes";
 
 export default async function JobMatchesPage({
   params,
@@ -35,6 +36,13 @@ export default async function JobMatchesPage({
              notes: true,
           },
         },
+        hiringOutcomes: {
+          select: {
+            candidateId: true,
+            status: true,
+            source: true,
+          },
+        },
         skills: true,
       },
     })
@@ -59,11 +67,16 @@ export default async function JobMatchesPage({
     job.jobCandidates.map((jobCandidate) => [jobCandidate.candidateId, jobCandidate]),
   );
 
+  const hiringOutcomeByCandidateId = new Map(
+    job.hiringOutcomes.map((outcome) => [outcome.candidateId, outcome]),
+  );
+
   const predictiveSignals = await getJobPredictiveSignals(job.id, job.tenantId);
 
   const matchRows: MatchRow[] = job.matchResults.map((match) => {
     const candidateId = match.candidateId ?? match.candidate.id;
     const jobCandidate = candidateId ? jobCandidateByCandidateId.get(candidateId) : undefined;
+    const hiringOutcome = candidateId ? hiringOutcomeByCandidateId.get(candidateId) : undefined;
     const confidence = computeCandidateConfidenceScore({
       candidate: {
         ...match.candidate,
@@ -90,6 +103,8 @@ export default async function JobMatchesPage({
       jobCandidateId: jobCandidate?.id,
       jobCandidateStatus: jobCandidate?.status,
       jobCandidateNotes: jobCandidate?.notes,
+      hiringOutcomeStatus: hiringOutcome?.status as HiringOutcomeStatus | undefined,
+      hiringOutcomeSource: hiringOutcome?.source,
       explanation: match.reasons,
       skillScore: match.skillScore,
       seniorityScore: match.seniorityScore,
