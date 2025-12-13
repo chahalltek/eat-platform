@@ -133,11 +133,11 @@ export function getConfidenceBand(
 }
 
 const findSignal = (
-  signalScores: Record<keyof ConfidenceSignals, number>,
+  signalScores: Partial<Record<keyof ConfidenceSignals, number>>,
   comparator: (a: number, b: number) => number,
 ): { key: keyof ConfidenceSignals; value: number } | null => {
   const usableEntries = Object.entries(signalScores).filter(
-    ([key]) => key !== "candidateId",
+    ([key, value]) => key !== "candidateId" && typeof value === "number",
   ) as Array<[keyof ConfidenceSignals, number]>;
 
   if (usableEntries.length === 0) return null;
@@ -153,7 +153,9 @@ export function buildConfidenceSummary(
   config: ConfidenceConfig = DEFAULT_CONFIDENCE_CONFIG,
 ): { band: ConfidenceBand; reasons: string[]; score: number } {
   const normalizedScore = score > 1 ? score / 100 : score;
-  const evaluatedSignals = signals ? collectNormalizedSignals(signals) : {};
+  const evaluatedSignals = signals
+    ? collectNormalizedSignals(signals)
+    : ({} as Partial<Record<keyof ConfidenceSignals, number>>);
   const band = getConfidenceBand(normalizedScore, config);
   const reasons: string[] = [];
 
