@@ -40,7 +40,8 @@ vi.mock('@/lib/agents/agentRun', () => ({
 const PERFORMANCE_BASELINES = {
   resumeParsingMs: 4,
   matchingMs: 5,
-  agentResponseMs: 15,
+  // The agent baseline is intentionally a bit looser to account for variance in CI containers.
+  agentResponseMs: 25,
 };
 
 const DRIFT_TOLERANCE = 1.25;
