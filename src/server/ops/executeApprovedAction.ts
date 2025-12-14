@@ -1,11 +1,13 @@
-import { type AgentActionApproval, ActionType, ExecutionStatus } from "@/server/db";
+import { Prisma, type AgentActionApproval, ActionType, ExecutionStatus } from "@/server/db";
 
 type ExecutionOutcome = {
   status: ExecutionStatus;
-  result: unknown;
+  result: Prisma.InputJsonValue;
 };
 
-async function performActionExecution(approval: AgentActionApproval) {
+async function performActionExecution(
+  approval: AgentActionApproval,
+): Promise<Prisma.InputJsonValue> {
   switch (approval.actionType) {
     case ActionType.WIDEN_CRITERIA:
       return { message: "Criteria widened", details: approval.actionPayload };
