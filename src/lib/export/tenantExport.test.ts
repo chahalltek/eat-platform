@@ -10,17 +10,9 @@ const prismaMock = vi.hoisted(() => ({
   agentRunLog: { findMany: vi.fn() },
 }));
 
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      ...prismaMock,
-    },
-  };
-});
+vi.mock("@/server/db", () => ({
+  prisma: prismaMock,
+}));
 
 const tenantId = "tenant-a";
 

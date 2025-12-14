@@ -4,7 +4,7 @@ const FALLBACK_DATABASE_URL = "postgresql://placeholder.invalid:5432/placeholder
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]),
-  APP_ENV: z.enum(["development", "staging", "production"]).default("development"),
+  APP_ENV: z.enum(["development", "staging", "production", "test"]).default("development"),
   DEPLOYMENT_MODE: z
     .enum(["internal_strsi", "managed_service", "customer_hosted", "demo"])
     .default("internal_strsi"),

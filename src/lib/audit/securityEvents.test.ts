@@ -1,6 +1,13 @@
 import { describe, expect, it, beforeEach, vi } from "vitest";
 
-import { prisma } from "@/server/db";
+const prisma = vi.hoisted(() => ({
+  securityEventLog: {
+    create: vi.fn(),
+    findMany: vi.fn(),
+  },
+}));
+
+vi.mock("@/server/db", () => ({ prisma }));
 import { getCurrentTenantId } from "@/lib/tenant";
 import { getCurrentUserId } from "@/lib/auth/user";
 
@@ -25,21 +32,6 @@ type SecurityEvent = {
   metadata: Record<string, unknown> | null;
   createdAt: Date;
 };
-
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      securityEventLog: {
-        create: vi.fn(),
-        findMany: vi.fn(),
-      },
-    },
-  };
-});
 
 vi.mock("@/lib/tenant", () => ({
   getCurrentTenantId: vi.fn(),

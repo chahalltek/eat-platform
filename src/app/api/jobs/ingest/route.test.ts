@@ -3,18 +3,34 @@
 const mocks = vi.hoisted(() => ({
   ingestJobMock: vi.fn(),
   getCurrentTenantIdMock: vi.fn(),
-  prisma: { jobReq: { update: vi.fn() } },
+  getCurrentUserMock: vi.fn(),
+  prisma: {
+    jobReq: { update: vi.fn(), findUnique: vi.fn() },
+    jobIntent: { upsert: vi.fn() },
+    matchResult: { findMany: vi.fn() },
+    match: { findMany: vi.fn() },
+  },
   isPrismaUnavailableErrorMock: vi.fn(() => false),
   isTableAvailableMock: vi.fn(() => true),
   recordMetricEventMock: vi.fn(),
+  JobCandidateStatus: {
+    POTENTIAL: "POTENTIAL",
+    SHORTLISTED: "SHORTLISTED",
+    SUBMITTED: "SUBMITTED",
+    INTERVIEWING: "INTERVIEWING",
+    HIRED: "HIRED",
+  },
 }));
 
 vi.mock("@/lib/matching/matcher", () => ({ ingestJob: mocks.ingestJobMock }));
 vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: mocks.getCurrentTenantIdMock }));
+vi.mock("@/lib/auth/user", () => ({ getCurrentUser: mocks.getCurrentUserMock }));
+vi.mock("@/lib/orchestration/triggers", () => ({ onJobChanged: vi.fn() }));
 vi.mock("@/server/db", () => ({
   prisma: mocks.prisma,
   isPrismaUnavailableError: mocks.isPrismaUnavailableErrorMock,
   isTableAvailable: mocks.isTableAvailableMock,
+  JobCandidateStatus: mocks.JobCandidateStatus,
 }));
 vi.mock("@/lib/metrics/events", () => ({ recordMetricEvent: mocks.recordMetricEventMock }));
 
@@ -24,6 +40,11 @@ describe("POST /api/jobs/ingest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCurrentTenantIdMock.mockResolvedValue("tenant-123");
+    mocks.getCurrentUserMock.mockResolvedValue({ id: "user-1", role: "ADMIN", tenantId: "tenant-123" });
+    mocks.prisma.jobIntent.upsert.mockResolvedValue({ id: "intent-1", jobReqId: "job-1", intent: {} });
+    mocks.prisma.jobReq.findUnique.mockResolvedValue({ id: "job-1", tenantId: "tenant-123", status: "OPEN" });
+    mocks.prisma.matchResult.findMany.mockResolvedValue([]);
+    mocks.prisma.match.findMany.mockResolvedValue([]);
     mocks.ingestJobMock.mockResolvedValue({
       id: "job-1",
       tenantId: "tenant-123",

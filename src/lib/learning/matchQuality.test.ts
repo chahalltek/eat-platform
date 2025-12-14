@@ -1,6 +1,23 @@
 /// <reference types="vitest/globals" />
 
-import { JobCandidateStatus } from "@/server/db";
+const JobCandidateStatus = vi.hoisted(() => ({
+  POTENTIAL: "POTENTIAL",
+  SHORTLISTED: "SHORTLISTED",
+  INTERVIEWING: "INTERVIEWING",
+  HIRED: "HIRED",
+})) as const;
+
+const prisma = vi.hoisted(() => ({
+  jobCandidate: { findMany: vi.fn() },
+  matchFeedback: { findMany: vi.fn() },
+  matchQualitySnapshot: { deleteMany: vi.fn(), createMany: vi.fn() },
+  tenant: { findMany: vi.fn() },
+}));
+
+vi.mock("@/server/db", () => ({
+  JobCandidateStatus,
+  prisma,
+}));
 
 import { calculateMatchQualityIndex, captureWeeklyMatchQualitySnapshots } from "./matchQuality";
 
@@ -9,21 +26,6 @@ const mockLoadTenantMode = vi.fn();
 vi.mock("@/lib/modes/loadTenantMode", () => ({
   loadTenantMode: (...args: unknown[]) => mockLoadTenantMode(...args),
 }));
-
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      jobCandidate: { findMany: vi.fn() },
-      matchFeedback: { findMany: vi.fn() },
-      matchQualitySnapshot: { deleteMany: vi.fn(), createMany: vi.fn() },
-      tenant: { findMany: vi.fn() },
-    },
-  };
-});
 
 describe("calculateMatchQualityIndex", () => {
   beforeEach(() => {
