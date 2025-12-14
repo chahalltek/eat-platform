@@ -34,7 +34,7 @@ describe("GET /api/ete/forecast/time-to-fill", () => {
     const response = await GET(buildRequest());
 
     expect(response.status).toBe(200);
-    expect(mockGetRisks).toHaveBeenCalledWith("tenant-abc");
+    expect(mockGetRisks).toHaveBeenCalledWith("tenant-abc", { bypassCache: false });
 
     const body = await response.json();
     expect(body.risks).toEqual([{ jobId: "job-123", riskFlags: ["Flag"] }]);
