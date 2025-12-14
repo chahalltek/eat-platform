@@ -1,17 +1,15 @@
 import { describe, test, vi } from "vitest";
 
-declare module "vitest" {
-  interface SuiteAPI {
-    integration: typeof describe.skip;
-  }
+const testWithIntegration = test as typeof test & {
+  integration: typeof test.skip;
+};
 
-  interface TestAPI {
-    integration: typeof test.skip;
-  }
-}
+const describeWithIntegration = describe as typeof describe & {
+  integration: typeof describe.skip;
+};
 
-test.integration = test.skip;
-describe.integration = describe.skip;
+testWithIntegration.integration = test.skip;
+describeWithIntegration.integration = describe.skip;
 
 vi.mock("@/lib/auth/requireRole", async () => {
   const actual = await vi.importActual<any>("@/lib/auth/requireRole");
