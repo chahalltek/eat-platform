@@ -45,13 +45,16 @@ function LoginContent() {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center px-6 py-12">
-        <header className="mb-8 flex flex-col">
-          <EteLogo variant="horizontal" className="mb-4 max-w-xs" tagline="" />
-          <h1 className="text-xl font-semibold">Sign in</h1>
-          <p className="text-sm text-zinc-600">Use your workspace credentials to access the platform.</p>
-        </header>
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+        >
+          <div className="flex flex-col items-center text-center">
+            <EteLogo variant="horizontal" className="mb-4 items-center" tagline="" />
+            <h1 className="text-xl font-semibold">Sign in</h1>
+            <p className="text-sm text-zinc-600">Use your workspace credentials to access the platform.</p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-zinc-800" htmlFor="email">
               Email
