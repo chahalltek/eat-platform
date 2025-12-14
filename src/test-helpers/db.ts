@@ -103,7 +103,7 @@ export function mockDb() {
 
     return {
       ...actual,
-      prisma: prismaMock as typeof actual.prisma,
+      prisma: prismaMock as unknown as typeof actual.prisma,
       isPrismaUnavailableError: vi.fn(() => false),
       isTableAvailable: vi.fn(async () => true),
     };
