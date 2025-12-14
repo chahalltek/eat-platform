@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-
+import { suggestionOnlyResponse } from '@/lib/agents/executionContract';
 import { FEATURE_FLAGS, FeatureFlagName, isFeatureEnabled } from '@/lib/featureFlags';
 
 export type FeatureFlagMiddlewareContext = {
@@ -18,9 +17,9 @@ export async function enforceFeatureFlag(
   }
 
   const label = context.featureName ?? `${flagName} feature`;
-  const status = context.fallbackStatus ?? 503;
+  const status = context.fallbackStatus ?? 200;
 
-  return NextResponse.json({ error: `${label} is currently disabled` }, { status });
+  return suggestionOnlyResponse(`${label} is currently disabled`, { status });
 }
 
 export function getAgentFeatureName(agentName: string) {

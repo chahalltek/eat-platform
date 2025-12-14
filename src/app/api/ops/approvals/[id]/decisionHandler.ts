@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { suggestionOnlyResponse } from "@/lib/agents/executionContract";
 import { getCurrentUser } from "@/lib/auth/user";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { prisma, ApprovalStatus } from "@/server/db";
@@ -74,14 +76,22 @@ export async function handleApprovalDecision(
     return NextResponse.json({ approval: updatedApproval });
   }
 
+  const agentsEnabled = await isFeatureEnabled(FEATURE_FLAGS.AGENTS);
+
+  if (!agentsEnabled) {
+    return suggestionOnlyResponse("Execution disabled in suggestion-only mode", { status: 200 }, {
+      approval: updatedApproval,
+    });
+  }
+
   try {
     const workflowResult = await runApprovedActionWorkflow(updatedApproval);
 
-    return NextResponse.json(workflowResult);
+    return NextResponse.json({ status: "EXECUTED", ...workflowResult });
   } catch (error) {
     console.error("[approvals] Failed to run approved action workflow", error);
     return NextResponse.json(
-      { error: "Approval updated but workflow failed", approval: updatedApproval },
+      { status: "REJECTED", error: "Approval updated but workflow failed", approval: updatedApproval },
       { status: 500 },
     );
   }

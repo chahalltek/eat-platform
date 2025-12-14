@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { suggestionOnlyResponse } from "@/lib/agents/executionContract";
 import { getCurrentUser } from "@/lib/auth/user";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { ApprovalStatus, ExecutionStatus, prisma } from "@/server/db";
@@ -37,6 +39,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Approval is not approved" }, { status: 409 });
   }
 
+  const agentsEnabled = await isFeatureEnabled(FEATURE_FLAGS.AGENTS);
+
+  if (!agentsEnabled) {
+    return suggestionOnlyResponse("Execution disabled in suggestion-only mode", { status: 200 });
+  }
+
   const execution = await executeApprovedAction(approval);
 
   const updatedApproval = await prisma.agentActionApproval.update({
@@ -50,10 +58,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (execution.status === ExecutionStatus.FAILED) {
     return NextResponse.json(
-      { error: "Failed to execute approval", approval: updatedApproval },
+      { status: "REJECTED", error: "Failed to execute approval", approval: updatedApproval },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ approval: updatedApproval });
+  return NextResponse.json({ status: "EXECUTED", approval: updatedApproval });
 }

@@ -1,5 +1,3 @@
-import { NextResponse } from 'next/server';
-
 import {
   AGENT_KILL_SWITCHES,
   AgentDisabledError,
@@ -11,6 +9,7 @@ import {
   parseAgentName,
   setAgentFlagAvailability,
 } from './agentAvailability';
+import { suggestionOnlyResponse } from './executionContract';
 
 export { AGENT_KILL_SWITCHES, parseAgentName };
 
@@ -77,13 +76,10 @@ export async function enforceAgentKillSwitch(agentName: AgentName, tenantId?: st
   if (!response) return null;
 
   const label = describeAgent(agentName);
+  const state = await getAgentKillSwitchState(agentName, tenantId);
 
-  return NextResponse.json(
-    {
-      error: `${label} is currently disabled`,
-      reason: DEFAULT_REASON,
-      latchedAt: (await getAgentKillSwitchState(agentName, tenantId)).latchedAt?.toISOString() ?? null,
-    },
-    { status: 503 },
-  );
+  return suggestionOnlyResponse(`${label} is currently disabled`, { status: 200 }, {
+    latchedAt: state.latchedAt?.toISOString() ?? null,
+    killSwitchReason: DEFAULT_REASON,
+  });
 }

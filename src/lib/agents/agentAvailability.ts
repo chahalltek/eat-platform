@@ -1,10 +1,10 @@
 import { Prisma, type AgentFlag as AgentFlagModel } from '@/server/db';
-import { NextResponse } from 'next/server';
 
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { loadTenantMode } from '@/lib/modes/loadTenantMode';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from '@/server/db';
 import { getCurrentTenantId } from '@/lib/tenant';
+import { suggestionOnlyResponse } from './executionContract';
 
 export async function getAgentAvailability(tenantId: string) {
   const mode = await loadTenantMode(tenantId);
@@ -242,11 +242,9 @@ export async function enforceAgentFlagAvailability(agentName: AgentName, tenantI
     scope: 'agent',
   });
 
-  return NextResponse.json(
-    {
-      error: `${label} is currently disabled`,
-      latchedAt: state.enabled ? null : state.updatedAt.toISOString(),
-    },
-    { status: 503 },
+  return suggestionOnlyResponse(
+    `${label} is currently disabled`,
+    { status: 200 },
+    { latchedAt: state.enabled ? null : state.updatedAt.toISOString() },
   );
 }
