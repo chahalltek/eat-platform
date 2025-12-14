@@ -176,8 +176,8 @@ export async function upsertJobIntent(
   const intentPayload = payload as unknown as Prisma.InputJsonValue;
 
   return prismaClient.jobIntent.upsert({
-    where: { jobReqId },
-    update: { intent: intentPayload, tenantId },
+    where: { tenantId_jobReqId: { tenantId, jobReqId } },
+    update: { intent: intentPayload, tenantId, createdById: createdById ?? null },
     create: { jobReqId, tenantId, intent: intentPayload, createdById: createdById ?? null },
   });
 }
