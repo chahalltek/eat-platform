@@ -10,6 +10,9 @@ import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 export async function GET(req: NextRequest) {

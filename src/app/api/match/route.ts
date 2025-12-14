@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
   const tenantId = (currentUser.tenantId ?? DEFAULT_TENANT_ID).trim();
 
 <<<<<<< ours
+<<<<<<< ours
   try {
     assertFeatureEnabled(HARD_FEATURE_FLAGS.EXECUTION_ENABLED);
   } catch (error) {
@@ -75,6 +76,9 @@ export async function POST(req: NextRequest) {
   }
 
   const flagCheck = await enforceFeatureFlag(FEATURE_FLAGS.SCORING, {
+=======
+  const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.SCORING, {
+>>>>>>> theirs
 =======
   const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.SCORING, {
 >>>>>>> theirs
