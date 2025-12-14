@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 
 import { getCurrentUser } from "@/lib/auth/user";
-import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
+import { isAdminOrDataAccessRole, normalizeRole } from "@/lib/auth/roles";
 import { getPlatformHealthSnapshot } from "@/lib/metrics/platformHealth";
 import { EteLogo } from "@/components/EteLogo";
 
@@ -101,6 +101,7 @@ function formatDate(value: Date | null) {
 
 export default async function AdminHealthPage() {
   const user = await getCurrentUser();
+  const detectedRole = normalizeRole(user?.role);
 
   if (!isAdminOrDataAccessRole(user?.role)) {
     return (
@@ -110,7 +111,19 @@ export default async function AdminHealthPage() {
             <ShieldCheckIcon className="h-6 w-6" aria-hidden />
             <div>
               <h1 className="text-xl font-semibold">Admin access required</h1>
-              <p className="mt-1 text-sm text-amber-800">Switch to an admin account to view platform health.</p>
+              <p className="mt-1 text-sm text-amber-800">
+                Switch to an admin account to view platform health. You&apos;re currently signed in as
+                {" "}
+                <span className="font-semibold">{user?.email ?? "an unknown user"}</span>
+                {detectedRole ? (
+                  <span className="text-xs font-semibold uppercase tracking-wide"> ({detectedRole})</span>
+                ) : null}
+                .
+              </p>
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-amber-800">
+                <li>Use the seeded admin account (admin@test.demo) and the configured AUTH_PASSWORD.</li>
+                <li>If you expected admin access, sign out, sign back in, and confirm your role is ADMIN or SYSTEM_ADMIN.</li>
+              </ul>
             </div>
           </div>
           <div className="mt-4">
