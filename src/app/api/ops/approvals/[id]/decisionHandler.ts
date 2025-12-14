@@ -10,10 +10,12 @@ const decisionSchema = z.object({
   decisionReason: z.string().trim().optional(),
 });
 
+type DecisionStatus = Extract<ApprovalStatus, "APPROVED" | "REJECTED">;
+
 export async function handleApprovalDecision(
   req: NextRequest,
   params: Promise<{ id: string }>,
-  status: ApprovalStatus.APPROVED | ApprovalStatus.REJECTED,
+  status: DecisionStatus,
 ) {
   const user = await getCurrentUser(req);
 
