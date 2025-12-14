@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { runOutreach, type OutreachInput } from "@/lib/agents/outreach";
+import { runIntake, type IntakeInput } from "@/server/agents/intake";
 import { runRina, type RinaInput } from "@/lib/agents/rina";
 import { runRua, type RuaInput } from "@/lib/agents/rua";
 import { type IdentityUser } from "@/lib/auth/identityProvider";
@@ -62,6 +63,17 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
         candidateId: trimmedCandidateId,
         jobReqId: trimmedJobReqId,
       });
+    },
+  },
+  "ETE-TS.INTAKE": {
+    key: "ETE-TS.INTAKE",
+    displayName: "Intake Agent",
+    description: "Extracts intent from existing job descriptions.",
+    run: async ({ input, ctx }) => {
+      const { jobId, sourceType, sourceTag } = (input ?? {}) as Partial<IntakeInput>;
+      const trimmedJobId = requireString("jobId", jobId);
+
+      return runIntake({ jobId: trimmedJobId, recruiterId: ctx.currentUser.id, sourceType, sourceTag });
     },
   },
 };
