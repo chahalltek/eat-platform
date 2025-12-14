@@ -9,12 +9,14 @@ import type { SystemExecutionState, SystemStatusMap } from "@/lib/systemStatus";
 type Props = {
   initialStatus: SystemStatusMap;
   initialExecutionState: SystemExecutionState;
+  canResetDegraded: boolean;
 };
 
-export function SystemHealthPanel({ initialStatus, initialExecutionState }: Props) {
+export function SystemHealthPanel({ initialStatus, initialExecutionState, canResetDegraded }: Props) {
   const [statusMap, setStatusMap] = useState<SystemStatusMap>(initialStatus);
   const [executionState, setExecutionState] = useState<SystemExecutionState>(initialExecutionState);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   async function handleRefresh() {
     try {
@@ -57,9 +59,41 @@ export function SystemHealthPanel({ initialStatus, initialExecutionState }: Prop
     }
   }
 
+  async function handleReset() {
+    if (!canResetDegraded) return;
+
+    try {
+      setIsResetting(true);
+      const response = await fetch("/api/system-state/reset", { method: "POST", cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error("Failed to reset execution state");
+      }
+
+      const data = (await response.json()) as {
+        statusMap: SystemStatusMap;
+        executionState: SystemExecutionState;
+      };
+
+      setStatusMap(data.statusMap);
+      setExecutionState(data.executionState);
+    } catch (error) {
+      console.error("[system-health] reset failed", error);
+    } finally {
+      setIsResetting(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
-      <SystemStateBanner executionState={executionState} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+      <SystemStateBanner
+        executionState={executionState}
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        canResetDegraded={canResetDegraded}
+        onReset={handleReset}
+        isResetting={isResetting}
+      />
       <SystemStatus
         statusMap={statusMap}
         executionState={executionState}

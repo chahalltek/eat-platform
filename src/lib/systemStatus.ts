@@ -129,19 +129,19 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const [activeRuns, latestRun, latestFailure, latestSuccess, recentFailureCount, runsToday] = await Promise.all([
-      prisma.agentRunLog.count({ where: { tenantId, status: AgentRunStatus.RUNNING } }),
+      prisma.agentRunLog.count({ where: { tenantId, status: AgentRunStatus.RUNNING, deletedAt: null } }),
       prisma.agentRunLog.findFirst({
-        where: { tenantId },
+        where: { tenantId, deletedAt: null },
         orderBy: { startedAt: 'desc' },
         select: { startedAt: true },
       }),
       prisma.agentRunLog.findFirst({
-        where: { tenantId, status: AgentRunStatus.FAILED },
+        where: { tenantId, status: AgentRunStatus.FAILED, deletedAt: null },
         orderBy: { startedAt: 'desc' },
         select: { startedAt: true, agentName: true },
       }),
       prisma.agentRunLog.findFirst({
-        where: { tenantId, status: AgentRunStatus.SUCCESS },
+        where: { tenantId, status: AgentRunStatus.SUCCESS, deletedAt: null },
         orderBy: { startedAt: 'desc' },
         select: { startedAt: true },
       }),
@@ -149,6 +149,7 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
         where: {
           tenantId,
           status: AgentRunStatus.FAILED,
+          deletedAt: null,
           startedAt: { gte: twentyFourHoursAgo },
         },
       }),
@@ -156,6 +157,7 @@ export async function getSystemExecutionState(): Promise<SystemExecutionState> {
         where: {
           tenantId,
           status: AgentRunStatus.SUCCESS,
+          deletedAt: null,
           startedAt: { gte: startOfDay },
         },
       }),

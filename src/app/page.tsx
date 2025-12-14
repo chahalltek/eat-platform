@@ -16,6 +16,8 @@ import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
 import { WorkflowCard } from "@/components/home/WorkflowCard";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { BRANDING } from "@/config/branding";
+import { getCurrentUser } from "@/lib/auth/user";
+import { isAdminRole, normalizeRole } from "@/lib/auth/roles";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -246,18 +248,19 @@ function TelemetryMetric({
 }
 
 export default async function Home() {
-  const [uiEnabled, systemStatus, executionState, metrics, tenantId] = await Promise.all([
+  const [uiEnabled, systemStatus, executionState, metrics, tenantId, currentUser] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
     getSystemStatus(),
     getSystemExecutionState(),
     getHomeCardMetrics(),
     getCurrentTenantId(),
+    getCurrentUser(),
   ]);
 
   const links = buildLinks(metrics, tenantId);
   const coreLinks = links.slice(0, 3);
   const dataLinks = links.slice(3);
-  
+  const canResetDegraded = isAdminRole(normalizeRole(currentUser?.role));
 
   const renderLinkCard = (link: HomeLink) => {
     const dependencyState = getDependencyState(link, systemStatus);
@@ -386,7 +389,11 @@ export default async function Home() {
             </div>
           </section>
 
-          <SystemHealthPanel initialStatus={systemStatus} initialExecutionState={executionState} />
+          <SystemHealthPanel
+            initialStatus={systemStatus}
+            initialExecutionState={executionState}
+            canResetDegraded={canResetDegraded}
+          />
 
           <AgentAvailabilityHints />
 

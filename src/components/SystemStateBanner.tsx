@@ -23,9 +23,19 @@ type SystemStateBannerProps = {
   executionState: SystemExecutionState;
   onRefresh: () => void;
   isRefreshing: boolean;
+  canResetDegraded: boolean;
+  onReset?: () => void;
+  isResetting?: boolean;
 };
 
-export function SystemStateBanner({ executionState, onRefresh, isRefreshing }: SystemStateBannerProps) {
+export function SystemStateBanner({
+  executionState,
+  onRefresh,
+  isRefreshing,
+  canResetDegraded,
+  onReset,
+  isResetting = false,
+}: SystemStateBannerProps) {
   const [isEntering, setIsEntering] = useState(false);
   const previousState = useRef<SystemExecutionState["state"] | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -94,10 +104,20 @@ export function SystemStateBanner({ executionState, onRefresh, isRefreshing }: S
         >
           View incident
         </Link>
+        {canResetDegraded ? (
+          <button
+            type="button"
+            onClick={onReset}
+            disabled={!onReset || isResetting || isRefreshing}
+            className="inline-flex items-center rounded-full border border-red-200 bg-white px-3 py-1 text-xs font-semibold text-red-800 shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 hover:text-red-900 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isResetting ? "Resetting…" : "Reset incident"}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onRefresh}
-          disabled={isRefreshing}
+          disabled={isRefreshing || isResetting}
           className="inline-flex items-center rounded-full border border-red-200 bg-white px-3 py-1 text-xs font-semibold text-red-800 shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 hover:text-red-900 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isRefreshing ? "Refreshing…" : "Refresh status"}
