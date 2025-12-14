@@ -1,6 +1,10 @@
 export function combineLabels(primary: string, secondary?: string): string {
-  if (!primary && !secondary) {
-    return "";
+  if (!primary) {
+    if (!secondary) {
+      return "";
+    }
+
+    return secondary;
   }
 
   if (!secondary) {

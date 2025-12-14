@@ -9,6 +9,10 @@ describe("coverageTarget", () => {
     expect(combineLabels("Primary")).toBe("Primary");
   });
 
+  it("returns the secondary label when primary is missing", () => {
+    expect(combineLabels("", "Secondary")).toBe("Secondary");
+  });
+
   it("handles missing labels", () => {
     expect(combineLabels("", "")).toBe("");
   });
