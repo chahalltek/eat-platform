@@ -1,4 +1,3 @@
-<<<<<<< ours
 import { NextRequest, NextResponse } from "next/server";
 
 import { HiringManagerFeedbackStatus, HiringManagerFeedbackType, Prisma } from "@prisma/client";
@@ -19,7 +18,6 @@ const hiringManagerFeedbackTypeEnum =
     CANDIDATE_UPDATED: "CANDIDATE_UPDATED",
     THRESHOLD_ADJUSTED: "THRESHOLD_ADJUSTED",
   } satisfies Record<string, string>;
-
 
 const requirementSchema = z.object({
   id: z.string().min(1),
@@ -207,6 +205,3 @@ export async function POST(req: NextRequest, context: RouteContext) {
     { status: 201 },
   );
 }
-=======
-export { POST } from "../../[jobReqId]/hm-feedback/route";
->>>>>>> theirs
