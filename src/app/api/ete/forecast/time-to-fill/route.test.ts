@@ -28,13 +28,13 @@ describe("GET /api/ete/forecast/time-to-fill", () => {
   });
 
   it("returns time-to-fill risk flags for the tenant", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "user-1", tenantId: "tenant-abc" });
+    mockGetCurrentUser.mockResolvedValue({ id: "user-1", tenantId: "tenant-abc", role: "RECRUITER" });
     mockGetRisks.mockResolvedValue([{ jobId: "job-123", riskFlags: ["Flag"] }]);
 
     const response = await GET(buildRequest());
 
     expect(response.status).toBe(200);
-    expect(mockGetRisks).toHaveBeenCalledWith("tenant-abc", { bypassCache: false });
+    expect(mockGetRisks).toHaveBeenCalledWith("tenant-abc", expect.objectContaining({ bypassCache: false }));
 
     const body = await response.json();
     expect(body.risks).toEqual([{ jobId: "job-123", riskFlags: ["Flag"] }]);
@@ -42,7 +42,7 @@ describe("GET /api/ete/forecast/time-to-fill", () => {
   });
 
   it("degrades gracefully when forecasting fails", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "user-1", tenantId: "tenant-abc" });
+    mockGetCurrentUser.mockResolvedValue({ id: "user-1", tenantId: "tenant-abc", role: "RECRUITER" });
     mockGetRisks.mockRejectedValue(new Error("forecasting offline"));
 
     const response = await GET(buildRequest());

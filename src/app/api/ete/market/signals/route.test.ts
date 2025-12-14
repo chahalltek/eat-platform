@@ -33,7 +33,7 @@ describe("GET /api/ete/market/signals", () => {
   });
 
   it("returns market signals with filters", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "user-1", tenantId: "tenant-123" });
+    mockGetCurrentUser.mockResolvedValue({ id: "user-1", tenantId: "tenant-123", role: "RECRUITER" });
     mockLoadTenantMode.mockResolvedValue({ mode: "production" });
     mockGetMarketSignals.mockResolvedValue({ label: "Market benchmark (aggregated)" });
 
