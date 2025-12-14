@@ -226,7 +226,7 @@ function parseRetryPayload(value: unknown): { nextAttemptAt: string | null } {
   return { nextAttemptAt };
 }
 
-async function loadLatestAtsSync(tenantId: string): Promise<TenantDiagnostics["ats"]> {
+export async function loadLatestAtsSync(tenantId: string): Promise<TenantDiagnostics["ats"]> {
   try {
     const lastSync = await prisma.agentRunLog.findFirst({
       where: { tenantId, agentName: { contains: "ATS_SYNC", mode: "insensitive" } },
