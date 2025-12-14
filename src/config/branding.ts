@@ -1,4 +1,3 @@
-import { getAppConfig } from "@/lib/config/configValidator";
 import { DEPLOYMENT_MODES, type DeploymentMode } from "@/lib/deployment/deploymentModes";
 
 type BrandingPreset = {
@@ -36,18 +35,28 @@ const DEPLOYMENT_BRANDING_PRESETS: Record<DeploymentMode, BrandingPreset> = {
   },
 };
 
+function resolveDeploymentMode(env: NodeJS.ProcessEnv): DeploymentMode {
+  const deploymentMode = env.NEXT_PUBLIC_DEPLOYMENT_MODE ?? env.DEPLOYMENT_MODE;
+  const validModes = Object.values(DEPLOYMENT_MODES);
+
+  if (deploymentMode && validModes.includes(deploymentMode as DeploymentMode)) {
+    return deploymentMode as DeploymentMode;
+  }
+
+  return DEPLOYMENT_MODES.INTERNAL_STRSI;
+}
+
 export function getBrandingConfig(env: NodeJS.ProcessEnv = process.env) {
-  const appConfig = getAppConfig(env);
-  const preset = DEPLOYMENT_BRANDING_PRESETS[appConfig.DEPLOYMENT_MODE] ?? FALLBACKS;
+  const preset = DEPLOYMENT_BRANDING_PRESETS[resolveDeploymentMode(env)] ?? FALLBACKS;
 
   return {
-    name: appConfig.NEXT_PUBLIC_ETE_APP_NAME ?? preset.name,
-    description: appConfig.NEXT_PUBLIC_ETE_APP_DESCRIPTION ?? preset.description,
-    tagline: appConfig.NEXT_PUBLIC_ETE_APP_TAGLINE ?? preset.tagline,
-    logoHorizontal: appConfig.NEXT_PUBLIC_ETE_BRAND_LOGO_HORIZONTAL ?? preset.logoHorizontal,
-    logoMark: appConfig.NEXT_PUBLIC_ETE_BRAND_LOGO_MARK ?? preset.logoMark,
-    accentColor: appConfig.NEXT_PUBLIC_ETE_BRAND_ACCENT_COLOR ?? preset.accentColor,
-    headerText: appConfig.NEXT_PUBLIC_ETE_BRAND_HEADER_TEXT ?? preset.headerText,
+    name: env.NEXT_PUBLIC_ETE_APP_NAME ?? preset.name,
+    description: env.NEXT_PUBLIC_ETE_APP_DESCRIPTION ?? preset.description,
+    tagline: env.NEXT_PUBLIC_ETE_APP_TAGLINE ?? preset.tagline,
+    logoHorizontal: env.NEXT_PUBLIC_ETE_BRAND_LOGO_HORIZONTAL ?? preset.logoHorizontal,
+    logoMark: env.NEXT_PUBLIC_ETE_BRAND_LOGO_MARK ?? preset.logoMark,
+    accentColor: env.NEXT_PUBLIC_ETE_BRAND_ACCENT_COLOR ?? preset.accentColor,
+    headerText: env.NEXT_PUBLIC_ETE_BRAND_HEADER_TEXT ?? preset.headerText,
   } as const;
 }
 
