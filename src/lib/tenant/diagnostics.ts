@@ -1,4 +1,4 @@
-import { AgentRunStatus, TenantDeletionMode, type SubscriptionPlan, type Tenant } from "@/server/db";
+import { AgentRunStatus, Prisma, TenantDeletionMode, type SubscriptionPlan, type Tenant } from "@/server/db";
 
 import { getAppConfig } from "@/lib/config/configValidator";
 import { FEATURE_FLAGS, type FeatureFlagName } from "@/lib/featureFlags/constants";
@@ -247,9 +247,9 @@ export async function loadLatestAtsSync(tenantId: string): Promise<TenantDiagnos
     }
 
     const status =
-      lastSync.status === AgentRunStatus.SUCCESS
+      lastSync.status === AGENT_RUN_STATUS.SUCCESS
         ? "success"
-        : lastSync.status === AgentRunStatus.RUNNING
+        : lastSync.status === AGENT_RUN_STATUS.RUNNING
           ? "running"
           : "failed";
 
@@ -300,6 +300,15 @@ const LLM_FAILURE_THRESHOLD = 0.25;
 const MATCH_FAILURE_THRESHOLD = 0.25;
 const FIRE_DRILL_IMPACT = ["Agent dispatch paused", "Guardrails forced to conservative"] as const;
 
+const AGENT_RUN_STATUS =
+  AgentRunStatus ??
+  (Prisma as { AgentRunStatus?: typeof AgentRunStatus } | undefined)?.AgentRunStatus ?? {
+    RUNNING: "RUNNING",
+    SUCCESS: "SUCCESS",
+    FAILED: "FAILED",
+    PARTIAL: "PARTIAL",
+  };
+
 async function evaluateFireDrillStatus(tenantId: string) {
   const since = new Date(Date.now() - INCIDENT_WINDOW_MINUTES * 60 * 1000);
 
@@ -319,7 +328,7 @@ async function evaluateFireDrillStatus(tenantId: string) {
       where: {
         tenantId,
         agentName: { contains: "EXPLAIN", mode: "insensitive" },
-        status: AgentRunStatus.FAILED,
+        status: AGENT_RUN_STATUS.FAILED,
         startedAt: { gte: since },
       },
     }),
@@ -340,7 +349,7 @@ async function evaluateFireDrillStatus(tenantId: string) {
           { agentName: { contains: "RINA", mode: "insensitive" } },
           { agentName: { contains: "RUA", mode: "insensitive" } },
         ],
-        status: AgentRunStatus.FAILED,
+        status: AGENT_RUN_STATUS.FAILED,
         startedAt: { gte: since },
       },
     }),
@@ -363,7 +372,7 @@ async function evaluateFireDrillStatus(tenantId: string) {
           { agentName: { contains: "CONFIDENCE", mode: "insensitive" } },
           { agentName: { contains: "RANK", mode: "insensitive" } },
         ],
-        status: AgentRunStatus.FAILED,
+        status: AGENT_RUN_STATUS.FAILED,
         startedAt: { gte: since },
       },
     }),
