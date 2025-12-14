@@ -93,14 +93,21 @@ describe("POST /api/tenant/export", () => {
   it("blocks exports when outbound data is disabled", async () => {
     process.env.SECURITY_MODE = "preview";
     delete process.env.DATA_EXPORTS_ENABLED;
-    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
-    mockGetCurrentTenantId.mockResolvedValue("tenant-a");
+    const { requireAdminOrDataAccess } = await import("@/lib/auth/requireRole");
+    const { getCurrentTenantId } = await import("@/lib/tenant");
+    const { buildTenantExportArchive } = await import("@/lib/export/tenantExport");
 
-    const response = await POST(buildRequest());
+    vi.mocked(requireAdminOrDataAccess).mockResolvedValue({
+      ok: true,
+      user: { id: "admin-1", role: USER_ROLES.ADMIN, tenantId: "tenant-a" },
+    } as RequireRoleResult);
+    vi.mocked(getCurrentTenantId).mockResolvedValue("tenant-a");
+
+    const response = await POST(makeRequest());
     const body = await response.json();
 
     expect(response.status).toBe(403);
     expect(body.error).toContain("Data exports is disabled");
-    expect(mockBuildTenantExportArchive).not.toHaveBeenCalled();
+    expect(buildTenantExportArchive).not.toHaveBeenCalled();
   });
 });

@@ -23,6 +23,10 @@ vi.mock("@prisma/client", async () => {
 
   return {
     ...actual,
+    // Ensure enum exports are available when mocked so tests can import them directly.
+    JobCandidateStatus: (actual as any).JobCandidateStatus ?? (actual as any).Prisma?.JobCandidateStatus,
+    AgentRunStatus: (actual as any).AgentRunStatus ?? (actual as any).Prisma?.AgentRunStatus,
+    TenantDeletionMode: (actual as any).TenantDeletionMode ?? (actual as any).Prisma?.TenantDeletionMode,
     PrismaClient,
   };
 });

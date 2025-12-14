@@ -48,8 +48,7 @@ describe("GET /api/jobs/[jobReqId]/hm-brief", () => {
   });
 
   it("returns a brief when job intent exists", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    mocks.prisma.jobIntent.findFirst.mockResolvedValue({ id: "intent-1" });
+    mocks.prisma.jobIntent.findFirst.mockResolvedValue({ id: "intent-1", intent: { summary: "intent" } });
 
     const request = new NextRequest("http://localhost/api/jobs/job-123/hm-brief");
     const response = await GET(request, baseContext);
@@ -65,34 +64,33 @@ describe("GET /api/jobs/[jobReqId]/hm-brief", () => {
       updatedAt: "2024-05-02T00:00:00.000Z",
       sentAt: null,
       sentTo: null,
+      intentSnapshot: { summary: "intent" },
+      intentStatus: "READY",
     });
-    expect(warnSpy).not.toHaveBeenCalled();
     expect(mocks.prisma.jobIntent.findFirst).toHaveBeenCalledWith({
       where: { jobReqId: "job-123", tenantId: "tenant-1" },
     });
-
-    warnSpy.mockRestore();
   });
 
-  it("returns 409 when job intent is missing", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("returns the brief with missing intent status when intent is absent", async () => {
     mocks.prisma.jobIntent.findFirst.mockResolvedValue(null);
 
     const request = new NextRequest("http://localhost/api/jobs/job-123/hm-brief");
     const response = await GET(request, baseContext);
     const payload = await response.json();
 
-    expect(response.status).toBe(409);
+    expect(response.status).toBe(200);
     expect(payload).toEqual({
-      error: "JOB_INTENT_MISSING",
-      message: "Job intent missing; run ingestion or intake before generating a brief.",
-      jobReqId: "job-123",
+      briefId: "brief-1",
+      jobId: "job-123",
+      content: { summary: "brief" },
+      status: "READY",
+      createdAt: "2024-05-01T00:00:00.000Z",
+      updatedAt: "2024-05-02T00:00:00.000Z",
+      sentAt: null,
+      sentTo: null,
+      intentSnapshot: null,
+      intentStatus: "MISSING",
     });
-    expect(warnSpy).toHaveBeenCalledWith("Job intent missing for hiring manager brief", {
-      jobReqId: "job-123",
-      tenantId: "tenant-1",
-    });
-
-    warnSpy.mockRestore();
   });
 });

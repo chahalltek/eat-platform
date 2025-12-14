@@ -5,12 +5,12 @@ import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSw
 import { runOutreach } from "@/lib/agents/outreach";
 import { getCurrentUser } from "@/lib/auth/user";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
-import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
+import { assertFeatureEnabled as assertSoftFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { toRateLimitResponse } from "@/lib/rateLimiting/http";
 import { isRateLimitError } from "@/lib/rateLimiting/rateLimiter";
 import { validateRecruiterId } from "../recruiterValidation";
 import { getCurrentTenantId } from "@/lib/tenant";
-import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
+import { assertFeatureEnabled as assertHardFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -21,14 +21,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: "Agents" });
+  const flagCheck = await assertSoftFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: "Agents" });
 
   if (flagCheck) {
     return flagCheck;
   }
 
   try {
-    assertFeatureEnabled(HARD_FEATURE_FLAGS.OUTBOUND_EMAIL_ENABLED);
+    assertHardFeatureEnabled(HARD_FEATURE_FLAGS.OUTBOUND_EMAIL_ENABLED);
   } catch (error) {
     if (error instanceof FeatureDisabledError) {
       return NextResponse.json({ error: error.message }, { status: 403 });

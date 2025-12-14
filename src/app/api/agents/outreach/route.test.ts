@@ -10,7 +10,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/auth/user", () => ({ getCurrentUser: mocks.getCurrentUser }));
-vi.mock("@/lib/featureFlags/middleware", () => ({ agentFeatureGuard: mocks.agentFeatureGuard }));
+vi.mock("@/lib/featureFlags/middleware", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/featureFlags/middleware")>();
+
+  return { ...actual, agentFeatureGuard: mocks.agentFeatureGuard };
+});
 vi.mock("@/lib/agents/outreach", () => ({ runOutreach: mocks.runOutreach }));
 vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: mocks.getCurrentTenantId }));
 vi.mock("@/lib/agents/killSwitch", () => ({
