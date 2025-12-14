@@ -19,7 +19,10 @@ const { mockRequireRole } = vi.hoisted(() => ({
   mockRequireRole: vi.fn(async () => ({ ok: true, user: { id: "user-1", role: "RECRUITER" } })),
 }));
 
-vi.mock("@/lib/auth/requireRole", () => ({ requireRole: mockRequireRole }));
+vi.mock("@/lib/auth/requireRole", () => ({
+  requireRole: mockRequireRole,
+  requireRecruiterOrAdmin: mockRequireRole,
+}));
 vi.mock("@/lib/auth/roles", () => ({ USER_ROLES: { ADMIN: "ADMIN", RECRUITER: "RECRUITER" } }));
 
 const requestBody = { recruiterId: "recruiter-1" };
