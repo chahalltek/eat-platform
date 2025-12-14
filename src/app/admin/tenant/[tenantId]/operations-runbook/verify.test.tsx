@@ -31,12 +31,17 @@ vi.mock("@/lib/modes/loadTenantMode", () => ({
   loadTenantMode: vi.fn(),
 }));
 
+vi.mock("@/lib/tenant/diagnostics", () => ({
+  buildTenantDiagnostics: vi.fn(),
+}));
+
 describe("verify:mvp | operations runbook readiness summary", () => {
   it("renders the operational readiness summary even when diagnostics are unavailable", async () => {
     const { getCurrentUser } = await import("@/lib/auth/user");
     const { requireTenantAdmin } = await import("@/lib/auth/tenantAdmin");
     const { listAgentKillSwitches } = await import("@/lib/agents/killSwitch");
     const { loadTenantMode } = await import("@/lib/modes/loadTenantMode");
+    const { buildTenantDiagnostics } = await import("@/lib/tenant/diagnostics");
 
     vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1", role: "ADMIN" });
     vi.mocked(requireTenantAdmin).mockResolvedValue({ isAdmin: true });
@@ -55,6 +60,9 @@ describe("verify:mvp | operations runbook readiness summary", () => {
       agentsEnabled: ["RUA", "RINA"],
       source: "fallback",
     });
+    vi.mocked(buildTenantDiagnostics).mockRejectedValue(new Error("diagnostics unavailable"));
+
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const page = await OperationsRunbookPage({ params: { tenantId: "tenant-123" } });
 
@@ -65,5 +73,7 @@ describe("verify:mvp | operations runbook readiness summary", () => {
     });
 
     expect(screen.getAllByText(/UNKNOWN/i).length).toBeGreaterThanOrEqual(1);
+
+    errorSpy.mockRestore();
   });
 });
