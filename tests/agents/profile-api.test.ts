@@ -31,16 +31,22 @@ const { mockCallLLM, mockCandidateCreate, mockWithAgentRun, createdSkills } = vi
   return { mockCallLLM, mockCandidateCreate, mockWithAgentRun, createdSkills };
 });
 
-vi.mock("@/server/db", () => ({
-  prisma: {
-    candidate: {
-      create: mockCandidateCreate,
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      candidate: {
+        create: mockCandidateCreate,
+      },
+      tenant: {
+        findUnique: vi.fn().mockResolvedValue({ id: "tenant-1" }),
+      },
     },
-    tenant: {
-      findUnique: vi.fn().mockResolvedValue({ id: "tenant-1" }),
-    },
-  },
-}));
+  };
+});
 
 vi.mock("@/lib/agents/agentRun", () => ({ withAgentRun: mockWithAgentRun }));
 vi.mock("@/lib/agents/promptRegistry", () => ({

@@ -3,13 +3,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/server/db";
 import { requireTenantAdmin, TENANT_ROLES } from "@/lib/auth/tenantAdmin";
 
-vi.mock("@/server/db", () => ({
-  prisma: {
-    tenantUser: {
-      findFirst: vi.fn(),
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      tenantUser: {
+        findFirst: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 describe("requireTenantAdmin", () => {
   const tenantId = "default-tenant";

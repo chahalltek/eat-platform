@@ -40,10 +40,18 @@ vi.mock("@/lib/modes/loadTenantMode", () => ({
   loadTenantMode: mockLoadTenantMode,
 }));
 
-vi.mock("@/server/db", () => ({
-  prisma: prismaMock,
-  isPrismaUnavailableError: () => false,
-}));
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      ...prismaMock,
+    },
+    isPrismaUnavailableError: () => false,
+  };
+});
 
 vi.mock("@/lib/guardrails/config", () => ({
   loadTenantGuardrailConfig: mockLoadGuardrails,

@@ -44,7 +44,17 @@ const {
   };
 });
 
-vi.mock("@/server/db", () => ({ prisma: mockPrisma }));
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      ...mockPrisma,
+    },
+  };
+});
 vi.mock("@/lib/killSwitch", () => ({ assertKillSwitchDisarmed: vi.fn(), KILL_SWITCHES: { AGENTS: "AGENTS" } }));
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),

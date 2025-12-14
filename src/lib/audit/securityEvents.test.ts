@@ -26,14 +26,20 @@ type SecurityEvent = {
   createdAt: Date;
 };
 
-vi.mock("@/server/db", () => ({
-  prisma: {
-    securityEventLog: {
-      create: vi.fn(),
-      findMany: vi.fn(),
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      securityEventLog: {
+        create: vi.fn(),
+        findMany: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 vi.mock("@/lib/tenant", () => ({
   getCurrentTenantId: vi.fn(),

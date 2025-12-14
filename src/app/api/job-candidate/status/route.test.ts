@@ -5,14 +5,20 @@ import { prisma } from '@/server/db';
 import { getCurrentUser } from '@/lib/auth/user';
 import { recordAuditEvent } from '@/lib/audit/trail';
 
-vi.mock('@/server/db', () => ({
-  prisma: {
-    jobCandidate: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
+vi.mock('@/server/db', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/server/db')>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      jobCandidate: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 vi.mock('@/lib/auth/user', () => ({
   getCurrentUser: vi.fn(),

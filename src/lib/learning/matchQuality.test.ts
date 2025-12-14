@@ -10,14 +10,20 @@ vi.mock("@/lib/modes/loadTenantMode", () => ({
   loadTenantMode: (...args: unknown[]) => mockLoadTenantMode(...args),
 }));
 
-vi.mock("@/server/db", () => ({
-  prisma: {
-    jobCandidate: { findMany: vi.fn() },
-    matchFeedback: { findMany: vi.fn() },
-    matchQualitySnapshot: { deleteMany: vi.fn(), createMany: vi.fn() },
-    tenant: { findMany: vi.fn() },
-  },
-}));
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      jobCandidate: { findMany: vi.fn() },
+      matchFeedback: { findMany: vi.fn() },
+      matchQualitySnapshot: { deleteMany: vi.fn(), createMany: vi.fn() },
+      tenant: { findMany: vi.fn() },
+    },
+  };
+});
 
 describe("calculateMatchQualityIndex", () => {
   beforeEach(() => {

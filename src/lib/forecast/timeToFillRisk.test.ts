@@ -2,13 +2,19 @@ import { describe, expect, it, vi } from "vitest";
 
 import { evaluateTimeToFillRisks, getTimeToFillRisksForTenant } from "./timeToFillRisk";
 
-vi.mock("@/server/db", () => ({
-  prisma: {
-    jobReq: {
-      findMany: vi.fn(),
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      jobReq: {
+        findMany: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 describe("evaluateTimeToFillRisks", () => {
   it("flags risks based on forecast, stage velocity, and confidence mix", () => {

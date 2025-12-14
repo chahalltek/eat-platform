@@ -25,7 +25,17 @@ vi.mock("@/lib/agents/killSwitch", () => ({
   enforceAgentKillSwitch: mockEnforceKillSwitch,
 }));
 vi.mock("@/lib/guardrails/tenantConfig", () => ({ loadTenantConfig: mockLoadTenantConfig }));
-vi.mock("@/server/db", () => ({ prisma: mockPrisma }));
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      ...mockPrisma,
+    },
+  };
+});
 
 const buildRequest = (body: unknown) =>
   makeRequest({

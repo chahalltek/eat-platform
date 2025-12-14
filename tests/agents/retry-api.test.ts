@@ -31,14 +31,20 @@ vi.mock("@/lib/featureFlags/middleware", () => ({
   enforceFeatureFlag: mockEnforceFeatureFlag,
   getAgentFeatureName: mockGetAgentFeatureName,
 }));
-vi.mock("@/server/db", () => ({
-  prisma: {
-    agentRunLog: {
-      findFirst: mockFindFirst,
-      count: mockCount,
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    prisma: {
+      ...actual.prisma,
+      agentRunLog: {
+        findFirst: mockFindFirst,
+        count: mockCount,
+      },
     },
-  },
-}));
+  };
+});
 
 const buildRequest = (runId: string) =>
   makeRequest({ method: "POST", url: `http://localhost/api/agents/runs/${runId}/retry` });
