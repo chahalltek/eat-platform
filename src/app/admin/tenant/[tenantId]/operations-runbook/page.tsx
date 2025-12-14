@@ -329,6 +329,8 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
     },
   ];
 
+  const diagnosticsStatus = diagnosticsAvailable ? "AVAILABLE" : "UNAVAILABLE";
+
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
