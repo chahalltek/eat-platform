@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
-  requireTenantAdmin: vi.fn(),
+  resolveTenantAdminAccess: vi.fn(),
   listAgentKillSwitches: vi.fn(),
   loadTenantMode: vi.fn(),
   buildTenantDiagnostics: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock("@/lib/auth/user", () => ({
 }));
 
 vi.mock("@/lib/auth/tenantAdmin", () => ({
-  requireTenantAdmin: mocks.requireTenantAdmin,
+  requireTenantAdmin: vi.fn(),
 }));
 
 vi.mock("@/lib/agents/killSwitch", () => ({
@@ -48,6 +48,10 @@ vi.mock("@/lib/tenant/diagnostics", () => ({
   buildTenantDiagnostics: mocks.buildTenantDiagnostics,
 }));
 
+vi.mock("@/lib/tenant/access", () => ({
+  resolveTenantAdminAccess: mocks.resolveTenantAdminAccess,
+}));
+
 import OperationsRunbookPage from "@/app/admin/tenant/[tenantId]/operations-runbook/page";
 
 describe("Operations runbook readiness summary", () => {
@@ -57,7 +61,7 @@ describe("Operations runbook readiness summary", () => {
     vi.clearAllMocks();
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mocks.getCurrentUser.mockResolvedValue({ id: "admin-1" });
-    mocks.requireTenantAdmin.mockResolvedValue({ isAdmin: true });
+    mocks.resolveTenantAdminAccess.mockResolvedValue({ hasAccess: true });
     mocks.listAgentKillSwitches.mockResolvedValue([]);
     mocks.loadTenantMode.mockResolvedValue({ mode: "production" });
   });
