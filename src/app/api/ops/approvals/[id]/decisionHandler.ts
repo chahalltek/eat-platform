@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { prisma, ApprovalStatus } from "@/server/db";
+import { runApprovedActionWorkflow } from "@/server/workflows/runApprovedActionWorkflow";
 
 const decisionSchema = z.object({
   decisionReason: z.string().trim().optional(),
@@ -69,5 +70,19 @@ export async function handleApprovalDecision(
     },
   });
 
-  return NextResponse.json({ approval: updatedApproval });
+  if (updatedApproval.status !== ApprovalStatus.APPROVED) {
+    return NextResponse.json({ approval: updatedApproval });
+  }
+
+  try {
+    const workflowResult = await runApprovedActionWorkflow(updatedApproval);
+
+    return NextResponse.json(workflowResult);
+  } catch (error) {
+    console.error("[approvals] Failed to run approved action workflow", error);
+    return NextResponse.json(
+      { error: "Approval updated but workflow failed", approval: updatedApproval },
+      { status: 500 },
+    );
+  }
 }
