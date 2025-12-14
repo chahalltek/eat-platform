@@ -23,7 +23,10 @@ export const DEFAULT_GUARDRAILS: GuardrailConfig = {
   source: "default",
 };
 
-type PrismaGuardrailClient = { guardrailConfig?: { findUnique: (args: unknown) => Promise<GuardrailConfigRecord | null> } };
+type PrismaGuardrailClient = {
+  guardrailConfig?: { findUnique: (args: unknown) => Promise<GuardrailConfigRecord | null> };
+  tenantConfig?: { findFirst: (args: unknown) => Promise<GuardrailConfigRecord | null> };
+};
 
 export async function loadTenantGuardrailConfig(
   tenantId: string,
@@ -35,6 +38,12 @@ export async function loadTenantGuardrailConfig(
     });
 
     if (!record) {
+      const tenantConfig = await client.tenantConfig?.findFirst?.({ where: { tenantId } });
+
+      if (tenantConfig) {
+        return { ...DEFAULT_GUARDRAILS, source: "database" };
+      }
+
       return { ...DEFAULT_GUARDRAILS, source: "default" };
     }
 
