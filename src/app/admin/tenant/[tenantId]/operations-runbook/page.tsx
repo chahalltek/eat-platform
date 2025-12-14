@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { ExclamationTriangleIcon, ShieldExclamationIcon } from "@heroicons/react/24/solid";
 import { ArrowTopRightOnSquareIcon, FireIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 
@@ -6,10 +7,11 @@ import { EteLogo } from "@/components/EteLogo";
 import { HARD_FEATURE_FLAGS, getSecurityMode, isHardFeatureEnabled } from "@/config/featureFlags";
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
 import type { AgentName } from "@/lib/agents/agentAvailability";
-import { requireTenantAdmin } from "@/lib/auth/tenantAdmin";
 import { getCurrentUser } from "@/lib/auth/user";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { buildTenantDiagnostics } from "@/lib/tenant/diagnostics";
+import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -220,6 +222,7 @@ function badgeToneClass(tone: "positive" | "negative" | "neutral" | "caution") {
 export default async function OperationsRunbookPage({ params }: { params: { tenantId: string } }) {
   const user = await getCurrentUser();
   const tenantId = params.tenantId?.trim?.() ?? "";
+  const headerRole = getTenantRoleFromHeaders(await headers());
 
   if (!user || !tenantId) {
     return (
@@ -237,9 +240,9 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
     );
   }
 
-  const access = await requireTenantAdmin(tenantId, user.id);
+  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole });
 
-  if (!access.isAdmin) {
+  if (!access.hasAccess) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
