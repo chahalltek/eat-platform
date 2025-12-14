@@ -11,8 +11,7 @@ import { parseJobIntentPayload } from "@/lib/jobIntent";
 import { onJobChanged } from "@/lib/orchestration/triggers";
 
 const hiringManagerFeedbackTypeEnum =
-  HiringManagerFeedbackType ??
-  Prisma?.HiringManagerFeedbackType ?? {
+  HiringManagerFeedbackType ?? {
     REQUIREMENT_CHANGED: "REQUIREMENT_CHANGED",
     CANDIDATE_REJECTED: "CANDIDATE_REJECTED",
     CANDIDATE_UPDATED: "CANDIDATE_UPDATED",
