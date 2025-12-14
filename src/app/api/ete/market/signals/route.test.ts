@@ -41,11 +41,14 @@ describe("GET /api/ete/market/signals", () => {
 
     expect(response.status).toBe(200);
     expect(mockLoadTenantMode).toHaveBeenCalledWith("tenant-123");
-    expect(mockGetMarketSignals).toHaveBeenCalledWith({
-      roleFamily: "Data",
-      region: "US",
-      systemMode: "production",
-    });
+    expect(mockGetMarketSignals).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roleFamily: "Data",
+        region: "US",
+        systemMode: "production",
+        bypassCache: false,
+      }),
+    );
 
     const body = await response.json();
     expect(body).toEqual({ label: "Market benchmark (aggregated)" });
