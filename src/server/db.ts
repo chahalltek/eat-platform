@@ -59,6 +59,7 @@ const TENANTED_MODELS = new Set([
   "DecisionItem",
   "AgentActionApproval",
   "HiringManagerFeedback",
+  "ApprovalRequest",
 ]);
 
 function withTenantWhere(where: Record<string, any> | undefined, tenantId: string) {

@@ -1,4 +1,4 @@
-import { Prisma } from '@/server/db';
+import { ApprovalStatus, Prisma } from '@/server/db';
 
 import { prisma } from '@/server/db';
 import { getCurrentUserId } from '@/lib/auth/user';
@@ -16,6 +16,7 @@ export const SECURITY_EVENT_TYPES = {
   COMPLIANCE_SCAN: 'COMPLIANCE_SCAN',
   KILL_SWITCH_UPDATED: 'KILL_SWITCH_UPDATED',
   KILL_SWITCH_BLOCKED: 'KILL_SWITCH_BLOCKED',
+  HITL_APPROVAL_CHECK: 'HITL_APPROVAL_CHECK',
 } as const;
 
 export type SecurityEventType = (typeof SECURITY_EVENT_TYPES)[keyof typeof SECURITY_EVENT_TYPES];
@@ -288,6 +289,34 @@ export async function logKillSwitchBlock(params: {
       reason: params.reason ?? null,
       latchedAt: params.latchedAt?.toISOString() ?? null,
       scope: params.scope ?? 'system',
+    },
+  });
+}
+
+export async function logApprovalCheck(params: {
+  tenantId?: string;
+  userId?: string | null;
+  approvalRequestId: string;
+  actionType: string;
+  requestedBy: string;
+  approvedBy?: string | null;
+  status: ApprovalStatus;
+  expiresAt?: Date | null;
+  result: 'allowed' | 'blocked';
+  reason?: string;
+}) {
+  return recordSecurityEvent({
+    ...params,
+    eventType: SECURITY_EVENT_TYPES.HITL_APPROVAL_CHECK,
+    metadata: {
+      approvalRequestId: params.approvalRequestId,
+      actionType: params.actionType,
+      requestedBy: params.requestedBy,
+      approvedBy: params.approvedBy ?? null,
+      status: params.status,
+      expiresAt: params.expiresAt?.toISOString() ?? null,
+      result: params.result,
+      reason: params.reason ?? null,
     },
   });
 }

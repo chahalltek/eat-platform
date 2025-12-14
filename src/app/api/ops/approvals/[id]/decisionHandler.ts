@@ -43,7 +43,10 @@ export async function handleApprovalDecision(
     );
   }
 
-  const approval = await prisma.agentActionApproval.findUnique({ where: { id: approvalId } });
+  const approval = await prisma.agentActionApproval.findUnique({
+    where: { id: approvalId },
+    include: { approvalRequest: true },
+  });
 
   if (!approval) {
     return NextResponse.json({ error: "Approval not found" }, { status: 404 });
@@ -62,14 +65,31 @@ export async function handleApprovalDecision(
 
   const decisionReason = parsed.data.decisionReason?.trim() || null;
 
-  const updatedApproval = await prisma.agentActionApproval.update({
-    where: { id: approvalId },
-    data: {
-      status,
-      decidedBy: user.id,
-      decidedAt: new Date(),
-      decisionReason,
-    },
+  const updatedApproval = await prisma.$transaction(async (tx) => {
+    const requestId = approval.approvalRequestId ?? approval.id;
+
+    if (requestId) {
+      await tx.approvalRequest.update({
+        where: { id: requestId },
+        data: {
+          status,
+          approvedBy: user.id,
+          approvedAt: new Date(),
+          decisionReason,
+        },
+      });
+    }
+
+    return tx.agentActionApproval.update({
+      where: { id: approvalId },
+      data: {
+        status,
+        decidedBy: user.id,
+        decidedAt: new Date(),
+        decisionReason,
+      },
+      include: { approvalRequest: true },
+    });
   });
 
   if (updatedApproval.status !== ApprovalStatus.APPROVED) {
@@ -90,9 +110,16 @@ export async function handleApprovalDecision(
     return NextResponse.json({ status: "EXECUTED", ...workflowResult });
   } catch (error) {
     console.error("[approvals] Failed to run approved action workflow", error);
+<<<<<<< ours
     return NextResponse.json(
       { status: "REJECTED", error: "Approval updated but workflow failed", approval: updatedApproval },
       { status: 500 },
     );
+=======
+    const message = error instanceof Error ? error.message : "Approval updated but workflow failed";
+    const status = message.toLowerCase().includes("approval") ? 409 : 500;
+
+    return NextResponse.json({ error: message, approval: updatedApproval }, { status });
+>>>>>>> theirs
   }
 }

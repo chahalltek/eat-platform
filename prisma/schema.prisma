@@ -716,6 +716,26 @@ model DecisionItem {
   @@index([tenantId, candidateId])
 }
 
+model ApprovalRequest {
+  id             String         @id @default(cuid())
+  tenantId       String         @default("default-tenant")
+  actionType     String
+  actionPayload  Json
+  payloadHash    String
+  requestedBy    String
+  requestedAt    DateTime       @default(now())
+  status         ApprovalStatus @default(PENDING)
+  approvedBy     String?
+  approvedAt     DateTime?
+  expiresAt      DateTime?
+  decisionReason String?
+
+  actionApproval AgentActionApproval?
+
+  @@index([tenantId, status])
+  @@index([tenantId, requestedBy])
+}
+
 model AgentActionApproval {
   id               String           @id @default(cuid())
   tenantId         String           @default("default-tenant")
@@ -737,10 +757,13 @@ model AgentActionApproval {
   executionStatus  ExecutionStatus?
   executedAt       DateTime?
   executionResult  Json?
+  approvalRequest  ApprovalRequest? @relation(fields: [approvalRequestId], references: [id])
+  approvalRequestId String? @unique
 
   @@index([tenantId, status])
   @@index([tenantId, jobReqId])
   @@index([tenantId, candidateId])
+  @@index([tenantId, approvalRequestId])
 }
 
 model MatchResult {

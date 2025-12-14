@@ -5,6 +5,7 @@ import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { isAdminRole, normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { ActionType, ApprovalStatus, prisma } from "@/server/db";
+import { hashApprovalPayload } from "@/server/approvals/approvalRequest";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -76,17 +77,37 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const approval = await prisma.agentActionApproval.create({
-      data: {
-        tenantId: normalizedTenantId,
-        jobReqId: jobReqId?.trim(),
-        candidateId: candidateId?.trim(),
-        actionType,
-        actionPayload,
-        proposedBy: user.id,
-        status: ApprovalStatus.PENDING,
-        decisionStreamId: decisionStreamId?.trim(),
-      },
+    const payloadHash = hashApprovalPayload(actionPayload);
+
+    const { approval } = await prisma.$transaction(async (tx) => {
+      const approvalRequest = await tx.approvalRequest.create({
+        data: {
+          tenantId: normalizedTenantId,
+          actionType,
+          actionPayload,
+          payloadHash,
+          requestedBy: user.id,
+          status: ApprovalStatus.PENDING,
+          decisionReason: null,
+        },
+      });
+
+      const createdApproval = await tx.agentActionApproval.create({
+        data: {
+          id: approvalRequest.id,
+          tenantId: normalizedTenantId,
+          jobReqId: jobReqId?.trim(),
+          candidateId: candidateId?.trim(),
+          actionType,
+          actionPayload,
+          proposedBy: user.id,
+          status: ApprovalStatus.PENDING,
+          decisionStreamId: decisionStreamId?.trim(),
+          approvalRequestId: approvalRequest.id,
+        },
+      });
+
+      return { approval: createdApproval };
     });
 
     return NextResponse.json({ approval }, { status: 201 });

@@ -6,6 +6,7 @@ import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { ApprovalStatus, ExecutionStatus, prisma } from "@/server/db";
+import { validateApprovalRequest } from "@/server/approvals/approvalRequest";
 import { executeApprovedAction } from "@/server/ops/executeApprovedAction";
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -22,7 +23,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Invalid approval id" }, { status: 400 });
   }
 
-  const approval = await prisma.agentActionApproval.findUnique({ where: { id: approvalId } });
+  const approval = await prisma.agentActionApproval.findUnique({
+    where: { id: approvalId },
+    include: { approvalRequest: true },
+  });
 
   if (!approval) {
     return NextResponse.json({ error: "Approval not found" }, { status: 404 });
@@ -39,10 +43,23 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Approval is not approved" }, { status: 409 });
   }
 
+<<<<<<< ours
   const agentsEnabled = await isFeatureEnabled(FEATURE_FLAGS.AGENTS);
 
   if (!agentsEnabled) {
     return suggestionOnlyResponse("Execution disabled in suggestion-only mode", { status: 200 });
+=======
+  const validation = await validateApprovalRequest({
+    approvalRequest: approval.approvalRequest,
+    actorId: user.id,
+    tenantId: approval.tenantId,
+    actionType: approval.actionType,
+    actionPayload: approval.actionPayload,
+  });
+
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.message }, { status: validation.status });
+>>>>>>> theirs
   }
 
   const execution = await executeApprovedAction(approval);

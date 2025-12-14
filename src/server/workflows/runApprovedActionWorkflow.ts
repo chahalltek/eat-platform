@@ -1,12 +1,14 @@
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { recordMetricEvent } from "@/lib/metrics/events";
 import { executeApprovedAction } from "@/server/actions/executeApprovedAction";
+import { validateApprovalRequest } from "@/server/approvals/approvalRequest";
 import {
   ApprovalStatus,
   ExecutionStatus,
   HiringManagerBriefStatus,
   prisma,
   type AgentActionApproval,
+  type ApprovalRequest,
 } from "@/server/db";
 import { generateHiringManagerBrief } from "@/server/hiringManagerBrief";
 
@@ -40,11 +42,36 @@ async function logDecisionStreamItem(
   });
 }
 
+type ActionApprovalWithRequest = AgentActionApproval & {
+  approvalRequest?: ApprovalRequest | null;
+};
+
+async function resolveApprovalRequest(approval: ActionApprovalWithRequest) {
+  if (approval.approvalRequest) return approval.approvalRequest;
+
+  return prisma.approvalRequest.findUnique({
+    where: { id: approval.approvalRequestId ?? approval.id },
+  });
+}
+
 export async function runApprovedActionWorkflow(
-  approval: AgentActionApproval,
+  approval: ActionApprovalWithRequest,
 ): Promise<ApprovedActionWorkflowResult> {
   if (approval.status !== ApprovalStatus.APPROVED) {
     throw new Error("Approval must be in APPROVED status to execute workflow");
+  }
+
+  const approvalRequest = await resolveApprovalRequest(approval);
+  const validator = await validateApprovalRequest({
+    approvalRequest,
+    actorId: approval.decidedBy ?? approval.proposedBy,
+    tenantId: approval.tenantId ?? DEFAULT_TENANT_ID,
+    actionType: approval.actionType,
+    actionPayload: approval.actionPayload,
+  });
+
+  if (!validator.ok) {
+    throw new Error(validator.message);
   }
 
   await logDecisionStreamItem(approval, "APPROVAL_DECIDED", {
