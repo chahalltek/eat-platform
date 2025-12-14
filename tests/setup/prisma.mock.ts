@@ -25,11 +25,11 @@ vi.mock("@prisma/client", async () => {
   };
 });
 
-vi.mock("@/server/db", async () => {
+vi.mock("@/server/db", async (importOriginal) => {
   const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = "true";
 
-  const actual = await vi.importActual<typeof import("@/server/db")>("@/server/db");
+  const actual = await importOriginal<typeof import("@/server/db")>();
 
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 
@@ -64,24 +64,11 @@ vi.mock("@/server/db", async () => {
     $disconnect: vi.fn(),
   } as const;
 
-  const TenantDeletionMode = {
-    SOFT_DELETE: "SOFT_DELETE",
-    HARD_DELETE: "HARD_DELETE",
-  } as const;
-
-  const JobCandidateStatus = {
-    NEW: "NEW",
-    SHORTLISTED: "SHORTLISTED",
-    SUBMITTED: "SUBMITTED",
-    REJECTED: "REJECTED",
-    HIRED: "HIRED",
-  } as const;
-
   return {
     ...actual,
     prisma,
-    TenantDeletionMode,
-    JobCandidateStatus,
+    TenantDeletionMode: actual.TenantDeletionMode,
+    JobCandidateStatus: actual.JobCandidateStatus,
     isPrismaUnavailableError: vi.fn(() => false),
     isTableAvailable: vi.fn(async () => true),
   };
