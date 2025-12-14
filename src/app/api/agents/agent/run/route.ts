@@ -41,7 +41,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (err instanceof Response) {
-      return NextResponse.from(err);
+      return new NextResponse(err.body, {
+        status: err.status,
+        statusText: err.statusText,
+        headers: err.headers,
+      });
     }
 
     console.error("Agent run failed", err);
