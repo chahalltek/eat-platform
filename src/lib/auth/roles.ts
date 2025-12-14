@@ -20,3 +20,13 @@ export function isAdminRole(role: string | null | undefined) {
   const normalized = normalizeRole(role);
   return normalized === USER_ROLES.ADMIN || normalized === USER_ROLES.SYSTEM_ADMIN;
 }
+
+export function isAdminOrDataAccessRole(role: string | null | undefined) {
+  const normalized = normalizeRole(role);
+
+  return (
+    normalized === USER_ROLES.ADMIN ||
+    normalized === USER_ROLES.SYSTEM_ADMIN ||
+    normalized === USER_ROLES.DATA_ACCESS
+  );
+}

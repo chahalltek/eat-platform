@@ -2,7 +2,7 @@ import { BanknotesIcon, ShieldCheckIcon, SparklesIcon } from "@heroicons/react/2
 import type { CostDriverType } from "@/server/db";
 
 import { getCurrentUser } from "@/lib/auth/user";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { formatCostValue, getMonthlyCostSnapshots } from "@/lib/cost/summary";
 
 const DRIVER_LABELS: Record<CostDriverType, string> = {
@@ -14,7 +14,7 @@ const DRIVER_LABELS: Record<CostDriverType, string> = {
 export default async function CostPage() {
   const user = await getCurrentUser();
 
-  if (!isAdminRole(user?.role)) {
+  if (!isAdminOrDataAccessRole(user?.role)) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
         <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm">

@@ -1,7 +1,7 @@
 import { ChartBarIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 
 import { getCurrentUser } from "@/lib/auth/user";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { getMonthlyUsageSnapshots } from "@/lib/usage/summary";
 
 const DIMENSION_LABELS = {
@@ -15,7 +15,7 @@ const DIMENSION_LABELS = {
 export default async function UsagePage() {
   const user = await getCurrentUser();
 
-  if (!isAdminRole(user?.role)) {
+  if (!isAdminOrDataAccessRole(user?.role)) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
         <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm">

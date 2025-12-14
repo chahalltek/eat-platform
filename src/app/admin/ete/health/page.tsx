@@ -11,7 +11,7 @@ import Link from "next/link";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 
@@ -119,7 +119,7 @@ export default async function EteHealthPage() {
   const user = await getCurrentUser();
   const tenantId = (await getCurrentTenantId()) ?? user?.tenantId ?? DEFAULT_TENANT_ID;
 
-  if (!user || !isAdminRole(user.role) || (user.tenantId ?? DEFAULT_TENANT_ID) !== tenantId) {
+  if (!user || !isAdminOrDataAccessRole(user.role) || (user.tenantId ?? DEFAULT_TENANT_ID) !== tenantId) {
     return <AccessDenied />;
   }
 

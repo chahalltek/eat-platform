@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 
 import { getCurrentUser } from "@/lib/auth/user";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { getPlatformHealthSnapshot } from "@/lib/metrics/platformHealth";
 import { EteLogo } from "@/components/EteLogo";
 
@@ -102,7 +102,7 @@ function formatDate(value: Date | null) {
 export default async function AdminHealthPage() {
   const user = await getCurrentUser();
 
-  if (!isAdminRole(user?.role)) {
+  if (!isAdminOrDataAccessRole(user?.role)) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-amber-900 shadow-sm">

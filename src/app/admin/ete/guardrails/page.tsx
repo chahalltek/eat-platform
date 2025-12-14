@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 
@@ -34,7 +34,7 @@ export default async function GuardrailsPage() {
   const user = await getCurrentUser();
   const tenantId = await getCurrentTenantId();
   const userTenant = (user?.tenantId ?? DEFAULT_TENANT_ID).trim();
-  const isAuthorized = user && isAdminRole(user.role) && userTenant === tenantId.trim();
+  const isAuthorized = user && isAdminOrDataAccessRole(user.role) && userTenant === tenantId.trim();
 
   if (!isAuthorized) {
     return <AccessDenied />;
