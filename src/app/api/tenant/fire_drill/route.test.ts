@@ -48,11 +48,7 @@ describe("POST /api/tenant/fire_drill", () => {
       callback(),
     );
     mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
-<<<<<<< ours
     mockSetFeatureFlag.mockResolvedValue({ name: FEATURE_FLAGS.FIRE_DRILL_MODE, enabled: true });
-=======
-    mockSetFeatureFlag.mockResolvedValue({ enabled: true, name: FEATURE_FLAGS.FIRE_DRILL_MODE });
->>>>>>> theirs
     mockCanManageTenants.mockReturnValue(false);
   });
 

@@ -1,24 +1,23 @@
 /// <reference types="vitest/globals" />
 
+import { JobCandidateStatus } from '@prisma/client';
+
 import { POST } from './route';
 import { prisma } from '@/server/db';
 import { getCurrentUser } from '@/lib/auth/user';
 import { recordAuditEvent } from '@/lib/audit/trail';
 
-vi.mock('@/server/db', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/server/db')>();
+const prismaMock = vi.hoisted(() => ({
+  jobCandidate: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+}));
 
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      jobCandidate: {
-        findUnique: vi.fn(),
-        update: vi.fn(),
-      },
-    },
-  };
-});
+vi.mock('@/server/db', async () => ({
+  JobCandidateStatus,
+  prisma: prismaMock,
+}));
 
 vi.mock('@/lib/auth/user', () => ({
   getCurrentUser: vi.fn(),
@@ -34,11 +33,12 @@ describe('POST /api/job-candidate/status', () => {
   });
 
   it('enforces permission boundaries for non-owners', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-1', role: 'RECRUITER' } as never);
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-1', role: 'RECRUITER', tenantId: 'tenant-1' } as never);
     vi.mocked(prisma.jobCandidate.findUnique).mockResolvedValue({
       id: 'jc-1',
       status: 'POTENTIAL',
       userId: 'other-user',
+      tenantId: 'tenant-1',
     } as never);
 
     const request = new Request('http://localhost/api/job-candidate/status', {
@@ -63,11 +63,12 @@ describe('POST /api/job-candidate/status', () => {
   });
 
   it('allows admins to override data isolation rules', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'admin-1', role: 'ADMIN' } as never);
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-1' } as never);
     vi.mocked(prisma.jobCandidate.findUnique).mockResolvedValue({
       id: 'jc-2',
       status: 'POTENTIAL',
       userId: 'owner-2',
+      tenantId: 'tenant-1',
     } as never);
     vi.mocked(prisma.jobCandidate.update).mockResolvedValue({ id: 'jc-2', status: 'SUBMITTED' } as never);
 
@@ -95,11 +96,12 @@ describe('POST /api/job-candidate/status', () => {
   });
 
   it('claims unassigned candidates to maintain isolation', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-2', role: 'SOURCER' } as never);
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-2', role: 'SOURCER', tenantId: 'tenant-1' } as never);
     vi.mocked(prisma.jobCandidate.findUnique).mockResolvedValue({
       id: 'jc-3',
       status: 'POTENTIAL',
       userId: null,
+      tenantId: 'tenant-1',
     } as never);
     vi.mocked(prisma.jobCandidate.update).mockResolvedValue({ id: 'jc-3', status: 'SHORTLISTED', userId: 'user-2' } as never);
 

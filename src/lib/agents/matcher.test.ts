@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Prisma } from "@prisma/client";
 
-import * as matcherAgent from "@/lib/agents/matcher";
-import { matchJobToAllCandidates } from "@/lib/matching/batch";
+const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/killSwitch", () => ({
   assertKillSwitchDisarmed: vi.fn(),
@@ -13,14 +13,12 @@ vi.mock("@/lib/agents/killSwitch", () => ({
   AGENT_KILL_SWITCHES: { MATCHER: "ETE-TS.MATCHER" },
 }));
 
+vi.mock("@/lib/auth", () => ({
+  getCurrentUser: mockGetCurrentUser,
+}));
+
 vi.mock("@/lib/auth/user", () => ({
-  getCurrentUser: vi.fn().mockResolvedValue({
-    id: "test-user",
-    email: null,
-    displayName: null,
-    role: null,
-    tenantId: "tenant",
-  }),
+  getCurrentUser: mockGetCurrentUser,
 }));
 
 vi.mock("@/lib/subscription/usageLimits", () => ({
@@ -49,17 +47,29 @@ const { mockAgentRunLogCreate, mockAgentRunLogUpdate, mockMatchResultCreate, moc
   return { mockAgentRunLogCreate, mockAgentRunLogUpdate, mockMatchResultCreate, mockPrisma };
 });
 
-vi.mock("@/server/db", () => {
-  return { prisma: mockPrisma };
-});
+vi.mock("@/server/db", () => ({
+  Prisma,
+  prisma: mockPrisma,
+}));
 
 vi.mock("@/lib/matching/batch", () => ({
   matchJobToAllCandidates: vi.fn(),
 }));
 
+const matcherAgent = await import("@/lib/agents/matcher");
+const { matchJobToAllCandidates } = await import("@/lib/matching/batch");
+const { getCurrentUser } = await import("@/lib/auth");
+
 describe("matcher agent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      id: "test-user",
+      email: null,
+      displayName: null,
+      role: null,
+      tenantId: "tenant",
+    });
   });
 
   it("creates candidate matches and marks the run as successful", async () => {
