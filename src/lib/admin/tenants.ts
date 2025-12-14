@@ -63,12 +63,11 @@ function activeSubscriptionWhere(now: Date) {
 
 export async function listTenantsWithPlans(): Promise<TenantPlanSummary[]> {
   const now = new Date();
-  const includeTenantMode = await isTableAvailable("TenantMode");
 
   const tenants = await prisma.tenant.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      ...(includeTenantMode ? { tenantMode: true } : {}),
+      tenantMode: true,
       subscriptions: {
         where: activeSubscriptionWhere(now),
         orderBy: { startAt: "desc" },
