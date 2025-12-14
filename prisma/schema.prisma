@@ -21,6 +21,22 @@ enum CostDriverType {
   AGGREGATION_RUNTIME
 }
 
+enum ActionType {
+  WIDEN_CRITERIA
+  ADJUST_COMP
+  SOURCE_EXTERNALLY
+  ESCALATE_TO_HM
+  PUSH_CANDIDATES
+  PAUSE_REQUISITION
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
 enum TenantDeletionMode {
   SOFT_DELETE
   HARD_DELETE
@@ -311,6 +327,7 @@ model Candidate {
   matchResults         MatchResult[]
   jobCandidates        JobCandidate[]
   decisionItems        DecisionItem[]
+  actionApprovals      AgentActionApproval[]
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
   jobPostingMatches    JobPostingMatch[]
@@ -373,6 +390,7 @@ model JobReq {
   matchResults         MatchResult[]
   jobCandidates        JobCandidate[]
   decisionStreams      DecisionStream[]
+  actionApprovals      AgentActionApproval[]
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
   hiringOutcomes       HiringOutcome[]
@@ -393,9 +411,9 @@ model JobIntent {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@unique([tenantId, jobReqId])
   @@index([tenantId])
   @@index([tenantId, jobReqId])
-  @@unique([tenantId, jobReqId])
 }
 
 model JobSkill {
@@ -611,7 +629,8 @@ model DecisionStream {
   createdAt     DateTime  @default(now())
   finalizedAt   DateTime?
 
-  items DecisionItem[]
+  items           DecisionItem[]
+  actionApprovals AgentActionApproval[]
 
   @@index([tenantId])
   @@index([tenantId, jobId, createdBy, status])
@@ -628,6 +647,30 @@ model DecisionItem {
   createdAt        DateTime       @default(now())
 
   @@index([tenantId, decisionStreamId])
+  @@index([tenantId, candidateId])
+}
+
+model AgentActionApproval {
+  id               String          @id @default(cuid())
+  tenantId         String          @default("default-tenant")
+  jobReq           JobReq?         @relation(fields: [jobReqId], references: [id])
+  jobReqId         String?
+  candidate        Candidate?      @relation(fields: [candidateId], references: [id])
+  candidateId      String?
+  actionType       ActionType
+  actionPayload    Json
+  proposedBy       String
+  proposedAt       DateTime        @default(now())
+  status           ApprovalStatus  @default(PENDING)
+  decidedBy        String?
+  decidedAt        DateTime?
+  decisionReason   String?
+  expiresAt        DateTime?
+  decisionStream   DecisionStream? @relation(fields: [decisionStreamId], references: [id])
+  decisionStreamId String?
+
+  @@index([tenantId, status])
+  @@index([tenantId, jobReqId])
   @@index([tenantId, candidateId])
 }
 
