@@ -22,7 +22,10 @@
     "seed:demo": "ts-node scripts/seed-demo-tenant.ts",
     "provision-demo-users": "ts-node scripts/provision-demo-users.ts",
     "prisma:guard": "node scripts/db-safety.js",
-    "docs:api-map": "tsx scripts/generate-api-map.ts"
+    "docs:api-map": "tsx scripts/generate-api-map.ts",
+    "verify:mvp:unit": "vitest run src/lib/jobIntent.test.ts src/lib/agentRunLog.test.ts src/lib/tenant/diagnostics.test.ts",
+    "verify:mvp:smoke": "vitest run tests/smoke/mvp-smoke.test.ts",
+    "verify:mvp": "npm run verify:mvp:unit && npm run verify:mvp:smoke && node scripts/verify-mvp-summary.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -57,6 +60,7 @@
     "png-to-ico": "^3.0.1",
     "prisma": "^5.19.0",
     "sharp": "^0.34.5",
+    "supertest": "^7.1.4",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",

@@ -1,4 +1,3 @@
-import { AgentRunStatus } from "@/server/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -7,12 +6,18 @@ import {
   startAgentRun,
 } from "@/lib/agentRunLog";
 
-const { mockAgentRunLogCreate, mockAgentRunLogUpdate } = vi.hoisted(() => ({
+const { mockAgentRunLogCreate, mockAgentRunLogUpdate, AgentRunStatus } = vi.hoisted(() => ({
   mockAgentRunLogCreate: vi.fn(),
   mockAgentRunLogUpdate: vi.fn(),
+  AgentRunStatus: {
+    RUNNING: "RUNNING",
+    SUCCESS: "SUCCESS",
+    FAILED: "FAILED",
+  } as const,
 }));
 
 vi.mock("@/server/db", () => ({
+  AgentRunStatus,
   prisma: {
     agentRunLog: {
       create: mockAgentRunLogCreate,
