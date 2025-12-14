@@ -28,5 +28,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ enabled: true, name: FEATURE_FLAGS.FIRE_DRILL_MODE });
   }
 
-  return NextResponse.json({ enabled: flag.enabled, name: flag.name });
+  const enabled = typeof flag.enabled === "boolean" ? flag.enabled : true;
+  const name = flag.name ?? FEATURE_FLAGS.FIRE_DRILL_MODE;
+
+  return NextResponse.json({ enabled, name });
 }
