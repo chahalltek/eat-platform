@@ -44,10 +44,24 @@ jobs:
         run: npm run ci:todo-scan
 
       - name: Run tests
-        run: npm test
+        env:
+          RUN_INTEGRATION_TESTS: ${{ vars.RUN_INTEGRATION_TESTS }}
+        run: |
+          if [ "${RUN_INTEGRATION_TESTS}" = "true" ]; then
+            VITEST_ENV_FILE=.env.test npm test
+          else
+            npm test
+          fi
 
       - name: Run Vitest with coverage
-        run: npm run test:coverage
+        env:
+          RUN_INTEGRATION_TESTS: ${{ vars.RUN_INTEGRATION_TESTS }}
+        run: |
+          if [ "${RUN_INTEGRATION_TESTS}" = "true" ]; then
+            VITEST_ENV_FILE=.env.test npm run test:coverage
+          else
+            npm run test:coverage
+          fi
 
       - name: Run deployment health gates
         run: npm run predeploy

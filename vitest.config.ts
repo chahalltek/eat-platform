@@ -1,5 +1,13 @@
-import { defineConfig } from "vitest/config";
+import fs from "node:fs";
 import path from "node:path";
+import { config as loadEnvConfig } from "dotenv";
+import { defineConfig } from "vitest/config";
+
+const envFilePath = path.resolve(__dirname, process.env.VITEST_ENV_FILE ?? ".env.test");
+
+if (fs.existsSync(envFilePath)) {
+  loadEnvConfig({ path: envFilePath });
+}
 
 export default defineConfig({
   test: {
