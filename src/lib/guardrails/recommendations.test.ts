@@ -2,8 +2,8 @@
 
 vi.mock("@/server/db", () => ({
   prisma: {
-    matchQualitySnapshot: { findMany: vi.fn() },
-    matchFeedback: { findMany: vi.fn() },
+    matchQualitySnapshot: { findMany: vi.fn(async () => []) },
+    matchFeedback: { findMany: vi.fn(async () => []) },
   },
   isPrismaUnavailableError: () => false,
   isTableAvailable: vi.fn(async () => true),

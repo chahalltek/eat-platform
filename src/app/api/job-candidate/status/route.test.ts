@@ -24,7 +24,16 @@ vi.mock('@/server/db', async (importOriginal) => {
 
   return {
     ...actual,
-    JobCandidateStatus: actual.JobCandidateStatus ?? (actual as any).Prisma?.JobCandidateStatus,
+    JobCandidateStatus:
+      actual.JobCandidateStatus ??
+      (actual as any).Prisma?.JobCandidateStatus ?? {
+        POTENTIAL: 'POTENTIAL',
+        SHORTLISTED: 'SHORTLISTED',
+        SUBMITTED: 'SUBMITTED',
+        INTERVIEWING: 'INTERVIEWING',
+        HIRED: 'HIRED',
+        REJECTED: 'REJECTED',
+      },
     prisma: prismaMock,
   };
 });

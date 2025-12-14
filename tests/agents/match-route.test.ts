@@ -110,7 +110,10 @@ vi.mock("@/lib/agents/agentRunLog", () => ({
 }));
 
 vi.mock("@/lib/auth/user", () => ({ getCurrentUser: vi.fn().mockResolvedValue({ id: "user-1" }) }));
-vi.mock("@/lib/featureFlags/middleware", () => ({ agentFeatureGuard: vi.fn().mockResolvedValue(null) }));
+vi.mock("@/lib/featureFlags/middleware", () => ({
+  agentFeatureGuard: vi.fn().mockResolvedValue(null),
+  assertFeatureEnabled: vi.fn().mockResolvedValue(null),
+}));
 vi.mock("@/lib/agents/killSwitch", () => ({
   AGENT_KILL_SWITCHES: { MATCHER: "ETE-TS.MATCHER" },
   enforceAgentKillSwitch: vi.fn().mockResolvedValue(null),
@@ -123,11 +126,33 @@ describe("/api/agents/match", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mockGetTenantScopedPrismaClient.mockResolvedValue({
+      tenantId: "tenant-1",
+      prisma: {
+        jobReq: { findUnique: mockJobReqFindUnique },
+        candidate: { findMany: mockCandidateFindMany },
+        jobCandidate: { findMany: mockJobCandidateFindMany },
+        outreachInteraction: { groupBy: mockOutreachGroupBy },
+        matchResult: { findMany: mockMatchResultFindMany },
+        match: { findMany: mockMatchFindMany },
+        agentRunLog: { update: mockAgentRunLogUpdate },
+        $transaction: vi.fn(async (callback) =>
+          callback({
+            matchResult: { update: vi.fn(), create: vi.fn() },
+            match: { update: vi.fn(), create: vi.fn() },
+            jobCandidate: { upsert: vi.fn(), findFirst: vi.fn(), update: vi.fn(), create: vi.fn() },
+          } as any),
+        ),
+      } as any,
+      runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
+    });
+
     mockJobReqFindUnique.mockResolvedValue({
       id: "job-1",
       tenantId: "tenant-1",
       title: "Engineer",
       rawDescription: "Role desc",
+      jobIntent: { id: 'intent-1', tenantId: 'tenant-1', jobReqId: 'job-1', intent: {}, createdAt: new Date(), updatedAt: new Date() },
       createdAt: new Date(),
       updatedAt: new Date(),
       skills: [],

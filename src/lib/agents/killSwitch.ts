@@ -78,8 +78,8 @@ export async function enforceAgentKillSwitch(agentName: AgentName, tenantId?: st
   const label = describeAgent(agentName);
   const state = await getAgentKillSwitchState(agentName, tenantId);
 
-  return suggestionOnlyResponse(`${label} is currently disabled`, { status: 200 }, {
+  return suggestionOnlyResponse(DEFAULT_REASON, { status: 503 }, {
     latchedAt: state.latchedAt?.toISOString() ?? null,
-    killSwitchReason: DEFAULT_REASON,
+    killSwitchReason: state.reason ?? DEFAULT_REASON,
   });
 }

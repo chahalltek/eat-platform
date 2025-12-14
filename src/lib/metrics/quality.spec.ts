@@ -8,17 +8,32 @@ import { AgentRunStatus } from '@/server/db';
 
 import { getQualityMetrics } from './quality';
 
-vi.mock('@/server/db', () => ({
-  prisma: {
-    agentRunLog: {
-      findMany: vi.fn(),
+vi.mock('@/server/db', async (importOriginal) => {
+  const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = 'true';
+
+  const actual = await importOriginal<typeof import('@/server/db')>();
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
+
+  return {
+    ...actual,
+    AgentRunStatus:
+      actual.AgentRunStatus ?? (actual as any).Prisma?.AgentRunStatus ?? {
+        RUNNING: 'RUNNING',
+        SUCCESS: 'SUCCESS',
+        FAILED: 'FAILED',
+      },
+    prisma: {
+      agentRunLog: {
+        findMany: vi.fn(),
+      },
+      coverageReport: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+      },
     },
-    coverageReport: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-    },
-  },
-}));
+  };
+});
 
 describe('getQualityMetrics', () => {
   beforeEach(() => {

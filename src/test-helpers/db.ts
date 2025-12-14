@@ -99,6 +99,7 @@ export function mockDb() {
     process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = "true";
 
     const actual = await importOriginal<typeof import("@/server/db")>();
+    const prismaClient = await import("@prisma/client");
 
     process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 
@@ -127,6 +128,7 @@ export function mockDb() {
 
     return {
       ...actual,
+      Prisma: actual.Prisma ?? prismaClient.Prisma,
       ...withEnums,
       prisma: prismaMock as unknown as typeof actual.prisma,
       isPrismaUnavailableError: vi.fn((error) => actual.isPrismaUnavailableError(error)),

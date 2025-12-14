@@ -51,7 +51,11 @@ vi.mock("@/server/db", async (importOriginal) => {
   return {
     ...actual,
     TenantDeletionMode:
-      actual.TenantDeletionMode ?? (actual as any).Prisma?.TenantDeletionMode,
+      actual.TenantDeletionMode ??
+      (actual as any).Prisma?.TenantDeletionMode ?? {
+        HARD_DELETE: "HARD_DELETE",
+        SOFT_DELETE: "SOFT_DELETE",
+      },
     prisma: prismaMock,
     isPrismaUnavailableError: () => false,
   };

@@ -45,7 +45,10 @@ vi.mock("@/lib/agents/killSwitch", () => ({
   enforceAgentKillSwitch: vi.fn(),
   assertAgentKillSwitchDisarmed: vi.fn(),
 }));
-vi.mock("@/lib/featureFlags/middleware", () => ({ agentFeatureGuard: vi.fn().mockResolvedValue(null) }));
+vi.mock("@/lib/featureFlags/middleware", () => ({
+  agentFeatureGuard: vi.fn().mockResolvedValue(null),
+  assertFeatureEnabled: vi.fn().mockResolvedValue(null),
+}));
 vi.mock("@/lib/subscription/usageLimits", () => ({ assertTenantWithinLimits: vi.fn() }));
 vi.mock("@/lib/llm", () => ({ callLLM: mockCallLLM }));
 const { mockGetCurrentUser } = vi.hoisted(() => ({

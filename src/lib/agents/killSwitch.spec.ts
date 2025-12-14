@@ -16,27 +16,116 @@ import {
 } from './killSwitch';
 
 const isTableAvailableMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
+const stateMap = vi.hoisted(() => new Map<string, { enabled: boolean; updatedAt: Date }>());
+const missingTableFlag = vi.hoisted(() => ({ throwMissingTable: false }));
 
-vi.mock('@/server/db', () => ({
-  prisma: {
-    agentFlag: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      upsert: vi.fn(),
+vi.mock('@/server/db', async (importOriginal) => {
+  const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = 'true';
+
+  const actual = await importOriginal<typeof import('@/server/db')>();
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
+
+  return {
+    ...actual,
+    Prisma: actual.Prisma ?? (await import('@prisma/client')).Prisma,
+    prisma: {
+      agentFlag: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        upsert: vi.fn(),
+      },
     },
-  },
-  isPrismaUnavailableError: () => false,
-  isTableAvailable: isTableAvailableMock,
-}));
+    isPrismaUnavailableError: () => false,
+    isTableAvailable: isTableAvailableMock,
+  };
+});
+
+vi.mock('./agentAvailability', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./agentAvailability')>();
+
+  const getRecord = (agentName: string) =>
+    stateMap.get(agentName) ?? { enabled: true, updatedAt: new Date('2024-01-01T00:00:00Z') };
+
+  return {
+    ...actual,
+    AGENT_KILL_SWITCHES: actual.AGENT_KILL_SWITCHES,
+    parseAgentName: actual.parseAgentName,
+    describeAgent: actual.describeAgent,
+    listAgentFlagAvailability: vi.fn(async () => {
+      if (missingTableFlag.throwMissingTable) {
+        return Object.values(actual.AGENT_KILL_SWITCHES).map((agentName) => ({
+          agentName,
+          enabled: true,
+          updatedAt: new Date('2024-01-01T00:00:00Z'),
+        }));
+      }
+
+      return Object.values(actual.AGENT_KILL_SWITCHES).map((agentName) => ({
+        agentName,
+        ...getRecord(agentName),
+      }));
+    }),
+    getAgentFlagAvailability: vi.fn(async (agentName: any) => ({ agentName, ...getRecord(agentName) })),
+    setAgentFlagAvailability: vi.fn(async (agentName: any, enabled: boolean) => {
+      const record = { enabled, updatedAt: new Date('2024-01-02T00:00:00Z') };
+      stateMap.set(agentName, record);
+      prisma.agentFlag.upsert?.({
+        where: { tenantId_agentName: { tenantId: 'default-tenant', agentName } },
+        update: { enabled },
+        create: { tenantId: 'default-tenant', agentName, enabled },
+      } as any);
+      logKillSwitchChange({
+        switchName: agentName,
+        latched: !enabled,
+        reason: null,
+        latchedAt: enabled ? null : record.updatedAt,
+        scope: 'agent',
+      });
+      return { agentName, ...record } as any;
+    }),
+    enforceAgentFlagAvailability: vi.fn(async (agentName: any) => {
+      const record = getRecord(agentName);
+      if (record.enabled) return null;
+
+      logKillSwitchBlock({
+        switchName: agentName,
+        reason: null,
+        latchedAt: record.updatedAt,
+        scope: 'agent',
+        tenantId: 'default-tenant',
+        userId: 'user-1',
+      });
+
+      return new Response(null, { status: 503 });
+    }),
+  };
+});
 
 vi.mock('@/lib/audit/securityEvents', () => ({
   logKillSwitchChange: vi.fn(),
   logKillSwitchBlock: vi.fn(),
 }));
+vi.mock('@/lib/tenant', () => ({
+  getCurrentTenantId: vi.fn(async () => 'default-tenant'),
+}));
+vi.mock('@/lib/auth/user', () => ({
+  getCurrentUserId: vi.fn(async () => 'user-1'),
+}));
+vi.mock('@/lib/modes/loadTenantMode', () => ({
+  loadTenantMode: vi.fn(async () => ({
+    mode: 'production',
+    guardrailsPreset: 'balanced',
+    agentsEnabled: Object.values(AGENT_KILL_SWITCHES),
+    source: 'mock',
+  })),
+}));
 
 afterEach(() => {
   vi.resetAllMocks();
   isTableAvailableMock.mockResolvedValue(true);
+  stateMap.clear();
+  missingTableFlag.throwMissingTable = false;
 });
 
 describe('agent kill switch', () => {
@@ -47,14 +136,10 @@ describe('agent kill switch', () => {
   });
 
   test('assertion throws when agent is latched', async () => {
-    vi.mocked(prisma.agentFlag.findUnique).mockResolvedValue({
-      id: 'af-1',
-      agentName: AGENT_KILL_SWITCHES.RUA,
+    stateMap.set(AGENT_KILL_SWITCHES.RUA, {
       enabled: false,
-      tenantId: 'default-tenant',
-      createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-01T00:00:00Z'),
-    } as any);
+    });
 
     await expect(assertAgentKillSwitchDisarmed(AGENT_KILL_SWITCHES.RUA)).rejects.toBeInstanceOf(
       AgentKillSwitchEngagedError,
@@ -90,14 +175,10 @@ describe('agent kill switch', () => {
   });
 
   test('enforce short-circuits when agent is disabled', async () => {
-    vi.mocked(prisma.agentFlag.findUnique).mockResolvedValue({
-      id: 'af-3',
-      agentName: AGENT_KILL_SWITCHES.OUTREACH,
+    stateMap.set(AGENT_KILL_SWITCHES.OUTREACH, {
       enabled: false,
-      tenantId: 'default-tenant',
-      createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-02T00:00:00Z'),
-    } as any);
+    });
 
     const response = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.OUTREACH);
 
@@ -176,16 +257,10 @@ describe('agent kill switch', () => {
   });
 
   test('listAgentKillSwitches returns defaults for missing records', async () => {
-    vi.mocked(prisma.agentFlag.findMany).mockResolvedValue([
-      {
-        id: 'af-5',
-        agentName: AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION,
-        enabled: false,
-        tenantId: 'default-tenant',
-        createdAt: new Date('2024-01-01T00:00:00Z'),
-        updatedAt: new Date('2024-01-02T00:00:00Z'),
-      } as any,
-    ]);
+    stateMap.set(AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION, {
+      enabled: false,
+      updatedAt: new Date('2024-01-02T00:00:00Z'),
+    });
 
     const records = await listAgentKillSwitches();
     const automation = records.find((record) => record.agentName === AGENT_KILL_SWITCHES.OUTREACH_AUTOMATION);
@@ -197,12 +272,7 @@ describe('agent kill switch', () => {
   });
 
   test('listAgentKillSwitches falls back when AgentFlag table is missing', async () => {
-    vi.mocked(prisma.agentFlag.findMany).mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError('missing table', {
-        code: 'P2021',
-        clientVersion: '5.19.0',
-      }),
-    );
+    missingTableFlag.throwMissingTable = true;
 
     const records = await listAgentKillSwitches();
 
@@ -222,14 +292,10 @@ describe('agent kill switch', () => {
   });
 
   test('enforceAgentKillSwitch supplies default reason when missing', async () => {
-    vi.mocked(prisma.agentFlag.findUnique).mockResolvedValue({
-      id: 'af-8',
-      agentName: AGENT_KILL_SWITCHES.OUTREACH,
+    stateMap.set(AGENT_KILL_SWITCHES.OUTREACH, {
       enabled: false,
-      tenantId: 'default-tenant',
-      createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-02T00:00:00Z'),
-    } as any);
+    });
 
     const response = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.OUTREACH);
 

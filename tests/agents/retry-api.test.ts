@@ -31,6 +31,7 @@ vi.mock("@/lib/auth/user", () => ({ getCurrentUser: mockGetCurrentUser }));
 vi.mock("@/lib/featureFlags/middleware", () => ({
   enforceFeatureFlag: mockEnforceFeatureFlag,
   getAgentFeatureName: mockGetAgentFeatureName,
+  assertFeatureEnabled: vi.fn().mockResolvedValue(null),
 }));
 const { prisma, resetDbMocks } = mockDb();
 

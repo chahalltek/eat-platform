@@ -11,15 +11,25 @@ type AggregateRow = {
   capturedAt: Date;
 };
 
-vi.mock("@/server/db", () => ({
-  prisma: {
-    $queryRaw: vi.fn(),
-    eteIndexSnapshot: {
-      findFirst: vi.fn(),
-      upsert: vi.fn(),
+vi.mock("@/server/db", async (importOriginal) => {
+  const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = "true";
+
+  const actual = await importOriginal<typeof import("@/server/db")>();
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
+
+  return {
+    ...actual,
+    Prisma: actual.Prisma ?? (await import("@prisma/client")).Prisma,
+    prisma: {
+      $queryRaw: vi.fn(),
+      eteIndexSnapshot: {
+        findFirst: vi.fn(),
+        upsert: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 describe("buildEteIndex", () => {
   const rows: AggregateRow[] = [
