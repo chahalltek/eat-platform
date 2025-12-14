@@ -1,6 +1,6 @@
-import type { LearningAggregate, TenantConfig, TenantLearningSignal } from "@prisma/client";
+import type { LearningAggregate, TenantConfig, TenantLearningSignal } from "@/server/db";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { startTiming } from "@/lib/observability/timing";
 
 type BenchmarkBasis = "industry" | "region" | "size";

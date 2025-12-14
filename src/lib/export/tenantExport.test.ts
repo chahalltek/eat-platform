@@ -10,7 +10,7 @@ const prismaMock = vi.hoisted(() => ({
   agentRunLog: { findMany: vi.fn() },
 }));
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: prismaMock,
 }));
 

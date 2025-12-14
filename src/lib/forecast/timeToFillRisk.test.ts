@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { evaluateTimeToFillRisks, getTimeToFillRisksForTenant } from "./timeToFillRisk";
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     jobReq: {
       findMany: vi.fn(),
@@ -68,7 +68,7 @@ describe("evaluateTimeToFillRisks", () => {
 
 describe("getTimeToFillRisksForTenant", () => {
   it("loads jobs for the tenant and evaluates risks", async () => {
-    const { prisma } = await import("@/lib/prisma");
+    const { prisma } = await import("@/server/db");
     (prisma.jobReq.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
       {
         id: "job-3",

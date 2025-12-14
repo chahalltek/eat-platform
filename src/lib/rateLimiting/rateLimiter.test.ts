@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SubscriptionPlan } from '@prisma/client';
+import type { SubscriptionPlan } from '@/server/db';
 
 import { getTenantPlan } from '@/lib/subscriptionPlans';
 import type { RateLimitAction, RateLimitConfig } from './rateLimiter';

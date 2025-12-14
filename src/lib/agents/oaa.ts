@@ -1,5 +1,5 @@
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 import { getCurrentTenantId } from '@/lib/tenant';
 
 export const OAA_PROMPT_VERSION = 'v1.1.0';

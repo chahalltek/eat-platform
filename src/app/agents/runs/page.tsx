@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/server/db";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { ClientActionLink } from "@/components/ClientActionLink";
@@ -6,7 +6,7 @@ import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { AgentAvailabilityHints } from "@/components/AgentAvailabilityHints";
 import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { getCurrentTenantId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";

@@ -25,7 +25,7 @@ vi.mock("@/lib/agents/killSwitch", () => ({
   enforceAgentKillSwitch: mockEnforceKillSwitch,
 }));
 vi.mock("@/lib/guardrails/tenantConfig", () => ({ loadTenantConfig: mockLoadTenantConfig }));
-vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/server/db", () => ({ prisma: mockPrisma }));
 
 const buildRequest = (body: unknown) =>
   makeRequest({

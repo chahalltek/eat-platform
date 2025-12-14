@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 import type { MatchRow } from "./JobMatchesTable";
 

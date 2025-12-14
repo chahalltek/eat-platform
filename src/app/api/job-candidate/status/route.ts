@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { isAdminRole, normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { recordAuditEvent } from "@/lib/audit/trail";
 import { getClientIp } from "@/lib/request/ip";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 function parseRequestBody(body: unknown) {
   const { jobCandidateId, status } = (body ?? {}) as {

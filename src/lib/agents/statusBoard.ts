@@ -1,7 +1,7 @@
-import { AgentRunStatus } from '@prisma/client';
+import { AgentRunStatus } from '@/server/db';
 
 import { AGENT_KILL_SWITCHES, describeAgentKillSwitch, listAgentKillSwitches } from '@/lib/agents/killSwitch';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
 export type AgentStatusHealth = 'healthy' | 'warning' | 'error' | 'unknown';
 

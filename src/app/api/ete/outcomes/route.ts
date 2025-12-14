@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import {
   HIRING_OUTCOME_SOURCES,
   HIRING_OUTCOME_STATUSES,

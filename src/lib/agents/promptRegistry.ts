@@ -1,9 +1,9 @@
-import { Prisma, type AgentPrompt } from '@prisma/client';
+import { Prisma, type AgentPrompt } from '@/server/db';
 
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
 import { RUA_PROMPT_VERSION, RUA_SYSTEM_PROMPT } from '@/lib/agents/contracts/ruaContract';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 export const AGENT_PROMPTS = {

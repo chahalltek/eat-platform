@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { __testing, getMarketSignals } from "./marketSignals";
 
 type AggregateRow = {
@@ -14,7 +14,7 @@ type AggregateRow = {
   capturedAt: Date;
 };
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: { $queryRaw: vi.fn() },
 }));
 

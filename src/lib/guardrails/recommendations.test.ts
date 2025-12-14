@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     matchQualitySnapshot: { findMany: vi.fn() },
     matchFeedback: { findMany: vi.fn() },
@@ -34,7 +34,7 @@ describe("GuardrailRecommendationEngine", () => {
   let prisma: Awaited<ReturnType<typeof importModule>>;
 
   async function importModule() {
-    return import("@/lib/prisma");
+    return import("@/server/db");
   }
 
   beforeAll(async () => {

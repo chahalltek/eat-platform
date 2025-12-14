@@ -1,5 +1,5 @@
 import { JobTable, type JobTableRow } from "./JobTable";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { ETEClientLayout } from "@/components/ETEClientLayout";

@@ -1,6 +1,6 @@
-import { AgentRunStatus, Prisma } from "@prisma/client";
+import { AgentRunStatus, Prisma } from "@/server/db";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { logRetentionJobRun } from "@/lib/audit/securityEvents";
 import {
   ensureJobState,

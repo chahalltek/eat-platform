@@ -1,4 +1,4 @@
-import { MatchResult } from "@prisma/client";
+import { MatchResult } from "@/server/db";
 
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";

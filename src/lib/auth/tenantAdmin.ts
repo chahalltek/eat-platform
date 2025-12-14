@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 export const TENANT_ROLES = {
   Admin: "Admin",

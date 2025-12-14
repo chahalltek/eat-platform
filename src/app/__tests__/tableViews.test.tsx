@@ -8,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach, beforeAll } from "vitest";
 import { useState } from "react";
 
-vi.mock("@prisma/client", () => ({
+vi.mock("@/server/db", () => ({
   JobCandidateStatus: {
     POTENTIAL: "POTENTIAL",
     SHORTLISTED: "SHORTLISTED",
@@ -19,7 +19,7 @@ vi.mock("@prisma/client", () => ({
   },
 }));
 
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 import { AgentRunsTable } from "../agents/runs/AgentRunsTable";
 import { EnvTable } from "../admin/env/EnvTable";

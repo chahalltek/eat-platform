@@ -31,7 +31,7 @@ vi.mock("@/lib/featureFlags/middleware", () => ({
   enforceFeatureFlag: mockEnforceFeatureFlag,
   getAgentFeatureName: mockGetAgentFeatureName,
 }));
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     agentRunLog: {
       findFirst: mockFindFirst,

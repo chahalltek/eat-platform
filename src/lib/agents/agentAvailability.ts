@@ -1,9 +1,9 @@
-import { Prisma, type AgentFlag as AgentFlagModel } from '@prisma/client';
+import { Prisma, type AgentFlag as AgentFlagModel } from '@/server/db';
 import { NextResponse } from 'next/server';
 
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { loadTenantMode } from '@/lib/modes/loadTenantMode';
-import { isPrismaUnavailableError, isTableAvailable, prisma } from '@/lib/prisma';
+import { isPrismaUnavailableError, isTableAvailable, prisma } from '@/server/db';
 import { getCurrentTenantId } from '@/lib/tenant';
 
 export async function getAgentAvailability(tenantId: string) {

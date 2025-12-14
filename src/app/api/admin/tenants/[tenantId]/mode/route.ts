@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { canManageTenants } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { getTenantMode, updateTenantMode } from "@/lib/tenantMode";
 
 export const dynamic = "force-dynamic";

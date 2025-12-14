@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 const payloadSchema = z.object({
   jobId: z.string().trim().min(1),

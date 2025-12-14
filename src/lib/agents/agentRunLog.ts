@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient, UsageEventType } from "@prisma/client";
+import type { Prisma, PrismaClient, UsageEventType } from "@/server/db";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";

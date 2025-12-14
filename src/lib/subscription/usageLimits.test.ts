@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/server/db';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -14,7 +14,7 @@ const prismaMock = vi.hoisted(() => ({
   agentRunLog: { count: vi.fn() },
 }));
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   prisma: prismaMock,
 }));
 

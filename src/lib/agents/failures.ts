@@ -1,6 +1,6 @@
-import { AgentRunStatus } from "@prisma/client";
+import { AgentRunStatus } from "@/server/db";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 export async function getAgentFailureCount(tenantId: string) {
   if (!tenantId?.trim()) {

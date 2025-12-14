@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { MatchRunner } from "./MatchRunner";
 import { FreshnessIndicator } from "../FreshnessIndicator";
 

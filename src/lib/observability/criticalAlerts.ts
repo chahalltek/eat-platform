@@ -1,6 +1,6 @@
-import type { AsyncJobState, BenchmarkRelease, BenchmarkMetric, MatchResult } from "@prisma/client";
+import type { AsyncJobState, BenchmarkRelease, BenchmarkMetric, MatchResult } from "@/server/db";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 export type CriticalAlertType = "JOB_FAILURE" | "FORECAST_STALE" | "BENCHMARK_MISSING";
 export type CriticalAlertSeverity = "warning" | "critical";

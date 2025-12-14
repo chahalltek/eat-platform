@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { HiringManagerView } from "./HiringManagerView";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
-import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { prisma } from "@/server/db";
+import type { Prisma } from "@/server/db";
 import type { ShortlistCandidate, ShortlistRunMeta } from "./HiringManagerView";
 import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";

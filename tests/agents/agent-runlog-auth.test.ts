@@ -53,7 +53,7 @@ vi.mock("@/lib/auth/requireRole", () => ({
   requireRole: vi.fn(async () => ({ ok: true, user: { id: "test-user-1", tenantId: "tenant-1" } })),
 }));
 
-vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/server/db", () => ({ prisma: mockPrisma }));
 
 vi.mock("@/lib/killSwitch", () => ({
   assertKillSwitchDisarmed: vi.fn(),

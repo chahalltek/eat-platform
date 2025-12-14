@@ -30,7 +30,7 @@ const { mockPrisma, mockMatchCreate, mockMatchUpdate, mockJobCandidateUpsert, mo
     };
   });
 
-vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/server/db", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/featureFlags", () => ({
   FEATURE_FLAGS: { SCORING: "SCORING" },
   isFeatureEnabled: vi.fn().mockResolvedValue(true),

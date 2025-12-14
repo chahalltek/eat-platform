@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { getCurrentTenantId, withTenantContext } from "@/lib/tenant";
 
 export class TenantScopeError extends Error {

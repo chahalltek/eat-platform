@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/server/db';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_TENANT_ID } from './config';
@@ -19,7 +19,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const assertTenantWithinLimits = vi.hoisted(() => vi.fn());
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   prisma: prismaMock,
 }));
 

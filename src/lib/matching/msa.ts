@@ -1,4 +1,4 @@
-import { Candidate, CandidateSkill, JobReq, JobSkill } from '@prisma/client';
+import { Candidate, CandidateSkill, JobReq, JobSkill } from '@/server/db';
 
 import { CandidateSignalResult } from '@/lib/matching/candidateSignals';
 import { MatchExplanation, SkillOverlap, makeDeterministicExplanation } from '@/lib/matching/explanation';

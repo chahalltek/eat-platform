@@ -1,6 +1,6 @@
-import { JobCandidateStatus, Prisma, PrismaClient } from "@prisma/client";
+import { JobCandidateStatus, Prisma, PrismaClient } from "@/server/db";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { getCurrentTenantId } from "@/lib/tenant";
 
 export async function upsertJobCandidateForMatch(

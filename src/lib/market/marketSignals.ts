@@ -1,11 +1,11 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/server/db";
 
 import {
   intelligenceCache,
   intelligenceCacheKeys,
   INTELLIGENCE_CACHE_TTLS,
 } from "@/lib/cache/intelligenceCache";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import type { SystemModeName } from "@/lib/modes/systemModes";
 
 export type MarketSignals = {

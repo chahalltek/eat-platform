@@ -1,6 +1,6 @@
 import type { IdentityUser } from "@/lib/auth/identityProvider";
 import { isAdminRole } from "@/lib/auth/roles";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { normalizeTenantRole, TENANT_ROLES, type TenantRole } from "./roles";
 
 export async function resolveTenantAdminAccess(

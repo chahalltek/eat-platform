@@ -1,7 +1,7 @@
-import { AgentRunStatus, Prisma } from "@prisma/client";
+import { AgentRunStatus, Prisma } from "@/server/db";
 
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { getCurrentTenantId } from "@/lib/tenant";
 
 export type HomeTelemetryMetrics = {

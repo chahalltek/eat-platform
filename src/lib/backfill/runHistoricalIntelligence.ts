@@ -7,7 +7,7 @@ import {
   getBenchmarkRelease,
   publishBenchmarkRelease,
 } from "@/lib/benchmarks/buildBenchmarkRelease";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { prismaAdmin } from "@/lib/prismaAdmin";
 import { runLearningAggregation } from "@/lib/network/aggregateLearning";
 

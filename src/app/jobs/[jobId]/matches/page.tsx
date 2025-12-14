@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 import { JobMatchesTable, type MatchRow } from "./JobMatchesTable";
 import { RunMatcherButton } from "./RunMatcherButton";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { categorizeConfidence } from "./confidence";
 import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { type HiringOutcomeStatus } from "@/lib/hiringOutcomes";
 
 export default async function JobMatchesPage({

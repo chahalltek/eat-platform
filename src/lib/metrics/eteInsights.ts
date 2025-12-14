@@ -1,6 +1,6 @@
-import { AgentRunStatus, type Prisma } from '@prisma/client';
+import { AgentRunStatus, type Prisma } from '@/server/db';
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
 const DAYS_OF_HISTORY = 7;
 const BEHAVIOR_HISTORY_DAYS = 14;

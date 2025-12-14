@@ -1,7 +1,7 @@
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 type SampleSkill = {
   name: string;

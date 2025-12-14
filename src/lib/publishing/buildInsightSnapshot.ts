@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 import type { BenchmarkRelease } from './releaseRegistry';
 
 export type InsightSnapshotFilters = {

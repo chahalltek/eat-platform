@@ -1,6 +1,6 @@
 import { runScheduledComplianceScan } from "@/lib/agents/comply";
 import { captureWeeklyMatchQualitySnapshots } from "@/lib/learning/matchQuality";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { prismaAdmin } from "@/lib/prismaAdmin";
 import { runLearningAggregation } from "@/lib/network/aggregateLearning";
 import { runTenantRetentionJob } from "@/lib/retention";

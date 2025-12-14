@@ -1,6 +1,6 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/server/db';
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
 export type SubscriptionPlan = {
   maxUsers?: number;

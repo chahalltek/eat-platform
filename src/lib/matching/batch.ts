@@ -1,4 +1,4 @@
-import { MatchResult } from "@prisma/client";
+import { MatchResult } from "@/server/db";
 
 import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
@@ -6,7 +6,7 @@ import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from "@/lib/killSwitch";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { loadTenantConfig } from "@/lib/config/tenantConfig";
 import { startTiming } from "@/lib/observability/timing";

@@ -1,6 +1,6 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/server/db';
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 import { getCurrentUserId } from '@/lib/auth/user';
 import { getCurrentTenantId } from '@/lib/tenant';
 

@@ -1,7 +1,7 @@
-import { AgentRunStatus } from "@prisma/client";
+import { AgentRunStatus } from "@/server/db";
 
 import { describeKillSwitch, getKillSwitchState, KILL_SWITCHES, type KillSwitchName, type KillSwitchState } from "@/lib/killSwitch";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { USER_ROLES } from "@/lib/auth/roles";
 
 export type PlatformHealthSnapshot = {

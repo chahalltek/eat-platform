@@ -1,6 +1,6 @@
-import { Prisma, type User } from '@prisma/client';
+import { Prisma, type User } from '@/server/db';
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 import { DEFAULT_TENANT_ID } from './config';

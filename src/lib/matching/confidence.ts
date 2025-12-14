@@ -1,4 +1,4 @@
-import { Candidate, CandidateSkill, JobReq, JobSkill } from "@prisma/client";
+import { Candidate, CandidateSkill, JobReq, JobSkill } from "@/server/db";
 
 import { DEFAULT_TENANT_CONFIG } from "@/lib/config/tenantConfig";
 import { computeConfidenceScore, ConfidenceBreakdown } from "@/lib/confidence/scoring";

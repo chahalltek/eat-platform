@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { JobOpportunitiesTable, type JobOpportunityRow } from "../JobOpportunitiesTable";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { getCurrentTenantId } from "@/lib/tenant";
 

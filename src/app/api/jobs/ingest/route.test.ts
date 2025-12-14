@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/matching/matcher", () => ({ ingestJob: mocks.ingestJobMock }));
 vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: mocks.getCurrentTenantIdMock }));
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: mocks.prisma,
   isPrismaUnavailableError: mocks.isPrismaUnavailableErrorMock,
   isTableAvailable: mocks.isTableAvailableMock,

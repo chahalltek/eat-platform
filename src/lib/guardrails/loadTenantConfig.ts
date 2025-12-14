@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { defaultTenantGuardrails } from "./defaultTenantConfig";
 
 function coerceGuardrailSection(value: unknown) {

@@ -3,11 +3,11 @@ import type {
   BenchmarkRelease,
   PrismaClient,
   TenantLearningSignal,
-} from "@prisma/client";
+} from "@/server/db";
 
 import { callLLM } from "@/lib/llm";
 import type { OpenAIAdapter } from "@/lib/llm/openaiAdapter";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import type { MarketSignals } from "@/lib/market/marketSignals";
 import type { TimeToFillRisk } from "@/lib/forecast/timeToFillRisk";
 

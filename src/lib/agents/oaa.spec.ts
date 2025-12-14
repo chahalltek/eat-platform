@@ -7,9 +7,9 @@ import {
   runOutreachAutomation,
 } from '@/lib/agents/oaa';
 import { AgentBehaviorSpec, runAgentBehavior } from '@/lib/agents/testing/agentTestRunner';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
-vi.mock('@/lib/prisma', () => {
+vi.mock('@/server/db', () => {
   return {
     prisma: {
       candidate: { findUnique: vi.fn() },

@@ -1,7 +1,7 @@
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 type MatchQualityComponents = {
   shortlistToInterviewRate: number;

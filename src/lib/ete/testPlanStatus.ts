@@ -1,5 +1,5 @@
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 import { TEST_PLAN_STATUS_OPTIONS, type TestPlanStatusValue, isValidTestPlanItemId } from "./testPlanRegistry";
 

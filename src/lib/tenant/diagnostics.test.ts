@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { TenantDeletionMode } from "@prisma/client";
+import { TenantDeletionMode } from "@/server/db";
 
 import { buildTenantDiagnostics, TenantNotFoundError } from "./diagnostics";
 import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
@@ -40,7 +40,7 @@ vi.mock("@/lib/modes/loadTenantMode", () => ({
   loadTenantMode: mockLoadTenantMode,
 }));
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: prismaMock,
   isPrismaUnavailableError: () => false,
 }));

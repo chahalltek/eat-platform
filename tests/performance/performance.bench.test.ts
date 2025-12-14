@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { sanitizeExtractedText } from '@/lib/uploads';
 import { computeMatchScore } from '@/lib/matching/msa';
-import type { Candidate, CandidateSkill, JobReq, JobSkill } from '@prisma/client';
+import type { Candidate, CandidateSkill, JobReq, JobSkill } from '@/server/db';
 
 vi.mock('@/lib/llm', () => ({
   callLLM: vi.fn(async () =>
@@ -27,7 +27,7 @@ vi.mock('@/lib/llm', () => ({
   ),
 }));
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   prisma: {
     candidate: {
       create: vi.fn(async ({ data }) => ({ id: 'candidate-benchmark', ...data })),

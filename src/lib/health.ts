@@ -1,7 +1,7 @@
 import OpenAI from "openai";
-import { AgentRunStatus, Prisma } from "@prisma/client";
+import { AgentRunStatus, Prisma } from "@/server/db";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 export type HealthCheckName = "environment" | "database" | "prisma" | "openai";
 

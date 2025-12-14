@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
 function formatDateTime(value?: Date | null) {
   if (!value) return '—';

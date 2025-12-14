@@ -1,6 +1,6 @@
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { type SystemModeName } from "@/lib/modes/systemModes";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { getCurrentTenantId } from "@/lib/tenant";
 
 export async function getTenantMode(tenantId?: string): Promise<SystemModeName> {

@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from "../src/server/db";
 
-import { DEFAULT_TENANT_ID } from '../src/lib/auth/config';
-
-const prisma = new PrismaClient();
+import { DEFAULT_TENANT_ID } from "../src/lib/auth/config";
 
 const DEMO_USERS = [
   {

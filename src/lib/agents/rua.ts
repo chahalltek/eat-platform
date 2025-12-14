@@ -8,7 +8,7 @@ import { AGENT_PROMPTS, resolveAgentPrompt } from '@/lib/agents/promptRegistry';
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 import { getCurrentTenantId } from '@/lib/tenant';
 
 export type RuaInput = {

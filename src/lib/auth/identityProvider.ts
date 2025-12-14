@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 import { DEFAULT_TENANT_ID } from "./config";
 import { getSessionClaims } from "./session";

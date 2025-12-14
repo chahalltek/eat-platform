@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from "../src/server/db";
 
-import { seedDemoTenant } from '../prisma/demoSeed';
-
-const prisma = new PrismaClient();
+import { seedDemoTenant } from "../prisma/demoSeed";
 const DEMO_TENANT_ID = 'demo-tenant';
 
 async function main() {

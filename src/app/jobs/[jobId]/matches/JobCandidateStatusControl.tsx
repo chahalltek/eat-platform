@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 const STATUS_OPTIONS: JobCandidateStatus[] = [
   JobCandidateStatus.POTENTIAL,

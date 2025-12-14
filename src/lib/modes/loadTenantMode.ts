@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/server/db";
 
-import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/lib/prisma";
+import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db";
 import { SYSTEM_MODES, type SystemModeName } from "./systemModes";
 
 const DEFAULT_MODE: SystemModeName = "pilot";

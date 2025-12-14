@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { PrismaClient, UsageEventType } from '@prisma/client';
+import type { PrismaClient, UsageEventType } from '@/server/db';
 
 import { formatUsageTotal, getCurrentMonthStart, getMonthlyUsageSnapshots } from './summary';
 
@@ -8,7 +8,7 @@ const isTableAvailable = vi.hoisted(() => vi.fn());
 const mockGroupBy = vi.hoisted(() => vi.fn());
 const mockFindMany = vi.hoisted(() => vi.fn());
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   isTableAvailable: isTableAvailable,
   prisma: {
     usageEvent: { groupBy: mockGroupBy },

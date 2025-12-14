@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/server/db";
 
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { FireDrillAgentDisabledError } from "@/lib/agents/availability";
@@ -8,7 +8,7 @@ import { buildExplanation, type Explanation } from "@/lib/agents/explainEngine";
 import type { MatchResult } from "@/lib/agents/matchEngine";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export type RunExplainInput = {

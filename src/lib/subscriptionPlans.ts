@@ -1,5 +1,5 @@
-import type { SubscriptionPlan, TenantSubscription } from '@prisma/client';
-import { Prisma } from '@prisma/client';
+import type { SubscriptionPlan, TenantSubscription } from '@/server/db';
+import { Prisma } from '@/server/db';
 
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 

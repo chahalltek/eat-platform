@@ -1,4 +1,4 @@
-import { AgentRunStatus } from '@prisma/client';
+import { AgentRunStatus } from '@/server/db';
 
 import { FEATURE_FLAGS, isFeatureEnabled } from './featureFlags';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';

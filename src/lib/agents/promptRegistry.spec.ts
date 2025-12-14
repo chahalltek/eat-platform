@@ -3,7 +3,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { AGENT_PROMPTS, resolveAgentPrompt } from '@/lib/agents/promptRegistry';
 import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
 import { RUA_PROMPT_VERSION, RUA_SYSTEM_PROMPT } from '@/lib/agents/contracts/ruaContract';
-import type { AgentPrompt } from '@prisma/client';
+import type { AgentPrompt } from '@/server/db';
 
 const agentPromptMock = vi.hoisted(() => ({
   findUnique: vi.fn(),
@@ -12,7 +12,7 @@ const agentPromptMock = vi.hoisted(() => ({
   updateMany: vi.fn(),
 }));
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   prisma: {
     agentPrompt: agentPromptMock,
   },

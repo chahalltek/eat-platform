@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { approveBenchmarkRelease, buildBenchmarkRelease, publishBenchmarkRelease } from "@/lib/benchmarks/buildBenchmarkRelease";
-import type { BenchmarkMetric, BenchmarkRelease, LearningAggregate } from "@prisma/client";
+import type { BenchmarkMetric, BenchmarkRelease, LearningAggregate } from "@/server/db";
 
 type MockBenchmarkClient = {
   learningAggregate: { findMany: ({ where }: { where: { windowDays: number } }) => Promise<LearningAggregate[]> };

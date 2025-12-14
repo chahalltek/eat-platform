@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from "../src/server/db";
 
-import { DEFAULT_TENANT_ID } from '../src/lib/auth/config';
-import { seedDemoTenant } from './demoSeed';
-
-const prisma = new PrismaClient();
+import { DEFAULT_TENANT_ID } from "../src/lib/auth/config";
+import { seedDemoTenant } from "./demoSeed";
 
 async function main() {
   await seedDemoTenant(prisma, {

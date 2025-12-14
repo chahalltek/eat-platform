@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/server/db';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getSystemMode, SYSTEM_MODES, type SystemModeMetadata } from './systemMode';

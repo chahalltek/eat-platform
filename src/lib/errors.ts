@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/server/db';
 
 export type ErrorCategory = "AI" | "DATA" | "AUTH";
 

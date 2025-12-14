@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 export type TenantExportCollections = {
   candidates: unknown[];

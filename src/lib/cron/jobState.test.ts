@@ -1,4 +1,4 @@
-import type { AsyncJobState } from "@prisma/client";
+import type { AsyncJobState } from "@/server/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -17,7 +17,7 @@ const { mockFindUnique, mockCreate, mockUpsert, mockUpdate } = vi.hoisted(() => 
   mockUpdate: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     asyncJobState: {
       findUnique: mockFindUnique,

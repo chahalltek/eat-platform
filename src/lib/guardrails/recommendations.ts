@@ -1,4 +1,4 @@
-import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/lib/prisma";
+import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db";
 import { guardrailsPresets } from "./presets";
 import { loadTenantGuardrails } from "@/lib/tenant/guardrails";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";

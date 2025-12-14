@@ -7,7 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { loadTenantConfig } from "@/lib/config/tenantConfig";
 import { guardrailsPresets, type GuardrailsConfig } from "@/lib/guardrails/presets";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { setShortlistState } from "@/lib/matching/shortlist";
 import { recordMetricEvent } from "@/lib/metrics/events";
 import { startTiming } from "@/lib/observability/timing";

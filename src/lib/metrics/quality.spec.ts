@@ -4,11 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { AgentRunStatus } from '@prisma/client';
+import { AgentRunStatus } from '@/server/db';
 
 import { getQualityMetrics } from './quality';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   prisma: {
     agentRunLog: {
       findMany: vi.fn(),
@@ -63,7 +63,7 @@ describe('getQualityMetrics', () => {
       createdAt: new Date('2025-02-14T23:00:00.000Z'),
     };
 
-    const prisma = await import('@/lib/prisma');
+    const prisma = await import('@/server/db');
     vi.mocked(prisma.prisma.agentRunLog.findMany).mockResolvedValue(mockAgentRuns);
     vi.mocked(prisma.prisma.coverageReport.findFirst).mockResolvedValue(mockLatestCoverage as never);
     vi.mocked(prisma.prisma.coverageReport.findMany).mockResolvedValue(mockCoverageHistory as never);

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/server/db';
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
 import {
   AGENT_KILL_SWITCHES,
@@ -17,7 +17,7 @@ import {
 
 const isTableAvailableMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   prisma: {
     agentFlag: {
       findUnique: vi.fn(),

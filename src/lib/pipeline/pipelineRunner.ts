@@ -1,5 +1,5 @@
-import { Prisma } from '@prisma/client';
-import type { PrismaClient } from '@prisma/client';
+import { Prisma } from '@/server/db';
+import type { PrismaClient } from '@/server/db';
 
 export type PipelineRunStatus = 'success' | 'failed' | 'skipped';
 

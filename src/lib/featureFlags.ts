@@ -1,5 +1,5 @@
-import type { FeatureFlag as FeatureFlagModel } from '@prisma/client';
-import { Prisma } from '@prisma/client';
+import type { FeatureFlag as FeatureFlagModel } from '@/server/db';
+import { Prisma } from '@/server/db';
 import { cookies } from 'next/headers';
 
 import {

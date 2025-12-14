@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 import { setShortlistState } from "./shortlist";
 

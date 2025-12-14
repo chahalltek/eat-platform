@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { JobCandidateStatus } from "@prisma/client";
+import { JobCandidateStatus } from "@/server/db";
 
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";

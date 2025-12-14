@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/lib/prisma";
+import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db";
 
 export const guardrailsSchema = z
   .object({

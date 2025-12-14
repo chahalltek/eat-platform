@@ -3,7 +3,7 @@ import {
   JobCandidateStatus,
   PrismaClient,
   type Prisma,
-} from '@prisma/client';
+} from "../src/server/db";
 
 import { FEATURE_FLAGS, setFeatureFlag } from '../src/lib/featureFlags';
 import { defaultTenantGuardrails } from '../src/lib/guardrails/defaultTenantConfig';

@@ -5,7 +5,7 @@ import { DEFAULT_GUARDRAILS, loadTenantGuardrailConfig } from "@/lib/guardrails/
 
 const mockFindUnique = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     guardrailConfig: {
       findUnique: mockFindUnique,

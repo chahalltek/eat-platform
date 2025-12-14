@@ -52,7 +52,7 @@ const {
 
 const { mockCallLLM } = vi.hoisted(() => ({ mockCallLLM: vi.fn() }));
 
-vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/server/db", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/killSwitch", () => ({
   assertKillSwitchDisarmed: vi.fn(),
   KILL_SWITCHES: { AGENTS: "AGENTS" },

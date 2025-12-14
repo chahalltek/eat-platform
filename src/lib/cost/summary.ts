@@ -1,7 +1,7 @@
-import type { CostDriverType } from '@prisma/client';
+import type { CostDriverType } from '@/server/db';
 
 import { getCurrentMonthStart } from '@/lib/usage/summary';
-import { isTableAvailable, prisma } from '@/lib/prisma';
+import { isTableAvailable, prisma } from '@/server/db';
 
 export type CostDriverSnapshot = {
   tenantId: string | null;

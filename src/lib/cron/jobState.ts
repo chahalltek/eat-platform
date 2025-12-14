@@ -1,6 +1,6 @@
-import type { AsyncJobState } from "@prisma/client";
+import type { AsyncJobState } from "@/server/db";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 export type AsyncJobStatus = "idle" | "running" | "success" | "failed";
 

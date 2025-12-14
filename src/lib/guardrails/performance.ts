@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { guardrailsPresets, type GuardrailsConfig, type GuardrailsPresetName } from "./presets";
 
 export type GuardrailFeedbackRecord = {

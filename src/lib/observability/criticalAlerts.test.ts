@@ -1,4 +1,4 @@
-import type { AsyncJobState, BenchmarkRelease, BenchmarkMetric, MatchResult } from "@prisma/client";
+import type { AsyncJobState, BenchmarkRelease, BenchmarkMetric, MatchResult } from "@/server/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { collectCriticalAlerts, notifyCriticalAlerts, type CriticalAlert } from "./criticalAlerts";
@@ -9,7 +9,7 @@ const { mockAsyncJobStateFindMany, mockMatchResultFindFirst, mockBenchmarkReleas
   mockBenchmarkReleaseFindFirst: vi.fn<[], Promise<(BenchmarkRelease & { metrics: BenchmarkMetric[] }) | null>>(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     asyncJobState: { findMany: mockAsyncJobStateFindMany },
     matchResult: { findFirst: mockMatchResultFindFirst },

@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@/server/db';
 
 import { recordUsageEvent } from './events';
 
 const isTableAvailable = vi.hoisted(() => vi.fn());
 const createMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   isTableAvailable: isTableAvailable,
   prisma: { usageEvent: { create: createMock } } as unknown as PrismaClient,
 }));

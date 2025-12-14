@@ -31,7 +31,7 @@ const { mockCallLLM, mockCandidateCreate, mockWithAgentRun, createdSkills } = vi
   return { mockCallLLM, mockCandidateCreate, mockWithAgentRun, createdSkills };
 });
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     candidate: {
       create: mockCandidateCreate,

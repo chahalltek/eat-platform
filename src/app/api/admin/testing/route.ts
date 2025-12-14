@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { computeMatchScore } from "@/lib/matching/msa";
-import type { Candidate, CandidateSkill, JobReq, JobSkill } from "@prisma/client";
+import type { Candidate, CandidateSkill, JobReq, JobSkill } from "@/server/db";
 import { getCurrentUser } from "@/lib/auth/user";
 import { isAdminRole } from "@/lib/auth/roles";
 

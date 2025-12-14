@@ -1,6 +1,6 @@
-import { Candidate, CandidateSkill } from "@prisma/client";
+import { Candidate, CandidateSkill } from "@/server/db";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 
 import {
   CANDIDATE_CONFIDENCE_WEIGHTS,

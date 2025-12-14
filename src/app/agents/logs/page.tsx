@@ -1,7 +1,7 @@
 import AgentRunLogsView from "./logs-view";
 import { SerializableLog } from "./types";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
 import { canViewAgentLogs } from "@/lib/auth/permissions";

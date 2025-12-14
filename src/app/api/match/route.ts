@@ -8,7 +8,7 @@ import { computeMatchScore } from "@/lib/matching/msa";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { KILL_SWITCHES } from "@/lib/killSwitch";
 import { enforceKillSwitch } from "@/lib/killSwitch/middleware";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";

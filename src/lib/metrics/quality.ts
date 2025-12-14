@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { AgentRunStatus } from '@prisma/client';
+import { AgentRunStatus } from '@/server/db';
 import { prisma } from '../prisma';
 
 type TimeSeriesBucket = {

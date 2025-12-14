@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Prisma } from '@prisma/client';
-import type { SubscriptionPlan, TenantSubscription } from '@prisma/client';
+import { Prisma } from '@/server/db';
+import type { SubscriptionPlan, TenantSubscription } from '@/server/db';
 import { getTenantPlan } from './subscriptionPlans';
 
 const prismaMock = vi.hoisted(() => ({

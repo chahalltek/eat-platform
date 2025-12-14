@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { requireTenantAdmin, TENANT_ROLES } from "@/lib/auth/tenantAdmin";
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     tenantUser: {
       findFirst: vi.fn(),

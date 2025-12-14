@@ -3,9 +3,9 @@
 import { runRina } from '@/lib/agents/rina';
 import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
 import { MockOpenAIAdapter } from '@/lib/llm/mockOpenAIAdapter';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   prisma: {
     agentPrompt: {
       findUnique: vi.fn(async () => null),

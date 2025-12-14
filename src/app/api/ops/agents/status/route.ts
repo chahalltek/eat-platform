@@ -1,8 +1,8 @@
-import type { AgentRunStatus } from '@prisma/client';
+import type { AgentRunStatus } from '@/server/db';
 import { NextResponse } from 'next/server';
 
 import { listAgentKillSwitches } from '@/lib/agents/killSwitch';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

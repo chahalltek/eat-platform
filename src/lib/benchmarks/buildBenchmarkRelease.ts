@@ -1,7 +1,7 @@
-import type { BenchmarkMetric, BenchmarkRelease, LearningAggregate, PrismaClient } from "@prisma/client";
+import type { BenchmarkMetric, BenchmarkRelease, LearningAggregate, PrismaClient } from "@/server/db";
 
 import { intelligenceCache } from "@/lib/cache/intelligenceCache";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { startTiming } from "@/lib/observability/timing";
 
 export type BenchmarkMetricKey =

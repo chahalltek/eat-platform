@@ -1,4 +1,4 @@
-import { AgentRunStatus } from "@prisma/client";
+import { AgentRunStatus } from "@/server/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -12,7 +12,7 @@ const { mockAgentRunLogCreate, mockAgentRunLogUpdate } = vi.hoisted(() => ({
   mockAgentRunLogUpdate: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     agentRunLog: {
       create: mockAgentRunLogCreate,

@@ -1,11 +1,11 @@
 /// <reference types="vitest/globals" />
 
 import { POST } from './route';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 import { getCurrentUser } from '@/lib/auth/user';
 import { recordAuditEvent } from '@/lib/audit/trail';
 
-vi.mock('@/lib/prisma', () => ({
+vi.mock('@/server/db', () => ({
   prisma: {
     jobCandidate: {
       findUnique: vi.fn(),

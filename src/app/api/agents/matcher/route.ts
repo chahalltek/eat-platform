@@ -4,7 +4,7 @@ import { requireRole } from '@/lib/auth/requireRole';
 import { normalizeRole, USER_ROLES } from '@/lib/auth/roles';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 import { getCurrentTenantId } from '@/lib/tenant';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/server/db';
 
 export async function POST(req: NextRequest) {
   try {

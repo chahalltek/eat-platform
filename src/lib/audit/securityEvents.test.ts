@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, vi } from "vitest";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/server/db";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { getCurrentUserId } from "@/lib/auth/user";
 
@@ -26,7 +26,7 @@ type SecurityEvent = {
   createdAt: Date;
 };
 
-vi.mock("@/lib/prisma", () => ({
+vi.mock("@/server/db", () => ({
   prisma: {
     securityEventLog: {
       create: vi.fn(),

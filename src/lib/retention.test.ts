@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { TenantDeletionMode } from '@prisma/client';
+import { TenantDeletionMode } from '@/server/db';
 
 import {
   collectTenantData,
