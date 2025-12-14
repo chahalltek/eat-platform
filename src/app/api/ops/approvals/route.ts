@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+<<<<<<< ours
 import { normalizeRole, USER_ROLES, isAdminRole } from "@/lib/auth/roles";
+=======
+import { isAdminRole, normalizeRole, USER_ROLES } from "@/lib/auth/roles";
+>>>>>>> theirs
 import { getCurrentUser } from "@/lib/auth/user";
-import { prisma, ActionType, ApprovalStatus } from "@/server/db";
+import { ActionType, ApprovalStatus, prisma } from "@/server/db";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -41,6 +48,62 @@ function parseStatusParam(statusParam: string | null): ApprovalStatus {
   }
 
   return match as ApprovalStatus;
+<<<<<<< ours
+=======
+}
+
+export async function POST(req: NextRequest) {
+  const user = await getCurrentUser(req);
+
+  if (!user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json().catch(() => null);
+  const parsed = payloadSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid payload", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  const { tenantId, jobReqId, candidateId, actionType, actionPayload, decisionStreamId } = parsed.data;
+  const normalizedTenantId = tenantId.trim();
+
+  const isPlatformAdmin = isAdminRole(user.role);
+
+  if (!isPlatformAdmin) {
+    const membership = await prisma.tenantUser.findUnique({
+      where: { userId_tenantId: { tenantId: normalizedTenantId, userId: user.id } },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
+  try {
+    const approval = await prisma.agentActionApproval.create({
+      data: {
+        tenantId: normalizedTenantId,
+        jobReqId: jobReqId?.trim(),
+        candidateId: candidateId?.trim(),
+        actionType,
+        actionPayload,
+        proposedBy: user.id,
+        status: ApprovalStatus.PENDING,
+        decisionStreamId: decisionStreamId?.trim(),
+      },
+    });
+
+    return NextResponse.json({ approval }, { status: 201 });
+  } catch (error) {
+    console.error("[ops/approvals] Failed to create approval", error);
+    return NextResponse.json({ error: "Unable to create approval" }, { status: 500 });
+  }
+>>>>>>> theirs
 }
 
 export async function GET(request: NextRequest) {
@@ -86,9 +149,11 @@ export async function GET(request: NextRequest) {
     proposedAt: approval.proposedAt.toISOString(),
     decidedAt: approval.decidedAt ? approval.decidedAt.toISOString() : null,
     expiresAt: approval.expiresAt ? approval.expiresAt.toISOString() : null,
+    executedAt: approval.executedAt ? approval.executedAt.toISOString() : null,
   }));
 
   return NextResponse.json({ approvals: serialized }, { status: 200 });
+<<<<<<< ours
 }
 
 export async function POST(req: NextRequest) {
@@ -142,4 +207,6 @@ export async function POST(req: NextRequest) {
     console.error("[ops/approvals] Failed to create approval", error);
     return NextResponse.json({ error: "Unable to create approval" }, { status: 500 });
   }
+=======
+>>>>>>> theirs
 }
