@@ -29,6 +29,8 @@ vi.mock("@prisma/client", async () => {
     TenantDeletionMode: (actual as any).TenantDeletionMode ?? (actual as any).Prisma?.TenantDeletionMode,
     HiringManagerFeedbackType:
       (actual as any).HiringManagerFeedbackType ?? (actual as any).Prisma?.HiringManagerFeedbackType,
+    HiringManagerFeedbackStatus:
+      (actual as any).HiringManagerFeedbackStatus ?? (actual as any).Prisma?.HiringManagerFeedbackStatus,
     PrismaClient,
   };
 });
