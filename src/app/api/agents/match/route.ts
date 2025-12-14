@@ -202,8 +202,8 @@ export async function handleMatchAgentPost(
       tenantId,
       sourceType: "api",
       sourceTag: "match",
-      input: parsed.data,
-      inputSnapshot: parsed.data,
+      input: request,
+      inputSnapshot: request,
       status: "RUNNING",
       startedAt,
     });
