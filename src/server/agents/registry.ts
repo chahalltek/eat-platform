@@ -76,11 +76,8 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
       const trimmedJobId = requireString("jobId", jobId);
 
       return runIntake({ jobId: trimmedJobId, recruiterId: ctx.currentUser.id, sourceType, sourceTag });
-<<<<<<< ours
-=======
     },
   },
->>>>>>> theirs
   "ETE-TS.CONFIDENCE": {
     key: "ETE-TS.CONFIDENCE",
     displayName: "Confidence Agent",
@@ -94,10 +91,9 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
         marketSignals: marketSignals ?? null,
         requestedBy: ctx.currentUser,
       });
-<<<<<<< ours
     },
   },
-   "ETE-TS.NEXT_BEST_ACTION": {
+  "ETE-TS.NEXT_BEST_ACTION": {
     key: "ETE-TS.NEXT_BEST_ACTION",
     displayName: "Next Best Action Agent",
     description: "Suggests the next best orchestration move for a job.",
@@ -113,7 +109,10 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
       const trimmedJobId = requireString("jobId", jobId);
 
       if (!pipelineHealth || !confidenceDistribution || !eteSignals) {
-        throw NextResponse.json({ error: "pipelineHealth, confidenceDistribution, and eteSignals are required" }, { status: 400 });
+        throw NextResponse.json(
+          { error: "pipelineHealth, confidenceDistribution, and eteSignals are required" },
+          { status: 400 },
+        );
       }
 
       return runNextBestAction({
@@ -125,8 +124,6 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
         sourceTag,
         recruiterId: ctx.currentUser.id,
       });
-=======
->>>>>>> theirs
     },
   },
 };
