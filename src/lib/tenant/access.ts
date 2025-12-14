@@ -1,5 +1,5 @@
 import type { IdentityUser } from "@/lib/auth/identityProvider";
-import { isAdminRole } from "@/lib/auth/roles";
+import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { prisma } from "@/server/db";
 import { normalizeTenantRole, TENANT_ROLES, type TenantRole } from "./roles";
 
@@ -15,7 +15,7 @@ export async function resolveTenantAdminAccess(
   }
 
   const headerIndicatesAdmin = options?.roleHint === TENANT_ROLES.Admin;
-  const isGlobalAdmin = isAdminRole(user.role) || headerIndicatesAdmin;
+  const isGlobalAdmin = isAdminOrDataAccessRole(user.role) || headerIndicatesAdmin;
 
   if (isGlobalAdmin) {
     return { hasAccess: true, isGlobalAdmin, membership: null } as const;

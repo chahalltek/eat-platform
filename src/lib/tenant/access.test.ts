@@ -27,6 +27,14 @@ describe("resolveTenantAdminAccess", () => {
     tenantId: "default",
   };
 
+  const dataAccessUser = {
+    id: "user-3",
+    email: "data@test.demo",
+    displayName: "Data",
+    role: "DATA_ACCESS",
+    tenantId: "default",
+  };
+
   it("grants access when a header indicates tenant admin even if the user role is not global admin", async () => {
     prismaMock.tenantUser.findUnique.mockResolvedValue(null);
 
@@ -61,6 +69,16 @@ describe("resolveTenantAdminAccess", () => {
     prismaMock.tenantUser.findUnique.mockResolvedValue(null);
 
     const access = await resolveTenantAdminAccess(adminUser, "default-tenant");
+
+    expect(access.hasAccess).toBe(true);
+    expect(access.isGlobalAdmin).toBe(true);
+    expect(prismaMock.tenantUser.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("treats data access roles as privileged for admin views", async () => {
+    prismaMock.tenantUser.findUnique.mockResolvedValue(null);
+
+    const access = await resolveTenantAdminAccess(dataAccessUser, "default-tenant");
 
     expect(access.hasAccess).toBe(true);
     expect(access.isGlobalAdmin).toBe(true);
