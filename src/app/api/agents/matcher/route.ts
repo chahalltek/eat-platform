@@ -10,7 +10,12 @@ import { prisma } from '@/server/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.RECRUITER]);
+    const roleCheck = await requireRole(req, [
+      USER_ROLES.ADMIN,
+      USER_ROLES.SYSTEM_ADMIN,
+      USER_ROLES.TENANT_ADMIN,
+      USER_ROLES.RECRUITER,
+    ]);
 
     if (!roleCheck.ok) {
       return roleCheck.response;

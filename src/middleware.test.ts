@@ -100,6 +100,15 @@ describe('middleware role enforcement', () => {
     expect(response.headers.get(ROLE_HEADER)).toBe('DATA_ACCESS');
   });
 
+  it('allows admin pages for tenant admins', async () => {
+    mockSessionRole('TENANT_ADMIN');
+
+    const response = await middleware(createRequest('/admin/feature-flags'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get(ROLE_HEADER)).toBe('TENANT_ADMIN');
+  });
+
   it('returns forbidden for admin apis when role is not allowed', async () => {
     const response = await middleware(createRequest('/api/admin/tenants'));
 

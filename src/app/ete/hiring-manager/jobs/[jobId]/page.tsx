@@ -121,7 +121,12 @@ function normalizeShortlistRunMeta(runs: Prisma.AgentRunLogGetPayload<{}>[], job
 export default async function HiringManagerPage({ params }: { params: { jobId: string } }) {
   const currentUser = await getCurrentUser();
   const normalizedRole = normalizeRole(currentUser?.role);
-  const hiringManagerRoles = new Set<string>([USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.MANAGER]);
+  const hiringManagerRoles = new Set<string>([
+    USER_ROLES.ADMIN,
+    USER_ROLES.SYSTEM_ADMIN,
+    USER_ROLES.TENANT_ADMIN,
+    USER_ROLES.MANAGER,
+  ]);
 
   if (!normalizedRole || !hiringManagerRoles.has(normalizedRole)) {
     redirect("/");

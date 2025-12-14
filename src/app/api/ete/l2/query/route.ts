@@ -34,7 +34,12 @@ const AGENT_HANDLERS: Record<L2Question, L2Handler | null> = {
 };
 
 export async function POST(req: NextRequest) {
-  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.EXEC]);
+  const roleCheck = await requireRole(req, [
+    USER_ROLES.ADMIN,
+    USER_ROLES.SYSTEM_ADMIN,
+    USER_ROLES.TENANT_ADMIN,
+    USER_ROLES.EXEC,
+  ]);
 
   if (!roleCheck.ok) {
     return roleCheck.response;

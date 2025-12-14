@@ -102,7 +102,14 @@ function buildInitialCandidates(matches: MatchResultWithCandidate[]): JobConsole
 export default async function JobConsolePage({ params }: { params: { jobId: string } }) {
   const currentUser = await getCurrentUser();
   const normalizedRole = normalizeRole(currentUser?.role);
-  const recruiterRoles = new Set<string>([USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.RECRUITER, USER_ROLES.SOURCER, USER_ROLES.SALES]);
+  const recruiterRoles = new Set<string>([
+    USER_ROLES.ADMIN,
+    USER_ROLES.SYSTEM_ADMIN,
+    USER_ROLES.TENANT_ADMIN,
+    USER_ROLES.RECRUITER,
+    USER_ROLES.SOURCER,
+    USER_ROLES.SALES,
+  ]);
 
   if (!normalizedRole || !recruiterRoles.has(normalizedRole)) {
     redirect("/ete/jobs");

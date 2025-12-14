@@ -30,6 +30,7 @@ describe("RBAC permission matrix", () => {
       USER_ROLES.SOURCER,
       USER_ROLES.SALES,
       USER_ROLES.ADMIN,
+      USER_ROLES.TENANT_ADMIN,
       USER_ROLES.SYSTEM_ADMIN,
     ];
 
@@ -43,6 +44,7 @@ describe("RBAC permission matrix", () => {
     const tenantB = "tenant-b";
 
     expect(canViewCandidates(buildUser(USER_ROLES.ADMIN, tenantA), tenantB)).toBe(false);
+    expect(canViewCandidates(buildUser(USER_ROLES.TENANT_ADMIN, tenantA), tenantB)).toBe(false);
     expect(canViewCandidates(buildUser(USER_ROLES.MANAGER, tenantA), tenantB)).toBe(false);
     expect(canViewCandidates(buildUser(USER_ROLES.RECRUITER, tenantA), tenantB)).toBe(false);
     expect(canViewCandidates(buildUser(USER_ROLES.SOURCER, tenantA), tenantB)).toBe(false);
@@ -54,10 +56,12 @@ describe("RBAC permission matrix", () => {
     const tenant = "tenant-a";
 
     expect(canManagePrompts(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
+    expect(canManagePrompts(buildUser(USER_ROLES.TENANT_ADMIN, tenant), tenant)).toBe(true);
     expect(canManagePrompts(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
     expect(canManagePrompts(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(false);
     expect(canManagePrompts(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), tenant)).toBe(true);
     expect(canManagePrompts(buildUser(USER_ROLES.ADMIN, tenant), "tenant-b")).toBe(false);
+    expect(canManagePrompts(buildUser(USER_ROLES.TENANT_ADMIN, tenant), "tenant-b")).toBe(false);
     expect(canManagePrompts(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
   });
 
@@ -66,24 +70,29 @@ describe("RBAC permission matrix", () => {
 
     expect(canViewAuditLogs(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(true);
     expect(canViewAuditLogs(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
+    expect(canViewAuditLogs(buildUser(USER_ROLES.TENANT_ADMIN, tenant), tenant)).toBe(true);
     expect(canViewAuditLogs(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), tenant)).toBe(true);
     expect(canViewAuditLogs(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(false);
     expect(canViewAuditLogs(buildUser(USER_ROLES.MANAGER, tenant), "tenant-b")).toBe(false);
+    expect(canViewAuditLogs(buildUser(USER_ROLES.TENANT_ADMIN, tenant), "tenant-b")).toBe(false);
     expect(canViewAuditLogs(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
   });
 
   it("restricts feature flag and environment views to admins", () => {
     expect(canManageFeatureFlags(buildUser(USER_ROLES.ADMIN, "tenant-a"))).toBe(true);
+    expect(canManageFeatureFlags(buildUser(USER_ROLES.TENANT_ADMIN, "tenant-a"))).toBe(true);
     expect(canManageFeatureFlags(buildUser(USER_ROLES.SYSTEM_ADMIN, "tenant-a"))).toBe(true);
     expect(canManageFeatureFlags(buildUser(USER_ROLES.MANAGER, "tenant-a"))).toBe(false);
 
     expect(canViewEnvironment(buildUser(USER_ROLES.ADMIN, "tenant-a"))).toBe(true);
+    expect(canViewEnvironment(buildUser(USER_ROLES.TENANT_ADMIN, "tenant-a"))).toBe(true);
     expect(canViewEnvironment(buildUser(USER_ROLES.SYSTEM_ADMIN, "tenant-a"))).toBe(true);
     expect(canViewEnvironment(buildUser(USER_ROLES.RECRUITER, "tenant-a"))).toBe(false);
   });
 
   it("allows only admins to view quality metrics", () => {
     expect(canViewQualityMetrics(buildUser(USER_ROLES.ADMIN, "tenant-a"))).toBe(true);
+    expect(canViewQualityMetrics(buildUser(USER_ROLES.TENANT_ADMIN, "tenant-a"))).toBe(true);
     expect(canViewQualityMetrics(buildUser(USER_ROLES.SYSTEM_ADMIN, "tenant-a"))).toBe(true);
     expect(canViewQualityMetrics(buildUser(USER_ROLES.MANAGER, "tenant-a"))).toBe(false);
   });
@@ -92,15 +101,18 @@ describe("RBAC permission matrix", () => {
     const tenant = "tenant-a";
 
     expect(canViewAgentLogs(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
+    expect(canViewAgentLogs(buildUser(USER_ROLES.TENANT_ADMIN, tenant), tenant)).toBe(true);
     expect(canViewAgentLogs(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), tenant)).toBe(true);
     expect(canViewAgentLogs(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
     expect(canViewAgentLogs(buildUser(USER_ROLES.ADMIN, tenant), "tenant-b")).toBe(false);
+    expect(canViewAgentLogs(buildUser(USER_ROLES.TENANT_ADMIN, tenant), "tenant-b")).toBe(false);
     expect(canViewAgentLogs(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
   });
 
   it("allows admins and system admins to manage tenants", () => {
     expect(canManageTenants(buildUser(USER_ROLES.SYSTEM_ADMIN, "tenant-a"))).toBe(true);
     expect(canManageTenants(buildUser(USER_ROLES.ADMIN, "tenant-a"))).toBe(true);
+    expect(canManageTenants(buildUser(USER_ROLES.TENANT_ADMIN, "tenant-a"))).toBe(true);
   });
 
   it("falls back to the default tenant when none is provided", () => {

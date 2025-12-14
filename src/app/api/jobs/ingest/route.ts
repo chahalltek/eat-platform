@@ -8,7 +8,7 @@ import { prisma } from "@/server/db";
 import { recordMetricEvent } from "@/lib/metrics/events";
 import { onJobChanged } from "@/lib/orchestration/triggers";
 import { getCurrentUser } from "@/lib/auth/user";
-import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
+import { isAdminRole, normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { buildJobIntentPayload, upsertJobIntent } from "@/lib/jobIntent";
 import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
   const role = normalizeRole(user.role);
 
-  if (!role || (role !== USER_ROLES.ADMIN && role !== USER_ROLES.SYSTEM_ADMIN)) {
+  if (!role || !isAdminRole(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

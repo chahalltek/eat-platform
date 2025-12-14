@@ -27,7 +27,12 @@ export async function POST(req: NextRequest) {
       };
 
     const normalizedRole = normalizeRole(currentUser.role);
-    const allowedRoles: UserRole[] = [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.RECRUITER];
+    const allowedRoles: UserRole[] = [
+      USER_ROLES.ADMIN,
+      USER_ROLES.SYSTEM_ADMIN,
+      USER_ROLES.TENANT_ADMIN,
+      USER_ROLES.RECRUITER,
+    ];
 
     if (!normalizedRole || !allowedRoles.includes(normalizedRole)) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });

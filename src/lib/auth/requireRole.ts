@@ -36,7 +36,7 @@ export async function requireRole(
   return { ok: true, user: currentUser };
 }
 
-const ADMIN_ROLES = [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN];
+const ADMIN_ROLES = [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.TENANT_ADMIN];
 const ADMIN_OR_DATA_ACCESS_ROLES: UserRole[] = [
   ...ADMIN_ROLES,
   USER_ROLES.DATA_ACCESS,

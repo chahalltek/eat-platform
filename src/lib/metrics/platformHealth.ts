@@ -86,7 +86,7 @@ export async function getPlatformHealthSnapshot(): Promise<PlatformHealthSnapsho
       _count: { _all: true },
     }),
     prisma.user.count(),
-    prisma.user.count({ where: { role: { in: [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN] } } }),
+    prisma.user.count({ where: { role: { in: [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.TENANT_ADMIN] } } }),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth(now) } } }),
     prisma.agentRunLog.findMany({
       where: { startedAt: { gte: oneWeekAgo }, userId: { not: null } },

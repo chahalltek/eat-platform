@@ -19,7 +19,11 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN]);
+  const roleCheck = await requireRole(req, [
+    USER_ROLES.ADMIN,
+    USER_ROLES.SYSTEM_ADMIN,
+    USER_ROLES.TENANT_ADMIN,
+  ]);
 
   if (!roleCheck.ok) {
     return roleCheck.response;
