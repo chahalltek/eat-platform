@@ -24,7 +24,7 @@
     "provision-demo-users": "ts-node scripts/provision-demo-users.ts",
     "prisma:guard": "node scripts/db-safety.js",
     "docs:api-map": "tsx scripts/generate-api-map.ts",
-    "verify:mvp:unit": "vitest run src/lib/jobIntent.test.ts src/lib/agentRunLog.test.ts src/lib/tenant/diagnostics.test.ts",
+    "verify:mvp:unit": "vitest run src/lib/jobIntent.test.ts src/lib/agentRunLog.test.ts src/lib/tenant/diagnostics.test.ts src/app/api/jobs/[jobReqId]/hm-brief/route.verify.test.ts src/app/admin/tenant/[tenantId]/operations-runbook/verify.test.tsx",
     "verify:mvp:smoke": "vitest run tests/smoke/mvp-smoke.test.ts",
     "verify:mvp": "npm run verify:mvp:unit && npm run verify:mvp:smoke && node scripts/verify-mvp-summary.js"
   },

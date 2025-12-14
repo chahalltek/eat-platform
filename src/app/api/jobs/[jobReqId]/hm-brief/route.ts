@@ -59,6 +59,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
   const { tenantScope, jobReqId } = membership;
   const { prisma, tenantId } = tenantScope;
 
+  const intent = await prisma.jobIntent.findFirst({ where: { jobReqId, tenantId } });
   const brief = await prisma.hiringManagerBrief.findFirst({
     where: { jobReqId, tenantId },
     orderBy: { createdAt: "desc" },
@@ -78,6 +79,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
       updatedAt: brief.updatedAt,
       sentAt: brief.sentAt,
       sentTo: brief.sentTo,
+      intentSnapshot: intent?.intent ?? null,
+      intentStatus: intent?.intent ? "READY" : "MISSING",
     },
     { status: 200 },
   );

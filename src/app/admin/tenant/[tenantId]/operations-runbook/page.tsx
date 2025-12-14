@@ -251,6 +251,28 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   const fireDrillActive = currentMode === "fire_drill";
   const changeModeHref = `/admin/tenants/${tenantId}`;
   const diagnosticsHref = `/admin/tenant/${tenantId}/diagnostics`;
+  const diagnosticsStatus = "UNKNOWN";
+
+  const readinessSummary = [
+    {
+      label: "Diagnostics",
+      value: diagnosticsStatus,
+      description: "Live checks for agents, scoring engine, and guardrails.",
+    },
+    {
+      label: "Guardrails",
+      value: formatGuardrailPreset(guardrails.source),
+      description: "Preset driving thresholds, weights, and safety defaults.",
+    },
+    {
+      label: "Agent Kill Switches",
+      value:
+        agentRows.length > 0
+          ? `${agentRows.filter((agent) => agent.effective).length}/${agentRows.length} ready`
+          : "UNKNOWN",
+      description: "Effective availability based on mode and kill switch state.",
+    },
+  ];
 
   return (
     <main className="min-h-screen bg-zinc-50 px-6 py-10">
@@ -295,6 +317,29 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
               <div className="rounded-xl bg-zinc-50 p-4">Guardrails determine strictness and thresholds.</div>
               <div className="rounded-xl bg-zinc-50 p-4">Agent kill switches control what functions are available.</div>
             </div>
+          </div>
+        </section>
+
+        <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-zinc-900">Operational Readiness Summary</h3>
+              <p className="text-sm text-zinc-600">
+                Snapshot of platform readiness based on diagnostics, guardrails, and kill switch coverage.
+              </p>
+            </div>
+            <div className="rounded-full bg-zinc-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-700">
+              Live checks: {diagnosticsStatus}
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {readinessSummary.map((row) => (
+              <div key={row.label} className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{row.label}</div>
+                <div className="mt-2 text-lg font-semibold text-zinc-900">{row.value ?? "UNKNOWN"}</div>
+                <p className="mt-1 text-sm text-zinc-600">{row.description}</p>
+              </div>
+            ))}
           </div>
         </section>
 

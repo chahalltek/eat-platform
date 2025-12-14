@@ -29,13 +29,6 @@ export async function assertFeatureEnabled(
   return enforceFeatureFlag(flagName, context);
 }
 
-export async function assertFeatureEnabled(
-  flagName: FeatureFlagName,
-  context: FeatureFlagMiddlewareContext = {},
-) {
-  return enforceFeatureFlag(flagName, context);
-}
-
 export function getAgentFeatureName(agentName: string) {
   if (agentName.toUpperCase().includes('RINA')) return 'RINA agent';
   if (agentName.toUpperCase().includes('RUA')) return 'RUA agent';
