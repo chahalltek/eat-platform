@@ -67,7 +67,7 @@ export function getEnvironmentSnapshot(): EnvSnapshot {
     versions: {
       appVersion: packageJson.version ?? 'unknown',
       nextVersion: packageJson.dependencies?.next,
-      prismaVersion: packageJson.dependencies?.['@/server/db'],
+      prismaVersion: packageJson.dependencies?.['@prisma/client'],
       nodeVersion: process.version,
     },
   };
