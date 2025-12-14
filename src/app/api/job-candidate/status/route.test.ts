@@ -14,10 +14,19 @@ const prismaMock = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@/server/db', async () => ({
-  JobCandidateStatus,
-  prisma: prismaMock,
-}));
+vi.mock('@/server/db', async (importOriginal) => {
+  const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = 'true';
+
+  const actual = await importOriginal<typeof import('@/server/db')>();
+
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
+
+  return {
+    ...actual,
+    prisma: prismaMock,
+  };
+});
 
 vi.mock('@/lib/auth/user', () => ({
   getCurrentUser: vi.fn(),

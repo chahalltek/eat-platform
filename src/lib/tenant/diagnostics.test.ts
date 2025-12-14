@@ -40,12 +40,20 @@ vi.mock("@/lib/modes/loadTenantMode", () => ({
   loadTenantMode: mockLoadTenantMode,
 }));
 
-vi.mock("@/server/db", async () => ({
-  AgentRunStatus,
-  TenantDeletionMode,
-  prisma: prismaMock,
-  isPrismaUnavailableError: () => false,
-}));
+vi.mock("@/server/db", async (importOriginal) => {
+  const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = "true";
+
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
+
+  return {
+    ...actual,
+    prisma: prismaMock,
+    isPrismaUnavailableError: () => false,
+  };
+});
 
 vi.mock("@/lib/guardrails/config", () => ({
   loadTenantGuardrailConfig: mockLoadGuardrails,
