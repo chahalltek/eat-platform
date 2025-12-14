@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { POST as confidencePost } from "@/app/api/jobs/[jobId]/confidence/route";
+import { POST as confidencePost } from "@/app/api/jobs/[jobReqId]/confidence/route";
 import { runConfidence } from "@/lib/agents/confidence";
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
@@ -27,7 +27,7 @@ vi.mock("@/lib/auth/roles", () => ({ USER_ROLES: { ADMIN: "ADMIN", RECRUITER: "R
 
 const requestBody = { recruiterId: "recruiter-1" };
 
-const context = { params: Promise.resolve({ jobId: "job-123" }) } as const;
+const context = { params: Promise.resolve({ jobReqId: "job-123" }) } as const;
 
 describe("CONFIDENCE agent API", () => {
   beforeEach(() => {

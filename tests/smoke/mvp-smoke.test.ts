@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as agentRunPost } from "@/app/api/agents/agent/run/route";
 import { GET as tenantDiagnosticsGet } from "@/app/api/tenant/diagnostics/route";
-import { GET as jobIntentGet } from "@/app/api/jobs/[jobId]/intent/route";
+import { GET as jobIntentGet } from "@/app/api/jobs/[jobReqId]/intent/route";
 import { createNextRouteTestServer } from "@tests/test-utils/nextRouteTestServer";
 
 const mocks = vi.hoisted(() => ({
@@ -43,9 +43,9 @@ vi.mock("@/server/agents/registry", () => ({
   },
 }));
 
-function buildJobIntentContext(jobId: string) {
+function buildJobIntentContext(jobReqId: string) {
   return {
-    params: Promise.resolve({ jobId }),
+    params: Promise.resolve({ jobReqId }),
   } satisfies any;
 }
 

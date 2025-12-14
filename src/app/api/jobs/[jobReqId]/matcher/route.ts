@@ -4,7 +4,7 @@ import { runMatcher } from '@/lib/agents/matcher';
 import { getCurrentUser } from '@/lib/auth';
 import { requireRecruiterOrAdmin } from '@/lib/auth/requireRole';
 
-type RouteParams = { jobId: string };
+type RouteParams = { jobReqId: string };
 
 type RouteContext = { params: RouteParams | Promise<RouteParams> };
 
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const params = await context.params;
-    const jobId = params.jobId;
+    const jobId = params.jobReqId;
     const body = await req.json().catch(() => ({}));
 
     const recruiterId = currentUser.id ?? roleCheck.user.id ?? body.recruiterId ?? 'recruiter@example.com';

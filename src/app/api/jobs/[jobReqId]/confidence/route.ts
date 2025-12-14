@@ -4,11 +4,11 @@ import { FireDrillAgentDisabledError } from "@/lib/agents/availability";
 import { runConfidence } from "@/lib/agents/confidence";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 
-type RouteParams = { jobId: string };
+type RouteParams = { jobReqId: string };
 
-  type RouteContext = { params: RouteParams | Promise<RouteParams> };
+type RouteContext = { params: RouteParams | Promise<RouteParams> };
 
-  export async function POST(req: NextRequest, context: RouteContext) {
+export async function POST(req: NextRequest, context: RouteContext) {
   try {
     const roleCheck = await requireRecruiterOrAdmin(req);
 
@@ -20,10 +20,13 @@ type RouteParams = { jobId: string };
     const body = await req.json().catch(() => ({}));
     const recruiterId = body.recruiterId ?? 'recruiter@example.com';
 
-    const result = await runConfidence({
-      jobId: params.jobId,
-      recruiterId,
-    }, req);
+    const result = await runConfidence(
+      {
+        jobId: params.jobReqId,
+        recruiterId,
+      },
+      req,
+    );
 
     return NextResponse.json(result, { status: 200 });
   } catch (err) {

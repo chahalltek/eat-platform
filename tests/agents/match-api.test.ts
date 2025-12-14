@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { POST as matchPost } from "@/app/api/jobs/[jobId]/matcher/route";
+import { POST as matchPost } from "@/app/api/jobs/[jobReqId]/matcher/route";
 import { mockDb } from "@/test-helpers/db";
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
@@ -113,7 +113,7 @@ describe("MATCH agent API", () => {
       json: { recruiterId: "recruiter-1", topN: 2 },
     });
 
-    const response = await matchPost(request, { params: { jobId: "job-1" } });
+    const response = await matchPost(request, { params: { jobReqId: "job-1" } });
     const payload = await response.json();
 
     expect(response.status).toBe(200);
@@ -159,7 +159,7 @@ describe("MATCH agent API", () => {
       json: { recruiterId: "recruiter-1" },
     });
 
-    const response = await matchPost(request, { params: { jobId: "job-err" } });
+    const response = await matchPost(request, { params: { jobReqId: "job-err" } });
 
     expect(response.status).toBe(500);
     expect(mockAgentRunLogCreate).toHaveBeenCalled();
@@ -177,7 +177,7 @@ describe("MATCH agent API", () => {
       json: { recruiterId: "recruiter-1", topN: 2 },
     });
 
-    const response = await matchPost(request, { params: { jobId: "job-1" } });
+    const response = await matchPost(request, { params: { jobReqId: "job-1" } });
     const payload = await response.json();
 
     expect(response.status).toBe(401);

@@ -5,8 +5,8 @@ import { runShortlist } from '@/lib/agents/shortlist';
 import { requireRecruiterOrAdmin } from '@/lib/auth/requireRole';
 
 type RouteContext =
-  | { params: { jobId: string } }
-  | { params: Promise<{ jobId: string }> };
+  | { params: { jobReqId: string } }
+  | { params: Promise<{ jobReqId: string }> };
 
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return roleCheck.response;
     }
 
-    const { jobId } = await Promise.resolve(context.params);
+    const { jobReqId } = await Promise.resolve(context.params);
     const body = await req.json().catch(() => ({}));
 
     const recruiterId =
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     const result = await runShortlist({
       recruiterId,
-      jobId,
+      jobId: jobReqId,
       shortlistLimit: body.shortlistLimit,
     });
 

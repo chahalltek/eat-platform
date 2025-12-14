@@ -6,7 +6,7 @@ import { requireRecruiterOrAdmin } from '@/lib/auth/requireRole';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> }
+  { params }: { params: Promise<{ jobReqId: string }> }
 ) {
   try {
     const roleCheck = await requireRecruiterOrAdmin(req);
@@ -15,11 +15,11 @@ export async function POST(
       return roleCheck.response;
     }
 
-    const { jobId } = await params;
+    const { jobReqId } = await params;
     const body = await req.json().catch(() => ({}));
 
     const result = await runExplainForJob({
-      jobId,
+      jobId: jobReqId,
       candidateIds: Array.isArray(body.candidateIds) ? body.candidateIds : undefined,
       tenantId: typeof body.tenantId === "string" ? body.tenantId : undefined,
     });

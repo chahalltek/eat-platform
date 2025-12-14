@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { POST as explainJobPost } from "@/app/api/jobs/[jobId]/explain/route";
-import { POST as shortlistJobPost } from "@/app/api/jobs/[jobId]/shortlist/route";
+import { POST as explainJobPost } from "@/app/api/jobs/[jobReqId]/explain/route";
+import { POST as shortlistJobPost } from "@/app/api/jobs/[jobReqId]/shortlist/route";
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const { mockRunExplainForJob, mockRunShortlist } = vi.hoisted(() => {
@@ -59,7 +59,7 @@ describe("EXPLAIN and SHORTLIST job endpoints", () => {
         url: "http://localhost/api/jobs/job-123/explain",
         json: explainBody,
       }),
-      { params: { jobId: "job-123" } },
+      { params: { jobReqId: "job-123" } },
     );
 
     const payload = await response.json();
@@ -83,7 +83,7 @@ describe("EXPLAIN and SHORTLIST job endpoints", () => {
         url: "http://localhost/api/jobs/job-123/shortlist",
         json: shortlistBody,
       }),
-      { params: { jobId: "job-123" } },
+      { params: { jobReqId: "job-123" } },
     );
 
     const payload = await response.json();

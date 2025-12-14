@@ -4,7 +4,7 @@ import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
 import { parseJobIntentPayload, upsertJobIntent } from "@/lib/jobIntent";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ jobReqId: string }> }) {
   const roleCheck = await requireRecruiterOrAdmin(req);
 
   if (!roleCheck.ok) {
@@ -26,10 +26,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ jobI
   }
 
   const { prisma, tenantId } = scopedTenant;
-  const { jobId } = await params;
+  const { jobReqId } = await params;
 
   const jobIntent = await prisma.jobIntent.findFirst({
-    where: { jobReqId: jobId, tenantId },
+    where: { jobReqId: jobReqId, tenantId },
   });
 
   if (!jobIntent) {
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ jobI
 
 async function handleMutation(
   req: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> },
+  { params }: { params: Promise<{ jobReqId: string }> },
 ): Promise<NextResponse> {
   const roleCheck = await requireRecruiterOrAdmin(req);
 
@@ -64,7 +64,7 @@ async function handleMutation(
   }
 
   const { prisma, tenantId } = scopedTenant;
-  const { jobId } = await params;
+  const { jobReqId } = await params;
 
   let body: unknown;
 
@@ -81,7 +81,7 @@ async function handleMutation(
   }
 
   const jobIntent = await upsertJobIntent(prisma, {
-    jobReqId: jobId,
+    jobReqId,
     tenantId,
     payload: parsedPayload,
     createdById: roleCheck.user?.id ?? null,
@@ -92,10 +92,10 @@ async function handleMutation(
   return NextResponse.json(jobIntent, { status });
 }
 
-export async function POST(req: NextRequest, context: { params: Promise<{ jobId: string }> }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ jobReqId: string }> }) {
   return handleMutation(req, context);
 }
 
-export async function PUT(req: NextRequest, context: { params: Promise<{ jobId: string }> }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ jobReqId: string }> }) {
   return handleMutation(req, context);
 }

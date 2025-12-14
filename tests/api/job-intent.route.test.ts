@@ -1,7 +1,7 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET, POST, PUT } from "@/app/api/jobs/[jobId]/intent/route";
+import { GET, POST, PUT } from "@/app/api/jobs/[jobReqId]/intent/route";
 import { createNextRouteTestServer } from "@tests/test-utils/nextRouteTestServer";
 
 const mocks = vi.hoisted(() => ({
@@ -15,8 +15,8 @@ vi.mock("@/lib/agents/tenantScope", () => ({
   toTenantErrorResponse: () => null,
 }));
 
-function buildContext(jobId: string) {
-  return { params: Promise.resolve({ jobId }) } as any;
+function buildContext(jobReqId: string) {
+  return { params: Promise.resolve({ jobReqId }) } as any;
 }
 
 const payload = {
