@@ -64,9 +64,24 @@ vi.mock("@/server/db", async () => {
     $disconnect: vi.fn(),
   } as const;
 
+  const TenantDeletionMode = {
+    SOFT_DELETE: "SOFT_DELETE",
+    HARD_DELETE: "HARD_DELETE",
+  } as const;
+
+  const JobCandidateStatus = {
+    NEW: "NEW",
+    SHORTLISTED: "SHORTLISTED",
+    SUBMITTED: "SUBMITTED",
+    REJECTED: "REJECTED",
+    HIRED: "HIRED",
+  } as const;
+
   return {
     ...actual,
     prisma,
+    TenantDeletionMode,
+    JobCandidateStatus,
     isPrismaUnavailableError: vi.fn(() => false),
     isTableAvailable: vi.fn(async () => true),
   };
