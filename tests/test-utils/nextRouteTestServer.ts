@@ -3,14 +3,14 @@ import { NextRequest } from "next/server";
 
 export type NextHandler = (req: NextRequest, context?: any) => Promise<Response> | Response;
 
-async function readBody(req: http.IncomingMessage): Promise<Buffer | undefined> {
+async function readBody(req: http.IncomingMessage): Promise<Uint8Array | null> {
   const chunks: Buffer[] = [];
 
   for await (const chunk of req) {
     chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
   }
 
-  if (!chunks.length) return undefined;
+  if (!chunks.length) return null;
 
   return Buffer.concat(chunks);
 }
@@ -35,10 +35,15 @@ export function createNextRouteTestServer(
       }
     }
 
+    const requestBody =
+      body !== null
+        ? new Blob([body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) as ArrayBuffer])
+        : null;
+
     const request = new Request(`http://localhost${req.url ?? ""}`, {
       method: req.method,
       headers,
-      body,
+      body: requestBody,
     });
 
     const nextRequest = new NextRequest(request);
