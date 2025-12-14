@@ -295,36 +295,43 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   const readinessSummary: Array<{
     label: string;
     value: string;
+    description: string;
     tone: "positive" | "negative" | "neutral" | "caution";
   }> = [
     {
       label: "Diagnostics available",
       value: diagnosticsAvailable ? "YES" : "NO",
+      description: "Live tenant diagnostics collected for observability.",
       tone: diagnosticsAvailable ? "positive" : "negative",
     },
     {
       label: "Job intent pipeline",
       value: jobIntentStatus,
+      description: "Job intent enrichment coverage and health.",
       tone: jobIntentStatus === "READY" ? "positive" : jobIntentStatus === "MISSING" ? "negative" : "neutral",
     },
     {
       label: "Agent loop",
       value: "READY",
+      description: "Core agent orchestration services are responsive.",
       tone: "positive",
     },
     {
       label: "Execution mode",
       value: executionEnabled ? "ENABLED" : "DISABLED",
+      description: "Agent write actions to external systems are permitted.",
       tone: executionEnabled ? "positive" : "negative",
     },
     {
       label: "External writeback",
       value: writebackEnabled ? "ENABLED" : "DISABLED",
+      description: "Synchronization to ATS/CRM connectors is enabled.",
       tone: writebackEnabled ? "positive" : "neutral",
     },
     {
       label: "Security mode",
       value: securityMode.toUpperCase(),
+      description: "Active security posture applied to tenant workloads.",
       tone: "caution",
     },
   ];
