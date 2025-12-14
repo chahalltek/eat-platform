@@ -63,6 +63,12 @@ enum JobCandidateStatus {
   REJECTED
 }
 
+enum HiringManagerBriefStatus {
+  DRAFT
+  READY
+  SENT
+}
+
 model User {
   id          String   @id @default(cuid())
   tenantId    String   @default("default-tenant")
@@ -621,6 +627,23 @@ model JobCandidate {
 
   @@index([tenantId, jobReqId])
   @@index([tenantId, candidateId])
+}
+
+model HiringManagerBrief {
+  id        String                    @id @default(cuid())
+  tenantId  String                    @default("default-tenant")
+  jobReq    JobReq                    @relation(fields: [jobReqId], references: [id])
+  jobReqId  String
+  content   Json
+  status    HiringManagerBriefStatus  @default(DRAFT)
+  createdBy String
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
+  sentAt    DateTime?
+  sentTo    String?
+
+  @@index([tenantId])
+  @@index([tenantId, jobReqId])
 }
 
 model DecisionStream {

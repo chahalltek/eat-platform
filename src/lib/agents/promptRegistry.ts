@@ -7,6 +7,10 @@ import {
   NEXT_BEST_ACTION_PROMPT_VERSION,
   NEXT_BEST_ACTION_SYSTEM_PROMPT,
 } from '@/lib/agents/contracts/nextBestActionContract';
+import {
+  HIRING_MANAGER_BRIEF_PROMPT_VERSION,
+  HIRING_MANAGER_BRIEF_SYSTEM_PROMPT,
+} from '@/lib/agents/contracts/hiringManagerBriefContract';
 import { prisma } from '@/server/db';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
@@ -14,6 +18,7 @@ export const AGENT_PROMPTS = {
   RINA_SYSTEM: 'ETE-TS.RINA',
   RUA_SYSTEM: 'ETE-TS.RUA',
   NBA_SYSTEM: 'ETE-TS.NEXT_BEST_ACTION',
+  HIRING_MANAGER_BRIEF: 'ETE-TS.HM_BRIEF',
 } as const;
 
 export type AgentPromptName = (typeof AGENT_PROMPTS)[keyof typeof AGENT_PROMPTS];
@@ -41,6 +46,13 @@ const DEFAULT_PROMPTS: AgentPromptDefinition[] = [
     agentName: AGENT_PROMPTS.NBA_SYSTEM,
     version: NEXT_BEST_ACTION_PROMPT_VERSION,
     prompt: NEXT_BEST_ACTION_SYSTEM_PROMPT,
+    active: true,
+    rollbackVersion: null,
+  },
+  {
+    agentName: AGENT_PROMPTS.HIRING_MANAGER_BRIEF,
+    version: HIRING_MANAGER_BRIEF_PROMPT_VERSION,
+    prompt: HIRING_MANAGER_BRIEF_SYSTEM_PROMPT,
     active: true,
     rollbackVersion: null,
   },

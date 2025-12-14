@@ -51,6 +51,7 @@ export const AGENTS = {
   OUTREACH: 'ETE-TS.OUTREACH',
   OUTREACH_AUTOMATION: 'ETE-TS.OUTREACH_AUTOMATION',
   NEXT_BEST_ACTION: 'ETE-TS.NEXT_BEST_ACTION',
+  HIRING_MANAGER_BRIEF: 'ETE-TS.HM_BRIEF',
 } as const;
 
 export const AGENT_KILL_SWITCHES = AGENTS;
@@ -135,6 +136,8 @@ export function describeAgent(agentName: AgentName) {
       return 'Outreach automation';
     case AGENTS.NEXT_BEST_ACTION:
       return 'Next best action recommender';
+    case AGENTS.HIRING_MANAGER_BRIEF:
+      return 'Hiring manager brief generator';
     case AGENTS.RANKER:
       return 'Shortlist ranker';
     default:
