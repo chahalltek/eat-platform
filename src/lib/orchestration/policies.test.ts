@@ -1,8 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { type OrchestrationPolicy, DEFAULT_ORCHESTRATION_POLICIES, getTenantPolicies, parsePolicyConfig, selectApplicablePolicies } from "./policies";
 
 describe("orchestration policies", () => {
+  it("handles malformed config strings gracefully", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    expect(parsePolicyConfig("")).toEqual({});
+    expect(parsePolicyConfig("not-json")).toEqual({});
+    expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
+
   it("parses tenant config safely", () => {
     const raw = JSON.stringify({
       "tenant-a": [
@@ -18,9 +28,24 @@ describe("orchestration policies", () => {
     expect(config["*"][0]?.steps).toEqual(["MATCH"]);
   });
 
+  it("ignores malformed policy entries while keeping defaults", () => {
+    const raw = JSON.stringify({ "tenant-a": ["nope", { when: "manual", steps: ["MATCH"] }] });
+
+    const config = parsePolicyConfig(raw);
+
+    expect(config["tenant-a"]).toEqual([{ when: "manual", steps: ["MATCH"] }]);
+    expect(getTenantPolicies("tenant-a", raw)).toEqual([{ when: "manual", steps: ["MATCH"] }]);
+    expect(getTenantPolicies("unknown", raw)).toEqual(DEFAULT_ORCHESTRATION_POLICIES);
+  });
+
   it("falls back to defaults when config is missing or invalid", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
     expect(getTenantPolicies("tenant-1", undefined)).toEqual(DEFAULT_ORCHESTRATION_POLICIES);
     expect(getTenantPolicies("tenant-1", "not-json")).toEqual(DEFAULT_ORCHESTRATION_POLICIES);
+    expect(warnSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
   });
 
   it("filters policies by event and candidate counts", () => {

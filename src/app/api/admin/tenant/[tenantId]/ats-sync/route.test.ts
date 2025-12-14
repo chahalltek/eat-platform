@@ -76,12 +76,18 @@ describe("GET /api/admin/tenant/[tenantId]/ats-sync", () => {
   });
 
   it("maps errors to 500", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN" });
     mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
     mockLoadLatestAtsSync.mockRejectedValue(new Error("boom"));
 
     const response = await GET(buildRequest(), { params: Promise.resolve({ tenantId: "tenant-a" }) });
+    const body = await response.json();
 
     expect(response.status).toBe(500);
+    expect(body).toEqual({ error: "Unable to load ATS sync run" });
+    expect(consoleSpy).toHaveBeenCalledWith("Failed to fetch latest ATS sync run", expect.any(Error));
+
+    consoleSpy.mockRestore();
   });
 });

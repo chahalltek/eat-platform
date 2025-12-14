@@ -131,20 +131,20 @@ function coerceConfidence(
   return normalized as CopilotResponse["confidence"];
 }
 
-  function extractJsonPayload(raw: string) {
-    try {
-      return JSON.parse(raw) as Partial<CopilotResponse>;
-    } catch {
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) return null;
+export function extractJsonPayload(raw: string) {
+  try {
+    return JSON.parse(raw) as Partial<CopilotResponse>;
+  } catch {
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return null;
 
-      try {
-        return JSON.parse(match[0]) as Partial<CopilotResponse>;
-      } catch {
-        return null;
-      }
+    try {
+      return JSON.parse(match[0]) as Partial<CopilotResponse>;
+    } catch {
+      return null;
     }
   }
+}
 
 function normalizeBullets(bullets: unknown) {
   if (!Array.isArray(bullets)) return [] as string[];

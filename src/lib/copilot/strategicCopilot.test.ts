@@ -8,7 +8,20 @@ vi.mock("@/lib/llm", () => ({
   ),
 }));
 
-import { generateStrategicCopilotResponse, type EvidencePack } from "./strategicCopilot";
+import { extractJsonPayload, generateStrategicCopilotResponse, type EvidencePack } from "./strategicCopilot";
+
+describe("extractJsonPayload", () => {
+  it("returns null for malformed payloads", () => {
+    expect(extractJsonPayload("not json")).toBeNull();
+    expect(extractJsonPayload("prefix {not: 'json'} suffix")).toBeNull();
+  });
+
+  it("extracts embedded JSON blocks", () => {
+    const parsed = extractJsonPayload("The answer is {\"answer\":\"hi\"}");
+
+    expect(parsed).toEqual({ answer: "hi" });
+  });
+});
 
 describe("generateStrategicCopilotResponse", () => {
   it("drops to low confidence when evidence is missing", async () => {
@@ -63,5 +76,19 @@ describe("generateStrategicCopilotResponse", () => {
 
     expect(response.confidence).toBe("low");
     expect(response.caveats).toContain("Market signals are unavailable right now.");
+  });
+
+  it("falls back to safe responses when evidence pack is empty", async () => {
+    const callSpy = vi.spyOn(await import("@/lib/llm"), "callLLM");
+
+    const response = await generateStrategicCopilotResponse({
+      request: { tenantId: "tenant-1", userId: "user-1", query: "What now?" },
+      evidencePack: { benchmarks: null, forecasts: [], marketSignals: null, mqiSignals: [], l2Results: [] },
+    });
+
+    expect(response.confidence).toBe("low");
+    expect(response.answer).toContain("could not find enough vetted ETE evidence");
+    expect(response.bullets).toEqual([]);
+    expect(callSpy).not.toHaveBeenCalled();
   });
 });
