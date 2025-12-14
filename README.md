@@ -1,5 +1,10 @@
 The ETE platform is a [Next.js](https://nextjs.org) application with CI guardrails baked in for security- and compliance-sensitive features.
 
+## Architecture references
+
+- [API map](docs/architecture/api-map.md) — route groups, ownership (EAT vs. ETE), and where to add new endpoints.
+- [EAT vs. ETE blueprint](docs/architecture/eat-vs-ete.md) — the platform-first intent, current split, and realignment plan.
+
 ## Definition of Done (DoD) enforcement
 
 The CI workflow enforces our enterprise DoD. A build will fail when any of the following protections do not pass:

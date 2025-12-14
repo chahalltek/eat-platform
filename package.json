@@ -21,7 +21,8 @@
     "seed": "ts-node prisma/seed.ts",
     "seed:demo": "ts-node scripts/seed-demo-tenant.ts",
     "provision-demo-users": "ts-node scripts/provision-demo-users.ts",
-    "prisma:guard": "node scripts/db-safety.js"
+    "prisma:guard": "node scripts/db-safety.js",
+    "docs:api-map": "tsx scripts/generate-api-map.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
