@@ -11,6 +11,11 @@ The ETE platform is a [Next.js](https://nextjs.org) application with CI guardrai
 - [EAT vs ETE alignment](./docs/architecture/eat-vs-ete.md) – how the original platform blueprint compares to the current ETE implementation and a plan to realign.
 >>>>>>> theirs
 
+## Security
+- [Security baseline alignment](./docs/security/security-baseline-alignment.md) – snapshot of current controls and Azure migration deltas.
+- [Environment modes](./docs/security/environment-modes.md) – how controls differ across local, dev, staging, and production.
+- [Azure migration checklist](./docs/security/migration-checklist-azure.md) – required actions before cutover to Azure services.
+
 ## Definition of Done (DoD) enforcement
 
 The CI workflow enforces our enterprise DoD. A build will fail when any of the following protections do not pass:
