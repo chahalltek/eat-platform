@@ -294,42 +294,49 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
 
   const readinessSummary: Array<{
     label: string;
+    detailLabel?: string;
     value: string;
     description: string;
     tone: "positive" | "negative" | "neutral" | "caution";
   }> = [
     {
       label: "Diagnostics available",
+      detailLabel: "Diagnostics availability",
       value: diagnosticsAvailable ? "YES" : "NO",
       description: "Live tenant diagnostics collected for observability.",
       tone: diagnosticsAvailable ? "positive" : "negative",
     },
     {
       label: "Job intent pipeline",
+      detailLabel: "Intent coverage readiness",
       value: jobIntentStatus,
       description: "Job intent enrichment coverage and health.",
       tone: jobIntentStatus === "READY" ? "positive" : jobIntentStatus === "MISSING" ? "negative" : "neutral",
     },
     {
       label: "Agent loop",
+      detailLabel: "Agent loop readiness",
       value: "READY",
       description: "Core agent orchestration services are responsive.",
       tone: "positive",
     },
     {
       label: "Execution mode",
+      detailLabel: "Execution mode status",
       value: executionEnabled ? "ENABLED" : "DISABLED",
       description: "Agent write actions to external systems are permitted.",
       tone: executionEnabled ? "positive" : "negative",
     },
     {
       label: "External writeback",
+      detailLabel: "External writeback status",
       value: writebackEnabled ? "ENABLED" : "DISABLED",
       description: "Synchronization to ATS/CRM connectors is enabled.",
       tone: writebackEnabled ? "positive" : "neutral",
     },
     {
       label: "Security mode",
+      detailLabel: "Security mode posture",
       value: securityMode.toUpperCase(),
       description: "Active security posture applied to tenant workloads.",
       tone: "caution",
@@ -419,7 +426,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
         <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-zinc-900">Operational Readiness Summary</h3>
+              <h3 className="text-lg font-semibold text-zinc-900">Operational Readiness Checks</h3>
               <p className="text-sm text-zinc-600">
                 Snapshot of platform readiness based on diagnostics, guardrails, and kill switch coverage.
               </p>
@@ -431,7 +438,9 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
           <div className="grid gap-4 md:grid-cols-3">
             {readinessSummary.map((row) => (
               <div key={row.label} className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
-                <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{row.label}</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  {row.detailLabel ?? row.label}
+                </div>
                 <div className="mt-2 text-lg font-semibold text-zinc-900">{row.value ?? "UNKNOWN"}</div>
                 <p className="mt-1 text-sm text-zinc-600">{row.description}</p>
               </div>

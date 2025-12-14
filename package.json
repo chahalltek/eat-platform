@@ -42,6 +42,7 @@
     "pdf-parse": "^2.4.5",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "supertest": "^7.1.4",
     "zod": "^4.1.13"
   },
   "devDependencies": {
@@ -61,7 +62,6 @@
     "png-to-ico": "^3.0.1",
     "prisma": "^5.19.0",
     "sharp": "^0.34.5",
-    "supertest": "^7.1.4",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
