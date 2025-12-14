@@ -11,6 +11,12 @@ import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/server/db';
 
+export {
+  assertValidRinaResponse,
+  RINA_PROMPT_VERSION,
+  type RinaLLMResponse,
+} from '@/lib/agents/contracts/rinaContract';
+
 export type RinaInput = {
   rawResumeText: string;
   sourceType?: string;
