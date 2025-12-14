@@ -22,6 +22,14 @@ export type SessionValidationResult = {
 const SESSION_COOKIE_NAME = "ete_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
+function getCookieDomain() {
+  const configuredDomain = process.env.AUTH_COOKIE_DOMAIN?.trim();
+
+  if (!configuredDomain) return undefined;
+
+  return configuredDomain.startsWith(".") ? configuredDomain : `.${configuredDomain}`;
+}
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -110,6 +118,7 @@ export async function createSessionCookie(user: {
     name: SESSION_COOKIE_NAME,
     value: token,
     httpOnly: true,
+    domain: getCookieDomain(),
     path: "/",
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
@@ -122,6 +131,7 @@ export function clearSessionCookie() {
     name: SESSION_COOKIE_NAME,
     value: "",
     httpOnly: true,
+    domain: getCookieDomain(),
     path: "/",
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",

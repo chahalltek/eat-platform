@@ -181,6 +181,18 @@ describe("session tokens", () => {
     expect(claims?.tenantId).toBe("tenant-y");
   });
 
+  it("sets a shared domain when configured", async () => {
+    process.env.AUTH_COOKIE_DOMAIN = "auth.example.com";
+
+    const cookie = await createSessionCookie({ id: "user-9" });
+    const clearingCookie = clearSessionCookie();
+
+    expect(cookie.domain).toBe(".auth.example.com");
+    expect(clearingCookie.domain).toBe(".auth.example.com");
+
+    delete process.env.AUTH_COOKIE_DOMAIN;
+  });
+
   it("returns a clearing cookie definition", () => {
     const cookie = clearSessionCookie();
 
