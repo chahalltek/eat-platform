@@ -1,9 +1,13 @@
-import { Prisma } from '@/server/db';
+import { Prisma } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_TENANT_ID } from './config';
 import { USER_ROLES, isAdminRole } from './roles';
-import { findOrCreateUserFromIdentity, type ProviderIdentityClaims } from './userIdentity';
+import {
+  IdentityLinkingError,
+  findOrCreateUserFromIdentity,
+  type ProviderIdentityClaims,
+} from './userIdentity';
 
 const prismaMock = vi.hoisted(() => ({
   userIdentity: {
@@ -21,6 +25,7 @@ const assertTenantWithinLimits = vi.hoisted(() => vi.fn());
 
 vi.mock('@/server/db', () => ({
   prisma: prismaMock,
+  Prisma,
 }));
 
 vi.mock('@/lib/subscription/usageLimits', () => ({
@@ -201,9 +206,10 @@ describe('findOrCreateUserFromIdentity', () => {
       new Prisma.PrismaClientKnownRequestError('Duplicate', { clientVersion: '5.0.0', code: 'P2002' }),
     );
 
-    await expect(findOrCreateUserFromIdentity(baseClaims)).rejects.toThrow(
-      'Identity for provider okta and subject abc-123 already exists.',
-    );
+    await expect(findOrCreateUserFromIdentity(baseClaims)).rejects.toMatchObject({
+      code: 'IDENTITY_ALREADY_LINKED',
+      message: 'Identity for provider okta and subject abc-123 already exists.',
+    });
   });
 
   it('propagates unexpected identity persistence errors', async () => {
@@ -220,6 +226,12 @@ describe('findOrCreateUserFromIdentity', () => {
     prismaMock.userIdentity.findFirst.mockResolvedValue(null);
     prismaMock.userIdentity.create.mockRejectedValue(failure);
 
-    await expect(findOrCreateUserFromIdentity(baseClaims)).rejects.toThrow('db unavailable');
+    const result = findOrCreateUserFromIdentity(baseClaims);
+
+    await expect(result).rejects.toBeInstanceOf(IdentityLinkingError);
+    await expect(result).rejects.toMatchObject({
+      code: 'IDENTITY_PERSISTENCE_FAILED',
+      message: 'Failed to persist identity link: db unavailable',
+    });
   });
 });

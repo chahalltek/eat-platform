@@ -3,8 +3,23 @@ import { Prisma, type User } from '@/server/db';
 import { prisma } from '@/server/db';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
+import { AuthFailureError } from '@/lib/errors';
+
 import { DEFAULT_TENANT_ID } from './config';
 import { USER_ROLES, normalizeRole } from './roles';
+
+export type IdentityLinkingErrorCode = 'IDENTITY_ALREADY_LINKED' | 'IDENTITY_PERSISTENCE_FAILED';
+
+export class IdentityLinkingError extends AuthFailureError {
+  constructor(
+    message: string,
+    public readonly code: IdentityLinkingErrorCode,
+    public readonly cause?: unknown,
+  ) {
+    super(message, 'We could not link your account. Please try again.');
+    this.name = 'IdentityLinkingError';
+  }
+}
 
 export type ProviderIdentityClaims = {
   provider: string;
@@ -59,17 +74,30 @@ async function ensureNoConflictingIdentity(userId: string, provider: string, sub
   }
 }
 
+function isUniqueIdentityError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+}
+
 async function attachIdentityToUser(userId: string, provider: string, subject: string) {
   try {
     return await prisma.userIdentity.create({
       data: { userId, provider, subject },
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new Error(`Identity for provider ${provider} and subject ${subject} already exists.`);
+    if (isUniqueIdentityError(error)) {
+      throw new IdentityLinkingError(
+        `Identity for provider ${provider} and subject ${subject} already exists.`,
+        'IDENTITY_ALREADY_LINKED',
+        error,
+      );
     }
 
-    throw error;
+    const reason = error instanceof Error ? error.message : 'Unknown error';
+    throw new IdentityLinkingError(
+      `Failed to persist identity link: ${reason}`,
+      'IDENTITY_PERSISTENCE_FAILED',
+      error,
+    );
   }
 }
 
