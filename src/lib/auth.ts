@@ -1,14 +1,12 @@
-export type AppUser = {
-  id: string;
-  email: string;
-  role: 'recruiter' | 'admin' | 'hiring_manager';
-};
+import type { NextRequest } from "next/server";
 
-export function getCurrentUser(): AppUser {
-  // TEMPORARY stub implementation for MVP
-  return {
-    id: 'charlie',
-    email: 'charlie@strategicsystems.io',
-    role: 'recruiter',
-  };
+import {
+  getCurrentUser as resolveCurrentUser,
+  type IdentityUser,
+} from "./auth/identityProvider";
+
+export type AppUser = IdentityUser;
+
+export function getCurrentUser(req?: NextRequest) {
+  return resolveCurrentUser(req);
 }
