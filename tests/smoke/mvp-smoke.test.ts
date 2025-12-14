@@ -1,10 +1,10 @@
-import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as agentRunPost } from "@/app/api/agents/agent/run/route";
 import { GET as tenantDiagnosticsGet } from "@/app/api/tenant/diagnostics/route";
 import { GET as jobIntentGet } from "@/app/api/jobs/[jobReqId]/intent/route";
 import { createNextRouteTestServer } from "@tests/test-utils/nextRouteTestServer";
+import { withListeningServer } from "@tests/test-utils/serverHelpers";
 
 const mocks = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
@@ -60,19 +60,22 @@ describe("MVP smoke tests", () => {
 
     const server = createNextRouteTestServer(agentRunPost);
 
-    await request(server)
-      .post("/api/agents/agent/run?agent=MVP.AGENT")
-      .send({ payload: { foo: "bar" } })
-      .expect(200)
-      .expect(({ body }) => {
-        expect(body).toEqual({ ok: true, result: { agentRunId: "run-123", result: { ok: true } }, traceId: "run-123" });
-        expect(mocks.mockAgentHandler).toHaveBeenCalledWith({
-          input: { payload: { foo: "bar" } },
-          ctx: { currentUser: { id: "user-1", email: "u@example.com", displayName: "User", role: "USER" }, req: expect.anything() },
-        });
+    await withListeningServer(server, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/agents/agent/run?agent=MVP.AGENT`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ payload: { foo: "bar" } }),
       });
 
-    server.close();
+      expect(response.status).toBe(200);
+
+      const body = await response.json();
+      expect(body).toEqual({ ok: true, result: { agentRunId: "run-123", result: { ok: true } }, traceId: "run-123" });
+      expect(mocks.mockAgentHandler).toHaveBeenCalledWith({
+        input: { payload: { foo: "bar" } },
+        ctx: { currentUser: { id: "user-1", email: "u@example.com", displayName: "User", role: "USER" }, req: expect.anything() },
+      });
+    });
   });
 
   it("reads a tenant-scoped job intent", async () => {
@@ -86,14 +89,14 @@ describe("MVP smoke tests", () => {
       buildContext: () => buildJobIntentContext("job-9"),
     });
 
-    await request(server)
-      .get("/api/jobs/job-9/intent")
-      .expect(200)
-      .expect(({ body }) => {
-        expect(body).toMatchObject({ id: "intent-1", jobReqId: "job-9", tenantId: "tenant-a" });
-      });
+    await withListeningServer(server, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/jobs/job-9/intent`);
 
-    server.close();
+      expect(response.status).toBe(200);
+
+      const body = await response.json();
+      expect(body).toMatchObject({ id: "intent-1", jobReqId: "job-9", tenantId: "tenant-a" });
+    });
   });
 
   it("returns diagnostics for authorized tenant admins", async () => {
@@ -103,13 +106,13 @@ describe("MVP smoke tests", () => {
 
     const server = createNextRouteTestServer(tenantDiagnosticsGet);
 
-    await request(server)
-      .get("/api/tenant/diagnostics")
-      .expect(200)
-      .expect(({ body }) => {
-        expect(body).toMatchObject({ tenantId: "tenant-a", featureFlags: { enabled: true } });
-      });
+    await withListeningServer(server, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/tenant/diagnostics`);
 
-    server.close();
+      expect(response.status).toBe(200);
+
+      const body = await response.json();
+      expect(body).toMatchObject({ tenantId: "tenant-a", featureFlags: { enabled: true } });
+    });
   });
 });

@@ -1,8 +1,8 @@
-import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET, POST, PUT } from "@/app/api/jobs/[jobReqId]/intent/route";
 import { createNextRouteTestServer } from "@tests/test-utils/nextRouteTestServer";
+import { withListeningServer } from "@tests/test-utils/serverHelpers";
 
 const mocks = vi.hoisted(() => ({
   mockRequireRecruiterOrAdmin: vi.fn(),
@@ -55,13 +55,18 @@ describe("Job intent routes", () => {
   it("creates a job intent via POST", async () => {
     const server = createNextRouteTestServer(POST, { buildContext: () => buildContext("job-55") });
 
-    await request(server)
-      .post("/api/jobs/job-55/intent")
-      .send(payload)
-      .expect(201)
-      .expect(({ body }) => {
-        expect(body).toMatchObject({ id: "intent-1", jobReqId: "job-55", tenantId: "tenant-1" });
+    await withListeningServer(server, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/jobs/job-55/intent`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
       });
+
+      expect(response.status).toBe(201);
+
+      const body = await response.json();
+      expect(body).toMatchObject({ id: "intent-1", jobReqId: "job-55", tenantId: "tenant-1" });
+    });
 
     const prisma = (await mocks.mockGetTenantScopedPrismaClient.mock.results[0].value).prisma;
 
@@ -79,54 +84,58 @@ describe("Job intent routes", () => {
         createdById: "user-7",
       },
     });
-
-    server.close();
   });
 
   it("updates a job intent via PUT", async () => {
     const server = createNextRouteTestServer(PUT, { buildContext: () => buildContext("job-55") });
 
-    await request(server)
-      .put("/api/jobs/job-55/intent")
-      .send({ payload })
-      .expect(200)
-      .expect(({ body }) => {
-        expect(body).toMatchObject({ id: "intent-1", jobReqId: "job-55", tenantId: "tenant-1" });
+    await withListeningServer(server, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/jobs/job-55/intent`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ payload }),
       });
 
-    server.close();
+      expect(response.status).toBe(200);
+
+      const body = await response.json();
+      expect(body).toMatchObject({ id: "intent-1", jobReqId: "job-55", tenantId: "tenant-1" });
+    });
   });
 
   it("retrieves a job intent via GET", async () => {
     const server = createNextRouteTestServer(GET, { buildContext: () => buildContext("job-55") });
 
-    await request(server)
-      .get("/api/jobs/job-55/intent")
-      .expect(200)
-      .expect(({ body }) => {
-        expect(body).toMatchObject({ id: "intent-1", jobReqId: "job-55", tenantId: "tenant-1" });
+    await withListeningServer(server, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/jobs/job-55/intent`);
+
+      expect(response.status).toBe(200);
+
+      const body = await response.json();
+      expect(body).toMatchObject({ id: "intent-1", jobReqId: "job-55", tenantId: "tenant-1" });
+
+      const prisma = (await mocks.mockGetTenantScopedPrismaClient.mock.results[0].value).prisma;
+
+      expect(prisma.jobIntent.findFirst).toHaveBeenCalledWith({
+        where: { jobReqId: "job-55", tenantId: "tenant-1" },
       });
-
-    const prisma = (await mocks.mockGetTenantScopedPrismaClient.mock.results[0].value).prisma;
-
-    expect(prisma.jobIntent.findFirst).toHaveBeenCalledWith({
-      where: { jobReqId: "job-55", tenantId: "tenant-1" },
     });
-
-    server.close();
   });
 
   it("rejects invalid payloads", async () => {
     const server = createNextRouteTestServer(POST, { buildContext: () => buildContext("job-55") });
 
-    await request(server)
-      .post("/api/jobs/job-55/intent")
-      .send({})
-      .expect(400)
-      .expect(({ body }) => {
-        expect(body.error).toBe("Invalid job intent payload");
+    await withListeningServer(server, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/jobs/job-55/intent`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
       });
 
-    server.close();
+      expect(response.status).toBe(400);
+
+      const body = await response.json();
+      expect(body.error).toBe("Invalid job intent payload");
+    });
   });
 });
