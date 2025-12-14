@@ -34,6 +34,17 @@ export async function GET(req: NextRequest) {
             id: true,
           },
         },
+        jobCandidates: {
+          select: {
+            confidenceScore: true,
+            confidenceBand: true,
+            confidenceNarrative: true,
+            confidenceUpdatedAt: true,
+            updatedAt: true,
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 1,
+        },
       },
       orderBy: { updatedAt: "desc" },
       take: 200,
@@ -46,6 +57,17 @@ export async function GET(req: NextRequest) {
       location: candidate.location,
       status: candidate.status,
       parsingConfidence: candidate.parsingConfidence,
+      confidence:
+        candidate.jobCandidates[0]
+          ? {
+              score: candidate.jobCandidates[0].confidenceScore ?? null,
+              band: candidate.jobCandidates[0].confidenceBand ?? null,
+              narrative: candidate.jobCandidates[0].confidenceNarrative ?? null,
+              updatedAt:
+                candidate.jobCandidates[0].confidenceUpdatedAt?.toISOString() ??
+                candidate.jobCandidates[0].updatedAt.toISOString(),
+            }
+          : null,
       updatedAt: candidate.updatedAt.toISOString(),
     }));
 

@@ -376,18 +376,13 @@ model JobReq {
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
   hiringOutcomes       HiringOutcome[]
-<<<<<<< ours
   jobIntent            JobIntent?
-=======
-  jobIntent           JobIntent?
->>>>>>> theirs
 
   @@index([tenantId])
   @@index([tenantId, customerId])
 }
 
 model JobIntent {
-<<<<<<< ours
   id          String   @id @default(cuid())
   tenantId    String   @default("default-tenant")
   jobReq      JobReq   @relation(fields: [jobReqId], references: [id])
@@ -400,18 +395,7 @@ model JobIntent {
 
   @@index([tenantId])
   @@index([tenantId, jobReqId])
-=======
-  id         String   @id @default(cuid())
-  tenantId   String   @default("default-tenant")
-  jobReq     JobReq   @relation(fields: [jobReqId], references: [id])
-  jobReqId   String   @unique
-  intent     Json
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([tenantId])
   @@unique([tenantId, jobReqId])
->>>>>>> theirs
 }
 
 model JobSkill {
@@ -588,6 +572,13 @@ model JobCandidate {
   status    JobCandidateStatus @default(POTENTIAL)
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
+
+  confidenceScore     Float?
+  confidenceBand      String?
+  confidenceReasons   Json?
+  confidenceNarrative String?
+  confidenceSignals   Json?
+  confidenceUpdatedAt DateTime?
 
   lastMatch         MatchResult?                @relation("JobCandidateLastMatch", fields: [lastMatchResultId], references: [id])
   lastMatchResultId String?                     @unique

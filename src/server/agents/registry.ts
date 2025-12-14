@@ -5,6 +5,7 @@ import { runIntake, type IntakeInput } from "@/server/agents/intake";
 import { runRina, type RinaInput } from "@/lib/agents/rina";
 import { runRua, type RuaInput } from "@/lib/agents/rua";
 import { type IdentityUser } from "@/lib/auth/identityProvider";
+import { runConfidenceAssessment, type ConfidenceAgentInput } from "@/server/agents/confidence";
 
 export type AgentRunContext = {
   currentUser: IdentityUser;
@@ -65,6 +66,7 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
       });
     },
   },
+<<<<<<< ours
   "ETE-TS.INTAKE": {
     key: "ETE-TS.INTAKE",
     displayName: "Intake Agent",
@@ -74,6 +76,21 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
       const trimmedJobId = requireString("jobId", jobId);
 
       return runIntake({ jobId: trimmedJobId, recruiterId: ctx.currentUser.id, sourceType, sourceTag });
+=======
+  "ETE-TS.CONFIDENCE": {
+    key: "ETE-TS.CONFIDENCE",
+    displayName: "Confidence Agent",
+    description: "Scores trust for a job-candidate pair using profile and market signals.",
+    run: async ({ input, ctx }) => {
+      const { jobCandidateId, marketSignals } = (input ?? {}) as Partial<ConfidenceAgentInput>;
+      const normalizedJobCandidateId = requireString("jobCandidateId", jobCandidateId);
+
+      return runConfidenceAssessment({
+        jobCandidateId: normalizedJobCandidateId,
+        marketSignals: marketSignals ?? null,
+        requestedBy: ctx.currentUser,
+      });
+>>>>>>> theirs
     },
   },
 };
