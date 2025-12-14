@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { HiringManagerFeedbackStatus, HiringManagerFeedbackType, Prisma } from "@prisma/client";
 import { z } from "zod";
 
+import type { IdentityUser } from "@/lib/auth/identityProvider";
 import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
@@ -37,10 +38,15 @@ const feedbackSchema = z.object({
 });
 
 type RouteContext = { params: { jobReqId: string } } | { params: Promise<{ jobReqId: string }> };
+type TenantScope = Awaited<ReturnType<typeof getTenantScopedPrismaClient>>;
 
 type TenantMembershipResult =
   | { errorResponse: NextResponse }
-  | { user: { id: string; role: string }; tenantScope: { prisma: any; tenantId: string }; jobReqId: string };
+  | {
+      user: IdentityUser;
+      tenantScope: TenantScope;
+      jobReqId: string;
+    };
 
 async function ensureTenantMembership(req: NextRequest, context: RouteContext): Promise<TenantMembershipResult> {
   const user = await getCurrentUser(req);
