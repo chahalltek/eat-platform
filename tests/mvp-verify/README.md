@@ -7,7 +7,7 @@ This suite runs a minimal set of tests to audit the MVP surface without dragging
 - Job intent helper coverage (`src/lib/jobIntent.test.ts`)
 - Agent run logging helpers (`src/lib/agentRunLog.test.ts`)
 - Tenant diagnostics builder (`src/lib/tenant/diagnostics.test.ts`)
-- Hire manager brief API verify test (`src/app/api/jobs/[jobId]/hm-brief/route.verify.test.ts`)
+- Hire manager brief API verify test (`src/app/api/jobs/[jobReqId]/hm-brief/route.verify.test.ts`)
 - Tenant operations runbook verify test (`src/app/admin/tenant/[tenantId]/operations-runbook/verify.test.tsx`)
 - MVP smoke test (`tests/smoke/mvp-smoke.test.ts`)
 

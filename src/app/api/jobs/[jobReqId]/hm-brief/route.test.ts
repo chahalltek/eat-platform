@@ -23,8 +23,8 @@ vi.mock("@/lib/agents/tenantScope", () => ({
   toTenantErrorResponse: mocks.toTenantErrorResponse,
 }));
 
-describe("GET /api/jobs/[jobId]/hm-brief", () => {
-  const baseContext = { params: { jobId: "job-123" } } as const;
+describe("GET /api/jobs/[jobReqId]/hm-brief", () => {
+  const baseContext = { params: { jobReqId: "job-123" } } as const;
 
   const briefRecord = {
     id: "brief-1",

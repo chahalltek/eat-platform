@@ -24,7 +24,7 @@ vi.mock("@/lib/orchestration/triggers", () => ({ onJobChanged: mocks.onJobChange
 
 import { POST } from "./route";
 
-describe("POST /api/jobs/[jobId]/hm-feedback", () => {
+describe("POST /api/jobs/[jobReqId]/hm-feedback", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCurrentUserMock.mockResolvedValue({ id: "user-1", role: "ADMIN" });
@@ -75,7 +75,7 @@ describe("POST /api/jobs/[jobId]/hm-feedback", () => {
       }),
     });
 
-    const response = await POST(request as any, { params: { jobId: "job-1" } });
+    const response = await POST(request as any, { params: { jobReqId: "job-1" } });
     const payload = await response.json();
 
     expect(response.status).toBe(201);
@@ -105,7 +105,7 @@ describe("POST /api/jobs/[jobId]/hm-feedback", () => {
       body: JSON.stringify({ candidateId: "candidate-1" }),
     });
 
-    const response = await POST(request as any, { params: { jobId: "job-1" } });
+    const response = await POST(request as any, { params: { jobReqId: "job-1" } });
     const payload = await response.json();
 
     expect(response.status).toBe(400);
@@ -121,7 +121,7 @@ describe("POST /api/jobs/[jobId]/hm-feedback", () => {
       body: JSON.stringify({ feedbackType: HiringManagerFeedbackType.CANDIDATE_REJECTED }),
     });
 
-    const response = await POST(request as any, { params: { jobId: "job-2" } });
+    const response = await POST(request as any, { params: { jobReqId: "job-2" } });
 
     expect(response.status).toBe(404);
     expect(mocks.prisma.hiringManagerFeedback.create).not.toHaveBeenCalled();

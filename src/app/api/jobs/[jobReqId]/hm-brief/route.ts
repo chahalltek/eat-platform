@@ -5,8 +5,8 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
 
 type RouteContext =
-  | { params: { jobId: string } }
-  | { params: Promise<{ jobId: string }> };
+  | { params: { jobReqId: string } }
+  | { params: Promise<{ jobReqId: string }> };
 
 async function ensureTenantMembership(
   req: NextRequest,
@@ -44,8 +44,7 @@ async function ensureTenantMembership(
     }
   }
 
-  const { jobId } = await Promise.resolve(context.params);
-  const jobReqId = jobId;
+  const { jobReqId } = await Promise.resolve(context.params);
 
   return { user, tenantScope, jobReqId } as const;
 }

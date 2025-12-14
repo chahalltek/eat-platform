@@ -5,7 +5,7 @@ const mvpAuditTests = [
   "src/lib/jobIntent.test.ts",
   "src/lib/agentRunLog.test.ts",
   "src/lib/tenant/diagnostics.test.ts",
-  "src/app/api/jobs/[jobId]/hm-brief/route.verify.test.ts",
+  "src/app/api/jobs/[jobReqId]/hm-brief/route.verify.test.ts",
   "src/app/admin/tenant/[tenantId]/operations-runbook/verify.test.tsx",
   "tests/smoke/mvp-smoke.test.ts",
 ];

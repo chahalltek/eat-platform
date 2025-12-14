@@ -21,10 +21,10 @@ type PrismaMock = {
   jobIntent: { findFirst: ReturnType<typeof vi.fn> };
 };
 
-type RequestContext = { params: { jobId: string } };
+type RequestContext = { params: { jobReqId: string } };
 
-function buildRequest(jobId: string) {
-  const url = new URL(`http://localhost/api/jobs/${jobId}/hm-brief`);
+function buildRequest(jobReqId: string) {
+  const url = new URL(`http://localhost/api/jobs/${jobReqId}/hm-brief`);
   const request = new Request(url, { method: "GET" });
   return new NextRequest(request);
 }
@@ -61,7 +61,9 @@ describe("verify:mvp | hiring manager brief intent contract", () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1", role: "ADMIN" });
     vi.mocked(getTenantScopedPrismaClient).mockResolvedValue({ tenantId: "tenant-1", prisma: prismaMock });
 
-    const response = await GET(buildRequest("job-123"), { params: { jobId: "job-123" } satisfies RequestContext["params"] });
+    const response = await GET(buildRequest("job-123"), {
+      params: { jobReqId: "job-123" } satisfies RequestContext["params"],
+    });
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -96,7 +98,9 @@ describe("verify:mvp | hiring manager brief intent contract", () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-2", role: "ADMIN" });
     vi.mocked(getTenantScopedPrismaClient).mockResolvedValue({ tenantId: "tenant-1", prisma: prismaMock });
 
-    const response = await GET(buildRequest("job-789"), { params: { jobId: "job-789" } satisfies RequestContext["params"] });
+    const response = await GET(buildRequest("job-789"), {
+      params: { jobReqId: "job-789" } satisfies RequestContext["params"],
+    });
     const body = await response.json();
 
     expect(response.status).toBe(200);
