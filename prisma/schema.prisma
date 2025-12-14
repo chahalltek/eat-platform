@@ -69,6 +69,18 @@ enum HiringManagerBriefStatus {
   SENT
 }
 
+enum HiringManagerFeedbackType {
+  REQUIREMENT_CHANGED
+  CANDIDATE_REJECTED
+  CANDIDATE_UPDATED
+  THRESHOLD_ADJUSTED
+}
+
+enum HiringManagerFeedbackStatus {
+  SUBMITTED
+  PROCESSED
+}
+
 model User {
   id          String   @id @default(cuid())
   tenantId    String   @default("default-tenant")
@@ -343,6 +355,7 @@ model Candidate {
   outreachActions      OutreachAction[]
   jobPostingMatches    JobPostingMatch[]
   hiringOutcomes       HiringOutcome[]
+  hiringManagerFeedbacks HiringManagerFeedback[] @relation("CandidateFeedback")
 
   @@index([tenantId])
   @@index([tenantId, deletedAt])
@@ -407,6 +420,7 @@ model JobReq {
   hiringOutcomes       HiringOutcome[]
   jobIntent            JobIntent?
   hiringManagerBriefs  HiringManagerBrief[]
+  hiringManagerFeedbacks HiringManagerFeedback[] @relation("JobReqFeedback")
 
   @@index([tenantId])
   @@index([tenantId, customerId])
@@ -423,9 +437,32 @@ model JobIntent {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  hiringManagerFeedbacks HiringManagerFeedback[] @relation("JobIntentFeedback")
+
   @@unique([tenantId, jobReqId])
   @@index([tenantId])
   @@index([tenantId, jobReqId])
+}
+
+model HiringManagerFeedback {
+  id          String                       @id @default(cuid())
+  tenantId    String                       @default("default-tenant")
+  jobReq      JobReq                       @relation("JobReqFeedback", fields: [jobReqId], references: [id])
+  jobReqId    String
+  jobIntent   JobIntent?                   @relation("JobIntentFeedback", fields: [jobIntentId], references: [id])
+  jobIntentId String?
+  candidate   Candidate?                   @relation("CandidateFeedback", fields: [candidateId], references: [id])
+  candidateId String?
+  feedbackType HiringManagerFeedbackType
+  status      HiringManagerFeedbackStatus  @default(SUBMITTED)
+  payload     Json
+  createdAt   DateTime                     @default(now())
+  updatedAt   DateTime                     @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, jobReqId])
+  @@index([tenantId, candidateId])
+  @@index([tenantId, jobIntentId])
 }
 
 model JobSkill {
