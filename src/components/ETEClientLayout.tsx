@@ -5,11 +5,13 @@ import { BRANDING } from "@/config/branding";
 
 import { AgentFailureBanner } from "@/components/AgentFailureBanner";
 import { FireDrillBanner } from "@/components/FireDrillBanner";
+import { UserSessionActions } from "@/components/auth/UserSessionActions";
 import { getAgentFailureCount } from "@/lib/agents/failures";
+import type { IdentityUser } from "@/lib/auth/identityProvider";
 import { getCurrentUser } from "@/lib/auth/user";
 import type { SystemModeName } from "@/lib/modes/systemModes";
-import { getCurrentTenantId } from "@/lib/tenant";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 function normalizeHex(color: string) {
   const hex = color.replace("#", "");
@@ -42,9 +44,11 @@ export async function ETEClientLayout({
 }: ETEClientLayoutProps) {
   let failedRuns = 0;
   let tenantMode: SystemModeName | null = null;
+  let currentUser: IdentityUser | null = null;
 
   try {
     const user = await getCurrentUser();
+    currentUser = user;
     const tenantId = await getCurrentTenantId();
 
     const mode = await loadTenantMode(tenantId);
@@ -88,7 +92,12 @@ export async function ETEClientLayout({
       ) : null}
       {isFireDrill ? <FireDrillBanner maxWidthClassName={maxWidthClassName} /> : null}
       <AgentFailureBanner initialCount={failedRuns} maxWidthClassName={maxWidthClassName} />
-      <main className={clsx("mx-auto px-6 py-8", maxWidthClassName, contentClassName)}>{children}</main>
+      <main className={clsx("mx-auto px-6 py-8", maxWidthClassName, contentClassName)}>
+        <div className="mb-6 flex justify-end">
+          <UserSessionActions user={currentUser} />
+        </div>
+        {children}
+      </main>
     </div>
   );
 }
