@@ -56,6 +56,7 @@ const TENANTED_MODELS = new Set([
   "TenantMode",
   "DecisionStream",
   "DecisionItem",
+  "AgentActionApproval",
 ]);
 
 function withTenantWhere(where: Record<string, any> | undefined, tenantId: string) {
