@@ -10,6 +10,11 @@ import {
   RUA_PROMPT_VERSION,
   RUA_SYSTEM_PROMPT,
 } from '@/lib/agents/contracts/ruaContract';
+import {
+  assertValidNextBestActionResponse,
+  NEXT_BEST_ACTION_PROMPT_VERSION,
+  NEXT_BEST_ACTION_SYSTEM_PROMPT,
+} from '@/lib/agents/contracts/nextBestActionContract';
 
 describe('LLM contract schemas', () => {
   it('accepts a valid RINA payload', () => {
@@ -92,8 +97,49 @@ describe('LLM contract schemas', () => {
     expect(() => assertValidRuaResponse(badPayload)).toThrowError(/RUA response failed schema validation/);
   });
 
+  it('accepts a valid Next Best Action payload', () => {
+    const payload = {
+      recommendation: {
+        actionId: 'refresh-pipeline',
+        title: 'Refresh shortlists with higher precision',
+        owner: 'recruiter',
+        urgency: 'high',
+        rationale: 'Low confidence share is overwhelming reviewers.',
+        expectedImpact: 'Reduce noise and increase shortlists in the next 24 hours.',
+        playbook: ['Re-run matcher with higher threshold', 'Pause low-signal outreach until shortlist improves'],
+        successMetric: 'shortlist_rate',
+        confidence: 'medium',
+      },
+      supportingSignals: ['54% low confidence matches', 'Job aging beyond 21 days'],
+      warning: null,
+    } satisfies Parameters<typeof assertValidNextBestActionResponse>[0];
+
+    expect(assertValidNextBestActionResponse(payload)).toEqual(payload);
+  });
+
+  it('rejects malformed Next Best Action payloads', () => {
+    const badPayload = {
+      recommendation: {
+        actionId: '',
+        title: '',
+        owner: 'unknown',
+        urgency: 'extreme',
+        rationale: '',
+        expectedImpact: '',
+        playbook: [],
+        successMetric: '',
+        confidence: 'certain',
+      },
+      supportingSignals: [''],
+      warning: 'none',
+    } as unknown;
+
+    expect(() => assertValidNextBestActionResponse(badPayload)).toThrowError(/Next Best Action response failed schema validation/);
+  });
+
   it('snapshots versioned prompts', () => {
     expect({ version: RINA_PROMPT_VERSION, prompt: RINA_SYSTEM_PROMPT }).toMatchSnapshot('RINA prompt contract');
     expect({ version: RUA_PROMPT_VERSION, prompt: RUA_SYSTEM_PROMPT }).toMatchSnapshot('RUA prompt contract');
+    expect({ version: NEXT_BEST_ACTION_PROMPT_VERSION, prompt: NEXT_BEST_ACTION_SYSTEM_PROMPT }).toMatchSnapshot('NEXT_BEST_ACTION prompt contract');
   });
 });

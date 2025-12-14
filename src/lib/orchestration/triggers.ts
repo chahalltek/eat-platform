@@ -5,6 +5,7 @@ import {
   selectApplicablePolicies,
   type OrchestrationPolicy,
 } from "@/lib/orchestration/policies";
+import { evaluateNextBestActionTriggers } from "@/lib/orchestration/nextBestAction";
 
 type PipelineTriggerInput = {
   tenantId: string;
@@ -48,6 +49,8 @@ async function runPolicyDrivenPipeline(event: OrchestrationPolicy["when"], input
       });
     }
   }
+
+  await evaluateNextBestActionTriggers({ jobId: input.jobId, tenantId: input.tenantId });
 }
 
 export async function onJobChanged(input: PipelineTriggerInput) {

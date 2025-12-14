@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { runOutreach, type OutreachInput } from "@/lib/agents/outreach";
 import { runIntake, type IntakeInput } from "@/server/agents/intake";
+import { runNextBestAction, type NextBestActionInput } from "@/server/agents/nextBestAction";
 import { runRina, type RinaInput } from "@/lib/agents/rina";
 import { runRua, type RuaInput } from "@/lib/agents/rua";
 import { type IdentityUser } from "@/lib/auth/identityProvider";
@@ -66,7 +67,6 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
       });
     },
   },
-<<<<<<< ours
   "ETE-TS.INTAKE": {
     key: "ETE-TS.INTAKE",
     displayName: "Intake Agent",
@@ -76,7 +76,6 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
       const trimmedJobId = requireString("jobId", jobId);
 
       return runIntake({ jobId: trimmedJobId, recruiterId: ctx.currentUser.id, sourceType, sourceTag });
-=======
   "ETE-TS.CONFIDENCE": {
     key: "ETE-TS.CONFIDENCE",
     displayName: "Confidence Agent",
@@ -90,7 +89,36 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
         marketSignals: marketSignals ?? null,
         requestedBy: ctx.currentUser,
       });
->>>>>>> theirs
+    },
+  },
+   "ETE-TS.NEXT_BEST_ACTION": {
+    key: "ETE-TS.NEXT_BEST_ACTION",
+    displayName: "Next Best Action Agent",
+    description: "Suggests the next best orchestration move for a job.",
+    run: async ({ input, ctx }) => {
+      const {
+        jobId,
+        pipelineHealth,
+        confidenceDistribution,
+        eteSignals,
+        sourceType,
+        sourceTag,
+      } = (input ?? {}) as Partial<NextBestActionInput>;
+      const trimmedJobId = requireString("jobId", jobId);
+
+      if (!pipelineHealth || !confidenceDistribution || !eteSignals) {
+        throw NextResponse.json({ error: "pipelineHealth, confidenceDistribution, and eteSignals are required" }, { status: 400 });
+      }
+
+      return runNextBestAction({
+        jobId: trimmedJobId,
+        pipelineHealth,
+        confidenceDistribution,
+        eteSignals,
+        sourceType,
+        sourceTag,
+        recruiterId: ctx.currentUser.id,
+      });
     },
   },
 };

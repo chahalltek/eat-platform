@@ -3,12 +3,17 @@ import { Prisma, type AgentPrompt } from '@/server/db';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
 import { RUA_PROMPT_VERSION, RUA_SYSTEM_PROMPT } from '@/lib/agents/contracts/ruaContract';
+import {
+  NEXT_BEST_ACTION_PROMPT_VERSION,
+  NEXT_BEST_ACTION_SYSTEM_PROMPT,
+} from '@/lib/agents/contracts/nextBestActionContract';
 import { prisma } from '@/server/db';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 export const AGENT_PROMPTS = {
   RINA_SYSTEM: 'ETE-TS.RINA',
   RUA_SYSTEM: 'ETE-TS.RUA',
+  NBA_SYSTEM: 'ETE-TS.NEXT_BEST_ACTION',
 } as const;
 
 export type AgentPromptName = (typeof AGENT_PROMPTS)[keyof typeof AGENT_PROMPTS];
@@ -29,6 +34,13 @@ const DEFAULT_PROMPTS: AgentPromptDefinition[] = [
     agentName: AGENT_PROMPTS.RUA_SYSTEM,
     version: RUA_PROMPT_VERSION,
     prompt: RUA_SYSTEM_PROMPT,
+    active: true,
+    rollbackVersion: null,
+  },
+  {
+    agentName: AGENT_PROMPTS.NBA_SYSTEM,
+    version: NEXT_BEST_ACTION_PROMPT_VERSION,
+    prompt: NEXT_BEST_ACTION_SYSTEM_PROMPT,
     active: true,
     rollbackVersion: null,
   },
