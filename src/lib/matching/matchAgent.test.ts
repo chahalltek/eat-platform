@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { Prisma } from "@prisma/client";
+
 import { matchJobToAllCandidates } from "@/lib/matching/batch";
 import { runMatcher } from "@/lib/agents/matcher";
 
@@ -30,7 +32,18 @@ const { mockPrisma, mockMatchCreate, mockMatchUpdate, mockJobCandidateUpsert, mo
     };
   });
 
-vi.mock("@/server/db", () => ({ prisma: mockPrisma }));
+vi.mock("@/server/db", () => ({
+  prisma: mockPrisma,
+  Prisma,
+  JobCandidateStatus: {
+    POTENTIAL: "POTENTIAL",
+    SHORTLISTED: "SHORTLISTED",
+    SUBMITTED: "SUBMITTED",
+    INTERVIEWING: "INTERVIEWING",
+    HIRED: "HIRED",
+    REJECTED: "REJECTED",
+  },
+}));
 vi.mock("@/lib/featureFlags", () => ({
   FEATURE_FLAGS: { SCORING: "SCORING" },
   isFeatureEnabled: vi.fn().mockResolvedValue(true),
@@ -105,6 +118,19 @@ const jobReq = {
   createdAt: new Date("2024-05-10T00:00:00Z"),
   updatedAt: new Date("2024-05-20T00:00:00Z"),
   tenantId: "tenant",
+  jobIntent: {
+    id: "intent-1",
+    tenantId: "tenant",
+    jobReqId: "job-1",
+    intent: {
+      skills: [
+        { name: "React", normalizedName: "react", required: true, weight: 2 },
+        { name: "GraphQL", normalizedName: "graphql", required: true, weight: 1 },
+      ],
+    },
+    createdAt: new Date("2024-05-10T00:00:00Z"),
+    updatedAt: new Date("2024-05-20T00:00:00Z"),
+  },
   skills: [
     {
       id: "job-skill-1",
@@ -136,17 +162,22 @@ const runCommonMocks = () => {
   mockPrisma.jobCandidate.findMany.mockResolvedValue([]);
   mockPrisma.outreachInteraction.groupBy.mockResolvedValue([]);
   mockPrisma.matchResult.findMany.mockResolvedValue([]);
+  mockPrisma.user.findUnique.mockResolvedValue({ id: "recruiter-1", tenantId: "tenant" });
   mockPrisma.$transaction.mockImplementation(async (callback) =>
     callback({ ...mockPrisma, jobCandidate: { upsert: mockJobCandidateUpsert } }),
   );
 };
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2024-06-01T00:00:00Z"));
   vi.clearAllMocks();
   runJobReqFindUnique();
   runCommonMocks();
+  const featureFlags = await import("@/lib/featureFlags");
+  const auth = await import("@/lib/auth");
+  (featureFlags.isFeatureEnabled as vi.Mock).mockResolvedValue(true);
+  (auth.getCurrentUser as vi.Mock).mockResolvedValue({ id: "recruiter-1", tenantId: "tenant" });
 });
 
 afterEach(() => {
@@ -184,6 +215,12 @@ describe("matchJobToAllCandidates", () => {
     expect(matches).toEqual([]);
     expect(mockMatchCreate).not.toHaveBeenCalled();
     expect(mockJobCandidateUpsert).not.toHaveBeenCalled();
+  });
+
+  it("fails gracefully when job intent is missing", async () => {
+    mockPrisma.jobReq.findUnique.mockResolvedValue({ ...jobReq, jobIntent: null });
+
+    await expect(matchJobToAllCandidates(jobReq.id, 3)).rejects.toThrow("JobIntent missing");
   });
 });
 

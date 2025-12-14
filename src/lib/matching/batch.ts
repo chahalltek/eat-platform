@@ -10,7 +10,11 @@ import { prisma } from "@/server/db";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { loadTenantConfig } from "@/lib/config/tenantConfig";
 import { startTiming } from "@/lib/observability/timing";
+<<<<<<< ours
 import { applyJobIntent } from "@/lib/jobIntent";
+=======
+import { applyJobIntent, JobIntentMissingError } from "@/lib/matching/jobIntent";
+>>>>>>> theirs
 
 export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   assertKillSwitchDisarmed(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
@@ -45,10 +49,14 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       throw new Error(`JobReq not found: ${jobReqId}`);
     }
 
+<<<<<<< ours
     const jobReqWithIntent = applyJobIntent(jobReq);
+=======
+    const jobReqForMatching = applyJobIntent(jobReq, jobReq.jobIntent ?? null);
+>>>>>>> theirs
 
     const candidates = await prisma.candidate.findMany({
-      where: { tenantId: jobReq.tenantId },
+      where: { tenantId: jobReqForMatching.tenantId },
       include: { skills: true },
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -61,7 +69,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
     const jobCandidates = await prisma.jobCandidate.findMany({
       where: {
-        tenantId: jobReq.tenantId,
+        tenantId: jobReqForMatching.tenantId,
         jobReqId,
         candidateId: { in: candidates.map((candidate) => candidate.id) },
       },
@@ -70,7 +78,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
     const outreachInteractions = await prisma.outreachInteraction.groupBy({
       by: ["candidateId"],
       where: {
-        tenantId: jobReq.tenantId,
+        tenantId: jobReqForMatching.tenantId,
         jobReqId,
         candidateId: { in: candidates.map((candidate) => candidate.id) },
       },
@@ -87,7 +95,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
     const existingResults = await prisma.matchResult.findMany({
       where: {
-        tenantId: jobReq.tenantId,
+        tenantId: jobReqForMatching.tenantId,
         jobReqId,
         candidateId: { in: candidates.map((candidate) => candidate.id) },
       },
@@ -99,14 +107,21 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
     const matchResults: MatchResult[] = [];
 
+<<<<<<< ours
     const latestMatchActivity = jobReqWithIntent.matchResults[0]?.createdAt ?? null;
     const jobFreshness = computeJobFreshnessScore({
       createdAt: jobReqWithIntent.createdAt,
       updatedAt: jobReqWithIntent.updatedAt,
+=======
+    const latestMatchActivity = jobReqForMatching.matchResults[0]?.createdAt ?? null;
+    const jobFreshness = computeJobFreshnessScore({
+      createdAt: jobReqForMatching.createdAt,
+      updatedAt: jobReqForMatching.updatedAt,
+>>>>>>> theirs
       latestMatchActivity,
     });
 
-    const tenantConfig = await loadTenantConfig(jobReq.tenantId);
+    const tenantConfig = await loadTenantConfig(jobReqForMatching.tenantId);
     const matcherConfig = tenantConfig.scoring.matcher;
     const confidenceConfig = tenantConfig.scoring.confidence;
     const explainEnabled = tenantConfig.msa?.matcher?.explain ?? true;
@@ -119,7 +134,11 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       });
 
       const matchScore = computeMatchScore(
+<<<<<<< ours
         { candidate, jobReq: jobReqWithIntent },
+=======
+        { candidate, jobReq: jobReqForMatching },
+>>>>>>> theirs
         {
           candidateSignals,
           jobFreshnessScore: jobFreshness.score,
@@ -128,7 +147,11 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
         },
       );
 
+<<<<<<< ours
       const confidence = computeMatchConfidence({ candidate, jobReq: jobReqWithIntent }, confidenceConfig);
+=======
+      const confidence = computeMatchConfidence({ candidate, jobReq: jobReqForMatching }, confidenceConfig);
+>>>>>>> theirs
       const candidateSignalBreakdown = {
         ...(matchScore.candidateSignalBreakdown ?? {}),
         confidence,
@@ -151,11 +174,11 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
         const savedResult = existing
           ? await tx.matchResult.update({
               where: { id: existing.id },
-              data: { ...data, tenantId: jobReq.tenantId },
+              data: { ...data, tenantId: jobReqForMatching.tenantId },
             })
-          : await tx.matchResult.create({ data: { ...data, tenantId: jobReq.tenantId } });
+          : await tx.matchResult.create({ data: { ...data, tenantId: jobReqForMatching.tenantId } });
 
-        await upsertJobCandidateForMatch(jobReqId, candidate.id, savedResult.id, jobReq.tenantId, tx);
+        await upsertJobCandidateForMatch(jobReqId, candidate.id, savedResult.id, jobReqForMatching.tenantId, tx);
 
         return savedResult;
       });
