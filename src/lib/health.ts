@@ -1,7 +1,7 @@
-import OpenAI from "openai";
 import { AgentRunStatus, Prisma } from "@/server/db";
 
 import { prisma } from "@/server/db";
+import { verifyLLMProvider } from "@/server/ai/gateway";
 
 export type HealthCheckName = "environment" | "database" | "prisma" | "openai";
 
@@ -83,20 +83,8 @@ async function checkPrismaSchema(): Promise<HealthCheckResult> {
 }
 
 async function checkOpenAI(): Promise<HealthCheckResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    return {
-      name: "openai",
-      status: "error",
-      message: "OPENAI_API_KEY is not configured",
-    };
-  }
-
-  const client = new OpenAI({ apiKey });
-
   try {
-    await client.models.retrieve("gpt-4o-mini");
+    await verifyLLMProvider();
 
     return {
       name: "openai",
