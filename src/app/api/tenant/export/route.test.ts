@@ -20,8 +20,25 @@ vi.mock("@/lib/export/tenantExport", () => ({
 import { POST } from "./route";
 
 describe("POST /api/tenant/export", () => {
+  const originalEnv = {
+    SECURITY_MODE: process.env.SECURITY_MODE,
+    DATA_EXPORTS_ENABLED: process.env.DATA_EXPORTS_ENABLED,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.SECURITY_MODE = "internal";
+    process.env.DATA_EXPORTS_ENABLED = "true";
+  });
+
+  afterEach(() => {
+    process.env.SECURITY_MODE = originalEnv.SECURITY_MODE;
+
+    if (originalEnv.DATA_EXPORTS_ENABLED === undefined) {
+      delete process.env.DATA_EXPORTS_ENABLED;
+    } else {
+      process.env.DATA_EXPORTS_ENABLED = originalEnv.DATA_EXPORTS_ENABLED;
+    }
   });
 
   const buildRequest = () => makeRequest({ method: "POST", url: "http://localhost/api/tenant/export" });
@@ -79,5 +96,19 @@ describe("POST /api/tenant/export", () => {
 
     expect(response.status).toBe(500);
     expect(body.error).toBe("Unable to generate export");
+  });
+
+  it("blocks exports when outbound data is disabled", async () => {
+    process.env.SECURITY_MODE = "preview";
+    delete process.env.DATA_EXPORTS_ENABLED;
+    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
+    mockGetCurrentTenantId.mockResolvedValue("tenant-a");
+
+    const response = await POST(buildRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error).toContain("Data exports is disabled");
+    expect(mockBuildTenantExportArchive).not.toHaveBeenCalled();
   });
 });

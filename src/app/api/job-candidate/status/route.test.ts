@@ -37,8 +37,25 @@ vi.mock('@/lib/audit/trail', () => ({
 }));
 
 describe('POST /api/job-candidate/status', () => {
+  const originalEnv = {
+    SECURITY_MODE: process.env.SECURITY_MODE,
+    REAL_ATS_WRITEBACK_ENABLED: process.env.REAL_ATS_WRITEBACK_ENABLED,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.SECURITY_MODE = 'internal';
+    process.env.REAL_ATS_WRITEBACK_ENABLED = 'true';
+  });
+
+  afterEach(() => {
+    process.env.SECURITY_MODE = originalEnv.SECURITY_MODE;
+
+    if (originalEnv.REAL_ATS_WRITEBACK_ENABLED === undefined) {
+      delete process.env.REAL_ATS_WRITEBACK_ENABLED;
+    } else {
+      process.env.REAL_ATS_WRITEBACK_ENABLED = originalEnv.REAL_ATS_WRITEBACK_ENABLED;
+    }
   });
 
   it('enforces permission boundaries for non-owners', async () => {
@@ -135,5 +152,30 @@ describe('POST /api/job-candidate/status', () => {
       metadata: { previousStatus: 'POTENTIAL', newStatus: 'SHORTLISTED' },
       ip: '192.0.2.44',
     });
+  });
+
+  it('blocks writeback when ATS mutations are disabled', async () => {
+    process.env.SECURITY_MODE = 'preview';
+    delete process.env.REAL_ATS_WRITEBACK_ENABLED;
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-1' } as never);
+    vi.mocked(prisma.jobCandidate.findUnique).mockResolvedValue({
+      id: 'jc-4',
+      status: 'POTENTIAL',
+      userId: 'owner-2',
+      tenantId: 'tenant-1',
+    } as never);
+
+    const request = new Request('http://localhost/api/job-candidate/status', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jobCandidateId: 'jc-4', status: 'SUBMITTED' }),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error).toContain('ATS writeback is disabled');
+    expect(prisma.jobCandidate.update).not.toHaveBeenCalled();
   });
 });

@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { recordAuditEvent } from "@/lib/audit/trail";
 import { getClientIp } from "@/lib/request/ip";
 import { prisma } from "@/server/db";
+import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
 function parseRequestBody(body: unknown) {
   const { jobCandidateId, status } = (body ?? {}) as {
@@ -49,6 +50,16 @@ export async function POST(req: Request) {
   const userTenantId = user.tenantId ?? DEFAULT_TENANT_ID;
   const isSystemAdmin = role === USER_ROLES.SYSTEM_ADMIN;
   const isAdmin = isAdminRole(role);
+
+  try {
+    assertFeatureEnabled(HARD_FEATURE_FLAGS.REAL_ATS_WRITEBACK_ENABLED);
+  } catch (error) {
+    if (error instanceof FeatureDisabledError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
+    throw error;
+  }
 
   let body: unknown;
 

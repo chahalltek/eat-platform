@@ -26,6 +26,11 @@ import * as requireRole from '@/lib/auth/requireRole';
 import { POST } from './route';
 
 describe('POST /api/match', () => {
+  const originalEnv = {
+    SECURITY_MODE: process.env.SECURITY_MODE,
+    EXECUTION_ENABLED: process.env.EXECUTION_ENABLED,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.enforceKillSwitchMock.mockReturnValue(null);
@@ -39,6 +44,18 @@ describe('POST /api/match', () => {
       role: 'RECRUITER',
       tenantId: 'tenant-123',
     });
+    process.env.SECURITY_MODE = 'internal';
+    process.env.EXECUTION_ENABLED = 'true';
+  });
+
+  afterEach(() => {
+    process.env.SECURITY_MODE = originalEnv.SECURITY_MODE;
+
+    if (originalEnv.EXECUTION_ENABLED === undefined) {
+      delete process.env.EXECUTION_ENABLED;
+    } else {
+      process.env.EXECUTION_ENABLED = originalEnv.EXECUTION_ENABLED;
+    }
   });
 
   it('rejects malformed payloads before hitting downstream services', async () => {
@@ -65,5 +82,25 @@ describe('POST /api/match', () => {
     });
 
     warnSpy.mockRestore();
+  });
+
+  it('returns suggestion-only responses when execution is gated', async () => {
+    process.env.SECURITY_MODE = 'preview';
+    delete process.env.EXECUTION_ENABLED;
+    mocks.enforceFeatureFlagMock.mockResolvedValue(null);
+    mocks.handleMatchAgentPostMock.mockResolvedValue(new Response('should not hit', { status: 500 }));
+
+    const request = new Request('http://localhost/api/match', {
+      method: 'POST',
+      body: JSON.stringify({ jobReqId: 'job-1', candidateId: 'cand-1' }),
+    });
+
+    const response = await POST(request);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.suggestionOnly).toBe(true);
+    expect(payload.matches).toEqual([]);
+    expect(mocks.handleMatchAgentPostMock).not.toHaveBeenCalled();
   });
 });

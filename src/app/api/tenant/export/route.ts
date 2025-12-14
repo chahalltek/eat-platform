@@ -5,6 +5,7 @@ import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { buildTenantExportArchive } from "@/lib/export/tenantExport";
+import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser(req);
@@ -21,6 +22,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    assertFeatureEnabled(HARD_FEATURE_FLAGS.DATA_EXPORTS_ENABLED);
+
     const { archive } = await buildTenantExportArchive(tenantId);
 
     return new NextResponse(new Uint8Array(archive), {
@@ -30,6 +33,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof FeatureDisabledError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
     console.error("Failed to build tenant export", error);
     return NextResponse.json({ error: "Unable to generate export" }, { status: 500 });
   }

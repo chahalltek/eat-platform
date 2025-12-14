@@ -11,6 +11,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { buildJobIntentPayload, upsertJobIntent } from "@/lib/jobIntent";
+import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
 const jobSkillSchema = z.object({
   name: z.string().min(1, "Skill name is required"),
@@ -64,6 +65,16 @@ export async function POST(req: Request) {
 
   if (!isSystemAdmin && user.tenantId && user.tenantId !== requestTenantId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    assertFeatureEnabled(HARD_FEATURE_FLAGS.BULK_ACTIONS_ENABLED);
+  } catch (error) {
+    if (error instanceof FeatureDisabledError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
+    throw error;
   }
 
   const jobReq = await ingestJob({ ...parsed.data }, prisma);

@@ -37,6 +37,11 @@ vi.mock("@/lib/metrics/events", () => ({ recordMetricEvent: mocks.recordMetricEv
 import { POST } from "./route";
 
 describe("POST /api/jobs/ingest", () => {
+  const originalEnv = {
+    SECURITY_MODE: process.env.SECURITY_MODE,
+    BULK_ACTIONS_ENABLED: process.env.BULK_ACTIONS_ENABLED,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getCurrentTenantIdMock.mockResolvedValue("tenant-123");
@@ -54,6 +59,18 @@ describe("POST /api/jobs/ingest", () => {
         { name: "PostgreSQL", normalizedName: "postgresql", required: false, weight: 2 },
       ],
     });
+    process.env.SECURITY_MODE = "internal";
+    process.env.BULK_ACTIONS_ENABLED = "true";
+  });
+
+  afterEach(() => {
+    process.env.SECURITY_MODE = originalEnv.SECURITY_MODE;
+
+    if (originalEnv.BULK_ACTIONS_ENABLED === undefined) {
+      delete process.env.BULK_ACTIONS_ENABLED;
+    } else {
+      process.env.BULK_ACTIONS_ENABLED = originalEnv.BULK_ACTIONS_ENABLED;
+    }
   });
 
   it("validates input and ingests a job", async () => {
@@ -101,6 +118,23 @@ describe("POST /api/jobs/ingest", () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toContain("title is required");
+    expect(mocks.ingestJobMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects bulk ingestion when disabled for security", async () => {
+    process.env.SECURITY_MODE = "preview";
+    delete process.env.BULK_ACTIONS_ENABLED;
+
+    const request = new Request("http://localhost/api/jobs/ingest", {
+      method: "POST",
+      body: JSON.stringify({ title: "Backend Engineer" }),
+    });
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error).toContain("Bulk actions is disabled");
     expect(mocks.ingestJobMock).not.toHaveBeenCalled();
   });
 });

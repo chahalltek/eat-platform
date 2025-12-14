@@ -10,6 +10,7 @@ import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { handleMatchAgentPost } from "@/app/api/agents/match/route";
+import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
 const matchRequestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId must be a non-empty string"),
@@ -52,6 +53,25 @@ export async function POST(req: NextRequest) {
 
   const { jobReqId, candidateId } = parsedBody.data;
   const tenantId = (currentUser.tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  try {
+    assertFeatureEnabled(HARD_FEATURE_FLAGS.EXECUTION_ENABLED);
+  } catch (error) {
+    if (error instanceof FeatureDisabledError) {
+      return NextResponse.json(
+        {
+          matches: [],
+          jobReqId,
+          agentRunId: null,
+          suggestionOnly: true,
+          reason: error.message,
+        },
+        { status: 200 },
+      );
+    }
+
+    throw error;
+  }
 
   const flagCheck = await enforceFeatureFlag(FEATURE_FLAGS.SCORING, {
     featureName: "Scoring",

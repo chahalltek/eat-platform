@@ -9,6 +9,7 @@ import { toRateLimitResponse } from "@/lib/rateLimiting/http";
 import { isRateLimitError } from "@/lib/rateLimiting/rateLimiter";
 import { validateRecruiterId } from "../recruiterValidation";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -23,6 +24,16 @@ export async function POST(req: NextRequest) {
 
   if (flagCheck) {
     return flagCheck;
+  }
+
+  try {
+    assertFeatureEnabled(HARD_FEATURE_FLAGS.OUTBOUND_EMAIL_ENABLED);
+  } catch (error) {
+    if (error instanceof FeatureDisabledError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
+    throw error;
   }
 
   const tenantId = await getCurrentTenantId(req);
