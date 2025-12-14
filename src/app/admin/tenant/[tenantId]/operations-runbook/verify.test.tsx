@@ -61,7 +61,7 @@ describe("verify:mvp | operations runbook readiness summary", () => {
     render(page);
 
     await waitFor(() => {
-      expect(screen.getByText(/Operational Readiness Summary/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Operational Readiness Summary/i).length).toBeGreaterThanOrEqual(1);
     });
 
     expect(screen.getAllByText(/UNKNOWN/i).length).toBeGreaterThanOrEqual(1);

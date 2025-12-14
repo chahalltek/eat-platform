@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { AgentRunStatus, TenantDeletionMode } from "@prisma/client";
+import { AgentRunStatus, TenantDeletionMode } from "@/server/db";
 
 import { buildTenantDiagnostics, TenantNotFoundError } from "./diagnostics";
 import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
