@@ -6,8 +6,8 @@ import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents
 import { generateHiringManagerBrief } from "@/server/hiringManagerBrief";
 
 type RouteContext =
-  | { params: { jobReqId: string } }
-  | { params: Promise<{ jobReqId: string }> };
+  | { params: { jobId: string } }
+  | { params: Promise<{ jobId: string }> };
 
 export async function POST(req: NextRequest, context: RouteContext) {
   const roleCheck = await requireRecruiterOrAdmin(req);
@@ -42,7 +42,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
   }
 
-  const { jobReqId } = await Promise.resolve(context.params);
+  const { jobId } = await Promise.resolve(context.params);
+  const jobReqId = jobId;
 
   const job = await prisma.jobReq.findUnique({ where: { id: jobReqId, tenantId } });
 

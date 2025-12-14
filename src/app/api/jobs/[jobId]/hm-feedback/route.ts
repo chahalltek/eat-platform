@@ -37,7 +37,7 @@ const feedbackSchema = z.object({
   payload: feedbackPayloadSchema,
 });
 
-type RouteContext = { params: { jobReqId: string } } | { params: Promise<{ jobReqId: string }> };
+type RouteContext = { params: { jobId: string } } | { params: Promise<{ jobId: string }> };
 type TenantScope = Awaited<ReturnType<typeof getTenantScopedPrismaClient>>;
 
 type TenantMembershipResult =
@@ -81,7 +81,8 @@ async function ensureTenantMembership(req: NextRequest, context: RouteContext): 
     }
   }
 
-  const { jobReqId } = await Promise.resolve(context.params);
+  const { jobId } = await Promise.resolve(context.params);
+  const jobReqId = jobId;
 
   return { user, tenantScope, jobReqId };
 }
