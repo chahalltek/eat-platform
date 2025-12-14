@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { __testing as cacheTesting } from "@/lib/cache/intelligenceCache";
 import { runScarcityHotspots } from "@/lib/agents/l2/scarcityHotspots";
 import type { MarketSignals } from "@/lib/market/marketSignals";
 
@@ -32,6 +33,7 @@ const mockSignals: MarketSignals = {
 describe("runScarcityHotspots", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    cacheTesting.clear();
   });
 
   it("ranks scarcity hotspots with rationale and references", async () => {
@@ -40,6 +42,7 @@ describe("runScarcityHotspots", () => {
 
     const result = await runScarcityHotspots({ tenantId: "tenant-1", scope: { region: "US" } });
 
+    expect(getMarketSignals).toHaveBeenCalledWith(expect.objectContaining({ region: "US", bypassCache: false }));
     expect(result.question).toBe("SCARCITY_HOTSPOTS");
     expect(result.items[0].title.startsWith("Data")).toBe(true);
     expect(result.items[0].references).toEqual(
@@ -55,6 +58,7 @@ describe("runScarcityHotspots", () => {
     const first = await runScarcityHotspots({ tenantId: "tenant-1" });
     const second = await runScarcityHotspots({ tenantId: "tenant-1" });
 
+    expect(getMarketSignals).toHaveBeenCalledWith(expect.objectContaining({ bypassCache: false }));
     expect(first.items.map((item) => item.title)).toEqual(second.items.map((item) => item.title));
   });
 });

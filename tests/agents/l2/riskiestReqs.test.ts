@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { __testing as cacheTesting } from "@/lib/cache/intelligenceCache";
 import { runRiskiestReqs } from "@/lib/agents/l2/riskiestReqs";
 import type { TimeToFillRisk } from "@/lib/forecast/timeToFillRisk";
 
@@ -40,6 +41,7 @@ const mockRisks: TimeToFillRisk[] = [
 describe("runRiskiestReqs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    cacheTesting.clear();
   });
 
   it("ranks requisitions by combined risk score with rationale and references", async () => {
@@ -48,6 +50,7 @@ describe("runRiskiestReqs", () => {
 
     const result = await runRiskiestReqs({ tenantId: "tenant-1" });
 
+    expect(getTimeToFillRisksForTenant).toHaveBeenCalledWith("tenant-1", { bypassCache: false });
     expect(result.question).toBe("RISKIEST_REQS");
     expect(result.items).toHaveLength(3);
     expect(result.items[0].title).toBe("Data Scientist");
@@ -70,6 +73,7 @@ describe("runRiskiestReqs", () => {
     const first = await runRiskiestReqs({ tenantId: "tenant-1" });
     const second = await runRiskiestReqs({ tenantId: "tenant-1" });
 
+    expect(getTimeToFillRisksForTenant).toHaveBeenCalledWith("tenant-1", { bypassCache: false });
     expect(first.items.map((item) => item.title)).toEqual(second.items.map((item) => item.title));
   });
 });
