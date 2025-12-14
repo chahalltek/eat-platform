@@ -11,9 +11,19 @@ export type ActiveTenantPlan = {
 export async function getTenantPlan(tenantId: string): Promise<ActiveTenantPlan | null> {
   const now = new Date();
 
-  const hasSubscriptionTable = await isTableAvailable('TenantSubscription');
+  let hasSubscriptionTable: boolean | null = true;
 
-  if (!hasSubscriptionTable) {
+  try {
+    hasSubscriptionTable = await isTableAvailable('TenantSubscription');
+  } catch (error) {
+    if (isPrismaUnavailableError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+
+  if (hasSubscriptionTable === false) {
     return null;
   }
 
