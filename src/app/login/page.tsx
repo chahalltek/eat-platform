@@ -3,7 +3,7 @@
 import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { EteLogo } from "@/components/EteLogo";
+import { EteLogo } from "@/components/branding/EteLogo";
 
 function LoginContent() {
   const router = useRouter();
@@ -46,8 +46,8 @@ function LoginContent() {
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center px-6 py-12">
         <header className="mb-8 flex flex-col">
-          <EteLogo variant="horizontal" className="mb-4" />
-          <h1 className="text-xl font-semibold">Sign in to EDGE Talent Engine</h1>
+          <EteLogo variant="horizontal" className="mb-4 max-w-xs" tagline="" />
+          <h1 className="text-xl font-semibold">Sign in</h1>
           <p className="text-sm text-zinc-600">Use your workspace credentials to access the platform.</p>
         </header>
 
