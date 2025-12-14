@@ -40,6 +40,20 @@ export function JobMatchesTable({ data }: JobMatchesTableProps) {
   const columns = useMemo<ColumnDef<JobMatchRow>[]>(
     () => [
       {
+        accessorKey: 'shortlisted',
+        header: 'Shortlisted',
+        cell: (info) =>
+          info.getValue<boolean>() ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+              <span aria-hidden>●</span>
+              <span className="sr-only">Shortlisted</span>
+              Shortlisted
+            </span>
+          ) : (
+            <span className="text-xs text-slate-500">No</span>
+          ),
+      },
+      {
         accessorKey: 'candidateName',
         header: 'Candidate',
         cell: (info) => info.getValue() as string,
