@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { NextRequest, NextResponse } from "next/server";
 
 import { HiringManagerFeedbackStatus, HiringManagerFeedbackType, Prisma } from "@prisma/client";
@@ -9,6 +10,16 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
 import { parseJobIntentPayload } from "@/lib/jobIntent";
 import { onJobChanged } from "@/lib/orchestration/triggers";
+
+const hiringManagerFeedbackTypeEnum =
+  HiringManagerFeedbackType ??
+  Prisma?.HiringManagerFeedbackType ?? {
+    REQUIREMENT_CHANGED: "REQUIREMENT_CHANGED",
+    CANDIDATE_REJECTED: "CANDIDATE_REJECTED",
+    CANDIDATE_UPDATED: "CANDIDATE_UPDATED",
+    THRESHOLD_ADJUSTED: "THRESHOLD_ADJUSTED",
+  } satisfies Record<string, string>;
+
 
 const requirementSchema = z.object({
   id: z.string().min(1),
@@ -33,7 +44,7 @@ const feedbackPayloadSchema = z
 const feedbackSchema = z.object({
   jobIntentId: z.string().trim().optional(),
   candidateId: z.string().trim().optional(),
-  feedbackType: z.nativeEnum(HiringManagerFeedbackType),
+  feedbackType: z.nativeEnum(hiringManagerFeedbackTypeEnum),
   payload: feedbackPayloadSchema,
 });
 
@@ -196,3 +207,6 @@ export async function POST(req: NextRequest, context: RouteContext) {
     { status: 201 },
   );
 }
+=======
+export { POST } from "../../[jobReqId]/hm-feedback/route";
+>>>>>>> theirs
