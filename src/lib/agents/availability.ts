@@ -1,3 +1,6 @@
+import { isFeatureEnabledForTenant } from "@/lib/featureFlags";
+import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
+import { getCurrentTenantId } from "@/lib/tenant";
 import { getSystemMode, type SystemMode } from "@/lib/systemMode";
 
 export type AgentAvailability = {
@@ -15,7 +18,22 @@ export class FireDrillAgentDisabledError extends Error {
 }
 
 export async function getAgentAvailability(): Promise<AgentAvailability> {
-  const systemMode = await getSystemMode();
+  const [systemMode, tenantId] = await Promise.all([getSystemMode(), getCurrentTenantId()]);
+  const fireDrillEnabled = await isFeatureEnabledForTenant(tenantId, FEATURE_FLAGS.FIRE_DRILL_MODE);
+
+  if (fireDrillEnabled) {
+    return {
+      mode: {
+        ...systemMode,
+        mode: "fire_drill",
+        guardrailsPreset: "conservative",
+        agentEnablement: { basic: false, shortlist: false, agents: false },
+      },
+      confidenceEnabled: false,
+      explainEnabled: false,
+      shortlistEnabled: false,
+    } satisfies AgentAvailability;
+  }
 
   const killSwitches: Array<{ latched: boolean }> = [];
   const hasLatchedKillSwitch = killSwitches.some((entry) => entry.latched);
