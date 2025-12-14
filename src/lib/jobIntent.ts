@@ -1,4 +1,4 @@
-import { JobIntent, JobReq, JobSkill, PrismaClient } from '@prisma/client';
+import { JobIntent, JobReq, JobSkill, Prisma, PrismaClient } from '@prisma/client';
 
 import type { JobIntentPayload, JobIntentRequirement } from '@/types/jobIntent';
 
@@ -173,10 +173,11 @@ export async function upsertJobIntent(
   input: { jobReqId: string; tenantId: string; payload: JobIntentPayload; createdById?: string | null },
 ) {
   const { jobReqId, payload, tenantId, createdById } = input;
+  const intentPayload = payload as unknown as Prisma.InputJsonValue;
 
   return prismaClient.jobIntent.upsert({
     where: { jobReqId },
-    update: { intent: payload, tenantId },
-    create: { jobReqId, tenantId, intent: payload, createdById: createdById ?? null },
+    update: { intent: intentPayload, tenantId },
+    create: { jobReqId, tenantId, intent: intentPayload, createdById: createdById ?? null },
   });
 }
