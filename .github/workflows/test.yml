@@ -40,6 +40,9 @@ jobs:
       - name: Run lint
         run: npm run lint
 
+      - name: Run security baseline checks
+        run: npm run ci:security-baseline
+
       - name: Enforce TODO-free security domains
         run: npm run ci:todo-scan
 

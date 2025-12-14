@@ -13,6 +13,8 @@ import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { callLLM } from "@/lib/llm";
 import { recordUsageEvent } from "@/lib/usage/events";
 
@@ -224,6 +226,12 @@ export async function POST(req: NextRequest) {
 
   if (!roleCheck.ok) {
     return roleCheck.response;
+  }
+
+  const featureGuard = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: "Agents" });
+
+  if (featureGuard) {
+    return featureGuard;
   }
 
   const body = await req.json().catch(() => null);

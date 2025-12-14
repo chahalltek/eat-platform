@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runRua } from '@/lib/agents/rua';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 import { getCurrentUser } from '@/lib/auth/user';
-import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
+import { assertFeatureEnabled } from '@/lib/featureFlags/middleware';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
 import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { validateRecruiterId } from '../recruiterValidation';
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const flagCheck = await agentFeatureGuard();
+    const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: 'Agents' });
 
     if (flagCheck) {
       return flagCheck;

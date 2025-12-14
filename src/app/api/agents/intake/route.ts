@@ -6,6 +6,8 @@ import type { UsageEventType } from '@/server/db';
 import { callLLM } from '@/lib/llm';
 import { requireRole } from '@/lib/auth/requireRole';
 import { USER_ROLES } from '@/lib/auth/roles';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
+import { assertFeatureEnabled } from '@/lib/featureFlags/middleware';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 import { normalizeError } from '@/lib/errors';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
@@ -58,6 +60,12 @@ export async function POST(req: NextRequest) {
 
   if (!roleCheck.ok) {
     return roleCheck.response;
+  }
+
+  const featureCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: 'Agents' });
+
+  if (featureCheck) {
+    return featureCheck;
   }
 
   let scopedTenant;

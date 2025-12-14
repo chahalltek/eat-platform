@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runRina } from '@/lib/agents/rina';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
-import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
+import { assertFeatureEnabled } from '@/lib/featureFlags/middleware';
 import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
 import { validateRecruiterId } from '@/app/api/agents/recruiterValidation';
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
 
       throw error;
     }
-    const flagCheck = await agentFeatureGuard();
+    const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: 'Agents' });
 
     if (flagCheck) {
       return flagCheck;

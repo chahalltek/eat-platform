@@ -6,10 +6,7 @@ import { runOutreach } from '@/lib/agents/outreach';
 import { runRina } from '@/lib/agents/rina';
 import { runRua } from '@/lib/agents/rua';
 import { FEATURE_FLAGS } from '@/lib/featureFlags';
-import {
-  enforceFeatureFlag,
-  getAgentFeatureName,
-} from '@/lib/featureFlags/middleware';
+import { assertFeatureEnabled, getAgentFeatureName } from '@/lib/featureFlags/middleware';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 
 function asString(value: unknown) {
@@ -50,7 +47,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     return NextResponse.json({ error: 'Run not found' }, { status: 404 });
   }
 
-  const flagCheck = await enforceFeatureFlag(FEATURE_FLAGS.AGENTS, {
+  const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, {
     featureName: getAgentFeatureName(run.agentName),
   });
 

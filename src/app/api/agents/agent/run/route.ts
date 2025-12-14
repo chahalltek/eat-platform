@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/user";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { AgentRegistry } from "@/server/agents/registry";
 
 export async function POST(req: NextRequest) {
@@ -14,6 +16,12 @@ export async function POST(req: NextRequest) {
 
   if (!agentName) {
     return NextResponse.json({ error: "agent is required" }, { status: 400 });
+  }
+
+  const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: "Agents" });
+
+  if (flagCheck) {
+    return flagCheck;
   }
 
   const agentDefinition = AgentRegistry[agentName];

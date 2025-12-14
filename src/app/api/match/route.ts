@@ -6,7 +6,7 @@ import { KILL_SWITCHES } from "@/lib/killSwitch";
 import { enforceKillSwitch } from "@/lib/killSwitch/middleware";
 import { prisma } from "@/server/db";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
-import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
+import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { handleMatchAgentPost } from "@/app/api/agents/match/route";
@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
   const { jobReqId, candidateId } = parsedBody.data;
   const tenantId = (currentUser.tenantId ?? DEFAULT_TENANT_ID).trim();
 
+<<<<<<< ours
   try {
     assertFeatureEnabled(HARD_FEATURE_FLAGS.EXECUTION_ENABLED);
   } catch (error) {
@@ -74,6 +75,9 @@ export async function POST(req: NextRequest) {
   }
 
   const flagCheck = await enforceFeatureFlag(FEATURE_FLAGS.SCORING, {
+=======
+  const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.SCORING, {
+>>>>>>> theirs
     featureName: "Scoring",
   });
 

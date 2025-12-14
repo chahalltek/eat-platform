@@ -1,9 +1,13 @@
 <<<<<<< ours
+<<<<<<< ours
 export { callLLM, type CallLLMParams, type GatewayCapability } from '@/server/ai/gateway';
 =======
 import OpenAI from 'openai';
 
 import { ChatMessage, OpenAIAdapter, formatEmptyResponseError } from '@/lib/llm/openaiAdapter';
+=======
+import { ChatMessage, OpenAIAdapter } from '@/lib/llm/openaiAdapter';
+>>>>>>> theirs
 import { getCurrentUserId } from '@/lib/auth/user';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
@@ -11,9 +15,13 @@ import { AIFailureError } from '@/lib/errors';
 import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
 import { recordCostEvent } from '@/lib/cost/events';
 <<<<<<< ours
+<<<<<<< ours
 import { getOpenAIApiKey } from '@/server/config/secrets';
 =======
 import { logAiCall } from '@/server/audit/logger';
+>>>>>>> theirs
+=======
+import { OpenAIChatAdapter } from '@/server/ai/openaiClient';
 >>>>>>> theirs
 
 type CallLLMParams = {
@@ -24,6 +32,7 @@ type CallLLMParams = {
   agent: string;
 };
 
+<<<<<<< ours
 class OpenAIChatAdapter implements OpenAIAdapter {
   constructor(private apiKey = getOpenAIApiKey()) {}
 
@@ -53,6 +62,8 @@ class OpenAIChatAdapter implements OpenAIAdapter {
   }
 }
 
+=======
+>>>>>>> theirs
 export async function callLLM({
   systemPrompt,
   userPrompt,

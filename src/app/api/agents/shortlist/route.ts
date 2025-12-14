@@ -4,6 +4,8 @@ import { z } from "zod";
 import { setShortlistState } from "@/lib/agents/shortlistState";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 
 const requestSchema = z.object({
   matchId: z.string().trim().min(1, "matchId is required"),
@@ -21,6 +23,12 @@ export async function POST(req: NextRequest) {
 
   if (!roleCheck.ok) {
     return roleCheck.response;
+  }
+
+  const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: "Agents" });
+
+  if (flagCheck) {
+    return flagCheck;
   }
 
   const body = await req.json().catch(() => null);

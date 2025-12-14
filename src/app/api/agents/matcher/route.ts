@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runMatcher } from '@/lib/agents/matcher';
 import { requireRole } from '@/lib/auth/requireRole';
 import { normalizeRole, USER_ROLES } from '@/lib/auth/roles';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
+import { assertFeatureEnabled } from '@/lib/featureFlags/middleware';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { prisma } from '@/server/db';
@@ -12,6 +14,12 @@ export async function POST(req: NextRequest) {
 
     if (!roleCheck.ok) {
       return roleCheck.response;
+    }
+
+    const featureGuard = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: 'Agents' });
+
+    if (featureGuard) {
+      return featureGuard;
     }
 
     const body = await req.json();

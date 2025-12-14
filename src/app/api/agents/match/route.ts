@@ -7,7 +7,8 @@ import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { createAgentRunLog } from "@/lib/agents/agentRunLog";
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSwitch";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
-import { agentFeatureGuard } from "@/lib/featureFlags/middleware";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
@@ -45,7 +46,7 @@ export async function handleMatchAgentPost(
     return roleCheck.response;
   }
 
-  const flagCheck = await agentFeatureGuard();
+  const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: "Agents" });
 
   if (flagCheck) {
     return flagCheck;
