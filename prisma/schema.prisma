@@ -37,6 +37,11 @@ enum ApprovalStatus {
   EXPIRED
 }
 
+enum ExecutionStatus {
+  SUCCESS
+  FAILED
+}
+
 enum TenantDeletionMode {
   SOFT_DELETE
   HARD_DELETE
@@ -668,6 +673,9 @@ model AgentActionApproval {
   expiresAt        DateTime?
   decisionStream   DecisionStream? @relation(fields: [decisionStreamId], references: [id])
   decisionStreamId String?
+  executionStatus  ExecutionStatus?
+  executedAt       DateTime?
+  executionResult  Json?
 
   @@index([tenantId, status])
   @@index([tenantId, jobReqId])

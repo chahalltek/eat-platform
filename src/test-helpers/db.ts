@@ -101,12 +101,28 @@ export function mockDb() {
 
     process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 
+    const {
+      JobCandidateStatus = {
+        POTENTIAL: "POTENTIAL",
+        SHORTLISTED: "SHORTLISTED",
+        SUBMITTED: "SUBMITTED",
+        INTERVIEWING: "INTERVIEWING",
+        HIRED: "HIRED",
+        REJECTED: "REJECTED",
+      },
+      AgentRunStatus = { RUNNING: "RUNNING", SUCCESS: "SUCCESS", FAILED: "FAILED" },
+      TenantDeletionMode = { HARD_DELETE: "HARD_DELETE", SOFT_DELETE: "SOFT_DELETE" },
+    } = actual as Partial<typeof import("@/server/db")>;
+
     return {
       ...actual,
+      JobCandidateStatus,
+      AgentRunStatus,
+      TenantDeletionMode,
       prisma: prismaMock as unknown as typeof actual.prisma,
-      isPrismaUnavailableError: vi.fn(() => false),
+      isPrismaUnavailableError: vi.fn((error) => actual.isPrismaUnavailableError(error)),
       isTableAvailable: vi.fn(async () => true),
-    };
+    } as typeof actual;
   });
 
   return { prisma: prismaMock, resetDbMocks: resetPrismaMock } as const;
