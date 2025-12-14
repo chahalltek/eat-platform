@@ -7,7 +7,7 @@ import { StandardTable } from "@/components/table/StandardTable";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
 import type { ETETableColumn } from "@/components/table/tableTypes";
 import { createNumberColumn, createTextColumn } from "@/components/table/tableTypes";
-import { JobCandidateStatus } from "@/server/db";
+import { type JobCandidateStatus } from "@/lib/jobs/status";
 
 import { MatchFeedbackControls } from "./MatchFeedbackControls";
 import { JobCandidateStatusControl } from "./JobCandidateStatusControl";

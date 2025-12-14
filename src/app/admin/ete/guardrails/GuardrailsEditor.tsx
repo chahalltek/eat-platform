@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ETECard } from "@/components/ETECard";
-import { defaultTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails";
+import { defaultTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails.shared";
 
 const PRESET_VALUES: Record<"Conservative" | "Balanced" | "Aggressive", TenantGuardrails> = {
   Conservative: {

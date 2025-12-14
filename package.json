@@ -16,6 +16,7 @@
     "coverage": "npm run test:coverage",
     "ci:config-validate": "tsx scripts/config-validate.ts",
     "ci:security-baseline": "tsx scripts/security-baseline.ts",
+    "ci:client-import-guard": "node scripts/check-client-imports.js",
     "ci:todo-scan": "tsx scripts/check-todos.ts",
     "ci:conflict-scan": "node scripts/check-merge-conflicts.js",
     "predeploy": "node scripts/deployment-health.js",

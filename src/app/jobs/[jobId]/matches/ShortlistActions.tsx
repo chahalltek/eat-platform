@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { JobCandidateStatus } from "@/server/db";
+import { type JobCandidateStatus } from "@/lib/jobs/status";
 
 import type { MatchRow } from "./JobMatchesTable";
 

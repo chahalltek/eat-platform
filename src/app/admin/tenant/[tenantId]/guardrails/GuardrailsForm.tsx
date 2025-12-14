@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { defaultTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails";
+import { defaultTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails.shared";
 
 type GuardrailsResponse = { guardrails: TenantGuardrails };
 

@@ -6,6 +6,7 @@ import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;

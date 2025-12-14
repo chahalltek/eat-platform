@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 
-import { JobCandidateStatus } from "@/server/db";
+import { JOB_CANDIDATE_STATUSES, type JobCandidateStatus } from "@/lib/jobs/status";
 
-const STATUS_OPTIONS: JobCandidateStatus[] = [
-  JobCandidateStatus.POTENTIAL,
-  JobCandidateStatus.SHORTLISTED,
-  JobCandidateStatus.SUBMITTED,
-  JobCandidateStatus.INTERVIEWING,
-  JobCandidateStatus.HIRED,
-  JobCandidateStatus.REJECTED,
-];
+const STATUS_OPTIONS: JobCandidateStatus[] = [...JOB_CANDIDATE_STATUSES];
 
 function formatStatus(status: JobCandidateStatus) {
   return status

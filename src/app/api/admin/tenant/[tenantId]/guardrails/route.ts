@@ -6,6 +6,7 @@ import { requireTenantAdmin } from "@/lib/auth/requireTenantAdmin";
 import { defaultTenantGuardrails, guardrailsSchema, loadTenantGuardrails, saveTenantGuardrails } from "@/lib/tenant/guardrails";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type GuardrailsPayload = z.infer<typeof guardrailsSchema>;
 

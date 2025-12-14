@@ -7,12 +7,13 @@ import { getCurrentTenantId } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
+import { AdminAccessDebugCard } from "./AdminAccessDebugCard";
 import { GuardrailsPreviewPanel } from "./GuardrailsPreviewPanel";
 import { OptimizationSuggestionsPanel } from "./OptimizationSuggestionsPanel";
 
 export const dynamic = "force-dynamic";
 
-function AccessDenied() {
+function AccessDenied({ tenantId, debugEnabled }: { tenantId: string; debugEnabled: boolean }) {
   return (
     <ETEClientLayout>
       <main className="mx-auto max-w-4xl px-6 py-12">
@@ -27,6 +28,9 @@ function AccessDenied() {
             </Link>
           </div>
         </div>
+        <div className="mt-6">
+          <AdminAccessDebugCard tenantId={tenantId} enabled={debugEnabled} />
+        </div>
       </main>
     </ETEClientLayout>
   );
@@ -36,21 +40,20 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   const user = await getCurrentUser();
   const tenantId = params.tenantId?.trim?.() ?? "";
   const headerRole = getTenantRoleFromHeaders(await headers());
+  const baseDebugEnabled = process.env.NODE_ENV !== "production";
 
-  if (!user || !tenantId) {
-    return <AccessDenied />;
+  if (!user) {
+    return <AccessDenied tenantId={tenantId} debugEnabled={baseDebugEnabled} />;
   }
 
-  const [currentTenantId, access] = await Promise.all([
-    getCurrentTenantId(),
-    resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole }),
-  ]);
+  const currentTenantId = await getCurrentTenantId();
+  const access = await resolveTenantAdminAccess(user, tenantId || currentTenantId, { roleHint: headerRole });
+  const normalizedTenantId = tenantId || currentTenantId || "";
+  const debugEnabled = baseDebugEnabled || access.isGlobalAdmin;
 
   if (!access.hasAccess) {
-    return <AccessDenied />;
+    return <AccessDenied tenantId={normalizedTenantId} debugEnabled={debugEnabled} />;
   }
-
-  const normalizedTenantId = tenantId || currentTenantId || "";
 
   return (
     <ETEClientLayout>
@@ -73,6 +76,8 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
               Back to home
             </Link>
           </header>
+
+          {debugEnabled ? <AdminAccessDebugCard tenantId={normalizedTenantId} enabled={debugEnabled} /> : null}
 
           <OptimizationSuggestionsPanel tenantId={normalizedTenantId} />
           <GuardrailsPreviewPanel tenantId={normalizedTenantId} />

@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { IdentityUser } from "@/lib/auth/identityProvider";
 import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { prisma } from "@/server/db";
@@ -10,15 +12,37 @@ export async function resolveTenantAdminAccess(
 ) {
   const normalizedTenantId = tenantId.trim();
 
-  if (!user || !user.id || !normalizedTenantId) {
-    return { hasAccess: false, isGlobalAdmin: false, membership: null } as const;
+  if (!user || !user.id) {
+    return {
+      hasAccess: false,
+      isGlobalAdmin: false,
+      membership: null,
+      roleHint: options?.roleHint ?? null,
+      reason: "No authenticated user",
+    } as const;
+  }
+
+  if (!normalizedTenantId) {
+    return {
+      hasAccess: false,
+      isGlobalAdmin: false,
+      membership: null,
+      roleHint: options?.roleHint ?? null,
+      reason: "Missing tenant identifier",
+    } as const;
   }
 
   const headerIndicatesAdmin = options?.roleHint === TENANT_ROLES.Admin;
   const isGlobalAdmin = isAdminOrDataAccessRole(user.role) || headerIndicatesAdmin;
 
   if (isGlobalAdmin) {
-    return { hasAccess: true, isGlobalAdmin, membership: null } as const;
+    return {
+      hasAccess: true,
+      isGlobalAdmin,
+      membership: null,
+      roleHint: options?.roleHint ?? null,
+      reason: headerIndicatesAdmin ? "Admin role supplied via header" : "Platform admin role",
+    } as const;
   }
 
   const membership = await prisma.tenantUser.findUnique({
@@ -28,10 +52,19 @@ export async function resolveTenantAdminAccess(
   });
 
   const membershipRole = normalizeTenantRole(membership?.role);
-  const hasAccess =
-    isGlobalAdmin || headerIndicatesAdmin || membershipRole === TENANT_ROLES.Admin;
+  const hasAccess = membershipRole === TENANT_ROLES.Admin;
 
-  return { hasAccess, isGlobalAdmin, membership } as const;
+  return {
+    hasAccess,
+    isGlobalAdmin,
+    membership,
+    roleHint: options?.roleHint ?? null,
+    reason: hasAccess
+      ? "Tenant admin membership verified"
+      : membership
+        ? "Tenant membership found without admin role"
+        : "No tenant membership for user",
+  } as const;
 }
 
 export function getTenantMembershipsForUser(userId: string) {
