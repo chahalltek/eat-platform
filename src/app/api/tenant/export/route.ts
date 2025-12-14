@@ -1,23 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { isAdminRole } from "@/lib/auth/roles";
-import { getCurrentUser } from "@/lib/auth/user";
+import { USER_ROLES } from "@/lib/auth/roles";
+import { requireAdminOrDataAccess } from "@/lib/auth/requireRole";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { buildTenantExportArchive } from "@/lib/export/tenantExport";
 import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
 export async function POST(req: NextRequest) {
-  const user = await getCurrentUser(req);
-  const tenantId = await getCurrentTenantId(req);
+  const roleCheck = await requireAdminOrDataAccess(req);
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!roleCheck.ok) {
+    return roleCheck.response;
   }
+
+  const { user } = roleCheck;
+  const tenantId = await getCurrentTenantId(req);
 
   const userTenant = (user.tenantId ?? DEFAULT_TENANT_ID).trim();
 
-  if (!isAdminRole(user.role) || userTenant !== tenantId.trim()) {
+  if (user.role !== USER_ROLES.SYSTEM_ADMIN && userTenant !== tenantId.trim()) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

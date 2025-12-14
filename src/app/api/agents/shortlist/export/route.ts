@@ -3,11 +3,10 @@ import { JobCandidateStatus } from "@/server/db";
 
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
-import { requireRole } from "@/lib/auth/requireRole";
-import { USER_ROLES } from "@/lib/auth/roles";
+import { requireAdminOrDataAccess } from "@/lib/auth/requireRole";
 
 export async function GET(req: NextRequest) {
-  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
+  const roleCheck = await requireAdminOrDataAccess(req);
 
   if (!roleCheck.ok) {
     return roleCheck.response;

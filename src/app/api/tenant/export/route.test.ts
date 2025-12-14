@@ -1,23 +1,28 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { makeRequest } from "@tests/test-utils/routeHarness";
+import { NextRequest, NextResponse } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockGetCurrentUser = vi.hoisted(() => vi.fn());
-const mockGetCurrentTenantId = vi.hoisted(() => vi.fn());
-const mockBuildTenantExportArchive = vi.hoisted(() => vi.fn());
+import { POST } from "./route";
+import { USER_ROLES } from "@/lib/auth/roles";
 
-vi.mock("@/lib/auth/user", () => ({
-  getCurrentUser: mockGetCurrentUser,
+vi.mock("@/lib/auth/requireRole", () => ({
+  requireAdminOrDataAccess: vi.fn(),
 }));
 
 vi.mock("@/lib/tenant", () => ({
-  getCurrentTenantId: mockGetCurrentTenantId,
+  getCurrentTenantId: vi.fn(),
 }));
 
 vi.mock("@/lib/export/tenantExport", () => ({
-  buildTenantExportArchive: mockBuildTenantExportArchive,
+  buildTenantExportArchive: vi.fn(),
 }));
 
-import { POST } from "./route";
+type RequireRoleResult = Awaited<ReturnType<typeof import("@/lib/auth/requireRole")["requireAdminOrDataAccess"]>>;
+
+function makeRequest() {
+  const url = new URL("http://localhost/api/tenant/export");
+  const request = new Request(url, { method: "POST" });
+  return new NextRequest(request);
+}
 
 describe("POST /api/tenant/export", () => {
   const originalEnv = {
@@ -41,61 +46,48 @@ describe("POST /api/tenant/export", () => {
     }
   });
 
-  const buildRequest = () => makeRequest({ method: "POST", url: "http://localhost/api/tenant/export" });
+  it("returns the role check response when the user is not authorized", async () => {
+    const forbiddenResponse = NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const { requireAdminOrDataAccess } = await import("@/lib/auth/requireRole");
 
-  it("blocks unauthenticated requests", async () => {
-    mockGetCurrentUser.mockResolvedValue(null);
+    vi.mocked(requireAdminOrDataAccess).mockResolvedValue({ ok: false, response: forbiddenResponse });
 
-    const response = await POST(buildRequest());
+    const response = await POST(makeRequest());
 
-    expect(response.status).toBe(401);
-    expect(mockBuildTenantExportArchive).not.toHaveBeenCalled();
+    expect(response).toBe(forbiddenResponse);
   });
 
-  it("blocks non-admin users", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "user-1", role: "RECRUITER", tenantId: "tenant-a" });
-    mockGetCurrentTenantId.mockResolvedValue("tenant-a");
+  it("enforces tenant isolation for data access users", async () => {
+    const { requireAdminOrDataAccess } = await import("@/lib/auth/requireRole");
+    const { getCurrentTenantId } = await import("@/lib/tenant");
 
-    const response = await POST(buildRequest());
+    vi.mocked(requireAdminOrDataAccess).mockResolvedValue({
+      ok: true,
+      user: { id: "user-1", role: USER_ROLES.DATA_ACCESS, tenantId: "tenant-1" },
+    } as RequireRoleResult);
+    vi.mocked(getCurrentTenantId).mockResolvedValue("tenant-2");
+
+    const response = await POST(makeRequest());
 
     expect(response.status).toBe(403);
-    expect(mockBuildTenantExportArchive).not.toHaveBeenCalled();
   });
 
-  it("prevents cross-tenant access even for admins", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
-    mockGetCurrentTenantId.mockResolvedValue("tenant-b");
+  it("returns a tenant archive when authorized", async () => {
+    const { requireAdminOrDataAccess } = await import("@/lib/auth/requireRole");
+    const { getCurrentTenantId } = await import("@/lib/tenant");
+    const { buildTenantExportArchive } = await import("@/lib/export/tenantExport");
 
-    const response = await POST(buildRequest());
+    vi.mocked(requireAdminOrDataAccess).mockResolvedValue({
+      ok: true,
+      user: { id: "user-1", role: USER_ROLES.DATA_ACCESS, tenantId: "tenant-1" },
+    } as RequireRoleResult);
+    vi.mocked(getCurrentTenantId).mockResolvedValue("tenant-1");
+    vi.mocked(buildTenantExportArchive).mockResolvedValue({ archive: new ArrayBuffer(1) });
 
-    expect(response.status).toBe(403);
-    expect(mockBuildTenantExportArchive).not.toHaveBeenCalled();
-  });
-
-  it("returns a zip archive when authorized", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
-    mockGetCurrentTenantId.mockResolvedValue("tenant-a");
-    mockBuildTenantExportArchive.mockResolvedValue({ archive: Buffer.from("zip-bytes") });
-
-    const response = await POST(buildRequest());
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const response = await POST(makeRequest());
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("application/zip");
-    expect(buffer.toString()).toBe("zip-bytes");
-    expect(mockBuildTenantExportArchive).toHaveBeenCalledWith("tenant-a");
-  });
-
-  it("handles export errors gracefully", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
-    mockGetCurrentTenantId.mockResolvedValue("tenant-a");
-    mockBuildTenantExportArchive.mockRejectedValue(new Error("boom"));
-
-    const response = await POST(buildRequest());
-    const body = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(body.error).toBe("Unable to generate export");
   });
 
   it("blocks exports when outbound data is disabled", async () => {

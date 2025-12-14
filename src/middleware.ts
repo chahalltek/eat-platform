@@ -11,7 +11,7 @@ import {
   USER_HEADER,
   USER_QUERY_PARAM,
 } from './lib/auth/config';
-import { isAdminRole, normalizeRole, USER_ROLES, type UserRole } from './lib/auth/roles';
+import { normalizeRole, USER_ROLES, type UserRole } from './lib/auth/roles';
 import { clearSessionCookie, getValidatedSession } from './lib/auth/session';
 import { isDemoMutationAllowed, isPublicDemoMode, isReadOnlyHttpMethod } from './lib/demoMode';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
@@ -35,6 +35,11 @@ const LEGACY_PATH_PREFIXES = [
   { from: '/admin/eat', to: '/admin/ete' },
   { from: '/eat', to: '/ete' },
 ];
+const ADMIN_OR_DATA_ACCESS_ROLES = new Set<UserRole>([
+  USER_ROLES.ADMIN,
+  USER_ROLES.SYSTEM_ADMIN,
+  USER_ROLES.DATA_ACCESS,
+]);
 const RECRUITER_ROLES = new Set<UserRole>([
   USER_ROLES.ADMIN,
   USER_ROLES.RECRUITER,
@@ -123,7 +128,7 @@ export async function middleware(request: NextRequest) {
   const isRecruiterPath = RECRUITER_PATH_PREFIXES.some((path) => requestPath.startsWith(path));
   const isExecPath = EXEC_PATH_PREFIXES.some((path) => requestPath.startsWith(path));
 
-  if (isAdminPath && !isAdminRole(normalizedRole)) {
+  if (isAdminPath && !ADMIN_OR_DATA_ACCESS_ROLES.has(normalizedRole)) {
     const body = requestPath.startsWith('/api')
       ? NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       : NextResponse.redirect(new URL('/', request.url));

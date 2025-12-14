@@ -91,6 +91,21 @@ describe('middleware role enforcement', () => {
     expect(response.headers.get(ROLE_HEADER)).toBe('ADMIN');
   });
 
+  it('allows admin pages for data access users', async () => {
+    mockSessionRole('DATA_ACCESS');
+
+    const response = await middleware(createRequest('/admin/feature-flags'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get(ROLE_HEADER)).toBe('DATA_ACCESS');
+  });
+
+  it('returns forbidden for admin apis when role is not allowed', async () => {
+    const response = await middleware(createRequest('/api/admin/tenants'));
+
+    expect(response.status).toBe(403);
+  });
+
   it('redirects unauthenticated users to login for app routes with next param', async () => {
     vi.mocked(getValidatedSession).mockResolvedValue({ session: null, error: null });
 
