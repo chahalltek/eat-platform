@@ -50,6 +50,8 @@ vi.mock("@/server/db", async (importOriginal) => {
 
   return {
     ...actual,
+    TenantDeletionMode:
+      actual.TenantDeletionMode ?? (actual as any).Prisma?.TenantDeletionMode,
     prisma: prismaMock,
     isPrismaUnavailableError: () => false,
   };

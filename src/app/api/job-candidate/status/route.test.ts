@@ -24,6 +24,7 @@ vi.mock('@/server/db', async (importOriginal) => {
 
   return {
     ...actual,
+    JobCandidateStatus: actual.JobCandidateStatus ?? (actual as any).Prisma?.JobCandidateStatus,
     prisma: prismaMock,
   };
 });

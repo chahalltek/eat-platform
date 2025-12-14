@@ -102,24 +102,32 @@ export function mockDb() {
 
     process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 
-    const {
-      JobCandidateStatus = {
-        POTENTIAL: "POTENTIAL",
-        SHORTLISTED: "SHORTLISTED",
-        SUBMITTED: "SUBMITTED",
-        INTERVIEWING: "INTERVIEWING",
-        HIRED: "HIRED",
-        REJECTED: "REJECTED",
-      },
-      AgentRunStatus = { RUNNING: "RUNNING", SUCCESS: "SUCCESS", FAILED: "FAILED" },
-      TenantDeletionMode = { HARD_DELETE: "HARD_DELETE", SOFT_DELETE: "SOFT_DELETE" },
-    } = actual as Partial<typeof import("@/server/db")>;
+    const withEnums = {
+      JobCandidateStatus:
+        actual.JobCandidateStatus ?? (actual as any).Prisma?.JobCandidateStatus ?? {
+          POTENTIAL: "POTENTIAL",
+          SHORTLISTED: "SHORTLISTED",
+          SUBMITTED: "SUBMITTED",
+          INTERVIEWING: "INTERVIEWING",
+          HIRED: "HIRED",
+          REJECTED: "REJECTED",
+        },
+      AgentRunStatus:
+        actual.AgentRunStatus ?? (actual as any).Prisma?.AgentRunStatus ?? {
+          RUNNING: "RUNNING",
+          SUCCESS: "SUCCESS",
+          FAILED: "FAILED",
+        },
+      TenantDeletionMode:
+        actual.TenantDeletionMode ?? (actual as any).Prisma?.TenantDeletionMode ?? {
+          HARD_DELETE: "HARD_DELETE",
+          SOFT_DELETE: "SOFT_DELETE",
+        },
+    };
 
     return {
       ...actual,
-      JobCandidateStatus,
-      AgentRunStatus,
-      TenantDeletionMode,
+      ...withEnums,
       prisma: prismaMock as unknown as typeof actual.prisma,
       isPrismaUnavailableError: vi.fn((error) => actual.isPrismaUnavailableError(error)),
       isTableAvailable: vi.fn(async () => true),
