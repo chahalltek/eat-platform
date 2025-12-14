@@ -2,21 +2,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as shortlistPost } from "@/app/api/ete/agents/shortlist/route";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
+import { mockDb } from "@/test-helpers/db";
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
-const { mockRequireRole, mockGetAgentAvailability, mockEnforceKillSwitch, mockLoadTenantConfig, mockPrisma } = vi.hoisted(() => {
-  return {
-    mockRequireRole: vi.fn(async () => ({ ok: true, user: { id: "user-1", tenantId: "tenant-1" } })),
-    mockGetAgentAvailability: vi.fn(),
-    mockEnforceKillSwitch: vi.fn(async () => null),
-    mockLoadTenantConfig: vi.fn(async () => guardrailsPresets.balanced),
-    mockPrisma: {
-      job: {
-        findUnique: vi.fn(),
-      },
-    },
-  };
-});
+const { mockRequireRole, mockGetAgentAvailability, mockEnforceKillSwitch, mockLoadTenantConfig, mockJobFindUnique } =
+  vi.hoisted(() => {
+    return {
+      mockRequireRole: vi.fn(async () => ({ ok: true, user: { id: "user-1", tenantId: "tenant-1" } })),
+      mockGetAgentAvailability: vi.fn(),
+      mockEnforceKillSwitch: vi.fn(async () => null),
+      mockLoadTenantConfig: vi.fn(async () => guardrailsPresets.balanced),
+      mockJobFindUnique: vi.fn(),
+    };
+  });
+const { prisma, resetDbMocks } = mockDb();
 
 vi.mock("@/lib/auth/requireRole", () => ({ requireRole: mockRequireRole }));
 vi.mock("@/lib/agents/agentAvailability", () => ({ getAgentAvailability: mockGetAgentAvailability }));
@@ -25,17 +24,6 @@ vi.mock("@/lib/agents/killSwitch", () => ({
   enforceAgentKillSwitch: mockEnforceKillSwitch,
 }));
 vi.mock("@/lib/guardrails/tenantConfig", () => ({ loadTenantConfig: mockLoadTenantConfig }));
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      ...mockPrisma,
-    },
-  };
-});
 
 const buildRequest = (body: unknown) =>
   makeRequest({
@@ -46,6 +34,8 @@ const buildRequest = (body: unknown) =>
 
 describe("ETE SHORTLIST agent endpoint", () => {
   beforeEach(() => {
+    resetDbMocks();
+    prisma.job.findUnique.mockImplementation(mockJobFindUnique);
     vi.clearAllMocks();
   });
 
@@ -56,7 +46,7 @@ describe("ETE SHORTLIST agent endpoint", () => {
       flags: [],
     });
     mockLoadTenantConfig.mockResolvedValue(guardrailsPresets.balanced);
-    mockPrisma.job.findUnique.mockResolvedValue({
+    mockJobFindUnique.mockResolvedValue({
       id: "job-1",
       tenantId: "tenant-1",
       matches: [
@@ -86,7 +76,7 @@ describe("ETE SHORTLIST agent endpoint", () => {
       flags: [],
     });
     mockLoadTenantConfig.mockResolvedValue(guardrailsPresets.aggressive);
-    mockPrisma.job.findUnique.mockResolvedValue({
+    mockJobFindUnique.mockResolvedValue({
       id: "job-2",
       tenantId: "tenant-1",
       matches: [

@@ -1,17 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prisma } from "@/server/db";
 import { requireTenantAdmin, TENANT_ROLES } from "@/lib/auth/tenantAdmin";
+import { mockDb } from "@/test-helpers/db";
 
-vi.mock("@/server/db", () => {
-  return {
-    prisma: {
-      tenantUser: {
-        findFirst: vi.fn(),
-      },
-    },
-  };
-});
+const { prisma, resetDbMocks } = mockDb();
 
 describe("requireTenantAdmin", () => {
   const tenantId = "default-tenant";
@@ -20,6 +12,7 @@ describe("requireTenantAdmin", () => {
   const unknownUserId = "ghost-user";
 
   beforeEach(() => {
+    resetDbMocks();
     vi.clearAllMocks();
   });
 

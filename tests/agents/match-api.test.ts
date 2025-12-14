@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as matchPost } from "@/app/api/jobs/[jobId]/matcher/route";
+import { mockDb } from "@/test-helpers/db";
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
@@ -9,7 +10,6 @@ const {
   mockUserFindUnique,
   mockMatchJobToAllCandidates,
   mockPersistCandidateConfidenceScore,
-  mockPrisma,
   mockGetCurrentUser,
 } = vi.hoisted(() => {
   const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-1", ...data }));
@@ -23,38 +23,18 @@ const {
     role: "RECRUITER",
   });
 
-  const mockPrisma = {
-    agentRunLog: {
-      create: mockAgentRunLogCreate,
-      update: mockAgentRunLogUpdate,
-    },
-    user: {
-      findUnique: mockUserFindUnique,
-    },
-  } as const;
-
   return {
     mockAgentRunLogCreate,
     mockAgentRunLogUpdate,
     mockUserFindUnique,
     mockMatchJobToAllCandidates,
     mockPersistCandidateConfidenceScore,
-    mockPrisma,
     mockGetCurrentUser,
   };
 });
 
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
+const { prisma, resetDbMocks } = mockDb();
 
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      ...mockPrisma,
-    },
-  };
-});
 vi.mock("@/lib/killSwitch", () => ({ assertKillSwitchDisarmed: vi.fn(), KILL_SWITCHES: { AGENTS: "AGENTS" } }));
 vi.mock("@/lib/agents/killSwitch", () => ({
   assertAgentKillSwitchDisarmed: vi.fn(),
@@ -102,6 +82,10 @@ const matchResults = [
 
 describe("MATCH agent API", () => {
   beforeEach(() => {
+    resetDbMocks();
+    prisma.agentRunLog.create.mockImplementation(mockAgentRunLogCreate);
+    prisma.agentRunLog.update.mockImplementation(mockAgentRunLogUpdate);
+    prisma.user.findUnique.mockImplementation(mockUserFindUnique);
     vi.clearAllMocks();
     mockMatchJobToAllCandidates.mockResolvedValue(
       matchResults.map(

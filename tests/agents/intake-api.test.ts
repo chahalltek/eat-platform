@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as intakePost } from "@/app/api/agents/intake/route";
+import { expectApiError } from "@/test-helpers/api";
+import { mockDb } from "@/test-helpers/db";
 import { makeRequest } from "@tests/test-utils/routeHarness";
+
+const { prisma, resetDbMocks } = mockDb();
 
 const {
   mockAgentRunLogCreate,
   mockAgentRunLogUpdate,
   mockJobReqCreate,
   mockUserFindUnique,
-  mockPrisma,
   mockGetTenantScopedPrismaClient,
   mockGetCurrentUser,
 } = vi.hoisted(() => {
@@ -16,20 +19,8 @@ const {
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockJobReqCreate = vi.fn(async ({ data }) => ({ id: "job-1", ...data }));
   const mockUserFindUnique = vi.fn(async () => ({ id: "recruiter-1", tenantId: "tenant-1" }));
-  const mockPrisma = {
-    agentRunLog: {
-      create: mockAgentRunLogCreate,
-      update: mockAgentRunLogUpdate,
-    },
-    jobReq: {
-      create: mockJobReqCreate,
-    },
-    user: {
-      findUnique: mockUserFindUnique,
-    },
-  } as const;
   const mockGetTenantScopedPrismaClient = vi.fn(async () => ({
-    prisma: mockPrisma as any,
+    prisma,
     tenantId: "tenant-1",
     runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
   }));
@@ -39,30 +30,17 @@ const {
     role: "RECRUITER",
   });
 
-    return {
-      mockAgentRunLogCreate,
-      mockAgentRunLogUpdate,
-      mockJobReqCreate,
-      mockUserFindUnique,
-      mockPrisma,
-      mockGetTenantScopedPrismaClient,
-      mockGetCurrentUser,
-    };
-  });
-
-const { mockCallLLM } = vi.hoisted(() => ({ mockCallLLM: vi.fn() }));
-
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
   return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      ...mockPrisma,
-    },
+    mockAgentRunLogCreate,
+    mockAgentRunLogUpdate,
+    mockJobReqCreate,
+    mockUserFindUnique,
+    mockGetTenantScopedPrismaClient,
+    mockGetCurrentUser,
   };
 });
+
+const { mockCallLLM } = vi.hoisted(() => ({ mockCallLLM: vi.fn() }));
 vi.mock("@/lib/killSwitch", () => ({
   assertKillSwitchDisarmed: vi.fn(),
   KILL_SWITCHES: { AGENTS: "AGENTS" },
@@ -102,6 +80,11 @@ vi.mock("@/app/api/agents/recruiterValidation", () => ({
 
 describe("INTAKE agent API", () => {
   beforeEach(() => {
+    resetDbMocks();
+    prisma.agentRunLog.create.mockImplementation(mockAgentRunLogCreate);
+    prisma.agentRunLog.update.mockImplementation(mockAgentRunLogUpdate);
+    prisma.jobReq.create.mockImplementation(mockJobReqCreate);
+    prisma.user.findUnique.mockImplementation(mockUserFindUnique);
     vi.clearAllMocks();
   });
 
@@ -181,7 +164,7 @@ describe("INTAKE agent API", () => {
 
       const response = await intakePost(request);
 
-      expect(response.status).toBe(403);
+      await expectApiError(response, 403);
       expect(mockAgentRunLogCreate).not.toHaveBeenCalled();
     });
   });

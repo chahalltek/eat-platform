@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as profilePost } from "@/app/api/agents/profile/route";
+import { expectApiError } from "@/test-helpers/api";
+import { mockDb } from "@/test-helpers/db";
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const { mockCallLLM, mockCandidateCreate, mockWithAgentRun, createdSkills } = vi.hoisted(() => {
@@ -31,22 +33,7 @@ const { mockCallLLM, mockCandidateCreate, mockWithAgentRun, createdSkills } = vi
   return { mockCallLLM, mockCandidateCreate, mockWithAgentRun, createdSkills };
 });
 
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      candidate: {
-        create: mockCandidateCreate,
-      },
-      tenant: {
-        findUnique: vi.fn().mockResolvedValue({ id: "tenant-1" }),
-      },
-    },
-  };
-});
+const { prisma, resetDbMocks } = mockDb();
 
 vi.mock("@/lib/agents/agentRun", () => ({ withAgentRun: mockWithAgentRun }));
 vi.mock("@/lib/agents/promptRegistry", () => ({
@@ -105,6 +92,9 @@ const llmResponse = {
 
 describe("PROFILE agent API", () => {
   beforeEach(() => {
+    resetDbMocks();
+    prisma.candidate.create.mockImplementation(mockCandidateCreate);
+    prisma.tenant.findUnique.mockResolvedValue({ id: "tenant-1" });
     vi.clearAllMocks();
     createdSkills.splice(0, createdSkills.length);
   });
@@ -151,6 +141,6 @@ describe("PROFILE agent API", () => {
 
     const response = await profilePost(request);
 
-    expect(response.status).toBe(403);
+    await expectApiError(response, 403);
   });
 });

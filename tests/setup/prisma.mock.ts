@@ -1,5 +1,7 @@
 import { vi } from "vitest";
 
+import { mockDb } from "@/test-helpers/db";
+
 vi.mock("@prisma/client", async () => {
   const actual = await vi.importActual<typeof import("@prisma/client")>("@prisma/client");
 
@@ -25,51 +27,4 @@ vi.mock("@prisma/client", async () => {
   };
 });
 
-vi.mock("@/server/db", async (importOriginal) => {
-  const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
-  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = "true";
-
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
-  process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
-
-  const createModelMock = () => ({
-    findMany: vi.fn(),
-    findUnique: vi.fn(),
-    findFirst: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    upsert: vi.fn(),
-    delete: vi.fn(),
-    deleteMany: vi.fn(),
-    count: vi.fn(),
-    aggregate: vi.fn(),
-  });
-
-  const prisma = {
-    job: createModelMock(),
-    candidate: createModelMock(),
-    user: createModelMock(),
-    agentRunLog: createModelMock(),
-    jobApplication: createModelMock(),
-    jobApplicationScore: createModelMock(),
-    jobApplicationEvent: createModelMock(),
-    tenant: createModelMock(),
-    auditLog: createModelMock(),
-    decisionStream: createModelMock(),
-    decisionItem: createModelMock(),
-    featureFlag: createModelMock(),
-    $transaction: vi.fn(async (fn: any) => fn(prisma)),
-    $connect: vi.fn(),
-    $disconnect: vi.fn(),
-  } as const;
-
-  return {
-    ...actual,
-    prisma,
-    TenantDeletionMode: actual.TenantDeletionMode,
-    JobCandidateStatus: actual.JobCandidateStatus,
-    isPrismaUnavailableError: vi.fn(() => false),
-    isTableAvailable: vi.fn(async () => true),
-  };
-});
+mockDb();

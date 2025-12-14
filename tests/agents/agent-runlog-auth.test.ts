@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { POST as rinaPost } from "@/app/api/agents/rina/route";
+import { mockDb } from "@/test-helpers/db";
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
@@ -8,41 +9,25 @@ const {
   mockAgentRunLogUpdate,
   mockCandidateCreate,
   mockUserFindUnique,
-  mockPrisma,
 } = vi.hoisted(() => {
   const mockAgentRunLogCreate = vi.fn(async (_client, data) => ({ id: "run-123", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockCandidateCreate = vi.fn(async ({ data }) => ({ id: "cand-123", ...data }));
   const mockUserFindUnique = vi.fn(async ({ where }) => ({ id: where?.id ?? "test-user-1", tenantId: "tenant-1" }));
 
-  const mockPrisma = {
-    agentRunLog: {
-      create: mockAgentRunLogCreate,
-      update: mockAgentRunLogUpdate,
-    },
-    tenant: {
-      findUnique: vi.fn().mockResolvedValue({ id: "tenant-1" }),
-    },
-    candidate: {
-      create: mockCandidateCreate,
-    },
-    user: {
-      findUnique: mockUserFindUnique,
-    },
-  } as const;
-
   return {
     mockAgentRunLogCreate,
     mockAgentRunLogUpdate,
     mockCandidateCreate,
     mockUserFindUnique,
-    mockPrisma,
   };
 });
 
+const { prisma, resetDbMocks } = mockDb();
+
 vi.mock("@/lib/agents/tenantScope", () => ({
   getTenantScopedPrismaClient: vi.fn(async () => ({
-    prisma: mockPrisma as any,
+    prisma: prisma as any,
     tenantId: "tenant-1",
     runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
   })),
@@ -52,18 +37,6 @@ vi.mock("@/lib/agents/tenantScope", () => ({
 vi.mock("@/lib/auth/requireRole", () => ({
   requireRole: vi.fn(async () => ({ ok: true, user: { id: "test-user-1", tenantId: "tenant-1" } })),
 }));
-
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      ...mockPrisma,
-    },
-  };
-});
 
 vi.mock("@/lib/killSwitch", () => ({
   assertKillSwitchDisarmed: vi.fn(),
@@ -124,6 +97,12 @@ vi.mock("@/lib/auth/user", () => ({
 
 describe("Agent run logging", () => {
   beforeEach(() => {
+    resetDbMocks();
+    prisma.agentRunLog.create.mockImplementation(mockAgentRunLogCreate);
+    prisma.agentRunLog.update.mockImplementation(mockAgentRunLogUpdate);
+    prisma.candidate.create.mockImplementation(mockCandidateCreate);
+    prisma.tenant.findUnique.mockResolvedValue({ id: "tenant-1" });
+    prisma.user.findUnique.mockImplementation(mockUserFindUnique);
     vi.clearAllMocks();
   });
 

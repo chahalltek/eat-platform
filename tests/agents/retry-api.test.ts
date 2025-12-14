@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as retryPost } from "@/app/api/agents/runs/[id]/retry/route";
+import { mockDb } from "@/test-helpers/db";
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const {
@@ -31,20 +32,7 @@ vi.mock("@/lib/featureFlags/middleware", () => ({
   enforceFeatureFlag: mockEnforceFeatureFlag,
   getAgentFeatureName: mockGetAgentFeatureName,
 }));
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
-  return {
-    ...actual,
-    prisma: {
-      ...actual.prisma,
-      agentRunLog: {
-        findFirst: mockFindFirst,
-        count: mockCount,
-      },
-    },
-  };
-});
+const { prisma, resetDbMocks } = mockDb();
 
 const buildRequest = (runId: string) =>
   makeRequest({ method: "POST", url: `http://localhost/api/agents/runs/${runId}/retry` });
@@ -52,6 +40,9 @@ const buildRequest = (runId: string) =>
 describe("agent retry API", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    resetDbMocks();
+    prisma.agentRunLog.findFirst.mockImplementation(mockFindFirst);
+    prisma.agentRunLog.count.mockImplementation(mockCount);
     mockGetCurrentUser.mockResolvedValue({ id: "user-1", tenantId: "tenant-1" });
     mockEnforceFeatureFlag.mockResolvedValue(null);
     mockGetAgentFeatureName.mockReturnValue("RINA");
