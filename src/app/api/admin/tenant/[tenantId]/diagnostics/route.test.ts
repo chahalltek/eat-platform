@@ -3,17 +3,20 @@ import { makeRequest } from "@tests/test-utils/routeHarness";
 
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockBuildTenantDiagnostics = vi.hoisted(() => vi.fn());
-const MockNotFoundError = vi.hoisted(() => class extends Error {});
 const mockResolveTenantAccess = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/user", () => ({
   getCurrentUser: mockGetCurrentUser,
 }));
 
-vi.mock("@/lib/tenant/diagnostics", () => ({
-  buildTenantDiagnostics: mockBuildTenantDiagnostics,
-  TenantNotFoundError: MockNotFoundError,
-}));
+vi.mock("@/lib/tenant/diagnostics", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/tenant/diagnostics")>("@/lib/tenant/diagnostics");
+
+  return {
+    ...actual,
+    buildTenantDiagnostics: mockBuildTenantDiagnostics,
+  };
+});
 
 vi.mock("@/lib/tenant/access", () => ({
   resolveTenantAdminAccess: mockResolveTenantAccess,
@@ -58,9 +61,11 @@ describe("GET /api/admin/tenant/[tenantId]/diagnostics", () => {
       tenantId: "tenant-a",
       mode: "pilot",
       modeNotice: null,
-      fireDrill: { enabled: false, fireDrillImpact: [] },
+      fireDrill: { enabled: false, fireDrillImpact: [], suggested: false, reason: null, windowMinutes: 30 },
       guardrailsStatus: "Guardrails healthy",
       sso: { configured: true, issuerUrl: null },
+      auditLogging: { enabled: true, eventsRecorded: 3 },
+      ats: { provider: "bullhorn", status: "failed", lastRunAt: "2024-03-01T00:03:00.000Z", nextAttemptAt: null, summary: null, errorMessage: "boom", retryCount: 0 },
     };
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN" });
     mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
@@ -77,7 +82,8 @@ describe("GET /api/admin/tenant/[tenantId]/diagnostics", () => {
   it("maps missing tenants to 404", async () => {
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN" });
     mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
-    mockBuildTenantDiagnostics.mockRejectedValue(new MockNotFoundError());
+    const { TenantNotFoundError } = await import("@/lib/tenant/diagnostics");
+    mockBuildTenantDiagnostics.mockRejectedValue(new TenantNotFoundError("tenant-a"));
 
     const response = await GET(buildRequest(), { params: Promise.resolve({ tenantId: "tenant-a" }) });
 
