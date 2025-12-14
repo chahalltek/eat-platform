@@ -51,7 +51,7 @@ describe('POST /api/match', () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe('jobReqId and candidateId must be non-empty strings');
-    expect(mocks.getCurrentUserMock).toHaveBeenCalled();
+    expect(mocks.getCurrentUserMock).not.toHaveBeenCalled();
     expect(mocks.prisma.candidate.findUnique).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith('Match payload validation failed', {
       body: { candidateId: 123, jobReqId: '   ' },
