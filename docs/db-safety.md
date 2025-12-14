@@ -10,7 +10,7 @@ The guard treats the deployment as **production** when any of these environment 
 - `VERCEL_ENV`
 - `NODE_ENV`
 
-When production is detected, `DATABASE_URL` must also be present. You can temporarily bypass the safety rails by setting `DB_SAFETY_OVERRIDE=true`, but this should only be used during controlled maintenance windows.
+When production is detected, `DATABASE_URL` must also be present. Attempts to bypass the guard with `DB_SAFETY_OVERRIDE=true` are ignored so that production guardrails remain enabled.
 
 ## Blocked commands and migrations
 

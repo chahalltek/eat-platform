@@ -108,8 +108,7 @@ if (!isProduction) {
 }
 
 if (overrideSafety) {
-  log('DB_SAFETY_OVERRIDE is true. Production guardrails are disabled for this run.');
-  process.exit(0);
+  log('DB_SAFETY_OVERRIDE is true, but guardrails cannot be bypassed. Running safety checks.');
 }
 
 requireDatabaseUrl();
