@@ -10,11 +10,7 @@ import { prisma } from "@/server/db";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { loadTenantConfig } from "@/lib/config/tenantConfig";
 import { startTiming } from "@/lib/observability/timing";
-<<<<<<< ours
-import { applyJobIntent } from "@/lib/jobIntent";
-=======
-import { applyJobIntent, JobIntentMissingError } from "@/lib/matching/jobIntent";
->>>>>>> theirs
+import { applyJobIntent } from "@/lib/matching/jobIntent";
 
 export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   assertKillSwitchDisarmed(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
@@ -49,11 +45,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       throw new Error(`JobReq not found: ${jobReqId}`);
     }
 
-<<<<<<< ours
-    const jobReqWithIntent = applyJobIntent(jobReq);
-=======
     const jobReqForMatching = applyJobIntent(jobReq, jobReq.jobIntent ?? null);
->>>>>>> theirs
 
     const candidates = await prisma.candidate.findMany({
       where: { tenantId: jobReqForMatching.tenantId },
@@ -107,17 +99,10 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
     const matchResults: MatchResult[] = [];
 
-<<<<<<< ours
-    const latestMatchActivity = jobReqWithIntent.matchResults[0]?.createdAt ?? null;
-    const jobFreshness = computeJobFreshnessScore({
-      createdAt: jobReqWithIntent.createdAt,
-      updatedAt: jobReqWithIntent.updatedAt,
-=======
     const latestMatchActivity = jobReqForMatching.matchResults[0]?.createdAt ?? null;
     const jobFreshness = computeJobFreshnessScore({
       createdAt: jobReqForMatching.createdAt,
       updatedAt: jobReqForMatching.updatedAt,
->>>>>>> theirs
       latestMatchActivity,
     });
 
@@ -134,11 +119,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       });
 
       const matchScore = computeMatchScore(
-<<<<<<< ours
-        { candidate, jobReq: jobReqWithIntent },
-=======
         { candidate, jobReq: jobReqForMatching },
->>>>>>> theirs
         {
           candidateSignals,
           jobFreshnessScore: jobFreshness.score,
@@ -147,11 +128,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
         },
       );
 
-<<<<<<< ours
-      const confidence = computeMatchConfidence({ candidate, jobReq: jobReqWithIntent }, confidenceConfig);
-=======
       const confidence = computeMatchConfidence({ candidate, jobReq: jobReqForMatching }, confidenceConfig);
->>>>>>> theirs
       const candidateSignalBreakdown = {
         ...(matchScore.candidateSignalBreakdown ?? {}),
         confidence,

@@ -76,6 +76,11 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
       const trimmedJobId = requireString("jobId", jobId);
 
       return runIntake({ jobId: trimmedJobId, recruiterId: ctx.currentUser.id, sourceType, sourceTag });
+<<<<<<< ours
+=======
+    },
+  },
+>>>>>>> theirs
   "ETE-TS.CONFIDENCE": {
     key: "ETE-TS.CONFIDENCE",
     displayName: "Confidence Agent",
@@ -89,6 +94,7 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
         marketSignals: marketSignals ?? null,
         requestedBy: ctx.currentUser,
       });
+<<<<<<< ours
     },
   },
    "ETE-TS.NEXT_BEST_ACTION": {
@@ -119,6 +125,8 @@ export const AgentRegistry: Record<string, AgentRegistryEntry<unknown, any>> = {
         sourceTag,
         recruiterId: ctx.currentUser.id,
       });
+=======
+>>>>>>> theirs
     },
   },
 };
