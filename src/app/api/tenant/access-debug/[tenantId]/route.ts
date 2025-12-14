@@ -39,14 +39,20 @@ function describeDenialReason(options: {
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest, context: { params: { tenantId?: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ tenantId: string }> },
+) {
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Not available in production" }, { status: 404 });
   }
 
-  const user = await getCurrentUser(req);
+  const [{ tenantId }, user] = await Promise.all([
+    params,
+    getCurrentUser(req),
+  ]);
   const headerRole = getTenantRoleFromHeaders(req.headers);
-  const requestedTenantId = context.params.tenantId?.trim?.() || DEFAULT_TENANT_ID;
+  const requestedTenantId = tenantId?.trim?.() || DEFAULT_TENANT_ID;
   const isPlatformAdmin = isAdminRole(user?.role);
 
   const [requestedAccess, defaultTenantMembership, defaultTenantAccess] = await Promise.all([
