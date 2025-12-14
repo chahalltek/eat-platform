@@ -406,6 +406,7 @@ model JobReq {
   outreachActions      OutreachAction[]
   hiringOutcomes       HiringOutcome[]
   jobIntent            JobIntent?
+  hiringManagerBriefs  HiringManagerBrief[]
 
   @@index([tenantId])
   @@index([tenantId, customerId])
@@ -630,15 +631,15 @@ model JobCandidate {
 }
 
 model HiringManagerBrief {
-  id        String                    @id @default(cuid())
-  tenantId  String                    @default("default-tenant")
-  jobReq    JobReq                    @relation(fields: [jobReqId], references: [id])
+  id        String                   @id @default(cuid())
+  tenantId  String                   @default("default-tenant")
+  jobReq    JobReq                   @relation(fields: [jobReqId], references: [id])
   jobReqId  String
   content   Json
-  status    HiringManagerBriefStatus  @default(DRAFT)
+  status    HiringManagerBriefStatus @default(DRAFT)
   createdBy String
-  createdAt DateTime                  @default(now())
-  updatedAt DateTime                  @updatedAt
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
   sentAt    DateTime?
   sentTo    String?
 
@@ -679,22 +680,22 @@ model DecisionItem {
 }
 
 model AgentActionApproval {
-  id               String          @id @default(cuid())
-  tenantId         String          @default("default-tenant")
-  jobReq           JobReq?         @relation(fields: [jobReqId], references: [id])
+  id               String           @id @default(cuid())
+  tenantId         String           @default("default-tenant")
+  jobReq           JobReq?          @relation(fields: [jobReqId], references: [id])
   jobReqId         String?
-  candidate        Candidate?      @relation(fields: [candidateId], references: [id])
+  candidate        Candidate?       @relation(fields: [candidateId], references: [id])
   candidateId      String?
   actionType       ActionType
   actionPayload    Json
   proposedBy       String
-  proposedAt       DateTime        @default(now())
-  status           ApprovalStatus  @default(PENDING)
+  proposedAt       DateTime         @default(now())
+  status           ApprovalStatus   @default(PENDING)
   decidedBy        String?
   decidedAt        DateTime?
   decisionReason   String?
   expiresAt        DateTime?
-  decisionStream   DecisionStream? @relation(fields: [decisionStreamId], references: [id])
+  decisionStream   DecisionStream?  @relation(fields: [decisionStreamId], references: [id])
   decisionStreamId String?
   executionStatus  ExecutionStatus?
   executedAt       DateTime?
