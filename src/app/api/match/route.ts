@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   if (!parsedBody.success) {
     const issues = parsedBody.error.issues.map((issue) => issue.message).join("; ");
-    console.warn("Match payload validation failed", { issues, body });
+    console.warn("Match payload validation failed", { issues, body, userId: currentUser?.id });
     return NextResponse.json(
       { error: "jobReqId and candidateId must be non-empty strings" },
       { status: 400 },

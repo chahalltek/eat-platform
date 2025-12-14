@@ -26,6 +26,7 @@ vi.mock('@/lib/matching/freshness', () => ({ computeJobFreshnessScore: vi.fn() }
 vi.mock('@/lib/matching/msa', () => ({ computeMatchScore: vi.fn() }));
 vi.mock('@/lib/matching/jobCandidate', () => ({ upsertJobCandidateForMatch: vi.fn() }));
 
+import * as requireRole from '@/lib/auth/requireRole';
 import { POST } from './route';
 
 describe('POST /api/match', () => {
@@ -33,14 +34,10 @@ describe('POST /api/match', () => {
     vi.clearAllMocks();
     mocks.enforceKillSwitchMock.mockReturnValue(null);
     mocks.enforceFeatureFlagMock.mockResolvedValue(null);
-    mocks.requireRecruiterOrAdminMock.mockResolvedValue({
+    mocks.requireRecruiterOrAdminMock.mockImplementation(async (req) => ({
       ok: true,
-      user: {
-        id: 'user-123',
-        role: 'RECRUITER',
-        tenantId: 'tenant-123',
-      },
-    });
+      user: await mocks.getCurrentUserMock(req),
+    }));
     mocks.getCurrentUserMock.mockResolvedValue({
       id: 'user-123',
       role: 'RECRUITER',
@@ -50,6 +47,7 @@ describe('POST /api/match', () => {
 
   it('rejects malformed payloads before hitting downstream services', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const requireRecruiterOrAdminSpy = vi.spyOn(requireRole, 'requireRecruiterOrAdmin');
 
     const request = new Request('http://localhost/api/match', {
       method: 'POST',
@@ -61,11 +59,13 @@ describe('POST /api/match', () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe('jobReqId and candidateId must be non-empty strings');
-    expect(mocks.requireRecruiterOrAdminMock).toHaveBeenCalledTimes(1);
+    expect(mocks.getCurrentUserMock).toHaveBeenCalledTimes(1);
+    expect(requireRecruiterOrAdminSpy).toHaveBeenCalledTimes(1);
     expect(mocks.prisma.candidate.findUnique).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith('Match payload validation failed', {
       body: { candidateId: 123, jobReqId: '   ' },
       issues: expect.stringContaining('non-empty string'),
+      userId: 'user-123',
     });
 
     warnSpy.mockRestore();
