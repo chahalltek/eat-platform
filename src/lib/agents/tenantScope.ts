@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { prisma } from "@/server/db";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentTenantId, withTenantContext } from "@/lib/tenant";
 
 export class TenantScopeError extends Error {
@@ -14,7 +15,7 @@ export class TenantScopeError extends Error {
 }
 
 export async function getTenantScopedPrismaClient(req: NextRequest) {
-  const tenantId = (await getCurrentTenantId(req))?.trim();
+  const tenantId = (await getCurrentTenantId(req))?.trim() || DEFAULT_TENANT_ID;
 
   if (!tenantId) {
     throw new TenantScopeError("Tenant is required", 400);

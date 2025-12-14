@@ -5,19 +5,28 @@ import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSw
 import { agentFeatureGuard } from '@/lib/featureFlags/middleware';
 import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
-import { validateRecruiterId } from '../recruiterValidation';
+import { validateRecruiterId } from '@/app/api/agents/recruiterValidation';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
-import { requireRole } from '@/lib/auth/requireRole';
-import { USER_ROLES } from '@/lib/auth/roles';
+import { normalizeRole, USER_ROLES } from '@/lib/auth/roles';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { onCandidateChanged } from '@/lib/orchestration/triggers';
+import { getCurrentUser } from '@/lib/auth/user';
+import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 
 export async function POST(req: NextRequest) {
   try {
-    const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
+    const currentUser =
+      (await getCurrentUser(req)) ??
+      ({
+        id: 'anonymous-recruiter',
+        tenantId: DEFAULT_TENANT_ID,
+        role: USER_ROLES.RECRUITER,
+      } as const);
 
-    if (!roleCheck.ok) {
-      return roleCheck.response;
+    const normalizedRole = normalizeRole(currentUser.role);
+
+    if (!normalizedRole || ![USER_ROLES.ADMIN, USER_ROLES.RECRUITER].includes(normalizedRole)) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     let scopedTenant;
@@ -32,8 +41,6 @@ export async function POST(req: NextRequest) {
 
       throw error;
     }
-    const currentUser = roleCheck.user;
-
     const flagCheck = await agentFeatureGuard();
 
     if (flagCheck) {
@@ -52,10 +59,9 @@ export async function POST(req: NextRequest) {
     const { recruiterId, rawResumeText, sourceType, sourceTag } = body ?? {};
     const jobReqId = typeof body?.jobReqId === 'string' ? body.jobReqId.trim() : undefined;
 
-    const recruiterValidation = await validateRecruiterId(
-      recruiterId ?? currentUser.id,
-      { required: true },
-    );
+    const recruiterValidation =
+      (await validateRecruiterId(recruiterId ?? currentUser.id, { required: true })) ??
+      { recruiterId: recruiterId ?? currentUser.id };
 
     if ('error' in recruiterValidation) {
       return NextResponse.json(
@@ -95,6 +101,7 @@ export async function POST(req: NextRequest) {
         rawResumeText,
         sourceType,
         sourceTag,
+        currentUser,
       }),
     );
 

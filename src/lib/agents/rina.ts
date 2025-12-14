@@ -10,6 +10,7 @@ import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/server/db';
+import type { IdentityUser } from '@/lib/auth/identityProvider';
 
 export {
   assertValidRinaResponse,
@@ -21,6 +22,7 @@ export type RinaInput = {
   rawResumeText: string;
   sourceType?: string;
   sourceTag?: string;
+  currentUser?: IdentityUser | null;
 };
 
 export async function runRina(
@@ -28,9 +30,9 @@ export async function runRina(
   retryMetadata?: AgentRetryMetadata,
   llmAdapter?: OpenAIAdapter,
 ): Promise<{ candidateId: string; agentRunId: string }> {
-  const { rawResumeText, sourceType, sourceTag } = input;
+  const { rawResumeText, sourceType, sourceTag, currentUser } = input;
   const normalizedRawResumeText = rawResumeText.trim();
-  const user = await getCurrentUser();
+  const user = currentUser ?? (await getCurrentUser());
 
   if (!user) {
     throw new Error('Current user is required to run RINA agent');
@@ -38,9 +40,10 @@ export async function runRina(
 
   // User identity is derived from auth; recruiterId in payload is ignored.
 
-  const promptContract = await resolveAgentPrompt(AGENT_PROMPTS.RINA_SYSTEM, {
-    version: RINA_PROMPT_VERSION,
-  });
+  const promptContract =
+    (await resolveAgentPrompt(AGENT_PROMPTS.RINA_SYSTEM, {
+      version: RINA_PROMPT_VERSION,
+    })) ?? ({ prompt: '', version: RINA_PROMPT_VERSION } as const);
 
   const [result, agentRunId] = await withAgentRun<{ candidateId: string }>(
     {
