@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { prisma } from "@/server/db";
 import type { IdentityUser } from "@/lib/auth/identityProvider";
+import { Prisma } from "@prisma/client";
 
 export type ConfidenceAgentInput = {
   jobCandidateId: string;
-  marketSignals?: Record<string, unknown> | null;
+  marketSignals?: Prisma.InputJsonValue | null;
 };
 
 export type ConfidenceAssessment = {
@@ -17,7 +18,7 @@ export type ConfidenceAssessment = {
   band: "HIGH" | "MEDIUM" | "LOW";
   reasons: string[];
   narrative: string;
-  marketSignals?: Record<string, unknown> | null;
+  marketSignals?: Prisma.InputJsonValue | null;
 };
 
 const buildNarrative = (reasons: string[]) =>
@@ -63,7 +64,7 @@ export async function runConfidenceAssessment({
       confidenceBand: assessment.band,
       confidenceReasons: assessment.reasons,
       confidenceNarrative: assessment.narrative,
-      confidenceSignals: assessment.marketSignals,
+      confidenceSignals: assessment.marketSignals ?? Prisma.JsonNull,
       confidenceUpdatedAt: new Date(),
     },
   });
@@ -107,6 +108,6 @@ export async function getConfidenceAssessment(jobCandidateId: string): Promise<C
     band: jobCandidate.confidenceBand as ConfidenceAssessment["band"],
     reasons: (jobCandidate.confidenceReasons as string[] | null) ?? [],
     narrative: jobCandidate.confidenceNarrative ?? buildNarrative((jobCandidate.confidenceReasons as string[] | null) ?? []),
-    marketSignals: (jobCandidate.confidenceSignals as Record<string, unknown> | null) ?? null,
+    marketSignals: (jobCandidate.confidenceSignals as Prisma.JsonValue | null) ?? null,
   };
 }

@@ -7,25 +7,28 @@ import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
 import { validateRecruiterId } from '@/app/api/agents/recruiterValidation';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
-import { normalizeRole, USER_ROLES } from '@/lib/auth/roles';
+import { normalizeRole, USER_ROLES, type UserRole } from '@/lib/auth/roles';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { onCandidateChanged } from '@/lib/orchestration/triggers';
 import { getCurrentUser } from '@/lib/auth/user';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
+import type { IdentityUser } from '@/lib/auth/identityProvider';
 
 export async function POST(req: NextRequest) {
   try {
-    const currentUser =
-      (await getCurrentUser(req)) ??
-      ({
+    const currentUser: IdentityUser =
+      (await getCurrentUser(req)) ?? {
         id: 'anonymous-recruiter',
         tenantId: DEFAULT_TENANT_ID,
         role: USER_ROLES.RECRUITER,
-      } as const);
+        email: null,
+        displayName: null,
+      };
 
     const normalizedRole = normalizeRole(currentUser.role);
+    const allowedRoles: UserRole[] = [USER_ROLES.ADMIN, USER_ROLES.SYSTEM_ADMIN, USER_ROLES.RECRUITER];
 
-    if (!normalizedRole || ![USER_ROLES.ADMIN, USER_ROLES.RECRUITER].includes(normalizedRole)) {
+    if (!normalizedRole || !allowedRoles.includes(normalizedRole)) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
