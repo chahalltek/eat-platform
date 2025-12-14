@@ -3,6 +3,7 @@
 const mocks = vi.hoisted(() => ({
   enforceKillSwitchMock: vi.fn(),
   enforceFeatureFlagMock: vi.fn(),
+  requireRecruiterOrAdminMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
   prisma: {
     candidate: { findUnique: vi.fn() },
@@ -17,6 +18,7 @@ vi.mock('@/lib/killSwitch', () => ({ KILL_SWITCHES: { SCORERS: 'scorers' } }));
 vi.mock('@/lib/killSwitch/middleware', () => ({ enforceKillSwitch: mocks.enforceKillSwitchMock }));
 vi.mock('@/lib/featureFlags', () => ({ FEATURE_FLAGS: { SCORING: 'scoring' } }));
 vi.mock('@/lib/featureFlags/middleware', () => ({ enforceFeatureFlag: mocks.enforceFeatureFlagMock }));
+vi.mock('@/lib/auth/requireRole', () => ({ requireRecruiterOrAdmin: mocks.requireRecruiterOrAdminMock }));
 vi.mock('@/lib/auth/user', () => ({ getCurrentUser: mocks.getCurrentUserMock }));
 vi.mock('@/server/db', () => ({ prisma: mocks.prisma }));
 vi.mock('@/lib/matching/candidateSignals', () => ({ computeCandidateSignalScore: vi.fn() }));
@@ -31,6 +33,14 @@ describe('POST /api/match', () => {
     vi.clearAllMocks();
     mocks.enforceKillSwitchMock.mockReturnValue(null);
     mocks.enforceFeatureFlagMock.mockResolvedValue(null);
+    mocks.requireRecruiterOrAdminMock.mockResolvedValue({
+      ok: true,
+      user: {
+        id: 'user-123',
+        role: 'RECRUITER',
+        tenantId: 'tenant-123',
+      },
+    });
     mocks.getCurrentUserMock.mockResolvedValue({
       id: 'user-123',
       role: 'RECRUITER',
@@ -51,7 +61,7 @@ describe('POST /api/match', () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe('jobReqId and candidateId must be non-empty strings');
-    expect(mocks.getCurrentUserMock).not.toHaveBeenCalled();
+    expect(mocks.requireRecruiterOrAdminMock).toHaveBeenCalledTimes(1);
     expect(mocks.prisma.candidate.findUnique).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith('Match payload validation failed', {
       body: { candidateId: 123, jobReqId: '   ' },
