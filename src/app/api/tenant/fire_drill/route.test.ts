@@ -97,4 +97,16 @@ describe("POST /api/tenant/fire_drill", () => {
     expect(response.status).toBe(200);
     expect(mockSetFeatureFlag).toHaveBeenCalledWith(FEATURE_FLAGS.FIRE_DRILL_MODE, true);
   });
+
+  it("returns a stable response when the feature flag call returns nothing", async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: false, membership: { role: "ADMIN" } });
+    mockSetFeatureFlag.mockResolvedValue(undefined);
+
+    const response = await POST(buildRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ name: FEATURE_FLAGS.FIRE_DRILL_MODE, enabled: true });
+  });
 });

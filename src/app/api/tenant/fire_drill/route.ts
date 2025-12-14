@@ -24,5 +24,9 @@ export async function POST(request: NextRequest) {
 
   const flag = await withTenantContext(tenantId, () => setFeatureFlag(FEATURE_FLAGS.FIRE_DRILL_MODE, true));
 
+  if (!flag) {
+    return NextResponse.json({ enabled: true, name: FEATURE_FLAGS.FIRE_DRILL_MODE });
+  }
+
   return NextResponse.json({ enabled: flag.enabled, name: flag.name });
 }
