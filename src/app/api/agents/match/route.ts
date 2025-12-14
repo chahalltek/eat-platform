@@ -19,7 +19,7 @@ import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 
-const requestSchema = z.object({
+export const requestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId is required"),
   candidateIds: z
     .array(z.string().trim().min(1))
@@ -28,21 +28,17 @@ const requestSchema = z.object({
   limit: z.number().int().positive().max(500).optional(),
 });
 
-export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
+type MatchRequest = z.infer<typeof requestSchema>;
+type RoleCheckResult = Awaited<ReturnType<typeof requireRole>>;
 
-  const parsed = requestSchema.safeParse(body);
+export async function handleMatchAgentPost(
+  req: NextRequest,
+  request: MatchRequest,
+  options?: { roleCheckResult?: RoleCheckResult; requireAllCandidates?: boolean },
+) {
+  const { jobReqId, candidateIds, limit = 50 } = request;
 
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues.map((issue) => issue.message).join("; ") },
-      { status: 400 },
-    );
-  }
-
-  const { jobReqId, candidateIds, limit = 50 } = parsed.data;
-
-  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
+  const roleCheck = options?.roleCheckResult ?? (await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]));
 
   if (!roleCheck.ok) {
     return roleCheck.response;
@@ -163,6 +159,10 @@ export async function POST(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: candidateIds ? undefined : limit,
     });
+
+    if (options?.requireAllCandidates && candidateIds && candidates.length !== candidateIds.length) {
+      return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+    }
 
     if (candidates.length === 0) {
       return NextResponse.json({ matches: [], jobReqId, agentRunId: null }, { status: 200 });
@@ -378,4 +378,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
   });
+}
+
+export async function POST(req: NextRequest) {
+  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
+
+  if (!roleCheck.ok) {
+    return roleCheck.response;
+  }
+
+  const body = await req.json().catch(() => null);
+
+  const parsed = requestSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues.map((issue) => issue.message).join("; ") },
+      { status: 400 },
+    );
+  }
+
+  return handleMatchAgentPost(req, parsed.data, { roleCheckResult: roleCheck });
 }

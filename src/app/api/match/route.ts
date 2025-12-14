@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { z } from "zod";
 
-import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
-import { computeJobFreshnessScore } from "@/lib/matching/freshness";
-import { computeMatchScore } from "@/lib/matching/msa";
-import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
 import { KILL_SWITCHES } from "@/lib/killSwitch";
 import { enforceKillSwitch } from "@/lib/killSwitch/middleware";
 import { prisma } from "@/server/db";
@@ -13,7 +9,7 @@ import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { enforceFeatureFlag } from "@/lib/featureFlags/middleware";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { computeMatchConfidence } from "@/lib/matching/confidence";
+import { handleMatchAgentPost } from "@/app/api/agents/match/route";
 
 const matchRequestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId must be a non-empty string"),
@@ -65,92 +61,44 @@ export async function POST(req: NextRequest) {
     return flagCheck;
   }
 
-  const candidate = await prisma.candidate.findUnique({
-    where: { id: candidateId, tenantId },
-    include: { skills: true },
-  });
+  const agentResponse = await handleMatchAgentPost(
+    req,
+    { jobReqId, candidateIds: [candidateId], limit: 1 },
+    { requireAllCandidates: true },
+  );
 
-  if (!candidate) {
+  if (!agentResponse.ok) {
+    return agentResponse;
+  }
+
+  const payload = (await agentResponse.json()) as {
+    matches: Array<{
+      matchResultId: string;
+      candidateId: string;
+      confidence: number;
+      confidenceCategory: string;
+      confidenceReasons: string[];
+    }>;
+  };
+
+  const match = payload.matches.find((entry) => entry.candidateId === candidateId);
+
+  if (!match) {
     return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
   }
 
-  const jobReq = await prisma.jobReq.findUnique({
-    where: { id: jobReqId, tenantId },
-    include: {
-      skills: true,
-      matchResults: {
-        select: { createdAt: true },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
+  const matchResult = await prisma.matchResult.findUnique({
+    where: { id: match.matchResultId, tenantId },
   });
 
-  if (!jobReq) {
-    return NextResponse.json({ error: "JobReq not found" }, { status: 404 });
+  if (!matchResult) {
+    return NextResponse.json({ error: "Match result not found" }, { status: 404 });
   }
-
-  const jobCandidate = await prisma.jobCandidate.findFirst({
-    where: { tenantId, jobReqId, candidateId },
-  });
-
-  const outreachInteractions = await prisma.outreachInteraction.count({
-    where: { jobReqId, candidateId, tenantId },
-  });
-
-  const candidateSignals = computeCandidateSignalScore({
-    candidate,
-    jobCandidate,
-    outreachInteractions,
-  });
-
-  const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
-  const freshnessScore = computeJobFreshnessScore({
-    createdAt: jobReq.createdAt,
-    updatedAt: jobReq.updatedAt,
-    latestMatchActivity,
-  });
-
-  const matchScore = computeMatchScore(
-    { candidate, jobReq },
-    { candidateSignals, jobFreshnessScore: freshnessScore.score },
-  );
-
-  const confidence = computeMatchConfidence({ candidate, jobReq });
-  const candidateSignalBreakdown = {
-    ...(matchScore.candidateSignalBreakdown ?? {}),
-    confidence,
-  } as const;
-
-  const data = {
-    candidateId,
-    jobReqId,
-    score: matchScore.score,
-    reasons: matchScore.explanation,
-    skillScore: matchScore.skillScore,
-    seniorityScore: matchScore.seniorityScore,
-    locationScore: matchScore.locationScore,
-    candidateSignalScore: matchScore.candidateSignalScore,
-    candidateSignalBreakdown,
-  };
-
-  const existingMatch = await prisma.matchResult.findFirst({
-    where: { candidateId, jobReqId, tenantId },
-  });
-
-  const matchResult = existingMatch
-    ? await prisma.matchResult.update({
-        where: { id: existingMatch.id },
-        data: { ...data, tenantId },
-      })
-    : await prisma.matchResult.create({ data: { ...data, tenantId } });
-
-  await upsertJobCandidateForMatch(jobReqId, candidateId, matchResult.id, tenantId);
 
   return NextResponse.json({
     ...matchResult,
-    confidence: confidence.score,
-    confidenceCategory: confidence.category,
-    confidenceReasons: confidence.reasons,
+    confidence: match.confidence,
+    confidenceCategory: match.confidenceCategory,
+    confidenceReasons: match.confidenceReasons,
   });
 }
