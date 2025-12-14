@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db";
+import { isTenantAdminRole } from "../tenant/roles";
 
 export const TENANT_ROLES = {
   Admin: "Admin",
@@ -22,7 +23,7 @@ export async function requireTenantAdmin(
     where: { tenantId, userId },
   });
 
-  if (!tenantUser || tenantUser.role !== TENANT_ROLES.Admin) {
+  if (!tenantUser || !isTenantAdminRole(tenantUser.role)) {
     return { isAdmin: false, tenantUser: tenantUser ?? undefined };
   }
 

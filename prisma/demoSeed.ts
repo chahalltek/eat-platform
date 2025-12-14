@@ -92,12 +92,12 @@ async function seedTenantMemberships(prisma: PrismaClient, tenantId: string) {
         tenantId,
       },
     },
-    update: { role: 'ADMIN' },
+    update: { role: 'TENANT_ADMIN' },
     create: {
       id: 'admin-default-tenant',
       userId: ADMIN_USER_ID,
       tenantId,
-      role: 'ADMIN',
+      role: 'TENANT_ADMIN',
     },
   });
 }

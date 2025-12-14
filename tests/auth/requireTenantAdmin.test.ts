@@ -3,13 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/server/db";
 import { requireTenantAdmin, TENANT_ROLES } from "@/lib/auth/tenantAdmin";
 
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
-
+vi.mock("@/server/db", () => {
   return {
-    ...actual,
     prisma: {
-      ...actual.prisma,
       tenantUser: {
         findFirst: vi.fn(),
       },
@@ -63,7 +59,7 @@ describe("requireTenantAdmin", () => {
     expect(result.tenantUser).toBeUndefined();
   });
 
-  it("treats role value with different casing as non-admin", async () => {
+  it("normalizes admin role casing", async () => {
     (prisma.tenantUser.findFirst as any).mockResolvedValue({
       tenantId,
       userId: adminUserId,
@@ -72,7 +68,19 @@ describe("requireTenantAdmin", () => {
 
     const result = await requireTenantAdmin(tenantId, adminUserId);
 
-    expect(result.isAdmin).toBe(false);
+    expect(result.isAdmin).toBe(true);
+  });
+
+  it("accepts TENANT_ADMIN as admin role", async () => {
+    (prisma.tenantUser.findFirst as any).mockResolvedValue({
+      tenantId,
+      userId: adminUserId,
+      role: "TENANT_ADMIN",
+    });
+
+    const result = await requireTenantAdmin(tenantId, adminUserId);
+
+    expect(result.isAdmin).toBe(true);
   });
 
   it("returns the underlying tenantUser record when admin", async () => {
