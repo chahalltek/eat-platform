@@ -10,7 +10,11 @@ import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/ra
 import { AIFailureError } from '@/lib/errors';
 import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
 import { recordCostEvent } from '@/lib/cost/events';
+<<<<<<< ours
 import { getOpenAIApiKey } from '@/server/config/secrets';
+=======
+import { logAiCall } from '@/server/audit/logger';
+>>>>>>> theirs
 
 type CallLLMParams = {
   systemPrompt: string;
@@ -95,8 +99,29 @@ export async function callLLM({
       metadata: { userId },
     });
 
+    logAiCall({
+      tenantId,
+      actorId: userId,
+      agent,
+      model: resolvedModel,
+      systemPromptChars: systemPrompt.length,
+      userPromptChars: trimmedUserPrompt.length,
+      status: 'SUCCESS',
+    });
+
     return response;
   } catch (err) {
+    logAiCall({
+      tenantId,
+      actorId: userId,
+      agent,
+      model: resolvedModel,
+      systemPromptChars: systemPrompt.length,
+      userPromptChars: trimmedUserPrompt.length,
+      status: 'FAILED',
+      error: err instanceof Error ? err.message : 'Unknown error',
+    });
+
     if (isRateLimitError(err)) {
       throw err;
     }

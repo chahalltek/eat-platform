@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { describeKillSwitch, getKillSwitchState, KillSwitchName } from "@/lib/killSwitch";
+import { logExecutionBlocked } from "@/server/audit/logger";
 
 type KillSwitchMiddlewareContext = {
   componentName?: string;
@@ -14,6 +15,11 @@ export function enforceKillSwitch(name: KillSwitchName, context: KillSwitchMiddl
 
   const label = context.componentName ?? describeKillSwitch(name);
   const status = context.fallbackStatus ?? 503;
+
+  logExecutionBlocked({
+    featureFlag: name,
+    reason: state.reason,
+  });
 
   return NextResponse.json(
     {

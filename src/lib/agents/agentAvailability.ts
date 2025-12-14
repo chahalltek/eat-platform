@@ -4,7 +4,12 @@ import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEve
 import { loadTenantMode } from '@/lib/modes/loadTenantMode';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from '@/server/db';
 import { getCurrentTenantId } from '@/lib/tenant';
+<<<<<<< ours
 import { suggestionOnlyResponse } from './executionContract';
+=======
+import { getCurrentUserId } from '@/lib/auth/user';
+import { logExecutionBlocked } from '@/server/audit/logger';
+>>>>>>> theirs
 
 export async function getAgentAvailability(tenantId: string) {
   const mode = await loadTenantMode(tenantId);
@@ -228,18 +233,32 @@ export async function assertAgentFlagEnabled(agentName: AgentName, tenantId?: st
 }
 
 export async function enforceAgentFlagAvailability(agentName: AgentName, tenantId?: string) {
-  const enabled = await isAgentFlagEnabled(agentName, tenantId);
+  const resolvedTenantId = await resolveTenantId(tenantId);
+  const enabled = await isAgentFlagEnabled(agentName, resolvedTenantId);
 
   if (enabled) return null;
 
   const label = describeAgent(agentName);
-  const state = await getAgentFlagAvailability(agentName, tenantId);
+  const [state, actorId] = await Promise.all([
+    getAgentFlagAvailability(agentName, resolvedTenantId),
+    getCurrentUserId(),
+  ]);
 
   await logKillSwitchBlock({
     switchName: agentName,
     reason: null,
     latchedAt: state.enabled ? null : state.updatedAt,
     scope: 'agent',
+    tenantId: resolvedTenantId,
+    userId: actorId,
+  });
+
+  logExecutionBlocked({
+    tenantId: resolvedTenantId,
+    actorId,
+    featureFlag: agentName,
+    reason: state.enabled ? null : DEFAULT_REASON,
+    subjectId: agentName,
   });
 
   return suggestionOnlyResponse(
