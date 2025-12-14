@@ -95,7 +95,7 @@ export async function withAgentRun<T extends Prisma.InputJsonValue>(
     startedAt,
     retryCount: retryCount ?? 0,
     retryOfId: retryOfId ?? null,
-  });
+  }, user ?? undefined);
 
   try {
     const fnResult = await fn();

@@ -7,8 +7,9 @@ import { recordUsageEvent } from "@/lib/usage/events";
 export async function createAgentRunLog(
   prisma: PrismaClient,
   data: Omit<Prisma.AgentRunLogUncheckedCreateInput, "userId">,
+  resolvedUser?: { id: string | null | undefined; tenantId?: string | null | undefined },
 ) {
-  const user = await getCurrentUser();
+  const user = resolvedUser?.id ? resolvedUser : await getCurrentUser();
 
   if (!user?.id) {
     throw new Error("Agent run log creation requires an authenticated user");

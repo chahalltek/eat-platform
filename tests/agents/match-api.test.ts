@@ -87,6 +87,11 @@ describe("MATCH agent API", () => {
     prisma.agentRunLog.update.mockImplementation(mockAgentRunLogUpdate);
     prisma.user.findUnique.mockImplementation(mockUserFindUnique);
     vi.clearAllMocks();
+    mockGetCurrentUser.mockResolvedValue({
+      id: "recruiter-1",
+      tenantId: "tenant-1",
+      role: "RECRUITER",
+    });
     mockMatchJobToAllCandidates.mockResolvedValue(
       matchResults.map(
         (match) =>
@@ -173,8 +178,10 @@ describe("MATCH agent API", () => {
     });
 
     const response = await matchPost(request, { params: { jobId: "job-1" } });
+    const payload = await response.json();
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(payload).toEqual({ error: "Unauthorized" });
     expect(mockAgentRunLogCreate).not.toHaveBeenCalled();
   });
 });

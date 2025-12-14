@@ -61,22 +61,22 @@ export async function generateMatchExplanation(match: MatchResult): Promise<Matc
 }
 
 export async function runMatcherAgent(
-  { jobReqId, recruiterId: _recruiterId, limit = 200 }: MatcherAgentInput,
+  { jobReqId, recruiterId: recruiterIdFromInput, limit = 200 }: MatcherAgentInput,
   deps: MatcherAgentDependencies = {},
   retryMetadata?: AgentRetryMetadata,
 ): Promise<[MatcherAgentResult, string]> {
-  const user = await getCurrentUser();
+  const recruiterId =
+    recruiterIdFromInput ?? (await getCurrentUser().then((user) => user?.id ?? null));
 
-  if (!user) {
+  if (!recruiterId) {
     throw new Error("Current user is required to run matcher agent");
   }
 
-  // User identity is derived from auth; recruiterId in payload is ignored.
   const explainMatch = deps.explainMatch ?? generateMatchExplanation;
   return withAgentRun<MatcherAgentResult>(
     {
       agentName: MATCHER_AGENT_NAME,
-      recruiterId: user.id,
+      recruiterId,
       inputSnapshot: { jobReqId, limit },
       sourceType: "agent",
       sourceTag: "matcher",
@@ -105,10 +105,10 @@ export async function runMatcher(
   input: RunMatcherInput,
   retryMetadata?: AgentRetryMetadata,
 ): Promise<RunMatcherResult> {
-  const { jobId, topN } = input;
+  const { jobId, topN, recruiterId } = input;
 
   const [result, agentRunId] = await runMatcherAgent(
-    { jobReqId: jobId, limit: topN },
+    { jobReqId: jobId, recruiterId, limit: topN },
     {},
     retryMetadata,
   );
