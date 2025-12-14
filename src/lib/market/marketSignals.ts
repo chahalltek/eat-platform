@@ -1,4 +1,4 @@
-import { Prisma } from "@/server/db";
+import { Prisma } from "@prisma/client";
 
 import {
   intelligenceCache,
