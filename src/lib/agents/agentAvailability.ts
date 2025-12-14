@@ -4,12 +4,9 @@ import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEve
 import { loadTenantMode } from '@/lib/modes/loadTenantMode';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from '@/server/db';
 import { getCurrentTenantId } from '@/lib/tenant';
-<<<<<<< ours
-import { suggestionOnlyResponse } from './executionContract';
-=======
 import { getCurrentUserId } from '@/lib/auth/user';
 import { logExecutionBlocked } from '@/server/audit/logger';
->>>>>>> theirs
+import { suggestionOnlyResponse } from './executionContract';
 
 export async function getAgentAvailability(tenantId: string) {
   const mode = await loadTenantMode(tenantId);

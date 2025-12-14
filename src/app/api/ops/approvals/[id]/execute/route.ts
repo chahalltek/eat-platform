@@ -43,12 +43,6 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Approval is not approved" }, { status: 409 });
   }
 
-<<<<<<< ours
-  const agentsEnabled = await isFeatureEnabled(FEATURE_FLAGS.AGENTS);
-
-  if (!agentsEnabled) {
-    return suggestionOnlyResponse("Execution disabled in suggestion-only mode", { status: 200 });
-=======
   const validation = await validateApprovalRequest({
     approvalRequest: approval.approvalRequest,
     actorId: user.id,
@@ -59,7 +53,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (!validation.ok) {
     return NextResponse.json({ error: validation.message }, { status: validation.status });
->>>>>>> theirs
+  }
+
+  const agentsEnabled = await isFeatureEnabled(FEATURE_FLAGS.AGENTS);
+
+  if (!agentsEnabled) {
+    return suggestionOnlyResponse("Execution disabled in suggestion-only mode", { status: 200 });
   }
 
   const execution = await executeApprovedAction(approval);

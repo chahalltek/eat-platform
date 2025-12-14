@@ -110,16 +110,9 @@ export async function handleApprovalDecision(
     return NextResponse.json({ status: "EXECUTED", ...workflowResult });
   } catch (error) {
     console.error("[approvals] Failed to run approved action workflow", error);
-<<<<<<< ours
-    return NextResponse.json(
-      { status: "REJECTED", error: "Approval updated but workflow failed", approval: updatedApproval },
-      { status: 500 },
-    );
-=======
     const message = error instanceof Error ? error.message : "Approval updated but workflow failed";
     const status = message.toLowerCase().includes("approval") ? 409 : 500;
 
     return NextResponse.json({ error: message, approval: updatedApproval }, { status });
->>>>>>> theirs
   }
 }

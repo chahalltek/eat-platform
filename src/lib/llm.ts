@@ -1,36 +1,12 @@
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-export { callLLM, type CallLLMParams, type GatewayCapability } from '@/server/ai/gateway';
-=======
-import OpenAI from 'openai';
-
-import { ChatMessage, OpenAIAdapter, formatEmptyResponseError } from '@/lib/llm/openaiAdapter';
-=======
-import { ChatMessage, OpenAIAdapter } from '@/lib/llm/openaiAdapter';
->>>>>>> theirs
-=======
-import { ChatMessage, OpenAIAdapter } from '@/lib/llm/openaiAdapter';
->>>>>>> theirs
 import { getCurrentUserId } from '@/lib/auth/user';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
 import { AIFailureError } from '@/lib/errors';
 import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
 import { recordCostEvent } from '@/lib/cost/events';
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-import { getOpenAIApiKey } from '@/server/config/secrets';
-=======
 import { logAiCall } from '@/server/audit/logger';
->>>>>>> theirs
-=======
 import { OpenAIChatAdapter } from '@/server/ai/openaiClient';
->>>>>>> theirs
-=======
-import { OpenAIChatAdapter } from '@/server/ai/openaiClient';
->>>>>>> theirs
+import type { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 
 type CallLLMParams = {
   systemPrompt: string;
@@ -40,41 +16,6 @@ type CallLLMParams = {
   agent: string;
 };
 
-<<<<<<< ours
-<<<<<<< ours
-class OpenAIChatAdapter implements OpenAIAdapter {
-  constructor(private apiKey = getOpenAIApiKey()) {}
-
-  async chatCompletion({ model, messages, temperature, maxTokens }: {
-    model: string;
-    messages: ChatMessage[];
-    temperature: number;
-    maxTokens?: number;
-  }): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('OPENAI_API_KEY is not configured');
-    }
-
-    const response = await new OpenAI({ apiKey: this.apiKey }).chat.completions.create({
-      model,
-      messages,
-      temperature,
-      max_tokens: maxTokens,
-    });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw formatEmptyResponseError();
-    }
-
-    return content;
-  }
-}
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 export async function callLLM({
   systemPrompt,
   userPrompt,
@@ -156,4 +97,3 @@ export async function callLLM({
     throw new AIFailureError('LLM call failed');
   }
 }
->>>>>>> theirs

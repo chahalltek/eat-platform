@@ -288,28 +288,6 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   const fireDrillActive = currentMode === "fire_drill";
   const changeModeHref = `/admin/tenants/${tenantId}`;
   const diagnosticsHref = `/admin/tenant/${tenantId}/diagnostics`;
-<<<<<<< ours
-  const diagnosticsStatus = "UNKNOWN";
-
-  const readinessSummary = [
-    {
-      label: "Diagnostics",
-      value: diagnosticsStatus,
-      description: "Live checks for agents, scoring engine, and guardrails.",
-    },
-    {
-      label: "Guardrails",
-      value: formatGuardrailPreset(guardrails.source),
-      description: "Preset driving thresholds, weights, and safety defaults.",
-    },
-    {
-      label: "Agent Kill Switches",
-      value:
-        agentRows.length > 0
-          ? `${agentRows.filter((agent) => agent.effective).length}/${agentRows.length} ready`
-          : "UNKNOWN",
-      description: "Effective availability based on mode and kill switch state.",
-=======
   const executionEnabled = isHardFeatureEnabled(HARD_FEATURE_FLAGS.EXECUTION_ENABLED);
   const writebackEnabled = isHardFeatureEnabled(HARD_FEATURE_FLAGS.REAL_ATS_WRITEBACK_ENABLED);
   const securityMode = getSecurityMode().toUpperCase();
@@ -348,7 +326,6 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
       label: "Security mode",
       value: securityMode.toUpperCase(),
       tone: "caution",
->>>>>>> theirs
     },
   ];
 

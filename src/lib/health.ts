@@ -1,11 +1,6 @@
-import { AgentRunStatus, Prisma } from "@/server/db";
-
-import { prisma } from "@/server/db";
-<<<<<<< ours
+import { AgentRunStatus, Prisma, prisma } from "@/server/db";
 import { verifyLLMProvider } from "@/server/ai/gateway";
-=======
 import { getOpenAIApiKey } from "@/server/config/secrets";
->>>>>>> theirs
 
 export type HealthCheckName = "environment" | "database" | "prisma" | "openai";
 
@@ -91,8 +86,6 @@ async function checkPrismaSchema(): Promise<HealthCheckResult> {
 }
 
 async function checkOpenAI(): Promise<HealthCheckResult> {
-<<<<<<< ours
-=======
   const apiKey = getOpenAIApiKey();
 
   if (!apiKey) {
@@ -103,9 +96,6 @@ async function checkOpenAI(): Promise<HealthCheckResult> {
     };
   }
 
-  const client = new OpenAI({ apiKey });
-
->>>>>>> theirs
   try {
     await verifyLLMProvider();
 
