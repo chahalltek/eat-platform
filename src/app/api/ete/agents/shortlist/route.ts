@@ -27,8 +27,11 @@ type ShortlistResponse = {
 function normalizeThresholds(
   source?: { minMatchScore?: number; shortlistMinScore?: number; shortlistMaxCandidates?: number },
 ) {
-  const minMatchScore = typeof source?.minMatchScore === "number" ? source.minMatchScore : undefined;
-  const shortlistMinScore = typeof source?.shortlistMinScore === "number" ? source.shortlistMinScore : undefined;
+  const normalizeScoreThreshold = (value?: number) =>
+    typeof value === "number" ? (value <= 1 ? value * 100 : value) : undefined;
+
+  const minMatchScore = normalizeScoreThreshold(source?.minMatchScore);
+  const shortlistMinScore = normalizeScoreThreshold(source?.shortlistMinScore);
   const shortlistMaxCandidates = typeof source?.shortlistMaxCandidates === "number" ? source.shortlistMaxCandidates : undefined;
 
   return { minMatchScore, shortlistMinScore, shortlistMaxCandidates };
@@ -105,9 +108,11 @@ export async function POST(req: NextRequest) {
   const confidenceEnabled = availability.isEnabled("CONFIDENCE");
   const notes: string[] = [];
   let confidenceMissingNoted = false;
+  const minimumScore = thresholds.shortlistMinScore ?? thresholds.minMatchScore ?? -Infinity;
 
   const matches = job.matches
     .filter((match) => !candidateIds || candidateIds.includes(match.candidateId))
+    .filter((match) => Math.max(0, Math.min(100, match.matchScore)) >= minimumScore)
     .map((match) => {
       const score = Math.max(0, Math.min(100, match.matchScore));
       const confidenceScore =
@@ -153,7 +158,7 @@ export async function POST(req: NextRequest) {
     (scoredShortlisted.length ? scoredShortlisted[scoredShortlisted.length - 1]?.score ?? null : null);
 
   if (shortlistOutput.notes?.length) {
-    notes.push(...shortlistOutput.notes);
+    notes.push(...shortlistOutput.notes.filter((note) => !note.startsWith("strategy=") && !note.startsWith("minScore=")));
   }
 
   if (confidenceMissingNoted) {

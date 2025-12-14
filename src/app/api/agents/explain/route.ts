@@ -282,7 +282,19 @@ export async function POST(req: NextRequest) {
     }
 
     const availability = await getAgentAvailability(tenantId);
-    const guardrails = (await loadTenantConfig(tenantId)) ?? guardrailsPresets.conservative;
+    const tenantGuardrails = (await loadTenantConfig(tenantId)) ?? {};
+    const guardrails = {
+      ...guardrailsPresets.conservative,
+      ...tenantGuardrails,
+      llm: {
+        ...(guardrailsPresets.conservative.llm as Record<string, unknown>),
+        ...(tenantGuardrails as { llm?: Record<string, unknown> }).llm,
+      },
+      explain: {
+        ...(guardrailsPresets.conservative.explain as Record<string, unknown>),
+        ...(tenantGuardrails as { explain?: Record<string, unknown> }).explain,
+      },
+    } satisfies typeof guardrailsPresets.conservative;
     const guardrailsSnapshot = JSON.parse(JSON.stringify(guardrails ?? {})) as Prisma.JsonValue;
     const isFireDrill = availability.mode.mode === "fire_drill";
 

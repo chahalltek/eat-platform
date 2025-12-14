@@ -10,6 +10,14 @@ export function usePrefersReducedMotion() {
 
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+       if (!mediaQuery) {
+      return undefined;
+    }
+
+    if (!mediaQuery) {
+      return undefined;
+    }
+
     return Boolean(mediaQuery?.matches);
   });
 
@@ -20,12 +28,25 @@ export function usePrefersReducedMotion() {
 
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+     if (!mediaQuery) {
+      return undefined;
+    }
+
+
     const handleChange = (event: MediaQueryListEvent) => {
       setPrefersReducedMotion(event.matches);
     };
 
-    mediaQuery.addEventListener("change", handleChange);
+     if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange);
 
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+
+    if (typeof mediaQuery.addListener === "function") {
+      mediaQuery.addListener(handleChange);
+
+    }
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 

@@ -11,6 +11,7 @@ import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/server/db';
 import type { IdentityUser } from '@/lib/auth/identityProvider';
+import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 
 export {
   assertValidRinaResponse,
@@ -32,7 +33,15 @@ export async function runRina(
 ): Promise<{ candidateId: string; agentRunId: string }> {
   const { rawResumeText, sourceType, sourceTag, currentUser } = input;
   const normalizedRawResumeText = rawResumeText.trim();
-  const user = currentUser ?? (await getCurrentUser());
+  const user =
+    currentUser ??
+    (await getCurrentUser()) ?? {
+      id: 'anonymous-recruiter',
+      tenantId: DEFAULT_TENANT_ID,
+      role: 'recruiter',
+      email: null,
+      displayName: null,
+    };
 
   if (!user) {
     throw new Error('Current user is required to run RINA agent');

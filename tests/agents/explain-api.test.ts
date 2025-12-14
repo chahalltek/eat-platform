@@ -86,7 +86,10 @@ vi.mock("@/lib/llm", () => ({ callLLM: mockCallLLM }));
 vi.mock("@/lib/auth/requireRole", () => ({ requireRole: mockRequireRole }));
 vi.mock("@/lib/agents/agentAvailability", () => ({ getAgentAvailability: mockGetAgentAvailability }));
 vi.mock("@/lib/guardrails/tenantConfig", () => ({ loadTenantConfig: mockLoadTenantConfig }));
-vi.mock("@/lib/featureFlags/middleware", () => ({ agentFeatureGuard: vi.fn().mockResolvedValue(null) }));
+vi.mock("@/lib/featureFlags/middleware", () => ({
+  agentFeatureGuard: vi.fn().mockResolvedValue(null),
+  assertFeatureEnabled: vi.fn().mockResolvedValue(null),
+}));
 vi.mock("@/lib/agents/killSwitch", () => ({
   AGENT_KILL_SWITCHES: { MATCHER: "ETE-TS.MATCHER", MATCH_EXPLAINER: "ETE-TS.EXPLAIN" },
   enforceAgentKillSwitch: vi.fn().mockResolvedValue(null),

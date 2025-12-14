@@ -23,6 +23,30 @@ const {
   };
 });
 
+const { mockCallLLM } = vi.hoisted(() => ({
+  mockCallLLM: vi.fn().mockResolvedValue(
+    JSON.stringify({
+      fullName: "Test User",
+      email: "candidate@example.com",
+      phone: "123-456-7890",
+      location: "Earth",
+      currentTitle: "Engineer",
+      currentCompany: "Example Corp",
+      totalExperienceYears: 5,
+      seniorityLevel: "MID",
+      summary: "A skilled engineer.",
+      parsingConfidence: 0.9,
+      warnings: [],
+      skills: [{
+        name: "TypeScript",
+        normalizedName: "typescript",
+        proficiency: "EXPERT",
+        yearsOfExperience: 3,
+      }],
+    }),
+  ),
+}));
+
 const { prisma, resetDbMocks } = mockDb();
 
 vi.mock("@/lib/agents/tenantScope", () => ({
@@ -52,6 +76,7 @@ vi.mock("@/lib/agents/killSwitch", () => ({
 vi.mock("@/lib/featureFlags/middleware", () => ({
   agentFeatureGuard: vi.fn().mockResolvedValue(null),
   enforceFeatureFlag: vi.fn().mockResolvedValue(null),
+  assertFeatureEnabled: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("@/lib/subscription/usageLimits", () => ({
@@ -63,47 +88,57 @@ vi.mock("@/lib/agents/promptRegistry", () => ({
   resolveAgentPrompt: vi.fn().mockResolvedValue({ prompt: "test-prompt", version: "v1" }),
 }));
 
-vi.mock("@/lib/llm", () => ({
-  callLLM: vi.fn().mockResolvedValue(
-    JSON.stringify({
-      fullName: "Test User",
-      email: "candidate@example.com",
-      phone: "123-456-7890",
-      location: "Earth",
-      currentTitle: "Engineer",
-      currentCompany: "Example Corp",
-      totalExperienceYears: 5,
-      seniorityLevel: "MID",
-      summary: "A skilled engineer.",
-      parsingConfidence: 0.9,
-      warnings: [],
-      skills: [{
-        name: "TypeScript",
-        normalizedName: "typescript",
-        proficiency: "EXPERT",
-        yearsOfExperience: 3,
-      }],
-    }),
-  ),
-}));
+vi.mock("@/lib/llm", () => ({ callLLM: mockCallLLM }));
 
-vi.mock("@/lib/auth/user", () => ({
-  getCurrentUser: vi.fn().mockResolvedValue({
+const { mockGetCurrentUser } = vi.hoisted(() => ({
+  mockGetCurrentUser: vi.fn().mockResolvedValue({
     id: "test-user-1",
+    tenantId: "tenant-1",
     email: "test@example.com",
     role: "recruiter",
   }),
 }));
 
+vi.mock("@/lib/auth/user", () => ({ getCurrentUser: mockGetCurrentUser }));
+
 describe("Agent run logging", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     resetDbMocks();
     prisma.agentRunLog.create.mockImplementation(mockAgentRunLogCreate);
     prisma.agentRunLog.update.mockImplementation(mockAgentRunLogUpdate);
     prisma.candidate.create.mockImplementation(mockCandidateCreate);
     prisma.tenant.findUnique.mockResolvedValue({ id: "tenant-1" });
     prisma.user.findUnique.mockImplementation(mockUserFindUnique);
-    vi.clearAllMocks();
+    mockCallLLM.mockClear();
+    mockGetCurrentUser.mockClear();
+    mockCallLLM.mockResolvedValue(
+      JSON.stringify({
+        fullName: "Test User",
+        email: "candidate@example.com",
+        phone: "123-456-7890",
+        location: "Earth",
+        currentTitle: "Engineer",
+        currentCompany: "Example Corp",
+        totalExperienceYears: 5,
+        seniorityLevel: "MID",
+        summary: "A skilled engineer.",
+        parsingConfidence: 0.9,
+        warnings: [],
+        skills: [{
+          name: "TypeScript",
+          normalizedName: "typescript",
+          proficiency: "EXPERT",
+          yearsOfExperience: 3,
+        }],
+      }),
+    );
+    mockGetCurrentUser.mockResolvedValue({
+      id: "test-user-1",
+      tenantId: "tenant-1",
+      email: "test@example.com",
+      role: "recruiter",
+    });
   });
 
   it("records the current user on RINA agent runs", async () => {

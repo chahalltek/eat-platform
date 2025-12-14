@@ -71,6 +71,7 @@ vi.mock("@/lib/agents/tenantScope", async () => {
 vi.mock("@/lib/featureFlags/middleware", () => ({
   agentFeatureGuard: vi.fn().mockResolvedValue(null),
   enforceFeatureFlag: vi.fn().mockResolvedValue(null),
+  assertFeatureEnabled: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/lib/subscription/usageLimits", () => ({ assertTenantWithinLimits: vi.fn() }));
 vi.mock("@/lib/agents/promptRegistry", () => ({
