@@ -112,17 +112,19 @@ export default async function AdminHealthPage() {
             <div>
               <h1 className="text-xl font-semibold">Admin access required</h1>
               <p className="mt-1 text-sm text-amber-800">
-                Switch to an admin account to view platform health. You&apos;re currently signed in as
-                {" "}
+                Admin routes are locked to privileged roles. You&apos;re currently signed in as{' '}
                 <span className="font-semibold">{user?.email ?? "an unknown user"}</span>
                 {detectedRole ? (
                   <span className="text-xs font-semibold uppercase tracking-wide"> ({detectedRole})</span>
                 ) : null}
-                .
+                , which doesn&apos;t have admin access for /admin.
               </p>
               <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-amber-800">
                 <li>Use the seeded admin account (admin@test.demo) and the configured AUTH_PASSWORD.</li>
-                <li>If you expected admin access, sign out, sign back in, and confirm your role is ADMIN or SYSTEM_ADMIN.</li>
+                <li>
+                  If you expected admin access, sign out, sign back in, and confirm your role is ADMIN, SYSTEM_ADMIN,
+                  TENANT_ADMIN, or DATA_ACCESS.
+                </li>
               </ul>
             </div>
           </div>
