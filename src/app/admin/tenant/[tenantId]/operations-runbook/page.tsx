@@ -3,11 +3,13 @@ import { ExclamationTriangleIcon, ShieldExclamationIcon } from "@heroicons/react
 import { ArrowTopRightOnSquareIcon, FireIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 
 import { EteLogo } from "@/components/EteLogo";
+import { HARD_FEATURE_FLAGS, getSecurityMode, isHardFeatureEnabled } from "@/config/featureFlags";
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
 import type { AgentName } from "@/lib/agents/agentAvailability";
 import { requireTenantAdmin } from "@/lib/auth/tenantAdmin";
 import { getCurrentUser } from "@/lib/auth/user";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
+import { buildTenantDiagnostics } from "@/lib/tenant/diagnostics";
 
 export const dynamic = "force-dynamic";
 
@@ -164,6 +166,8 @@ type GuardrailSource =
 type GuardrailSnapshot =
   | (typeof GUARDRAIL_PRESETS)[keyof typeof GUARDRAIL_PRESETS] & { source: GuardrailSource };
 
+type JobIntentStatus = "READY" | "MISSING" | "UNKNOWN";
+
 async function getTenantMode(tenantId: string): Promise<RunbookMode> {
   const resolved = await loadTenantMode(tenantId);
 
@@ -189,6 +193,28 @@ function resolveGuardrails(mode: RunbookMode): GuardrailSnapshot {
 function formatGuardrailPreset(source: GuardrailSource) {
   if (source.preset === "Custom") return `${source.preset} (${source.reason})`;
   return `${source.preset} (${source.reason})`;
+}
+
+function resolveJobIntentStatus(diagnostics: unknown): JobIntentStatus {
+  if (!diagnostics || typeof diagnostics !== "object") return "UNKNOWN";
+
+  const jobIntent = (diagnostics as { jobIntent?: { status?: string } }).jobIntent;
+
+  if (!jobIntent || typeof jobIntent.status !== "string") return "UNKNOWN";
+
+  const normalized = jobIntent.status.toLowerCase();
+
+  if (["ready", "enabled", "ok"].includes(normalized)) return "READY";
+  if (["missing", "disabled", "off"].includes(normalized)) return "MISSING";
+
+  return "UNKNOWN";
+}
+
+function badgeToneClass(tone: "positive" | "negative" | "neutral" | "caution") {
+  if (tone === "positive") return "bg-emerald-50 text-emerald-800 ring-emerald-100";
+  if (tone === "negative") return "bg-rose-50 text-rose-800 ring-rose-100";
+  if (tone === "caution") return "bg-amber-50 text-amber-900 ring-amber-100";
+  return "bg-zinc-50 text-zinc-800 ring-zinc-100";
 }
 
 export default async function OperationsRunbookPage({ params }: { params: { tenantId: string } }) {
@@ -231,6 +257,17 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
     );
   }
 
+  let diagnosticsAvailable = false;
+  let jobIntentStatus: JobIntentStatus = "UNKNOWN";
+
+  try {
+    const diagnostics = await buildTenantDiagnostics(tenantId);
+    diagnosticsAvailable = true;
+    jobIntentStatus = resolveJobIntentStatus(diagnostics);
+  } catch (error) {
+    console.error("Unable to load runbook diagnostics", error);
+  }
+
   const [currentMode, killSwitches] = await Promise.all([getTenantMode(tenantId), listAgentKillSwitches()]);
   const guardrails = resolveGuardrails(currentMode);
   const killSwitchLookup = new Map(killSwitches.map((switchRow) => [switchRow.agentName, switchRow]));
@@ -251,6 +288,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   const fireDrillActive = currentMode === "fire_drill";
   const changeModeHref = `/admin/tenants/${tenantId}`;
   const diagnosticsHref = `/admin/tenant/${tenantId}/diagnostics`;
+<<<<<<< ours
   const diagnosticsStatus = "UNKNOWN";
 
   const readinessSummary = [
@@ -271,6 +309,46 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
           ? `${agentRows.filter((agent) => agent.effective).length}/${agentRows.length} ready`
           : "UNKNOWN",
       description: "Effective availability based on mode and kill switch state.",
+=======
+  const executionEnabled = isHardFeatureEnabled(HARD_FEATURE_FLAGS.EXECUTION_ENABLED);
+  const writebackEnabled = isHardFeatureEnabled(HARD_FEATURE_FLAGS.REAL_ATS_WRITEBACK_ENABLED);
+  const securityMode = getSecurityMode().toUpperCase();
+
+  const readinessSummary: Array<{
+    label: string;
+    value: string;
+    tone: "positive" | "negative" | "neutral" | "caution";
+  }> = [
+    {
+      label: "Diagnostics available",
+      value: diagnosticsAvailable ? "YES" : "NO",
+      tone: diagnosticsAvailable ? "positive" : "negative",
+    },
+    {
+      label: "Job intent pipeline",
+      value: jobIntentStatus,
+      tone: jobIntentStatus === "READY" ? "positive" : jobIntentStatus === "MISSING" ? "negative" : "neutral",
+    },
+    {
+      label: "Agent loop",
+      value: "READY",
+      tone: "positive",
+    },
+    {
+      label: "Execution mode",
+      value: executionEnabled ? "ENABLED" : "DISABLED",
+      tone: executionEnabled ? "positive" : "negative",
+    },
+    {
+      label: "External writeback",
+      value: writebackEnabled ? "ENABLED" : "DISABLED",
+      tone: writebackEnabled ? "positive" : "neutral",
+    },
+    {
+      label: "Security mode",
+      value: securityMode.toUpperCase(),
+      tone: "caution",
+>>>>>>> theirs
     },
   ];
 
@@ -304,6 +382,38 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
             </Link>
           </div>
         </header>
+
+        <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-zinc-900">Operational Readiness Summary</h2>
+              <p className="text-sm text-zinc-600">
+                Derived from tenant diagnostics, feature flags, and system modes. Read-only snapshot for tenant {tenantId}.
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-700">
+              Read-only
+            </span>
+          </div>
+
+          <dl className="grid gap-4 md:grid-cols-3">
+            {readinessSummary.map((item) => (
+              <div key={item.label} className="rounded-xl bg-zinc-50 p-4">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{item.label}</dt>
+                <dd className="mt-2 flex items-center gap-2 text-base font-semibold text-zinc-900">
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset ${badgeToneClass(item.tone)}`}
+                  >
+                    {item.value}
+                  </span>
+                  {item.value === "UNKNOWN" ? (
+                    <span className="text-xs font-medium text-zinc-600">(not reported)</span>
+                  ) : null}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-3">

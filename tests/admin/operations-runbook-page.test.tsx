@@ -1,0 +1,82 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import "@testing-library/jest-dom/vitest";
+import { render, screen } from "@testing-library/react";
+import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  getCurrentUser: vi.fn(),
+  requireTenantAdmin: vi.fn(),
+  listAgentKillSwitches: vi.fn(),
+  loadTenantMode: vi.fn(),
+  buildTenantDiagnostics: vi.fn(),
+}));
+
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock("@/components/EteLogo", () => ({
+  EteLogo: () => <div data-testid="ete-logo" />,
+}));
+
+vi.mock("@/lib/auth/user", () => ({
+  getCurrentUser: mocks.getCurrentUser,
+}));
+
+vi.mock("@/lib/auth/tenantAdmin", () => ({
+  requireTenantAdmin: mocks.requireTenantAdmin,
+}));
+
+vi.mock("@/lib/agents/killSwitch", () => ({
+  listAgentKillSwitches: mocks.listAgentKillSwitches,
+}));
+
+vi.mock("@/lib/modes/loadTenantMode", () => ({
+  loadTenantMode: mocks.loadTenantMode,
+}));
+
+vi.mock("@/lib/tenant/diagnostics", () => ({
+  buildTenantDiagnostics: mocks.buildTenantDiagnostics,
+}));
+
+import OperationsRunbookPage from "@/app/admin/tenant/[tenantId]/operations-runbook/page";
+
+describe("Operations runbook readiness summary", () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.getCurrentUser.mockResolvedValue({ id: "admin-1" });
+    mocks.requireTenantAdmin.mockResolvedValue({ isAdmin: true });
+    mocks.listAgentKillSwitches.mockResolvedValue([]);
+    mocks.loadTenantMode.mockResolvedValue({ mode: "production" });
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("shows readiness summary with unknown states when diagnostics are unavailable", async () => {
+    mocks.buildTenantDiagnostics.mockRejectedValue(new Error("unavailable"));
+
+    const page = await OperationsRunbookPage({ params: { tenantId: "tenant-123" } });
+    render(page);
+
+    expect(screen.getByText(/Operational Readiness Summary/i)).toBeInTheDocument();
+    const diagnosticsLabel = screen.getByText(/Diagnostics available/i);
+    expect(diagnosticsLabel.nextElementSibling?.textContent).toContain("NO");
+
+    const jobIntentLabel = screen.getByText(/Job intent pipeline/i);
+    expect(jobIntentLabel.nextElementSibling?.textContent).toContain("UNKNOWN");
+  });
+});
