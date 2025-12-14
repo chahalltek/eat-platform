@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextResponse } from "next/server";
 
 import { POST as intakePost } from "@/app/api/agents/intake/route";
 import { expectApiError } from "@/test-helpers/api";
@@ -14,6 +15,8 @@ const {
   mockUserFindUnique,
   mockGetTenantScopedPrismaClient,
   mockGetCurrentUser,
+  mockRecordMetricEvent,
+  mockRequireRole,
 } = vi.hoisted(() => {
   const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-1", ...data }));
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
@@ -29,6 +32,8 @@ const {
     tenantId: "tenant-1",
     role: "RECRUITER",
   });
+  const mockRecordMetricEvent = vi.fn();
+  const mockRequireRole = vi.fn();
 
   return {
     mockAgentRunLogCreate,
@@ -37,6 +42,8 @@ const {
     mockUserFindUnique,
     mockGetTenantScopedPrismaClient,
     mockGetCurrentUser,
+    mockRecordMetricEvent,
+    mockRequireRole,
   };
 });
 
@@ -77,6 +84,12 @@ vi.mock("@/lib/auth/user", () => ({
 vi.mock("@/app/api/agents/recruiterValidation", () => ({
   validateRecruiterId: vi.fn().mockResolvedValue({ recruiterId: "recruiter-1" }),
 }));
+vi.mock("@/lib/metrics/events", () => ({ recordMetricEvent: mockRecordMetricEvent }));
+vi.mock("@/lib/auth/requireRole", () => ({
+  requireRole: mockRequireRole,
+  requireRecruiterOrAdmin: vi.fn(),
+  requireHiringManagerOrAdmin: vi.fn(),
+}));
 
 describe("INTAKE agent API", () => {
   beforeEach(() => {
@@ -86,6 +99,16 @@ describe("INTAKE agent API", () => {
     prisma.jobReq.create.mockImplementation(mockJobReqCreate);
     prisma.user.findUnique.mockImplementation(mockUserFindUnique);
     vi.clearAllMocks();
+    mockGetCurrentUser.mockResolvedValue({
+      id: "user-1",
+      tenantId: "tenant-1",
+      role: "RECRUITER",
+    });
+    mockRecordMetricEvent.mockResolvedValue(undefined);
+    mockRequireRole.mockResolvedValue({
+      ok: true,
+      user: { id: "user-1", tenantId: "tenant-1", role: "RECRUITER" },
+    });
   });
 
   it("logs successful runs", async () => {
@@ -128,6 +151,19 @@ describe("INTAKE agent API", () => {
         data: expect.objectContaining({ status: "SUCCESS" }),
       }),
     );
+    expect(mockRecordMetricEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "tenant-1",
+        eventType: "DECISION_STREAM_ITEM",
+        entityId: "job-1",
+        meta: expect.objectContaining({
+          action: "INTAKE_RESULT",
+          jobId: "job-1",
+          skillsCount: 1,
+          status: "Open",
+        }),
+      }),
+    );
   });
 
   it("marks failed runs when parsing fails", async () => {
@@ -149,22 +185,21 @@ describe("INTAKE agent API", () => {
     );
   });
 
-    it("denies access for unauthorized roles", async () => {
-      mockGetCurrentUser.mockResolvedValueOnce({
-        id: "user-1",
-        tenantId: "tenant-1",
-        role: "SALES",
-      });
-
-      const request = makeRequest({
-        method: "POST",
-        url: "http://localhost/api/agents/intake",
-        json: { rawJobText: "A role" },
-      });
-
-      const response = await intakePost(request);
-
-      await expectApiError(response, 403);
-      expect(mockAgentRunLogCreate).not.toHaveBeenCalled();
+  it("denies access for unauthorized roles", async () => {
+    mockRequireRole.mockResolvedValueOnce({
+      ok: false,
+      response: NextResponse.json({ message: "Forbidden" }, { status: 403 }),
     });
+
+    const request = makeRequest({
+      method: "POST",
+      url: "http://localhost/api/agents/intake",
+      json: { rawJobText: "A role" },
+    });
+
+    const response = await intakePost(request);
+
+    await expectApiError(response, 403);
+    expect(mockAgentRunLogCreate).not.toHaveBeenCalled();
   });
+});

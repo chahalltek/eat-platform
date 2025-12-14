@@ -54,6 +54,7 @@ const createPrismaMock = () => {
     jobApplicationEvent: createModelMock(),
     jobApplicationScore: createModelMock(),
     jobCandidate: createModelMock(),
+    jobIntent: createModelMock(),
     jobReq: createModelMock(),
     jobSkill: createModelMock(),
     match: createModelMock(),

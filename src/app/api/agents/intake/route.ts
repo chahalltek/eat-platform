@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { prisma: scopedPrisma, tenantId: resolvedTenantId, runWithTenantContext } = scopedTenant;
+  const tenantForMetrics = resolvedTenantId ?? 'default-tenant';
 
   const agentName = AGENT_KILL_SWITCHES.INTAKE;
   const startedAt = new Date();
@@ -127,6 +128,18 @@ export async function POST(req: NextRequest) {
     });
 
     void recordUsageEvent({ tenantId: resolvedTenantId ?? tenantId, eventType: 'AGENT_RUN' as UsageEventType });
+    void recordMetricEvent({
+      tenantId: tenantForMetrics,
+      eventType: 'DECISION_STREAM_ITEM',
+      entityId: inputSnapshot.jobReqId ?? agentRun.id,
+      meta: {
+        action: 'AGENT_RUN_STARTED',
+        agentName,
+        jobReqId: inputSnapshot.jobReqId,
+        runId: agentRun.id,
+        sourceType: 'agent_intake',
+      },
+    });
 
     try {
       const llmRaw = await callLLM({
@@ -230,26 +243,6 @@ export async function POST(req: NextRequest) {
         jobReqId = createdJob.id;
       });
 
-      if (jobReqId && resolvedTenantId) {
-        void onJobChanged({ tenantId: resolvedTenantId, jobId: jobReqId });
-      }
-
-      const tenantForMetrics = resolvedTenantId ?? 'default-tenant';
-      void recordMetricEvent({
-        tenantId: tenantForMetrics,
-        eventType: inputSnapshot.jobReqId ? 'JOB_UPDATED' : 'JOB_CREATED',
-        entityId: jobReqId ?? undefined,
-        meta: {
-          status: parsedProfile.status ?? null,
-          skillsCount: parsedProfile.skills.length,
-          sourceType: 'agent_intake',
-        },
-      });
-
-      if (resolvedTenantId) {
-        void recordUsageEvent({ tenantId: resolvedTenantId, eventType: 'JOBS_PROCESSED' as UsageEventType });
-      }
-
       const finishedAt = new Date();
       const durationMs = finishedAt.getTime() - startedAt.getTime();
 
@@ -263,6 +256,37 @@ export async function POST(req: NextRequest) {
           finishedAt,
         },
       });
+
+      if (jobReqId && resolvedTenantId) {
+        void onJobChanged({ tenantId: resolvedTenantId, jobId: jobReqId });
+      }
+
+      void recordMetricEvent({
+        tenantId: tenantForMetrics,
+        eventType: inputSnapshot.jobReqId ? 'JOB_UPDATED' : 'JOB_CREATED',
+        entityId: jobReqId ?? undefined,
+        meta: {
+          status: parsedProfile.status ?? null,
+          skillsCount: parsedProfile.skills.length,
+          sourceType: 'agent_intake',
+        },
+      });
+      void recordMetricEvent({
+        tenantId: tenantForMetrics,
+        eventType: 'DECISION_STREAM_ITEM',
+        entityId: jobReqId ?? agentRun.id,
+        meta: {
+          action: 'INTAKE_RESULT',
+          jobId: jobReqId,
+          skillsCount: parsedProfile.skills.length,
+          status: parsedProfile.status ?? null,
+          durationMs,
+        },
+      });
+
+      if (resolvedTenantId) {
+        void recordUsageEvent({ tenantId: resolvedTenantId, eventType: 'JOBS_PROCESSED' as UsageEventType });
+      }
 
       return NextResponse.json(parsedProfile, { status: 200 });
     } catch (err) {
@@ -278,6 +302,18 @@ export async function POST(req: NextRequest) {
           status: 'FAILED',
           errorMessage: userMessage,
           finishedAt,
+        },
+      });
+
+      void recordMetricEvent({
+        tenantId: tenantForMetrics,
+        eventType: 'DECISION_STREAM_ITEM',
+        entityId: inputSnapshot.jobReqId ?? agentRun.id,
+        meta: {
+          action: 'INTAKE_FAILED',
+          jobId: inputSnapshot.jobReqId ?? null,
+          durationMs,
+          error: userMessage,
         },
       });
 
