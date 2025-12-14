@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 
-import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
 import { TenantExportButton } from "./TenantExportButton";
 
@@ -11,11 +12,14 @@ export const dynamic = "force-dynamic";
 
 export default async function TenantAdminPage() {
   const user = await getCurrentUser();
-  const tenantId = await getCurrentTenantId();
-  const userTenant = (user?.tenantId ?? DEFAULT_TENANT_ID).trim();
-  const isAuthorized = user && isAdminRole(user.role) && userTenant === tenantId.trim();
+  const [tenantId, roleHint] = await Promise.all([
+    getCurrentTenantId(),
+    (async () => getTenantRoleFromHeaders(await headers()))(),
+  ]);
 
-  if (!isAuthorized) {
+  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint });
+
+  if (!access.hasAccess) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
