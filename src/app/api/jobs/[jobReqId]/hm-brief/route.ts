@@ -69,6 +69,23 @@ export async function GET(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Hiring manager brief not found" }, { status: 404 });
   }
 
+  const jobIntent = await prisma.jobIntent.findFirst({
+    where: { jobReqId, tenantId },
+  });
+
+  if (!jobIntent) {
+    console.warn("Job intent missing for hiring manager brief", { jobReqId, tenantId });
+
+    return NextResponse.json(
+      {
+        error: "JOB_INTENT_MISSING",
+        message: "Job intent missing; run ingestion or intake before generating a brief.",
+        jobReqId,
+      },
+      { status: 409 },
+    );
+  }
+
   return NextResponse.json(
     {
       briefId: brief.id,
