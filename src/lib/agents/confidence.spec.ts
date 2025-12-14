@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { runConfidence } from "@/lib/agents/confidence";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 
 vi.mock("@/server/db", () => ({
   prisma: {
@@ -48,15 +49,31 @@ describe("runConfidence", () => {
     vi.mocked(runConfidenceAgent).mockResolvedValue({
       jobId: "job-1",
       results: [
-        { candidateId: "cand-1", score: 0.8, confidenceBand: "HIGH", confidenceReasons: ["Existing"] },
-        { candidateId: "cand-2", score: 0.55, confidenceBand: "LOW", confidenceReasons: [] },
+        {
+          candidateId: "cand-1",
+          score: 0.8,
+          confidenceScore: 78,
+          confidenceBand: "HIGH",
+          confidenceReasons: ["Existing"],
+          riskFlags: [],
+          recommendedAction: "PUSH",
+        },
+        {
+          candidateId: "cand-2",
+          score: 0.55,
+          confidenceScore: 49,
+          confidenceBand: "LOW",
+          confidenceReasons: [],
+          riskFlags: [{ type: "MISSING_DATA", detail: "" }],
+          recommendedAction: "REJECT",
+        },
       ],
     });
 
     const result = await runConfidence({ jobId: "job-1" });
 
     expect(prisma.prisma.matchResult.findMany).toHaveBeenCalledWith({
-      where: { jobReqId: "job-1", tenantId: "tenant-123" },
+      where: { jobReqId: "job-1", tenantId: DEFAULT_TENANT_ID },
       select: { candidateId: true, score: true, candidateSignalBreakdown: true },
     });
     expect(runConfidenceAgent).toHaveBeenCalledWith({
@@ -65,13 +82,29 @@ describe("runConfidence", () => {
         { candidateId: "cand-2", score: 55, signals: undefined },
       ],
       job: { id: "job-1" },
-      tenantId: "tenant-123",
+      tenantId: DEFAULT_TENANT_ID,
     });
     expect(result).toEqual({
       jobId: "job-1",
       results: [
-        { candidateId: "cand-1", score: 0.8, confidenceBand: "HIGH", confidenceReasons: ["Existing"] },
-        { candidateId: "cand-2", score: 0.55, confidenceBand: "LOW", confidenceReasons: [] },
+        {
+          candidateId: "cand-1",
+          score: 0.8,
+          confidenceScore: 78,
+          confidenceBand: "HIGH",
+          confidenceReasons: ["Existing"],
+          riskFlags: [],
+          recommendedAction: "PUSH",
+        },
+        {
+          candidateId: "cand-2",
+          score: 0.55,
+          confidenceScore: 49,
+          confidenceBand: "LOW",
+          confidenceReasons: [],
+          riskFlags: [{ type: "MISSING_DATA", detail: "" }],
+          recommendedAction: "REJECT",
+        },
       ],
     });
   });

@@ -35,7 +35,17 @@ describe("CONFIDENCE agent API", () => {
     const runConfidenceMock = runConfidence as unknown as vi.Mock;
     runConfidenceMock.mockResolvedValue({
       jobId: "job-123",
-      recomputed: [{ candidateId: "cand-1", confidence: 97 }],
+      results: [
+        {
+          candidateId: "cand-1",
+          score: 0.97,
+          confidenceScore: 97,
+          confidenceBand: "HIGH",
+          confidenceReasons: ["Robust signals"],
+          riskFlags: [],
+          recommendedAction: "PUSH",
+        },
+      ],
     });
   });
 
@@ -67,6 +77,19 @@ describe("CONFIDENCE agent API", () => {
 
     expect(response.status).toBe(200);
     expect(runConfidence).toHaveBeenCalledWith({ jobId: "job-123", recruiterId: "recruiter-1" }, req);
-    expect(body).toEqual({ jobId: "job-123", recomputed: [{ candidateId: "cand-1", confidence: 97 }] });
+    expect(body).toEqual({
+      jobId: "job-123",
+      results: [
+        {
+          candidateId: "cand-1",
+          score: 0.97,
+          confidenceScore: 97,
+          confidenceBand: "HIGH",
+          confidenceReasons: ["Robust signals"],
+          riskFlags: [],
+          recommendedAction: "PUSH",
+        },
+      ],
+    });
   });
 });

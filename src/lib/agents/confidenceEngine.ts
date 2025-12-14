@@ -5,6 +5,12 @@ import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 
 export type ConfidenceBand = "HIGH" | "MEDIUM" | "LOW";
 
+export type ConfidenceRiskFlagType = "MISSING_DATA" | "STALE_ATS_SYNC" | "CONFLICTING_SIGNALS";
+
+export type ConfidenceRiskFlag = { type: ConfidenceRiskFlagType; detail: string };
+
+export type RecommendedRecruiterAction = "REQUEST_INFO" | "PUSH" | "REJECT" | "ESCALATE";
+
 export type ConfidenceSignals = {
   mustHaveCoverage?: number;
   niceToHaveCoverage?: number;
@@ -23,6 +29,8 @@ export type MatchResult = {
 type WeakSignal = { label: string; value: number } | null;
 
 const DEFAULT_CONFIDENCE_BANDS = defaultTenantGuardrails.safety.confidenceBands;
+
+const clampScore = (score: number) => Math.max(0, Math.min(100, Math.round(score)));
 
 const normalizeScore = (score: number) => (score > 1 ? score / 100 : score);
 
@@ -58,8 +66,9 @@ export function getConfidenceBand(score: number, config: GuardrailsConfig): Conf
 export function buildConfidenceSummary(
   match: MatchResult,
   config: GuardrailsConfig = defaultTenantGuardrails,
+  confidenceScore?: number,
 ): { band: ConfidenceBand; reasons: string[] } {
-  const normalizedScore = normalizeScore(match.score);
+  const normalizedScore = confidenceScore != null ? confidenceScore / 100 : normalizeScore(match.score);
   const band = getConfidenceBand(normalizedScore, config);
   const signals = match.signals ?? {};
   const reasons: string[] = [];
@@ -140,6 +149,105 @@ export function buildConfidenceSummary(
   return { band, reasons };
 }
 
+function computeConfidenceScore(match: MatchResult): number {
+  const baseScore = normalizeScore(match.score) * 100;
+  const signals = match.signals ?? {};
+
+  const hasAnySignalData = Boolean(
+    signals.notes?.length ||
+      signals.mustHaveCoverage !== undefined ||
+      signals.experienceAlignment !== undefined ||
+      signals.engagement !== undefined ||
+      signals.niceToHaveCoverage !== undefined ||
+      (signals.missingMustHaves?.length ?? 0) > 0,
+  );
+
+  const missingMustHavePenalty = (signals.missingMustHaves?.length ?? 0) * 5;
+  const missingSignalPenalty = hasAnySignalData
+    ?
+        Math.max(
+          0,
+          [signals.mustHaveCoverage, signals.experienceAlignment, signals.engagement, signals.niceToHaveCoverage].filter(
+            (value) => value == null,
+          ).length - 1,
+        ) * 2
+    : 0;
+
+  const staleDataPenalty = (signals.notes ?? []).some((note) => /stale|sync/i.test(note)) ? 7 : 0;
+
+  const conflictingSignalPenalty = (() => {
+    const { mustHaveCoverage, experienceAlignment } = signals;
+    if (
+      typeof mustHaveCoverage === "number" &&
+      typeof experienceAlignment === "number" &&
+      Math.abs(mustHaveCoverage - experienceAlignment) >= 0.35
+    ) {
+      return 8;
+    }
+    return 0;
+  })();
+
+  const penalties = missingMustHavePenalty + missingSignalPenalty + staleDataPenalty + conflictingSignalPenalty;
+
+  return clampScore(baseScore - penalties);
+}
+
+function identifyRiskFlags(match: MatchResult): ConfidenceRiskFlag[] {
+  const signals = match.signals ?? {};
+  const flags: ConfidenceRiskFlag[] = [];
+
+  const missingSignals = [signals.mustHaveCoverage, signals.experienceAlignment, signals.engagement].filter(
+    (value) => value == null,
+  ).length;
+
+  if ((signals.missingMustHaves?.length ?? 0) > 0 || missingSignals >= 4) {
+    const missingList = signals.missingMustHaves?.length ? `Missing must-haves: ${signals.missingMustHaves.join(", ")}.` :
+      "Limited evidence across core signals.";
+    flags.push({ type: "MISSING_DATA", detail: missingList });
+  }
+
+  const staleNote = (signals.notes ?? []).find((note) => /stale|sync/i.test(note));
+  if (staleNote) {
+    flags.push({ type: "STALE_ATS_SYNC", detail: `Data freshness risk: ${staleNote}` });
+  }
+
+  const { mustHaveCoverage, experienceAlignment } = signals;
+  if (
+    typeof mustHaveCoverage === "number" &&
+    typeof experienceAlignment === "number" &&
+    Math.abs(mustHaveCoverage - experienceAlignment) >= 0.35
+  ) {
+    flags.push({
+      type: "CONFLICTING_SIGNALS",
+      detail: `Must-have coverage ${formatPercent(mustHaveCoverage) ?? ""} conflicts with experience alignment ${
+        formatPercent(experienceAlignment) ?? ""
+      }.`,
+    });
+  }
+
+  return flags;
+}
+
+function recommendRecruiterAction(
+  band: ConfidenceBand,
+  confidenceScore: number,
+  riskFlags: ConfidenceRiskFlag[],
+): RecommendedRecruiterAction {
+  if (band === "LOW" || confidenceScore < 50) {
+    return riskFlags.some((flag) => flag.type === "CONFLICTING_SIGNALS") ? "ESCALATE" : "REJECT";
+  }
+
+  if (riskFlags.some((flag) => flag.type === "CONFLICTING_SIGNALS")) {
+    return "ESCALATE";
+  }
+
+  if (riskFlags.some((flag) => flag.type === "MISSING_DATA" || flag.type === "STALE_ATS_SYNC")) {
+    return "REQUEST_INFO";
+  }
+
+  return "PUSH";
+}
+
 export type ConfidenceAgentInput = {
   matchResults: MatchResult[];
   job: { id: string };
@@ -166,18 +274,25 @@ export async function runConfidenceAgent(
   const confidenceEnabled = mode.agentsEnabled.includes("CONFIDENCE");
 
   const results = matchResults.map((match) => {
+    const confidenceScore = computeConfidenceScore(match);
     const summary = confidenceEnabled
-      ? buildConfidenceSummary(match, guardrails)
+      ? buildConfidenceSummary(match, guardrails, confidenceScore)
       : {
-          band: getConfidenceBand(match.score, guardrails),
+          band: getConfidenceBand(confidenceScore / 100, guardrails),
           reasons: [] as string[],
         };
+
+    const riskFlags = confidenceEnabled ? identifyRiskFlags(match) : [];
+    const recommendedAction = recommendRecruiterAction(summary.band, confidenceScore, riskFlags);
 
     return {
       candidateId: match.candidateId,
       score: normalizeScore(match.score),
+      confidenceScore,
       confidenceBand: summary.band,
       confidenceReasons: confidenceEnabled ? summary.reasons : [],
+      riskFlags,
+      recommendedAction,
     };
   });
 
@@ -186,8 +301,11 @@ export async function runConfidenceAgent(
     results: Array<{
       candidateId: string;
       score: number;
+      confidenceScore: number;
       confidenceBand: ConfidenceBand;
       confidenceReasons: string[];
+      riskFlags: ConfidenceRiskFlag[];
+      recommendedAction: RecommendedRecruiterAction;
     }>;
   };
 }

@@ -7,6 +7,7 @@ import {
   getConfidenceBand,
   runConfidenceAgent,
   type MatchResult,
+  type ConfidenceRiskFlag,
 } from "./confidenceEngine";
 
 describe("getConfidenceBand", () => {
@@ -86,7 +87,10 @@ describe("runConfidenceAgent", () => {
     expect(results).toHaveLength(2);
     expect(results[0].confidenceBand).toBe("HIGH");
     expect(results[0].confidenceReasons.length).toBeGreaterThan(0);
+    expect(results[0].confidenceScore).toBeGreaterThan(0);
+    expect(results[0].recommendedAction).toBe("PUSH");
     expect(results[1].confidenceBand).toBe("LOW");
+    expect(results[1].riskFlags.some((flag) => flag.type === "MISSING_DATA")).toBe(true);
   });
 
   it("omits textual reasons when confidence is disabled (fire drill)", async () => {
@@ -104,5 +108,38 @@ describe("runConfidenceAgent", () => {
 
     expect(results[0].confidenceBand).toBe("HIGH");
     expect(results[0].confidenceReasons).toEqual([]);
+    expect(results[0].riskFlags).toEqual([]);
+  });
+
+  it("identifies risk flags and recommended recruiter actions", async () => {
+    const mockLoadGuardrails = vi.fn().mockResolvedValue(defaultTenantGuardrails);
+    const mockLoadMode = vi
+      .fn()
+      .mockResolvedValue({ mode: "production", guardrailsPreset: "balanced", agentsEnabled: ["CONFIDENCE", "MATCH"] });
+
+    const matchResults: MatchResult[] = [
+      {
+        candidateId: "cand-weak",
+        score: 0.65,
+        signals: {
+          mustHaveCoverage: 0.8,
+          experienceAlignment: 0.35,
+          missingMustHaves: ["Go"],
+          notes: ["Stale ATS sync; last updated 90d ago"],
+        },
+      },
+    ];
+
+    const { results } = await runConfidenceAgent(
+      { matchResults, job: { id: "job-risk" }, tenantId: "tenant-risk" },
+      { loadGuardrails: mockLoadGuardrails, loadMode: mockLoadMode },
+    );
+
+    const [result] = results;
+    const riskTypes = result.riskFlags.map((flag: ConfidenceRiskFlag) => flag.type);
+    expect(result.confidenceScore).toBeLessThan(65);
+    expect(result.confidenceBand).toBe("LOW");
+    expect(riskTypes).toEqual(expect.arrayContaining(["MISSING_DATA", "STALE_ATS_SYNC", "CONFLICTING_SIGNALS"]));
+    expect(result.recommendedAction).toBe("ESCALATE");
   });
 });
