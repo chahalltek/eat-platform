@@ -5,6 +5,7 @@ import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
 
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockGetCurrentTenantId = vi.hoisted(() => vi.fn());
+const mockWithTenantContext = vi.hoisted(() => vi.fn());
 const mockResolveTenantAccess = vi.hoisted(() => vi.fn());
 const mockSetFeatureFlag = vi.hoisted(() => vi.fn());
 const mockCanManageTenants = vi.hoisted(() => vi.fn());
@@ -15,7 +16,7 @@ vi.mock("@/lib/auth/user", () => ({
 
 vi.mock("@/lib/tenant", () => ({
   getCurrentTenantId: mockGetCurrentTenantId,
-  withTenantContext: (_tenantId: string, callback: () => Promise<unknown>) => callback(),
+  withTenantContext: mockWithTenantContext,
 }));
 
 vi.mock("@/lib/tenant/access", () => ({
@@ -43,7 +44,11 @@ describe("POST /api/tenant/fire_drill", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetCurrentTenantId.mockResolvedValue("tenant-a");
+    mockWithTenantContext.mockImplementation(async (_tenantId: string, callback: () => Promise<unknown>) =>
+      callback(),
+    );
     mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
+    mockSetFeatureFlag.mockResolvedValue({ name: FEATURE_FLAGS.FIRE_DRILL_MODE, enabled: true });
     mockCanManageTenants.mockReturnValue(false);
   });
 
