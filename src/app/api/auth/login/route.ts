@@ -64,7 +64,6 @@ export async function POST(request: Request) {
 
   const user = await prisma.user.findFirst({
     where: {
-      tenantId: DEFAULT_TENANT_ID,
       email: normalizedEmail,
     },
   });
