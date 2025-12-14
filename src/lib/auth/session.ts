@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 
+import { getAuthSessionSecret, getLocalAuthSessionSecret } from "@/server/config/secrets";
+
 import { DEFAULT_TENANT_ID } from "./config";
 
 export type SessionPayload = {
@@ -24,8 +26,8 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 function getRawSecret() {
-  const explicitSecret = process.env.AUTH_SESSION_SECRET;
-  const localSecret = process.env.AUTH_SESSION_SECRET_LOCAL;
+  const explicitSecret = getAuthSessionSecret();
+  const localSecret = getLocalAuthSessionSecret();
 
   if (explicitSecret) return explicitSecret;
 

@@ -2,6 +2,7 @@ import { isFeatureEnabledForTenant } from "@/lib/featureFlags";
 import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
 import { loadTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { getAzureOpenAIApiKey, getOpenAIApiKey } from "@/server/config/secrets";
 
 export class LLMUsageRestrictedError extends Error {
   constructor(message: string) {
@@ -14,11 +15,11 @@ export type TenantLLMControls = TenantGuardrails["llm"] & { providerReady: boole
 
 function isProviderReady(provider: TenantGuardrails["llm"]["provider"]): boolean {
   if (provider === "openai") {
-    return Boolean(process.env.OPENAI_API_KEY);
+    return Boolean(getOpenAIApiKey());
   }
 
   if (provider === "azure-openai") {
-    return Boolean(process.env.AZURE_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY);
+    return Boolean(getAzureOpenAIApiKey() ?? getOpenAIApiKey());
   }
 
   return false;

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { getBullhornWebhookSecret } from "@/server/config/secrets";
+
 type BullhornEvent = {
   eventId: string;
   entityName: string;
@@ -64,7 +66,7 @@ function validatePayload(body: unknown): asserts body is BullhornWebhookPayload 
 }
 
 function verifySignature(request: Request) {
-  const expectedSignature = process.env.BULLHORN_WEBHOOK_SECRET;
+  const expectedSignature = getBullhornWebhookSecret();
 
   if (!expectedSignature) return;
 

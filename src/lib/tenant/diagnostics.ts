@@ -11,6 +11,7 @@ import { resolveRetentionPolicy } from "@/lib/retention";
 import { loadTenantGuardrailConfig } from "@/lib/guardrails/config";
 import { loadTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
+import { getAzureOpenAIApiKey, getOpenAIApiKey } from "@/server/config/secrets";
 
 export class TenantNotFoundError extends Error {
   constructor(tenantId: string) {
@@ -124,11 +125,11 @@ function mapRetention(tenant: Pick<Tenant, "id" | "dataRetentionDays" | "deletio
 
 function isLlmProviderReady(llm: TenantGuardrails["llm"]) {
   if (llm.provider === "openai") {
-    return Boolean(process.env.OPENAI_API_KEY);
+    return Boolean(getOpenAIApiKey());
   }
 
   if (llm.provider === "azure-openai") {
-    return Boolean(process.env.AZURE_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY);
+    return Boolean(getAzureOpenAIApiKey() ?? getOpenAIApiKey());
   }
 
   return false;

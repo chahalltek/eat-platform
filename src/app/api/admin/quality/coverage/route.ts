@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { recordCoverageReport } from '@/lib/metrics/quality';
+import { getQualityIngestToken } from '@/server/config/secrets';
 
 export async function POST(request: NextRequest) {
-  const ingestToken = process.env.QUALITY_INGEST_TOKEN;
+  const ingestToken = getQualityIngestToken();
 
   if (ingestToken) {
     const authHeader = request.headers.get('authorization') ?? '';

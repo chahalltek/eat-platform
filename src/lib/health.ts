@@ -1,7 +1,11 @@
 import { AgentRunStatus, Prisma } from "@/server/db";
 
 import { prisma } from "@/server/db";
+<<<<<<< ours
 import { verifyLLMProvider } from "@/server/ai/gateway";
+=======
+import { getOpenAIApiKey } from "@/server/config/secrets";
+>>>>>>> theirs
 
 export type HealthCheckName = "environment" | "database" | "prisma" | "openai";
 
@@ -28,7 +32,11 @@ function formatError(error: unknown): string {
 }
 
 function checkRequiredEnvs(): HealthCheckResult {
-  const missing = REQUIRED_ENVS.filter((key) => !process.env[key]);
+  const missing = REQUIRED_ENVS.filter((key) => key !== "OPENAI_API_KEY" && !process.env[key]);
+
+  if (!getOpenAIApiKey()) {
+    missing.push("OPENAI_API_KEY");
+  }
 
   if (missing.length > 0) {
     return {
@@ -83,6 +91,21 @@ async function checkPrismaSchema(): Promise<HealthCheckResult> {
 }
 
 async function checkOpenAI(): Promise<HealthCheckResult> {
+<<<<<<< ours
+=======
+  const apiKey = getOpenAIApiKey();
+
+  if (!apiKey) {
+    return {
+      name: "openai",
+      status: "error",
+      message: "OPENAI_API_KEY is not configured",
+    };
+  }
+
+  const client = new OpenAI({ apiKey });
+
+>>>>>>> theirs
   try {
     await verifyLLMProvider();
 

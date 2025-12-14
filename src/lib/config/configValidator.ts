@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import "@/server/config/secrets";
+
 const FALLBACK_DATABASE_URL = "postgresql://placeholder.invalid:5432/placeholder";
 
 const EnvSchema = z.object({
