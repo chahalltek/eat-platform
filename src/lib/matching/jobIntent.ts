@@ -33,10 +33,9 @@ function normalizeIntentSkills(jobIntent: JobIntent): JobSkill[] {
     .filter((skill) => Boolean(skill.name?.trim()));
 }
 
-export function applyJobIntent(
-  jobReq: JobReq & { skills: JobSkill[] },
-  jobIntent: JobIntent | null,
-): JobReq & { skills: JobSkill[] } {
+export function applyJobIntent<
+  TJobReq extends JobReq & { skills: JobSkill[] },
+>(jobReq: TJobReq, jobIntent: JobIntent | null): TJobReq {
   if (!jobIntent) {
     throw new JobIntentMissingError(jobReq.id);
   }
