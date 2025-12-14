@@ -10,6 +10,7 @@ import { prisma } from "@/server/db";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { loadTenantConfig } from "@/lib/config/tenantConfig";
 import { startTiming } from "@/lib/observability/timing";
+import { applyJobIntent } from "@/lib/jobIntent";
 
 export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
   assertKillSwitchDisarmed(KILL_SWITCHES.SCORERS, { componentName: "Scoring" });
@@ -31,6 +32,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       where: { id: jobReqId },
       include: {
         skills: true,
+        jobIntent: true,
         matchResults: {
           select: { createdAt: true },
           orderBy: { createdAt: "desc" },
@@ -42,6 +44,8 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
     if (!jobReq) {
       throw new Error(`JobReq not found: ${jobReqId}`);
     }
+
+    const jobReqWithIntent = applyJobIntent(jobReq);
 
     const candidates = await prisma.candidate.findMany({
       where: { tenantId: jobReq.tenantId },
@@ -95,10 +99,10 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
 
     const matchResults: MatchResult[] = [];
 
-    const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
+    const latestMatchActivity = jobReqWithIntent.matchResults[0]?.createdAt ?? null;
     const jobFreshness = computeJobFreshnessScore({
-      createdAt: jobReq.createdAt,
-      updatedAt: jobReq.updatedAt,
+      createdAt: jobReqWithIntent.createdAt,
+      updatedAt: jobReqWithIntent.updatedAt,
       latestMatchActivity,
     });
 
@@ -115,7 +119,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
       });
 
       const matchScore = computeMatchScore(
-        { candidate, jobReq },
+        { candidate, jobReq: jobReqWithIntent },
         {
           candidateSignals,
           jobFreshnessScore: jobFreshness.score,
@@ -124,7 +128,7 @@ export async function matchJobToAllCandidates(jobReqId: string, limit = 200) {
         },
       );
 
-      const confidence = computeMatchConfidence({ candidate, jobReq }, confidenceConfig);
+      const confidence = computeMatchConfidence({ candidate, jobReq: jobReqWithIntent }, confidenceConfig);
       const candidateSignalBreakdown = {
         ...(matchScore.candidateSignalBreakdown ?? {}),
         confidence,

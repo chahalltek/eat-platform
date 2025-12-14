@@ -18,6 +18,7 @@ import { computeMatchScore } from "@/lib/matching/msa";
 import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
 import { computeJobFreshnessScore } from "@/lib/matching/freshness";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
+import { applyJobIntent } from "@/lib/jobIntent";
 
 export const requestSchema = z.object({
   jobReqId: z.string().trim().min(1, "jobReqId is required"),
@@ -83,6 +84,7 @@ export async function handleMatchAgentPost(
       where: { id: jobReqId, tenantId },
       include: {
         skills: true,
+        jobIntent: true,
         matchResults: {
           select: { createdAt: true },
           orderBy: { createdAt: "desc" },
@@ -94,6 +96,8 @@ export async function handleMatchAgentPost(
     if (!jobReq) {
       return NextResponse.json({ error: "JobReq not found" }, { status: 404 });
     }
+
+    const jobReqWithIntent = applyJobIntent(jobReq);
 
     const candidateWhere = candidateIds
       ? { id: { in: candidateIds }, tenantId }
@@ -221,10 +225,10 @@ export async function handleMatchAgentPost(
         explanation: string;
       }>;
 
-      const latestMatchActivity = jobReq.matchResults[0]?.createdAt ?? null;
+      const latestMatchActivity = jobReqWithIntent.matchResults[0]?.createdAt ?? null;
       const jobFreshness = computeJobFreshnessScore({
-        createdAt: jobReq.createdAt,
-        updatedAt: jobReq.updatedAt,
+        createdAt: jobReqWithIntent.createdAt,
+        updatedAt: jobReqWithIntent.updatedAt,
         latestMatchActivity,
       });
 
@@ -236,7 +240,7 @@ export async function handleMatchAgentPost(
         });
 
         const matchScore = computeMatchScore(
-          { candidate, jobReq },
+          { candidate, jobReq: jobReqWithIntent },
           {
             jobFreshnessScore: jobFreshness.score,
             candidateSignals,
@@ -250,7 +254,7 @@ export async function handleMatchAgentPost(
           continue;
         }
 
-        const confidence = computeMatchConfidence({ candidate, jobReq });
+        const confidence = computeMatchConfidence({ candidate, jobReq: jobReqWithIntent });
 
         const candidateSignalBreakdown: Prisma.JsonObject = {
           ...(candidateSignals.breakdown ?? {}),

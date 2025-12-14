@@ -63,6 +63,7 @@ model User {
   jobCandidateNotes     JobCandidateNote[]
   jobCandidateHistories JobCandidateHistory[]
   matchFeedback         MatchFeedback[]
+  jobIntents            JobIntent[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -100,17 +101,17 @@ model Tenant {
 }
 
 model TenantConfig {
-  id        String   @id @default(cuid())
-  tenantId  String   @unique
-  preset    String?
-  scoring   Json
-  explain   Json
-  safety    Json
-  llm       Json?
-  networkLearningOptIn Boolean @default(false)
-  networkLearning Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  tenantId             String   @unique
+  preset               String?
+  scoring              Json
+  explain              Json
+  safety               Json
+  llm                  Json?
+  networkLearningOptIn Boolean  @default(false)
+  networkLearning      Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 }
@@ -375,9 +376,25 @@ model JobReq {
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
   hiringOutcomes       HiringOutcome[]
+  jobIntent            JobIntent?
 
   @@index([tenantId])
   @@index([tenantId, customerId])
+}
+
+model JobIntent {
+  id          String   @id @default(cuid())
+  tenantId    String   @default("default-tenant")
+  jobReq      JobReq   @relation(fields: [jobReqId], references: [id])
+  jobReqId    String   @unique
+  intent      Json
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, jobReqId])
 }
 
 model JobSkill {
@@ -728,29 +745,29 @@ model JobCandidateFeedback {
 }
 
 model MatchFeedback {
-  id                String        @id @default(cuid())
-  tenantId          String        @default("default-tenant")
-  matchResult       MatchResult   @relation(fields: [matchResultId], references: [id])
-  matchResultId     String
-  jobReqId          String
-  candidateId       String
-  jobCandidate      JobCandidate? @relation(fields: [jobCandidateId], references: [id])
-  jobCandidateId    String?
-  user              User          @relation(fields: [userId], references: [id])
-  userId            String
-  feedback          String
-  direction         String?
-  outcome           String
-  outcomeSource     String?
-  matchScore        Int?
-  confidenceScore   Int?
-  shortlistStrategy String?
-  matchSignals      Json?
-  guardrailsPreset  String?
-  guardrailsConfig  Json?
+  id                   String        @id @default(cuid())
+  tenantId             String        @default("default-tenant")
+  matchResult          MatchResult   @relation(fields: [matchResultId], references: [id])
+  matchResultId        String
+  jobReqId             String
+  candidateId          String
+  jobCandidate         JobCandidate? @relation(fields: [jobCandidateId], references: [id])
+  jobCandidateId       String?
+  user                 User          @relation(fields: [userId], references: [id])
+  userId               String
+  feedback             String
+  direction            String?
+  outcome              String
+  outcomeSource        String?
+  matchScore           Int?
+  confidenceScore      Int?
+  shortlistStrategy    String?
+  matchSignals         Json?
+  guardrailsPreset     String?
+  guardrailsConfig     Json?
   guardrailsConfigHash String?
-  systemMode        String?
-  createdAt         DateTime      @default(now())
+  systemMode           String?
+  createdAt            DateTime      @default(now())
 
   @@unique([tenantId, jobReqId, candidateId, userId])
   @@unique([tenantId, matchResultId, outcome])
@@ -796,16 +813,16 @@ model JobCandidateStage {
 }
 
 model HiringOutcome {
-  id               String    @id @default(cuid())
-  tenantId         String    @default("default-tenant")
-  job              JobReq    @relation(fields: [jobId], references: [id])
-  jobId            String
-  candidate        Candidate @relation(fields: [candidateId], references: [id])
-  candidateId      String
+  id                String    @id @default(cuid())
+  tenantId          String    @default("default-tenant")
+  job               JobReq    @relation(fields: [jobId], references: [id])
+  jobId             String
+  candidate         Candidate @relation(fields: [candidateId], references: [id])
+  candidateId       String
   candidateIdString String?
-  status           String
-  source           String
-  createdAt        DateTime  @default(now())
+  status            String
+  source            String
+  createdAt         DateTime  @default(now())
 
   @@unique([tenantId, jobId, candidateId])
   @@index([tenantId, jobId])
@@ -897,16 +914,16 @@ model MetricEvent {
 }
 
 model AsyncJobState {
-  id        String   @id @default(cuid())
-  jobName   String   @unique
+  id        String    @id @default(cuid())
+  jobName   String    @unique
   jobType   String
-  status    String   @default("idle")
-  retries   Int      @default(0)
+  status    String    @default("idle")
+  retries   Int       @default(0)
   lastError String?
   lastRunAt DateTime?
   nextRunAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([jobType])
   @@index([status])
@@ -955,18 +972,18 @@ model EteIndexSnapshot {
 }
 
 model BenchmarkRelease {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   version     String
-  status      String   @default("draft")
+  status      String    @default("draft")
   windowDays  Int
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   publishedAt DateTime?
 
   metrics BenchmarkMetric[]
 }
 
 model BenchmarkMetric {
-  id               String             @id @default(cuid())
+  id               String   @id @default(cuid())
   releaseId        String
   roleFamily       String
   industry         String?
@@ -975,7 +992,7 @@ model BenchmarkMetric {
   metricValue      Float
   sampleSize       Int
   methodologyNotes String?
-  createdAt        DateTime           @default(now())
+  createdAt        DateTime @default(now())
 
   release BenchmarkRelease @relation(fields: [releaseId], references: [id])
 
@@ -984,14 +1001,14 @@ model BenchmarkMetric {
 }
 
 model InsightSnapshot {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   releaseId   String
   title       String
   subtitle    String?
-  audience    String   // "internal" | "client" | "public"
-  status      String   // "draft" | "approved" | "published"
+  audience    String // "internal" | "client" | "public"
+  status      String // "draft" | "approved" | "published"
   contentJson Json
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   publishedAt DateTime?
 
   @@index([releaseId])

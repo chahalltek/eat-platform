@@ -10,6 +10,7 @@ import { onJobChanged } from "@/lib/orchestration/triggers";
 import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { buildJobIntentPayload, upsertJobIntent } from "@/lib/jobIntent";
 
 const jobSkillSchema = z.object({
   name: z.string().min(1, "Skill name is required"),
@@ -71,6 +72,24 @@ export async function POST(req: Request) {
     await prisma.jobReq.update({ where: { id: jobReq.id }, data: { tenantId } });
     jobReq.tenantId = tenantId;
   }
+
+  const intentPayload = buildJobIntentPayload({
+    title: jobReq.title,
+    location: jobReq.location ?? null,
+    employmentType: jobReq.employmentType ?? null,
+    seniorityLevel: jobReq.seniorityLevel ?? null,
+    skills: parsed.data.skills,
+    sourceDescription: parsed.data.rawDescription ?? null,
+    createdFrom: "ingest",
+    confidenceLevels: { requirements: 1 },
+  });
+
+  await upsertJobIntent(prisma, {
+    jobReqId: jobReq.id,
+    tenantId: jobReq.tenantId ?? tenantId ?? DEFAULT_TENANT_ID,
+    payload: intentPayload,
+    createdById: user.id,
+  });
 
   void recordMetricEvent({
     tenantId: jobReq.tenantId,

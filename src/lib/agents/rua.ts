@@ -10,6 +10,7 @@ import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { prisma } from '@/server/db';
 import { getCurrentTenantId } from '@/lib/tenant';
+import { buildJobIntentPayload, upsertJobIntent } from '@/lib/jobIntent';
 
 export type RuaInput = {
   recruiterId?: string;
@@ -89,6 +90,24 @@ ${rawJobText}
             })),
           },
         },
+      });
+
+      const intentPayload = buildJobIntentPayload({
+        title: parsed.title,
+        location: parsed.location ?? null,
+        employmentType: parsed.employmentType ?? null,
+        seniorityLevel: parsed.seniorityLevel ?? null,
+        skills: parsed.skills,
+        sourceDescription: rawJobText,
+        confidenceLevels: { requirements: 0.85 },
+        createdFrom: 'rua',
+      });
+
+      await upsertJobIntent(prisma, {
+        jobReqId: jobReq.id,
+        tenantId: tenantId ?? 'default-tenant',
+        payload: intentPayload,
+        createdById: recruiterId,
       });
 
       return {

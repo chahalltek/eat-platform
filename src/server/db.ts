@@ -46,6 +46,7 @@ const TENANTED_MODELS = new Set([
   "AgentRunLog",
   "OutreachInteraction",
   "JobCandidate",
+  "JobIntent",
   "TenantSubscription",
   "SecurityEventLog",
   "AuditLog",

@@ -13,6 +13,7 @@ import { getCurrentTenantId } from '@/lib/tenant';
 import { onJobChanged } from '@/lib/orchestration/triggers';
 import { recordMetricEvent } from '@/lib/metrics/events';
 import { recordUsageEvent } from '@/lib/usage/events';
+import { buildJobIntentPayload, upsertJobIntent } from '@/lib/jobIntent';
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -149,6 +150,15 @@ export async function POST(req: NextRequest) {
             fn(scopedPrisma as unknown as typeof scopedPrisma);
 
       let jobReqId: string | null = null;
+      const intentPayload = buildJobIntentPayload({
+        title: parsedProfile.title,
+        location: parsedProfile.location ?? null,
+        employmentType: parsedProfile.employmentType ?? null,
+        seniorityLevel: parsedProfile.seniorityLevel ?? null,
+        skills: parsedProfile.skills,
+        sourceDescription: trimmedDescription,
+        confidenceLevels: { requirements: 0.85 },
+      });
 
       await runTransaction(async (tx) => {
         const skillCreates = parsedProfile.skills.map((skill) => ({
@@ -185,6 +195,13 @@ export async function POST(req: NextRequest) {
             },
           });
 
+          await upsertJobIntent(tx, {
+            jobReqId: existing.id,
+            tenantId: resolvedTenantId ?? tenantId ?? 'default-tenant',
+            payload: intentPayload,
+            createdById: currentUser.id,
+          });
+
           jobReqId = existing.id;
 
           return;
@@ -201,6 +218,13 @@ export async function POST(req: NextRequest) {
             rawDescription: trimmedDescription,
             skills: { create: skillCreates },
           },
+        });
+
+        await upsertJobIntent(tx, {
+          jobReqId: createdJob.id,
+          tenantId: resolvedTenantId ?? tenantId ?? 'default-tenant',
+          payload: intentPayload,
+          createdById: currentUser.id,
         });
 
         jobReqId = createdJob.id;
