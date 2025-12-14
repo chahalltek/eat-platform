@@ -59,6 +59,8 @@ export const AGENTS = {
 export const AGENT_KILL_SWITCHES = AGENTS;
 export type AgentName = (typeof AGENTS)[keyof typeof AGENTS];
 
+const DEFAULT_REASON = 'Disabled by admin';
+
 export type AgentAvailabilityRecord = {
   agentName: AgentName;
   enabled: boolean;
