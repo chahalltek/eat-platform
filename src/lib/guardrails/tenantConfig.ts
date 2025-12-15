@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "@/server/db";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { guardrailsPresets, type GuardrailsConfig, type GuardrailsPresetName } from "./presets";
@@ -47,7 +49,18 @@ const balancedPreset = guardrailsPresets.balanced;
 export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardrailsConfig> {
   const resolvedTenantId = tenantId ?? (await getCurrentTenantId());
 
-  const storedConfig = await prisma.tenantConfig.findFirst({ where: { tenantId: resolvedTenantId } });
+  const storedConfig = await prisma.tenantConfig.findFirst({ where: { tenantId: resolvedTenantId } }).catch((error) => {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
+      console.error(
+        "TenantConfig.preset column missing. Run prisma migrations to align the database schema.",
+        error,
+      );
+
+      return null;
+    }
+
+    throw error;
+  });
 
   const preset = normalizePreset((storedConfig?.preset as string | null | undefined) ?? null);
   const presetConfig = preset ? guardrailsPresets[preset] : balancedPreset;
