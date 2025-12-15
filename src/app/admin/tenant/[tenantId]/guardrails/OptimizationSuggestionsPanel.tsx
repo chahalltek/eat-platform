@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowPathIcon, CheckCircleIcon, ShieldExclamationIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 
@@ -14,6 +14,30 @@ type Recommendation = {
   signals: string[];
   status: "pending" | "applied" | "dismissed";
 };
+
+async function parseJsonSafely(response: Response) {
+  try {
+    return await response.json();
+  } catch (error) {
+    console.warn("Failed to parse guardrail recommendation response", error);
+    return null;
+  }
+}
+
+function getErrorMessage(payload: unknown, fallback: string) {
+  if (payload && typeof payload === "object") {
+    const data = payload as { error?: unknown; message?: unknown };
+    if (typeof data.message === "string") return data.message;
+
+    if (typeof data.error === "string") return data.error;
+
+    if (data.error && typeof data.error === "object" && typeof (data.error as { message?: unknown }).message === "string") {
+      return (data.error as { message: string }).message;
+    }
+  }
+
+  return fallback;
+}
 
 function StatusBadge({ status }: { status: Recommendation["status"] }) {
   const variants: Record<Recommendation["status"], string> = {
@@ -42,27 +66,34 @@ export function OptimizationSuggestionsPanel({ tenantId }: { tenantId: string })
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void loadRecommendations();
-  }, [tenantId]);
-
-  async function loadRecommendations() {
+  const loadRecommendations = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`/api/admin/tenant/${encodeURIComponent(tenantId)}/guardrails/recommendations`);
+      const body = await parseJsonSafely(response);
+
       if (!response.ok) {
-        throw new Error((await response.json())?.error ?? "Unable to load suggestions");
+        throw new Error(getErrorMessage(body, "Unable to load suggestions"));
       }
-      const body = (await response.json()) as { recommendations: Recommendation[] };
-      setRecommendations(body.recommendations ?? []);
+
+      if (!body || typeof body !== "object") {
+        throw new Error("Unable to load suggestions");
+      }
+
+      const payload = body as { recommendations?: Recommendation[] };
+      setRecommendations(payload.recommendations ?? []);
     } catch (loadError) {
       const message = (loadError as Error).message || "Failed to load suggestions";
       setError(message);
     } finally {
       setLoading(false);
     }
-  }
+  }, [tenantId]);
+
+  useEffect(() => {
+    void loadRecommendations();
+  }, [loadRecommendations]);
 
   async function handleAction(recommendationId: string, action: "approve" | "dismiss") {
     setSubmitting(true);
@@ -74,12 +105,18 @@ export function OptimizationSuggestionsPanel({ tenantId }: { tenantId: string })
         body: JSON.stringify({ recommendationId, action }),
       });
 
+      const body = await parseJsonSafely(response);
+
       if (!response.ok) {
-        throw new Error((await response.json())?.error ?? "Unable to update recommendation");
+        throw new Error(getErrorMessage(body, "Unable to update recommendation"));
       }
 
-      const body = (await response.json()) as { recommendations: Recommendation[] };
-      setRecommendations(body.recommendations ?? []);
+      if (!body || typeof body !== "object") {
+        throw new Error("Unable to update recommendation");
+      }
+
+      const payload = body as { recommendations?: Recommendation[] };
+      setRecommendations(payload.recommendations ?? []);
     } catch (submitError) {
       const message = (submitError as Error).message || "Unable to update recommendation";
       setError(message);
