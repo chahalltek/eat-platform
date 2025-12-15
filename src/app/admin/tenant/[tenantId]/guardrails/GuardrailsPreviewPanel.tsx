@@ -278,7 +278,7 @@ export function GuardrailsPreviewPanel({ tenantId }: { tenantId: string }) {
           )}
         </header>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="flex flex-wrap gap-3">
           {(Object.keys(PRESET_CONFIG) as Array<keyof typeof PRESET_CONFIG>).map((key) => {
             const presetConfig = PRESET_CONFIG[key];
             const active = preset === key;
@@ -287,7 +287,7 @@ export function GuardrailsPreviewPanel({ tenantId }: { tenantId: string }) {
                 key={key}
                 type="button"
                 onClick={() => handlePresetChange(key)}
-                className={`flex min-w-0 flex-col items-start gap-2 rounded-xl border p-3 text-left shadow-sm transition ${
+                className={`flex w-fit min-w-0 max-w-xs flex-col items-start gap-2 rounded-xl border p-3 text-left shadow-sm transition ${
                   active
                     ? "border-indigo-200 bg-indigo-50 text-indigo-900"
                     : "border-zinc-200 bg-white text-zinc-800 hover:border-indigo-100 hover:bg-indigo-50"
