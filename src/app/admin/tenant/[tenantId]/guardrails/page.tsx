@@ -50,6 +50,7 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   const access = await resolveTenantAdminAccess(user, tenantId || currentTenantId, { roleHint: headerRole });
   const normalizedTenantId = tenantId || currentTenantId || "";
   const debugEnabled = baseDebugEnabled || access.isGlobalAdmin;
+  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
 
   if (!access.hasAccess) {
     return <AccessDenied tenantId={normalizedTenantId} debugEnabled={debugEnabled} />;
@@ -76,6 +77,13 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
               Back to home
             </Link>
           </header>
+
+          {isGlobalWithoutMembership ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <p className="font-semibold">Limited membership context</p>
+              <p>You are accessing this tenant as a global admin without explicit tenant membership.</p>
+            </div>
+          ) : null}
 
           {debugEnabled ? <AdminAccessDebugCard tenantId={normalizedTenantId} enabled={debugEnabled} /> : null}
 

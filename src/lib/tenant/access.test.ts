@@ -35,16 +35,16 @@ describe("resolveTenantAdminAccess", () => {
     tenantId: "default",
   };
 
-  it("grants access when a header indicates tenant admin even if the user role is not global admin", async () => {
+  it("requires tenant membership when admin hint is supplied without global role", async () => {
     prismaMock.tenantUser.findUnique.mockResolvedValue(null);
 
     const access = await resolveTenantAdminAccess(recruiterUser, "default-tenant", {
       roleHint: TENANT_ROLES.Admin,
     });
 
-    expect(access.hasAccess).toBe(true);
-    expect(access.isGlobalAdmin).toBe(true);
-    expect(prismaMock.tenantUser.findUnique).not.toHaveBeenCalled();
+    expect(access.hasAccess).toBe(false);
+    expect(access.isGlobalAdmin).toBe(false);
+    expect(prismaMock.tenantUser.findUnique).toHaveBeenCalled();
   });
 
   it("uses membership lookup when no admin hint is available", async () => {

@@ -128,6 +128,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
   ]);
 
   const normalizedCurrentTenantId = currentTenantId?.trim?.() ?? "";
+  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
 
   if (!access.hasAccess) {
     return (
@@ -173,6 +174,13 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
               Back to tenants
             </Link>
           </header>
+
+          {isGlobalWithoutMembership ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <p className="font-semibold">Limited membership context</p>
+              <p>You are accessing this tenant as a global admin without explicit tenant membership.</p>
+            </div>
+          ) : null}
 
           <TenantFireDrillCallout fireDrill={diagnostics.fireDrill} />
 

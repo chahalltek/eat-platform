@@ -33,7 +33,7 @@ export async function resolveTenantAdminAccess(
   }
 
   const headerIndicatesAdmin = options?.roleHint === TENANT_ROLES.Admin;
-  const isGlobalAdmin = isAdminOrDataAccessRole(user.role) || headerIndicatesAdmin;
+  const isGlobalAdmin = isAdminOrDataAccessRole(user.role);
 
   if (isGlobalAdmin) {
     return {
