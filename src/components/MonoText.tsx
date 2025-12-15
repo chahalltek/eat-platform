@@ -1,11 +1,11 @@
 import type { ComponentPropsWithoutRef, ElementType } from "react";
 import clsx from "clsx";
 
-export type MonoTextProps<T extends keyof JSX.IntrinsicElements = "span"> = {
+export type MonoTextProps<T extends ElementType = "span"> = {
   as?: T;
 } & ComponentPropsWithoutRef<T>;
 
-export function MonoText<T extends keyof JSX.IntrinsicElements = "span">({
+export function MonoText<T extends ElementType = "span">({
   as,
   className,
   children,
