@@ -591,14 +591,14 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
   const configSchema = tenantGuardrailsResult.schemaStatus.status === "fallback"
     ? {
         status: "fallback" as const,
-        missingColumns: tenantGuardrailsResult.schemaStatus.missingColumns,
+        missingColumns: [...tenantGuardrailsResult.schemaStatus.missingColumns],
         reason:
           tenantGuardrailsResult.schemaStatus.reason ??
           (tenantGuardrailsResult.schemaStatus.missingColumns.length > 0
             ? `Missing columns: ${tenantGuardrailsResult.schemaStatus.missingColumns.join(", ")}`
             : "Config schema out of date; guardrails defaults are being used."),
       }
-    : { status: "ok" as const, missingColumns: [], reason: null };
+    : { status: "ok" as const, missingColumns: [] as string[], reason: null };
 
   const tenantGuardrails = tenantGuardrailsResult.guardrails;
 
