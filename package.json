@@ -29,7 +29,8 @@
     "docs:api-map": "tsx scripts/generate-api-map.ts",
     "verify:mvp:unit": "vitest run src/lib/jobIntent.test.ts src/lib/agentRunLog.test.ts src/lib/tenant/diagnostics.test.ts src/app/api/jobs/[jobReqId]/hm-brief/route.verify.test.ts src/app/admin/tenant/[tenantId]/operations-runbook/verify.test.tsx",
     "verify:mvp:smoke": "vitest run tests/smoke/mvp-smoke.test.ts",
-    "verify:mvp": "vitest run --config tests/mvp-verify/verify.mvp.config.ts && node scripts/verify-mvp-summary.js"
+    "verify:mvp": "vitest run --config tests/mvp-verify/verify.mvp.config.ts && node scripts/verify-mvp-summary.js",
+    "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -48,6 +49,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
