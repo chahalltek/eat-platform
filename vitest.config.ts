@@ -20,7 +20,7 @@ export default defineConfig({
     include: ["**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "json", "lcov", "html"],
+      reporter: ["text", "json", "json-summary", "lcov", "html"],
       reportsDirectory: "./coverage",
 <<<<<<< ours
       include: [
