@@ -29,7 +29,7 @@ function mergeSafetySection(value: unknown) {
 }
 
 export async function loadTenantConfig(tenantId: string) {
-  const existing = await withTenantConfigSchemaFallback(
+  const { result: existing, schemaMismatch } = await withTenantConfigSchemaFallback(
     () =>
       prisma.tenantConfig.findUnique({
         where: { tenantId },
@@ -41,17 +41,23 @@ export async function loadTenantConfig(tenantId: string) {
     return {
       ...defaultTenantGuardrails,
       preset: null,
+      schemaMismatch,
       _source: "default" as const,
     };
   }
 
   return {
-    preset: existing.preset ?? null,
+    preset: schemaMismatch ? null : existing.preset ?? null,
     scoring: { ...defaultTenantGuardrails.scoring, ...coerceGuardrailSection(existing.scoring) },
     explain: { ...defaultTenantGuardrails.explain, ...coerceGuardrailSection(existing.explain) },
     safety: mergeSafetySection(existing.safety),
-    llm: { ...defaultTenantGuardrails.llm, ...coerceGuardrailSection((existing as { llm?: unknown }).llm) },
-    networkLearning: coerceNetworkLearning((existing as { networkLearning?: unknown }).networkLearning),
+    llm: schemaMismatch
+      ? {}
+      : { ...defaultTenantGuardrails.llm, ...coerceGuardrailSection((existing as { llm?: unknown }).llm) },
+    networkLearning: schemaMismatch
+      ? { enabled: false }
+      : coerceNetworkLearning((existing as { networkLearning?: unknown }).networkLearning),
+    schemaMismatch,
     _source: "db" as const,
   };
 }

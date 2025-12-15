@@ -69,6 +69,9 @@ describe("loadTenantConfig", () => {
     expect(result).toMatchObject({
       ...defaultTenantGuardrails,
       preset: null,
+      llm: {},
+      networkLearning: { enabled: false },
+      schemaMismatch: true,
       _source: "default",
     });
   });

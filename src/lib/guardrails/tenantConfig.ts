@@ -41,6 +41,7 @@ export type TenantGuardrailsConfig = GuardrailsConfig & {
   preset: GuardrailsPresetName | null;
   llm: Record<string, unknown>;
   networkLearning: { enabled: boolean };
+  schemaMismatch?: boolean;
 };
 
 const balancedPreset = guardrailsPresets.balanced;
@@ -48,13 +49,13 @@ const balancedPreset = guardrailsPresets.balanced;
 export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardrailsConfig> {
   const resolvedTenantId = tenantId ?? (await getCurrentTenantId());
 
-  const storedConfig = await withTenantConfigSchemaFallback(
+  const { result: storedConfig, schemaMismatch } = await withTenantConfigSchemaFallback(
     () => prisma.tenantConfig.findFirst({ where: { tenantId: resolvedTenantId } }),
     { tenantId: resolvedTenantId },
   );
 
-  const preset = normalizePreset((storedConfig?.preset as string | null | undefined) ?? null);
-  const presetConfig = preset ? guardrailsPresets[preset] : balancedPreset;
+  const preset = schemaMismatch ? null : normalizePreset((storedConfig?.preset as string | null | undefined) ?? null);
+  const presetConfig = preset && !schemaMismatch ? guardrailsPresets[preset] : balancedPreset;
 
   const scoring = mergeConfig(presetConfig.scoring, storedConfig?.scoring ?? undefined);
   const explain = mergeConfig(presetConfig.explain, storedConfig?.explain ?? undefined);
@@ -63,10 +64,13 @@ export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardra
     presetConfig.shortlist ?? {},
     (storedConfig as { shortlist?: unknown } | undefined)?.shortlist ?? undefined,
   );
-  const llm = mergeConfig(presetConfig.llm ?? {}, (storedConfig as { llm?: unknown } | undefined)?.llm ?? undefined);
+  const llmBase = schemaMismatch ? {} : presetConfig.llm ?? {};
+  const llm = mergeConfig(llmBase, schemaMismatch ? undefined : (storedConfig as { llm?: unknown } | undefined)?.llm);
   const networkLearning = mergeConfig(
     presetConfig.networkLearning ?? { enabled: false },
-    (storedConfig as { networkLearning?: unknown } | undefined)?.networkLearning ?? undefined,
+    schemaMismatch
+      ? { enabled: false }
+      : (storedConfig as { networkLearning?: unknown } | undefined)?.networkLearning ?? undefined,
   );
 
   return {
@@ -79,5 +83,6 @@ export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardra
     networkLearning: {
       enabled: Boolean((networkLearning as { enabled?: unknown }).enabled),
     },
+    schemaMismatch,
   } satisfies TenantGuardrailsConfig;
 }

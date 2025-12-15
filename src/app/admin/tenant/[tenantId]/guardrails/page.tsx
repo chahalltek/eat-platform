@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
+import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 
 import { AdminAccessDebugCard } from "./AdminAccessDebugCard";
 import { GuardrailsPreviewPanel } from "./GuardrailsPreviewPanel";
@@ -62,6 +63,8 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
     return <AccessDenied tenantId={normalizedTenantId} debugEnabled={debugEnabled} />;
   }
 
+  const guardrailsConfig = await loadTenantConfig(normalizedTenantId);
+
   return (
     <TenantAdminShell tenantId={normalizedTenantId} bootstrapTenantId={bootstrapTenantId}>
       <div data-testid="guardrails-presets-page" className="mx-auto flex max-w-5xl flex-col gap-8">
@@ -87,6 +90,15 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <p className="font-semibold">Limited membership context</p>
             <p>You are accessing this tenant as a global admin without explicit tenant membership.</p>
+          </div>
+        ) : null}
+
+        {guardrailsConfig.schemaMismatch ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="font-semibold">TenantConfig schema mismatch, migration pending.</p>
+            <p className="text-xs text-amber-800">
+              Guardrails are using safe defaults until the database schema is migrated.
+            </p>
           </div>
         ) : null}
 

@@ -91,14 +91,38 @@ async function loadTenantGuardrailsInternal(tenantId: string) {
     return { guardrails: defaultTenantGuardrails, schemaStatus } as const;
   }
 
-  const record = await withTenantConfigSchemaFallback(
-    () => prisma.tenantConfig.findFirst({ where: { tenantId } }),
-    { tenantId },
-  ).catch((error) => {
-    if (isPrismaUnavailableError(error)) return null;
+  let record: Awaited<ReturnType<typeof prisma.tenantConfig.findFirst>> | null = null;
+  let schemaMismatch = false;
+
+  try {
+    const fallbackResult = await withTenantConfigSchemaFallback(
+      () => prisma.tenantConfig.findFirst({ where: { tenantId } }),
+      { tenantId },
+    );
+
+    record = fallbackResult.result;
+    schemaMismatch = fallbackResult.schemaMismatch;
+  } catch (error) {
+    if (isPrismaUnavailableError(error)) {
+      return {
+        guardrails: defaultTenantGuardrails,
+        schemaStatus: { status: "fallback", missingColumns: [], reason: "TenantConfig unavailable" },
+      } as const;
+    }
 
     throw error;
-  });
+  }
+
+  if (schemaMismatch) {
+    return {
+      guardrails: defaultTenantGuardrails,
+      schemaStatus: {
+        status: "fallback",
+        missingColumns: [],
+        reason: "TenantConfig schema mismatch detected; migration pending.",
+      },
+    } as const;
+  }
 
   const storedGuardrails =
     ((record as { guardrails?: unknown } | null | undefined)?.guardrails as

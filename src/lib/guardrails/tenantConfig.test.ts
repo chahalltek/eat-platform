@@ -44,9 +44,10 @@ describe("loadTenantConfig", () => {
       explain: guardrailsPresets.balanced.explain,
       safety: guardrailsPresets.balanced.safety,
       shortlist: guardrailsPresets.balanced.shortlist ?? {},
-      llm: guardrailsPresets.balanced.llm ?? {},
+      llm: {},
       preset: null,
-      networkLearning: { enabled: Boolean(guardrailsPresets.balanced.networkLearning?.enabled) },
+      networkLearning: { enabled: false },
+      schemaMismatch: true,
     });
 
     expect(consoleSpy).toHaveBeenCalledWith(
