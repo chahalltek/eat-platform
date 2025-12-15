@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isAdminRole } from "@/lib/auth/roles";
@@ -38,3 +39,6 @@ export async function GET(request: NextRequest) {
 
   return response;
 }
+=======
+export { GET } from "../../ete/tests/route";
+>>>>>>> theirs
