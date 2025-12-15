@@ -283,7 +283,12 @@ export default function SystemMapPage() {
             <li>Resumes move Intake → RINA → Database (Job Library) → Scoring engine; downstream agents only touch normalized profiles.</li>
             <li>Scoring engine requires both role and candidate profiles; outputs are immutable inputs to Confidence / Explain.</li>
             <li>Confidence / Explain block bad data and record rationales alongside scores for auditability.</li>
+<<<<<<< ours
             <li>Tenant Config injects feature flags and weighting rules; if disabled, dependent steps halt instead of falling back.</li>
+>>>>>>> theirs
+=======
+            <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
+            <li>Agent runs emit structured run logs and audit events (success/failure + rationale).</li>
 >>>>>>> theirs
           </ul>
         </div>
@@ -307,7 +312,7 @@ export default function SystemMapPage() {
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Dependencies</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
             <li>Database / Job Library is the source of truth for roles, candidates, and scoring history; if unavailable, matching halts.</li>
-            <li>Feature flags from Tenant Config control access to agents and scoring; a disabled flag blocks the dependent agent call.</li>
+            <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
             <li>Scoring pipeline expects structured profiles; malformed data fails fast rather than auto-correcting.</li>
             <li>Blueprint view mirrors the dashboard header style to reinforce that this is part of the core control plane.</li>
           </ul>
@@ -319,7 +324,8 @@ export default function SystemMapPage() {
             <li>UI collects inputs and surfaces results; it never rewrites agent outputs.</li>
             <li>Agents own interpretation: RUA shapes roles, RINA normalizes resumes, Scoring engine ranks, Confidence / Explain gate quality.</li>
             <li>Data correctness checks live in Confidence / Explain; downstream consumers reuse those signals instead of revalidating.</li>
-            <li>System Status pulls live subsystem health (agents, scoring, database, tenant config) and aligns with this blueprint.</li>
+            <li>System Status pulls live subsystem health (agents, scoring, database, runtime controls) and aligns with this blueprint.</li>
+            <li>Diagnostics aggregates health across ATS, flags, guardrails, retention, and logging.</li>
           </ul>
         </div>
       </section>
