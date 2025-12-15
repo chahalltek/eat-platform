@@ -10,3 +10,11 @@ Thank you for helping improve the EAT platform. Please follow the guidance below
 - Legacy routes are allowed only when documented in the API Overview.
 
 If you are unsure where a new route belongs, update the API Overview document before adding the route.
+
+## Pull Request Checklist
+- Use the repository [PR template](.github/pull_request_template.md) for every change.
+- Confirm the "Layout lint (admin)" checks:
+  - No horizontal scroll on admin pages
+  - Cards/titles wrap or clamp
+  - Long tokens break safely
+  - Run `npm run e2e:admin-layout` to validate admin layout basics
