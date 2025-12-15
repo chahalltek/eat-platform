@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 
+import type { TestCatalogItem } from "@/lib/testing/testCatalog";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
 import { TenantAdminShell } from "../../TenantAdminShell";
+import { OpsTestRunnerClient } from "./OpsTestRunnerClient";
 
 export const dynamic = "force-dynamic";
 
@@ -41,27 +43,36 @@ export default async function TenantTestRunnerPage({ params }: { params: { tenan
     return <AccessDenied />;
   }
 
+  const headerStore = await headers();
+  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
+  const host = headerStore.get("host") ?? process.env.VERCEL_URL;
+  const baseUrl = host?.startsWith("http") ? host : `${protocol}://${host ?? "localhost:3000"}`;
+
+  const response = await fetch(`${baseUrl}/api/admin/testing/catalog`, {
+    headers: {
+      cookie: headerStore.get("cookie") ?? "",
+    },
+    next: { revalidate: 0 },
+  });
+
+  if (!response.ok) {
+    return (
+      <TenantAdminShell tenantId={targetTenantId}>
+        <div className="mx-auto max-w-4xl space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+          <p className="text-lg font-semibold">Unable to load the test runner catalog</p>
+          <p className="text-sm">Status {response.status}: {response.statusText || "Unknown error"}</p>
+          <p className="text-sm text-amber-800">Try refreshing the page or check your admin session.</p>
+        </div>
+      </TenantAdminShell>
+    );
+  }
+
+  const payload = (await response.json()) as { items?: TestCatalogItem[] };
+  const catalog = payload.items ?? [];
+
   return (
     <TenantAdminShell tenantId={targetTenantId}>
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        <header className="flex flex-col gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Ops</p>
-          <h1 className="text-3xl font-semibold text-zinc-900">Test runner</h1>
-          <p className="text-sm text-zinc-600">
-            Validate ETE agent flows, data syncs, and guardrail behaviors for tenant {targetTenantId} without leaving the admin
-            console.
-          </p>
-        </header>
-
-        <section className="space-y-3 rounded-2xl border border-dashed border-indigo-200 bg-white/60 p-6 text-sm text-zinc-700">
-          <p className="font-semibold text-zinc-900">Coming soon</p>
-          <p>
-            The ops test runner will let you execute predefined smoke tests (ATS ingestion, scoring, shortlist generation,
-            messaging) and capture structured logs for troubleshooting.
-          </p>
-          <p className="text-xs text-zinc-500">Use Diagnostics and Guardrails while we finish wiring up the runner.</p>
-        </section>
-      </div>
+      <OpsTestRunnerClient catalog={catalog} />
     </TenantAdminShell>
   );
 }
