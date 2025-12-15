@@ -81,6 +81,7 @@ const systemNodes = [
     tags: ["Job library", "Run history"],
   },
   {
+<<<<<<< ours
     id: "diagnostics",
     name: "Diagnostics / Audit log",
     type: "Observability",
@@ -93,6 +94,27 @@ const systemNodes = [
     type: "Config",
     summary: "Tenant-level thresholds and experience toggles.",
     tags: ["Weights", "UX toggles"],
+=======
+    id: "tenant-config",
+    name: "Tenant Config",
+    type: "Control plane",
+    summary: "Thresholds, presets, and tuning per tenant.",
+    tags: ["Weights", "LLM config", "Presets"],
+  },
+  {
+    id: "feature-flags",
+    name: "Feature Flags",
+    type: "Control plane",
+    summary: "Gates agent combinations and UI surface safety.",
+    tags: ["Access gates", "UI safety"],
+  },
+  {
+    id: "runtime-controls",
+    name: "Runtime Controls",
+    type: "Control plane",
+    summary: "Modes and safety latches that fail closed and log why.",
+    tags: ["Pilot mode", "Kill switch", "Fire drill"],
+>>>>>>> theirs
   },
 ] as const;
 
@@ -128,8 +150,19 @@ const flowSequences = [
   },
   {
     label: "Guardrails",
+<<<<<<< ours
     steps: ["Runtime controls", "Feature Flags", "Tenant Config", "Confidence / Explain"],
     subtitles: ["mode", "rollout", "tenant", "interpretation"],
+=======
+    steps: [
+      "Tenant Config",
+      "Feature Flags",
+      "Runtime Controls",
+      "Scoring engine",
+      "Confidence / Explain",
+    ],
+    subtitles: ["thresholds", "gates", "failsafe", "calculations", "interpretation"],
+>>>>>>> theirs
     arrowVariant: "dashed",
   },
 ] satisfies {
@@ -263,6 +296,28 @@ export default function SystemMapPage() {
         </div>
       </section>
 
+      <section className="space-y-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Control plane</p>
+          <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">How we tune, gate, and shut off flows</h3>
+          <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+            Separate the knobs from the engines so we can change behavior without redeploying agents. These controls back the GUARDRAILS flow above.
+          </p>
+        </div>
+
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          <li>
+            <strong className="text-zinc-900 dark:text-zinc-100">Tenant Config.</strong> Thresholds, presets, and tuning per tenant.
+          </li>
+          <li>
+            <strong className="text-zinc-900 dark:text-zinc-100">Feature Flags.</strong> Gates agent combinations and UI surface safety.
+          </li>
+          <li>
+            <strong className="text-zinc-900 dark:text-zinc-100">Runtime Controls.</strong> Modes and safety latches that fail closed and log why.
+          </li>
+        </ul>
+      </section>
+
       <section className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-3 rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70 lg:col-span-2">
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Data flow highlights</h3>
@@ -284,11 +339,15 @@ export default function SystemMapPage() {
             <li>Scoring engine requires both role and candidate profiles; outputs are immutable inputs to Confidence / Explain.</li>
             <li>Confidence / Explain block bad data and record rationales alongside scores for auditability.</li>
 <<<<<<< ours
+<<<<<<< ours
             <li>Tenant Config injects feature flags and weighting rules; if disabled, dependent steps halt instead of falling back.</li>
 >>>>>>> theirs
 =======
             <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
             <li>Agent runs emit structured run logs and audit events (success/failure + rationale).</li>
+>>>>>>> theirs
+=======
+            <li>Control plane feeds thresholds, flags, and runtime latches; dependent steps halt instead of falling back when controls disable them.</li>
 >>>>>>> theirs
           </ul>
         </div>
@@ -312,7 +371,11 @@ export default function SystemMapPage() {
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Dependencies</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
             <li>Database / Job Library is the source of truth for roles, candidates, and scoring history; if unavailable, matching halts.</li>
+<<<<<<< ours
             <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
+=======
+            <li>Tenant Config feeds Feature Flags and Runtime Controls; disabled controls block the dependent agent call instead of silently passing.</li>
+>>>>>>> theirs
             <li>Scoring pipeline expects structured profiles; malformed data fails fast rather than auto-correcting.</li>
             <li>Blueprint view mirrors the dashboard header style to reinforce that this is part of the core control plane.</li>
           </ul>
@@ -324,8 +387,12 @@ export default function SystemMapPage() {
             <li>UI collects inputs and surfaces results; it never rewrites agent outputs.</li>
             <li>Agents own interpretation: RUA shapes roles, RINA normalizes resumes, Scoring engine ranks, Confidence / Explain gate quality.</li>
             <li>Data correctness checks live in Confidence / Explain; downstream consumers reuse those signals instead of revalidating.</li>
+<<<<<<< ours
             <li>System Status pulls live subsystem health (agents, scoring, database, runtime controls) and aligns with this blueprint.</li>
             <li>Diagnostics aggregates health across ATS, flags, guardrails, retention, and logging.</li>
+=======
+            <li>System Status pulls live subsystem health (agents, scoring, database, and control plane nodes) and aligns with this blueprint.</li>
+>>>>>>> theirs
           </ul>
         </div>
       </section>
