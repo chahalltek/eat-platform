@@ -11,42 +11,18 @@ import {
   resetDbMocks,
 } from "@tests/helpers";
 
-const {
-  mockAgentRunLogCreate,
-  mockAgentRunLogUpdate,
-  mockJobReqCreate,
-  mockUserFindUnique,
-  mockGetTenantScopedPrismaClient,
-  mockGetCurrentUser,
-  mockRecordMetricEvent,
-  mockRequireRole,
-} = vi.hoisted(() => {
-  const mockAgentRunLogCreate = vi.fn(async ({ data }) => ({ id: "run-1", ...data }));
-  const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
-  const mockJobReqCreate = vi.fn(async ({ data }) => ({ id: "job-1", ...data }));
-  const mockUserFindUnique = vi.fn(async () => ({ id: "recruiter-1", tenantId: "tenant-1" }));
-  const mockGetTenantScopedPrismaClient = mockGetCurrentTenantContext({ tenantId: "tenant-1" });
-  const mockGetCurrentUser = createMockGetCurrentUser({
-    id: "user-1",
-    tenantId: "tenant-1",
-    role: "RECRUITER",
-    email: null,
-    displayName: null,
-  });
-  const mockRecordMetricEvent = vi.fn();
-  const mockRequireRole = vi.fn();
-
-  return {
-    mockAgentRunLogCreate,
-    mockAgentRunLogUpdate,
-    mockJobReqCreate,
-    mockUserFindUnique,
-    mockGetTenantScopedPrismaClient,
-    mockGetCurrentUser,
-    mockRecordMetricEvent,
-    mockRequireRole,
-  };
-});
+const mockAgentRunLogCreate = vi.hoisted(() =>
+  vi.fn(async ({ data }) => ({ id: "run-1", ...data })),
+);
+const mockAgentRunLogUpdate = vi.hoisted(() =>
+  vi.fn(async ({ where, data }) => ({ id: where.id, ...data })),
+);
+const mockJobReqCreate = vi.hoisted(() => vi.fn(async ({ data }) => ({ id: "job-1", ...data })));
+const mockUserFindUnique = vi.hoisted(() => vi.fn(async () => ({ id: "recruiter-1", tenantId: "tenant-1" })));
+const mockGetTenantScopedPrismaClient = vi.hoisted(() => vi.fn());
+const mockGetCurrentUser = vi.hoisted(() => vi.fn());
+const mockRecordMetricEvent = vi.hoisted(() => vi.fn());
+const mockRequireRole = vi.hoisted(() => vi.fn());
 
 const { mockCallLLM } = vi.hoisted(() => ({ mockCallLLM: vi.fn() }));
 vi.mock("@/lib/killSwitch", () => ({
@@ -100,6 +76,9 @@ describe("INTAKE agent API", () => {
     prisma.agentRunLog.update.mockImplementation(mockAgentRunLogUpdate);
     prisma.jobReq.create.mockImplementation(mockJobReqCreate);
     prisma.user.findUnique.mockImplementation(mockUserFindUnique);
+    mockGetTenantScopedPrismaClient.mockImplementation(
+      mockGetCurrentTenantContext({ tenantId: "tenant-1" }),
+    );
     vi.clearAllMocks();
     mockGetCurrentUser.mockResolvedValue({
       id: "user-1",

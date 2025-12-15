@@ -50,6 +50,14 @@ vi.mock("@/server/db", async (importOriginal) => {
 
   return {
     ...actual,
+    AgentRunStatus:
+      actual.AgentRunStatus ??
+      (actual as any).Prisma?.AgentRunStatus ?? {
+        RUNNING: "RUNNING",
+        SUCCESS: "SUCCESS",
+        FAILED: "FAILED",
+        PARTIAL: "PARTIAL",
+      },
     TenantDeletionMode:
       actual.TenantDeletionMode ??
       (actual as any).Prisma?.TenantDeletionMode ?? {

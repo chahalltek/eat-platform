@@ -1,5 +1,27 @@
 /// <reference types="vitest/globals" />
 
+const prismaEnums = vi.hoisted(() => ({
+  HiringManagerFeedbackStatus: {
+    SUBMITTED: "SUBMITTED",
+    PROCESSED: "PROCESSED",
+  } as const,
+  HiringManagerFeedbackType: {
+    REQUIREMENT_CHANGED: "REQUIREMENT_CHANGED",
+    CANDIDATE_REJECTED: "CANDIDATE_REJECTED",
+    CANDIDATE_UPDATED: "CANDIDATE_UPDATED",
+    THRESHOLD_ADJUSTED: "THRESHOLD_ADJUSTED",
+  } as const,
+}));
+
+vi.mock("@prisma/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@prisma/client")>();
+
+  return {
+    ...actual,
+    ...prismaEnums,
+  };
+});
+
 import { HiringManagerFeedbackStatus, HiringManagerFeedbackType } from "@prisma/client";
 
 const mocks = vi.hoisted(() => ({

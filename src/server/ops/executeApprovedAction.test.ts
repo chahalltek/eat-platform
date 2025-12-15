@@ -1,5 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("@/server/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db")>();
+
+  return {
+    ...actual,
+    ExecutionStatus:
+      actual.ExecutionStatus ??
+      (actual as any).Prisma?.ExecutionStatus ?? { SUCCESS: "SUCCESS", FAILED: "FAILED" },
+  };
+});
+
 import { executeApprovedAction } from "@/server/ops/executeApprovedAction";
 import { ActionType, ExecutionStatus } from "@/server/db";
 
