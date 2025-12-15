@@ -5,6 +5,16 @@ vi.mock("@/server/db", async (importOriginal) => {
 
   return {
     ...actual,
+    ActionType:
+      actual.ActionType ??
+      (actual as any).Prisma?.ActionType ?? {
+        WIDEN_CRITERIA: "WIDEN_CRITERIA",
+        ADJUST_COMP: "ADJUST_COMP",
+        SOURCE_EXTERNALLY: "SOURCE_EXTERNALLY",
+        ESCALATE_TO_HM: "ESCALATE_TO_HM",
+        PUSH_CANDIDATES: "PUSH_CANDIDATES",
+        PAUSE_REQUISITION: "PAUSE_REQUISITION",
+      },
     ExecutionStatus:
       actual.ExecutionStatus ??
       (actual as any).Prisma?.ExecutionStatus ?? { SUCCESS: "SUCCESS", FAILED: "FAILED" },
