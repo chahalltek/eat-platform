@@ -44,6 +44,11 @@ function LogDetail({
     );
   }
 
+  const errorMessage = log.errorMessage ?? "Error details unavailable";
+  const [errorSummary, ...errorStackLines] = errorMessage.split("\n");
+  const stackTrace = errorStackLines.join("\n").trim();
+  const hasStackTrace = stackTrace.length > 0;
+
   return (
     <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -115,18 +120,26 @@ function LogDetail({
       {log.status === "FAILED" && (
         <div className="space-y-2">
           <h3 className="text-lg font-semibold text-gray-900">Error</h3>
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">
-            {log.errorMessage ?? "Error details unavailable"}
+          <div className="max-w-full break-words rounded-lg bg-red-50 p-4 text-sm text-red-800">
+            <p className="whitespace-pre-wrap">{errorSummary || "Error details unavailable"}</p>
+            {hasStackTrace ? (
+              <details className="mt-3 max-w-full">
+                <summary className="cursor-pointer text-sm font-semibold text-red-700">Show stack trace</summary>
+                <pre className="mt-2 max-w-full whitespace-pre-wrap break-words rounded border border-red-100 bg-white/60 p-3 text-xs leading-relaxed text-red-800">
+                  {stackTrace}
+                </pre>
+              </details>
+            ) : null}
           </div>
         </div>
       )}
 
       {retryError ? (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-800">{retryError}</div>
+        <div className="max-w-full break-words rounded-lg bg-red-50 p-4 text-sm text-red-800">{retryError}</div>
       ) : null}
 
       {retryNotice ? (
-        <div className="rounded-lg bg-green-50 p-4 text-sm text-green-800">{retryNotice}</div>
+        <div className="max-w-full break-words rounded-lg bg-green-50 p-4 text-sm text-green-800">{retryNotice}</div>
       ) : null}
     </div>
   );
