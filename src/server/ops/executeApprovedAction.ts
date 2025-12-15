@@ -1,5 +1,7 @@
 import { Prisma, type AgentActionApproval, ActionType, ExecutionStatus } from "@/server/db";
 
+import { assertUnreachable } from "@/lib/assertUnreachable";
+
 type ExecutionOutcome = {
   status: ExecutionStatus;
   result: Prisma.InputJsonValue;
@@ -22,7 +24,7 @@ async function performActionExecution(
     case ActionType.PAUSE_REQUISITION:
       return { message: "Requisition paused", details: approval.actionPayload };
     default:
-      throw new Error(`Unsupported action type: ${approval.actionType}`);
+      assertUnreachable(approval.actionType, `Unsupported action type: ${approval.actionType}`);
   }
 }
 
