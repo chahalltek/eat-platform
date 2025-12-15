@@ -221,12 +221,14 @@ export function GuardrailsPresetPanel({ initialConfig }: GuardrailsPresetPanelPr
               className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 shadow-inner"
             >
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-zinc-900">{option.label}</span>
+                <span className="font-semibold text-zinc-900 text-balance [overflow-wrap:anywhere] [hyphens:auto]">
+                  {option.label}
+                </span>
                 {config.preset === option.label ? (
                   <CheckCircleIcon className="h-5 w-5 text-emerald-500" aria-hidden />
                 ) : null}
               </div>
-              <p className="text-xs text-zinc-500">{option.description}</p>
+              <p className="text-xs text-zinc-500 text-balance [overflow-wrap:anywhere] [hyphens:auto]">{option.description}</p>
             </div>
           ))}
         </div>
