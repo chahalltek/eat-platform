@@ -51,6 +51,7 @@ exports[`tenant guardrails admin page access > captures a stable layout snapshot
       You are accessing this tenant as a global admin without explicit tenant membership.
     </p>
   </div>
+<<<<<<< ours
   <section
     class="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900"
   >
@@ -168,6 +169,8 @@ exports[`tenant guardrails admin page access > captures a stable layout snapshot
       </div>
     </div>
   </section>
+=======
+>>>>>>> theirs
   <div
     data-testid="guardrails-optimizations"
   >

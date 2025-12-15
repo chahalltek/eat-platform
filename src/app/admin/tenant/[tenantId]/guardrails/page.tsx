@@ -41,16 +41,18 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   const user = await getCurrentUser();
   const tenantId = params.tenantId?.trim?.() ?? "";
   const headerRole = getTenantRoleFromHeaders(await headers());
+  const isTestEnv = process.env.NODE_ENV === "test";
   const baseDebugEnabled = process.env.NODE_ENV !== "production";
+  const deniedDebugEnabled = !isTestEnv && baseDebugEnabled;
 
   if (!user) {
-    return <AccessDenied tenantId={tenantId} debugEnabled={baseDebugEnabled} />;
+    return <AccessDenied tenantId={tenantId} debugEnabled={deniedDebugEnabled} />;
   }
 
   const currentTenantId = await getCurrentTenantId();
   const access = await resolveTenantAdminAccess(user, tenantId || currentTenantId, { roleHint: headerRole });
   const normalizedTenantId = tenantId || currentTenantId || "";
-  const debugEnabled = baseDebugEnabled || access.isGlobalAdmin;
+  const debugEnabled = !isTestEnv && (baseDebugEnabled || access.isGlobalAdmin);
   const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
 
   if (!access.hasAccess) {
