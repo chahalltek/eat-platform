@@ -103,6 +103,7 @@ const systemNodes = [
     summary: "Thresholds, presets, and tuning per tenant.",
     tags: ["Weights", "LLM config", "Presets"],
   },
+<<<<<<< ours
   {
     id: "feature-flags",
     name: "Feature Flags",
@@ -117,6 +118,8 @@ const systemNodes = [
     summary: "Modes and safety latches that fail closed and log why.",
     tags: ["Pilot mode", "Kill switch", "Fire drill"],
   },
+=======
+>>>>>>> theirs
 ] as const;
 
 const flowSequences = [
@@ -342,12 +345,15 @@ export default function SystemMapPage() {
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Data flow highlights</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
 <<<<<<< ours
+<<<<<<< ours
             <li>Roles: Intake (RUA) normalizes job descriptions into role profiles stored in the database for matching.</li>
             <li>Candidates: Profile (RINA) normalizes resumes; results live in the database before scoring and explanation.</li>
             <li>Shortlist: scoring uses the persisted role + candidate profiles, writes shortlist outputs, and Confidence / Explain stamps rationales.</li>
             <li>ATS: adapters sync jobs and candidates into the database, then downstream agents consume the normalized records.</li>
             <li>OPS: agent endpoints log inputs/outputs into audit trails that surface in the diagnostics UI.</li>
             <li>Guardrails: runtime controls, feature flags, and tenant config govern agent activation, weighting, and interpretation.</li>
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
             <li>
@@ -359,12 +365,17 @@ export default function SystemMapPage() {
             <li>Scoring engine requires both role and candidate profiles; outputs are immutable inputs to Confidence / Explain.</li>
             <li>Confidence / Explain block bad data and record rationales alongside scores for auditability.</li>
 <<<<<<< ours
+<<<<<<< ours
             <li>Tenant Config injects feature flags and weighting rules; if disabled, dependent steps halt instead of falling back.</li>
             <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
             <li>Agent runs emit structured run logs and audit events (success/failure + rationale).</li>
             <li>Control plane feeds thresholds, flags, and runtime latches; dependent steps halt instead of falling back when controls disable them.</li>
 =======
             <li>OPS: agent endpoints log inputs/outputs into audit trails that surface in the Diagnostics UI.</li>
+            <li>Control plane feeds thresholds, flags, and runtime latches; dependent steps halt instead of falling back when controls disable them.</li>
+            <li>Agent runs emit structured run logs and audit events (success/failure + rationale).</li>
+>>>>>>> theirs
+=======
             <li>Control plane feeds thresholds, flags, and runtime latches; dependent steps halt instead of falling back when controls disable them.</li>
             <li>Agent runs emit structured run logs and audit events (success/failure + rationale).</li>
 >>>>>>> theirs
@@ -391,10 +402,14 @@ export default function SystemMapPage() {
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
             <li>Database / Job Library is the source of truth for roles, candidates, and scoring history; if unavailable, matching halts.</li>
 <<<<<<< ours
+<<<<<<< ours
             <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
 =======
 >>>>>>> theirs
             <li>Tenant Config feeds Feature Flags and Runtime Controls; disabled controls block the dependent agent call instead of silently passing.</li>
+=======
+            <li>Tenant Config feeds Feature Flags and Runtime Controls; disabled controls block the dependent agent call instead of silently passing while logging why.</li>
+>>>>>>> theirs
             <li>Scoring pipeline expects structured profiles; malformed data fails fast rather than auto-correcting.</li>
             <li>Blueprint view mirrors the dashboard header style to reinforce that this is part of the core control plane.</li>
           </ul>
@@ -407,9 +422,14 @@ export default function SystemMapPage() {
             <li>Agents own interpretation: RUA shapes roles, RINA normalizes resumes, Scoring engine ranks, Confidence / Explain gate quality.</li>
             <li>Data correctness checks live in Confidence / Explain; downstream consumers reuse those signals instead of revalidating.</li>
 <<<<<<< ours
+<<<<<<< ours
             <li>System Status pulls live subsystem health (agents, scoring, database, runtime controls) and aligns with this blueprint.</li>
             <li>Diagnostics aggregates health across ATS, flags, guardrails, retention, and logging.</li>
             <li>System Status pulls live subsystem health (agents, scoring, database, and control plane nodes) and aligns with this blueprint.</li>
+=======
+            <li>System Status pulls live subsystem health (agents, scoring, database, and control plane nodes) and aligns with this blueprint.</li>
+            <li>Diagnostics aggregates health across ATS, flags, guardrails, retention, and logging.</li>
+>>>>>>> theirs
 =======
             <li>System Status pulls live subsystem health (agents, scoring, database, and control plane nodes) and aligns with this blueprint.</li>
             <li>Diagnostics aggregates health across ATS, flags, guardrails, retention, and logging.</li>
