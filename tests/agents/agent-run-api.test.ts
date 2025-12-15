@@ -2,12 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextResponse } from "next/server";
 
 import { POST as runAgentPost } from "@/app/api/agents/agent/run/route";
-import { makeRequest, readJson } from "@tests/test-utils/routeHarness";
+import { makeNextRequest, readJson } from "@tests/helpers";
 
-const {
-  mockGetCurrentUser,
-  mockAgentHandler,
-} = vi.hoisted(() => ({
+const { mockGetCurrentUser, mockAgentHandler } = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
   mockAgentHandler: vi.fn(),
 }));
@@ -25,7 +22,7 @@ vi.mock("@/server/agents/registry", () => ({
 }));
 
 const buildRequest = (agentName: string, json?: unknown) =>
-  makeRequest({ method: "POST", url: `http://localhost/api/agents/agent/run?agent=${agentName}`, json });
+  makeNextRequest({ method: "POST", url: `http://localhost/api/agents/agent/run?agent=${agentName}`, json });
 
 describe("agent run API", () => {
   beforeEach(() => {

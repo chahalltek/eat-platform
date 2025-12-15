@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as shortlistPost } from "@/app/api/agents/shortlist/route";
-import { makeRequest } from "@tests/test-utils/routeHarness";
+import { makeNextRequest } from "@tests/helpers";
 
 const { mockRequireRole } = vi.hoisted(() => ({
   mockRequireRole: vi.fn(async () => ({ ok: true, user: { id: "user-1", tenantId: "tenant-1" } })),
@@ -33,7 +33,7 @@ describe("SHORTLIST agent API", () => {
     mockRequireRole.mockResolvedValueOnce({ ok: false, response: new Response(null, { status: 403 }) });
 
     const response = await shortlistPost(
-      makeRequest({
+      makeNextRequest({
         method: "POST",
         url: "http://localhost/api/agents/shortlist",
         json: requestBody,
@@ -46,7 +46,7 @@ describe("SHORTLIST agent API", () => {
 
   it("returns shortlist state for valid inputs", async () => {
     const response = await shortlistPost(
-      makeRequest({
+      makeNextRequest({
         method: "POST",
         url: "http://localhost/api/agents/shortlist",
         json: requestBody,
@@ -70,7 +70,7 @@ describe("SHORTLIST agent API", () => {
     mockSetShortlistState.mockRejectedValueOnce(new Error("Forbidden"));
 
     const response = await shortlistPost(
-      makeRequest({
+      makeNextRequest({
         method: "POST",
         url: "http://localhost/api/agents/shortlist",
         json: requestBody,

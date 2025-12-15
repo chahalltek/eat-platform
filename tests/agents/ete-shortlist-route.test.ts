@@ -2,8 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as shortlistPost } from "@/app/api/ete/agents/shortlist/route";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
-import { mockDb } from "@/test-helpers/db";
-import { makeRequest } from "@tests/test-utils/routeHarness";
+import { makeNextRequest, prisma, resetDbMocks } from "@tests/helpers";
 
 const { mockRequireRole, mockGetAgentAvailability, mockEnforceKillSwitch, mockLoadTenantConfig, mockJobFindUnique } =
   vi.hoisted(() => {
@@ -15,8 +14,6 @@ const { mockRequireRole, mockGetAgentAvailability, mockEnforceKillSwitch, mockLo
       mockJobFindUnique: vi.fn(),
     };
   });
-const { prisma, resetDbMocks } = mockDb();
-
 vi.mock("@/lib/auth/requireRole", () => ({ requireRole: mockRequireRole }));
 vi.mock("@/lib/agents/agentAvailability", () => ({ getAgentAvailability: mockGetAgentAvailability }));
 vi.mock("@/lib/agents/killSwitch", () => ({
@@ -26,7 +23,7 @@ vi.mock("@/lib/agents/killSwitch", () => ({
 vi.mock("@/lib/guardrails/tenantConfig", () => ({ loadTenantConfig: mockLoadTenantConfig }));
 
 const buildRequest = (body: unknown) =>
-  makeRequest({
+  makeNextRequest({
     method: "POST",
     url: "http://localhost/api/ete/agents/shortlist",
     json: body,

@@ -3,10 +3,13 @@ import { NextResponse } from "next/server";
 
 import { POST as intakePost } from "@/app/api/agents/intake/route";
 import { expectApiError } from "@/test-helpers/api";
-import { mockDb } from "@/test-helpers/db";
-import { makeRequest } from "@tests/test-utils/routeHarness";
-
-const { prisma, resetDbMocks } = mockDb();
+import {
+  makeNextRequest,
+  mockGetCurrentTenantContext,
+  mockGetCurrentUser as createMockGetCurrentUser,
+  prisma,
+  resetDbMocks,
+} from "@tests/helpers";
 
 const {
   mockAgentRunLogCreate,
@@ -22,15 +25,13 @@ const {
   const mockAgentRunLogUpdate = vi.fn(async ({ where, data }) => ({ id: where.id, ...data }));
   const mockJobReqCreate = vi.fn(async ({ data }) => ({ id: "job-1", ...data }));
   const mockUserFindUnique = vi.fn(async () => ({ id: "recruiter-1", tenantId: "tenant-1" }));
-  const mockGetTenantScopedPrismaClient = vi.fn(async () => ({
-    prisma,
-    tenantId: "tenant-1",
-    runWithTenantContext: async <T>(callback: () => Promise<T>) => callback(),
-  }));
-  const mockGetCurrentUser = vi.fn().mockResolvedValue({
+  const mockGetTenantScopedPrismaClient = mockGetCurrentTenantContext({ tenantId: "tenant-1" });
+  const mockGetCurrentUser = createMockGetCurrentUser({
     id: "user-1",
     tenantId: "tenant-1",
     role: "RECRUITER",
+    email: null,
+    displayName: null,
   });
   const mockRecordMetricEvent = vi.fn();
   const mockRequireRole = vi.fn();
@@ -104,6 +105,8 @@ describe("INTAKE agent API", () => {
       id: "user-1",
       tenantId: "tenant-1",
       role: "RECRUITER",
+      email: null,
+      displayName: null,
     });
     mockRecordMetricEvent.mockResolvedValue(undefined);
     mockRequireRole.mockResolvedValue({
@@ -130,7 +133,7 @@ describe("INTAKE agent API", () => {
       }),
     );
 
-    const request = makeRequest({
+    const request = makeNextRequest({
       method: "POST",
       url: "http://localhost/api/agents/intake",
       json: { rawJobText: "A role" },
@@ -170,7 +173,7 @@ describe("INTAKE agent API", () => {
   it("marks failed runs when parsing fails", async () => {
     mockCallLLM.mockResolvedValue("not-json");
 
-    const request = makeRequest({
+    const request = makeNextRequest({
       method: "POST",
       url: "http://localhost/api/agents/intake",
       json: { rawJobText: "bad" },
@@ -192,7 +195,7 @@ describe("INTAKE agent API", () => {
       response: NextResponse.json({ message: "Forbidden" }, { status: 403 }),
     });
 
-    const request = makeRequest({
+    const request = makeNextRequest({
       method: "POST",
       url: "http://localhost/api/agents/intake",
       json: { rawJobText: "A role" },

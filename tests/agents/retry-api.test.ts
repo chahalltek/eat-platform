@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as retryPost } from "@/app/api/agents/runs/[id]/retry/route";
 import { mockDb } from "@/test-helpers/db";
-import { makeRequest } from "@tests/test-utils/routeHarness";
+import { makeNextRequest } from "@tests/helpers";
 
 const {
   mockRunRina,
@@ -36,7 +36,7 @@ vi.mock("@/lib/featureFlags/middleware", () => ({
 const { prisma, resetDbMocks } = mockDb();
 
 const buildRequest = (runId: string) =>
-  makeRequest({ method: "POST", url: `http://localhost/api/agents/runs/${runId}/retry` });
+  makeNextRequest({ method: "POST", url: `http://localhost/api/agents/runs/${runId}/retry` });
 
 describe("agent retry API", () => {
   beforeEach(() => {
