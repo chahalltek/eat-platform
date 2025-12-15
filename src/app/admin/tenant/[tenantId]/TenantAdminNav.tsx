@@ -35,11 +35,8 @@ export function TenantAdminNav({ tenantId }: { tenantId: string }) {
     },
     {
       label: "Operations",
-      items: [{ label: "Runbook", href: `/admin/tenant/${tenantId}/operations-runbook` }],
-    },
-    {
-      label: "Ops",
       items: [
+        { label: "Runbook", href: `/admin/tenant/${tenantId}/operations-runbook` },
         { label: "Test Runner", href: `/admin/tenant/${tenantId}/ops/test-runner` },
         { label: "Runtime Controls", href: `/admin/tenant/${tenantId}/ops/runtime-controls` },
       ],
