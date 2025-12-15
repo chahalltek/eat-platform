@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --config vitest.coverage.config.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "coverage:unit": "vitest run --coverage --config vitest.unit.config.ts",
     "coverage": "npm run test:coverage",
