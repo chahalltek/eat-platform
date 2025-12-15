@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { guardrailRecommendationEngine } from "@/lib/guardrails/recommendations";
@@ -18,8 +19,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const recommendations = await guardrailRecommendationEngine.generate(tenantId);
-  return NextResponse.json({ recommendations });
+  try {
+    const recommendations = await guardrailRecommendationEngine.generate(tenantId);
+    return NextResponse.json({ recommendations });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
+      return NextResponse.json({
+        recommendations: [],
+        suggestions: [],
+        status: "unavailable",
+        reason: "schema-mismatch",
+      });
+    }
+
+    console.error("Failed to generate guardrail recommendations", error);
+    return NextResponse.json({ error: "Unable to generate guardrail recommendations" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) {
@@ -38,9 +53,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const status = payload.action === "approve" ? "applied" : "dismissed";
-  const recommendations = await guardrailRecommendationEngine.updateStatus(tenantId, payload.recommendationId, status);
+  try {
+    const status = payload.action === "approve" ? "applied" : "dismissed";
+    const recommendations = await guardrailRecommendationEngine.updateStatus(tenantId, payload.recommendationId, status);
 
-  return NextResponse.json({ recommendations });
+    return NextResponse.json({ recommendations });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
+      return NextResponse.json({
+        recommendations: [],
+        suggestions: [],
+        status: "unavailable",
+        reason: "schema-mismatch",
+      });
+    }
+
+    console.error("Failed to update guardrail recommendation status", error);
+    return NextResponse.json({ error: "Unable to update guardrail recommendations" }, { status: 500 });
+  }
 }
 
