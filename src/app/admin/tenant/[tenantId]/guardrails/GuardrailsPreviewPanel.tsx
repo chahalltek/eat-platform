@@ -295,7 +295,9 @@ export function GuardrailsPreviewPanel({ tenantId }: { tenantId: string }) {
               >
                 <div className="flex min-w-0 items-start gap-2">
                   <BoltIcon className={`h-5 w-5 ${active ? "text-indigo-600" : "text-zinc-400"}`} />
-                  <span className="text-sm font-semibold leading-tight text-balance">{presetConfig.label}</span>
+                  <span className="min-w-0 text-sm font-semibold leading-tight text-balance line-clamp-2">
+                    {presetConfig.label}
+                  </span>
                 </div>
                 <p className="text-xs text-zinc-600 text-balance">{presetConfig.helper}</p>
                 <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
