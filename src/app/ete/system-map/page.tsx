@@ -11,6 +11,13 @@ const systemNodes = [
     tags: ["Hiring manager inputs", "Resume uploads"],
   },
   {
+    id: "ats",
+    name: "ATS / Integrations",
+    type: "Adapter",
+    summary: "Optionally syncs jobs and candidates from external systems into Intake and the database.",
+    tags: ["Optional", "Sync"],
+  },
+  {
     id: "rua",
     name: "RUA",
     type: "Agent",
@@ -94,6 +101,11 @@ const flowSequences = [
     label: "Role flow",
     steps: ["Intake (RUA)", "Normalize", "Role profile"],
     note: "Role is stored and later used by matching and scoring agents.",
+  },
+  {
+    label: "ATS / Integrations",
+    steps: ["ATS / Integrations", "Jobs / Candidates", "Database", "Agents"],
+    note: "Optional lane; resume uploads and manual intake remain valid entry points.",
   },
   {
     label: "Resume flow",
@@ -255,12 +267,24 @@ export default function SystemMapPage() {
         <div className="space-y-3 rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70 lg:col-span-2">
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Data flow highlights</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+<<<<<<< ours
             <li>Roles: Intake (RUA) normalizes job descriptions into role profiles stored in the database for matching.</li>
             <li>Candidates: Profile (RINA) normalizes resumes; results live in the database before scoring and explanation.</li>
             <li>Shortlist: scoring uses the persisted role + candidate profiles, writes shortlist outputs, and Confidence / Explain stamps rationales.</li>
             <li>ATS: adapters sync jobs and candidates into the database, then downstream agents consume the normalized records.</li>
             <li>OPS: agent endpoints log inputs/outputs into audit trails that surface in the diagnostics UI.</li>
             <li>Guardrails: runtime controls, feature flags, and tenant config govern agent activation, weighting, and interpretation.</li>
+=======
+            <li>
+              ATS adapters sync jobs and candidates when connected; resume uploads and manual intake remain alternate entry
+              points.
+            </li>
+            <li>Job descriptions land in Intake and flow through RUA before any scoring is permitted.</li>
+            <li>Resumes move Intake → RINA → Database (Job Library) → Scoring engine; downstream agents only touch normalized profiles.</li>
+            <li>Scoring engine requires both role and candidate profiles; outputs are immutable inputs to Confidence / Explain.</li>
+            <li>Confidence / Explain block bad data and record rationales alongside scores for auditability.</li>
+            <li>Tenant Config injects feature flags and weighting rules; if disabled, dependent steps halt instead of falling back.</li>
+>>>>>>> theirs
           </ul>
         </div>
 
