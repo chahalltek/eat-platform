@@ -19,6 +19,7 @@ export default defineConfig({
     mockReset: true,
     include: ["**/*.{test,spec}.{ts,tsx}"],
     exclude: [
+      "node_modules/**",
       "tests/admin-layout/**", // Playwright E2E suite runs via its own runner
     ],
     coverage: {
