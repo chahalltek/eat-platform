@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { StatusPill } from "@/components/StatusPill";
@@ -81,7 +84,6 @@ const systemNodes = [
     tags: ["Job library", "Run history"],
   },
   {
-<<<<<<< ours
     id: "diagnostics",
     name: "Diagnostics / Audit log",
     type: "Observability",
@@ -94,7 +96,6 @@ const systemNodes = [
     type: "Config",
     summary: "Tenant-level thresholds and experience toggles.",
     tags: ["Weights", "UX toggles"],
-=======
     id: "tenant-config",
     name: "Tenant Config",
     type: "Control plane",
@@ -114,7 +115,7 @@ const systemNodes = [
     type: "Control plane",
     summary: "Modes and safety latches that fail closed and log why.",
     tags: ["Pilot mode", "Kill switch", "Fire drill"],
->>>>>>> theirs
+
   },
 ] as const;
 
@@ -150,10 +151,10 @@ const flowSequences = [
   },
   {
     label: "Guardrails",
-<<<<<<< ours
+
     steps: ["Runtime controls", "Feature Flags", "Tenant Config", "Confidence / Explain"],
     subtitles: ["mode", "rollout", "tenant", "interpretation"],
-=======
+
     steps: [
       "Tenant Config",
       "Feature Flags",
@@ -162,7 +163,6 @@ const flowSequences = [
       "Confidence / Explain",
     ],
     subtitles: ["thresholds", "gates", "failsafe", "calculations", "interpretation"],
->>>>>>> theirs
     arrowVariant: "dashed",
   },
 ] satisfies {
@@ -180,6 +180,18 @@ const statusLegend = [
   { status: "error" as const, label: "Fault" },
   { status: "off" as const, label: "Disabled" },
 ];
+
+const apiMapDocPath = path.join(process.cwd(), "docs/architecture/api-map.md");
+const apiMapDocUrl =
+  process.env.NEXT_PUBLIC_API_MAP_DOC_URL ??
+  process.env.API_MAP_DOC_URL ??
+  "https://github.com/edgeandnode/eat-platform/blob/main/docs/architecture/api-map.md";
+
+const apiMapDocMetadata = getDocLastUpdated(apiMapDocPath);
+const apiMapLastUpdatedIso = apiMapDocMetadata?.lastUpdatedIso ?? null;
+const apiMapLastUpdatedDisplay = apiMapLastUpdatedIso
+  ? formatDate(apiMapLastUpdatedIso)
+  : "Unknown";
 
 const apiSurface = [
   {
@@ -211,7 +223,18 @@ export default function SystemMapPage() {
               How agents, scoring, and configuration hand off work. Open this when you need the blueprint for dependencies, not just a link.
             </p>
           </div>
-          <ClientActionLink href="/">Back to Console</ClientActionLink>
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-zinc-900/70 dark:text-indigo-200 dark:ring-indigo-800/60">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+              <span>
+                Last updated: <time dateTime={apiMapLastUpdatedIso ?? undefined}>{apiMapLastUpdatedDisplay}</time>
+              </span>
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <ClientActionLink href={apiMapDocUrl}>View API Map</ClientActionLink>
+              <ClientActionLink href="/">Back to Console</ClientActionLink>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -322,14 +345,12 @@ export default function SystemMapPage() {
         <div className="space-y-3 rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70 lg:col-span-2">
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Data flow highlights</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-<<<<<<< ours
             <li>Roles: Intake (RUA) normalizes job descriptions into role profiles stored in the database for matching.</li>
             <li>Candidates: Profile (RINA) normalizes resumes; results live in the database before scoring and explanation.</li>
             <li>Shortlist: scoring uses the persisted role + candidate profiles, writes shortlist outputs, and Confidence / Explain stamps rationales.</li>
             <li>ATS: adapters sync jobs and candidates into the database, then downstream agents consume the normalized records.</li>
             <li>OPS: agent endpoints log inputs/outputs into audit trails that surface in the diagnostics UI.</li>
             <li>Guardrails: runtime controls, feature flags, and tenant config govern agent activation, weighting, and interpretation.</li>
-=======
             <li>
               ATS adapters sync jobs and candidates when connected; resume uploads and manual intake remain alternate entry
               points.
@@ -338,17 +359,10 @@ export default function SystemMapPage() {
             <li>Resumes move Intake → RINA → Database (Job Library) → Scoring engine; downstream agents only touch normalized profiles.</li>
             <li>Scoring engine requires both role and candidate profiles; outputs are immutable inputs to Confidence / Explain.</li>
             <li>Confidence / Explain block bad data and record rationales alongside scores for auditability.</li>
-<<<<<<< ours
-<<<<<<< ours
             <li>Tenant Config injects feature flags and weighting rules; if disabled, dependent steps halt instead of falling back.</li>
->>>>>>> theirs
-=======
             <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
             <li>Agent runs emit structured run logs and audit events (success/failure + rationale).</li>
->>>>>>> theirs
-=======
             <li>Control plane feeds thresholds, flags, and runtime latches; dependent steps halt instead of falling back when controls disable them.</li>
->>>>>>> theirs
           </ul>
         </div>
 
@@ -371,11 +385,8 @@ export default function SystemMapPage() {
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Dependencies</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
             <li>Database / Job Library is the source of truth for roles, candidates, and scoring history; if unavailable, matching halts.</li>
-<<<<<<< ours
             <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
-=======
             <li>Tenant Config feeds Feature Flags and Runtime Controls; disabled controls block the dependent agent call instead of silently passing.</li>
->>>>>>> theirs
             <li>Scoring pipeline expects structured profiles; malformed data fails fast rather than auto-correcting.</li>
             <li>Blueprint view mirrors the dashboard header style to reinforce that this is part of the core control plane.</li>
           </ul>
@@ -387,12 +398,9 @@ export default function SystemMapPage() {
             <li>UI collects inputs and surfaces results; it never rewrites agent outputs.</li>
             <li>Agents own interpretation: RUA shapes roles, RINA normalizes resumes, Scoring engine ranks, Confidence / Explain gate quality.</li>
             <li>Data correctness checks live in Confidence / Explain; downstream consumers reuse those signals instead of revalidating.</li>
-<<<<<<< ours
             <li>System Status pulls live subsystem health (agents, scoring, database, runtime controls) and aligns with this blueprint.</li>
             <li>Diagnostics aggregates health across ATS, flags, guardrails, retention, and logging.</li>
-=======
             <li>System Status pulls live subsystem health (agents, scoring, database, and control plane nodes) and aligns with this blueprint.</li>
->>>>>>> theirs
           </ul>
         </div>
       </section>
