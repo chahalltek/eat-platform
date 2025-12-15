@@ -18,6 +18,7 @@ When production is active and the override is not set:
 
 - Prisma commands that can drop or reset data are blocked (`migrate dev`, `migrate reset`, `db push`, `db execute`, or any command using `--force`/`--accept-data-loss`).
 - Deployment fails if any migration SQL contains destructive statements such as `DROP TABLE`, `DROP COLUMN`, `ALTER TABLE ... DROP`, or `TRUNCATE TABLE`.
+- Deployment fails when the target database has pending Prisma migrations. In non-production environments, the guard logs the migration status summary so drift can be fixed before promote/deploy.
 
 ## Usage
 

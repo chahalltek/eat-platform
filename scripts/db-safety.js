@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const args = process.argv.slice(2);
 const checkOnly = args.includes('--ci');
@@ -99,8 +100,85 @@ function guardPrismaCommand(commandArgs) {
   log(`Prisma command "${commandArgs.join(' ')}" cleared safety checks.`);
 }
 
+function runMigrationStatus({ enforce }) {
+  const result = spawnSync('prisma', ['migrate', 'status'], {
+    env: process.env,
+    stdio: 'pipe',
+    encoding: 'utf-8',
+  });
+
+  const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+
+  if (result.status !== 0) {
+    const message = `Unable to read Prisma migration status. Prisma exited with status ${result.status}.\n${output}`;
+    if (enforce) {
+      fail(message);
+    }
+
+    log(message);
+    return null;
+  }
+
+  return output;
+}
+
+function parsePendingMigrations(output) {
+  const normalized = output.toLowerCase();
+  const isUpToDate = normalized.includes('database schema is up to date');
+
+  const pendingPatterns = [
+    /not yet been applied/i,
+    /database schema is not in sync/i,
+    /drift detected/i,
+    /pending migration/i,
+  ];
+
+  const pendingNames = output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => /^[0-9]{10,}.*/.test(line));
+
+  const pendingDetected = pendingPatterns.some((pattern) => pattern.test(output));
+
+  return {
+    isUpToDate,
+    pendingDetected: pendingDetected || pendingNames.length > 0,
+    pendingNames,
+  };
+}
+
+function checkMigrationDrift({ enforce }) {
+  if (!process.env.DATABASE_URL) {
+    log('DATABASE_URL is not set; skipping migration drift check.');
+    return;
+  }
+
+  const statusOutput = runMigrationStatus({ enforce });
+  if (!statusOutput) {
+    return;
+  }
+  const { isUpToDate, pendingDetected, pendingNames } = parsePendingMigrations(statusOutput);
+
+  if (isUpToDate) {
+    log('Database schema is up to date with Prisma migrations.');
+    return;
+  }
+
+  const pendingSummary = pendingNames.length > 0 ? ` (${pendingNames.join(', ')})` : '';
+  const message = `Pending Prisma migrations detected${pendingSummary}. Apply migrations to the target database.`;
+
+  if (enforce) {
+    fail(message);
+  }
+
+  const outputHeading = pendingDetected ? 'Migration status output:' : 'Prisma migrate status output:';
+  log(message);
+  log(`${outputHeading}\n${statusOutput.trim()}`);
+}
+
 if (!isProduction) {
   log(`Non-production environment detected (${resolvedEnv || 'unknown'}). Safety guard is informational only.`);
+  checkMigrationDrift({ enforce: false });
   if (prismaArgs.length) {
     log('Prisma commands are not being restricted outside production.');
   }
@@ -112,6 +190,8 @@ if (overrideSafety) {
 }
 
 requireDatabaseUrl();
+
+checkMigrationDrift({ enforce: true });
 
 if (!checkOnly) {
   guardPrismaCommand(prismaArgs);
