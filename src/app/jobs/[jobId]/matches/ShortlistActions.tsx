@@ -13,11 +13,13 @@ type Props = {
 type CopyState = "idle" | "success" | "error";
 type ExportState = "idle" | "loading" | "success" | "error";
 
+const SHORTLISTED_STATUS: JobCandidateStatus = "SHORTLISTED";
+
 export function ShortlistActions({ jobId, matches }: Props) {
   const shortlisted = useMemo(
     () =>
       matches
-        .filter((match) => match.shortlisted ?? match.jobCandidateStatus === JobCandidateStatus.SHORTLISTED)
+        .filter((match) => match.shortlisted ?? match.jobCandidateStatus === SHORTLISTED_STATUS)
         .map((match) => ({
           ...match,
           confidenceBand: match.confidenceCategory ?? null,
