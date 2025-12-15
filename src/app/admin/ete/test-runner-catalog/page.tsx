@@ -113,7 +113,7 @@ export default async function EteTestRunnerCatalogPage() {
                     <CommandLineIcon className="h-4 w-4" />
                     Local command
                   </div>
-                  <code className="block whitespace-pre-wrap font-mono text-sm leading-relaxed">{item.localTestCommand}</code>
+                  <code className="block whitespace-pre-wrap font-mono text-sm leading-relaxed">{item.localCommand}</code>
                 </div>
 
                 <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-800 shadow-inner dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
@@ -121,7 +121,7 @@ export default async function EteTestRunnerCatalogPage() {
                     <ShieldCheckIcon className="h-4 w-4" />
                     CI snippet
                   </div>
-                  <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.ciSnippet}</pre>
+                  <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.ciStep}</pre>
                 </div>
               </div>
 

@@ -15,9 +15,13 @@ describe("getETEAdminTestCatalog", () => {
       expect(item.title.length).toBeGreaterThan(5);
       expect(item.description.length).toBeGreaterThan(10);
       expect(item.tags.length).toBeGreaterThan(0);
-      expect(item.localTestCommand.length).toBeGreaterThan(5);
-      expect(typeof item.ciSnippet).toBe("string");
-      expect(typeof item.blockedInVercel).toBe("boolean");
+      expect(item.localCommand.length).toBeGreaterThan(5);
+      expect(["string", "undefined"].includes(typeof item.ciStep)).toBe(true);
+      expect(["boolean", "undefined"].includes(typeof item.blockedInVercel)).toBe(true);
     }
+  });
+
+  it("includes the admin listing endpoint auth check", () => {
+    expect(catalog.some((item) => item.id === "admin-listing-auth")).toBe(true);
   });
 });
