@@ -59,7 +59,7 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
 
   return (
     <TenantAdminShell tenantId={normalizedTenantId}>
-      <div className="mx-auto flex max-w-5xl flex-col gap-8">
+      <div data-testid="guardrails-presets-page" className="mx-auto flex max-w-5xl flex-col gap-8">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin</p>

@@ -278,7 +278,7 @@ export function GuardrailsPreviewPanel({ tenantId }: { tenantId: string }) {
           )}
         </header>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {(Object.keys(PRESET_CONFIG) as Array<keyof typeof PRESET_CONFIG>).map((key) => {
             const presetConfig = PRESET_CONFIG[key];
             const active = preset === key;
@@ -295,11 +295,9 @@ export function GuardrailsPreviewPanel({ tenantId }: { tenantId: string }) {
               >
                 <div className="flex min-w-0 items-start gap-2">
                   <BoltIcon className={`h-5 w-5 ${active ? "text-indigo-600" : "text-zinc-400"}`} />
-                  <span className="text-sm font-semibold leading-snug break-words line-clamp-2">
-                    {presetConfig.label}
-                  </span>
+                  <span className="text-sm font-semibold leading-tight text-balance">{presetConfig.label}</span>
                 </div>
-                <p className="text-xs text-zinc-600">{presetConfig.helper}</p>
+                <p className="text-xs text-zinc-600 text-balance">{presetConfig.helper}</p>
                 <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
                   <span>Match ≥ {presetConfig.matchCutoff}%</span>
                   <span>Conf ≥ {presetConfig.minConfidence}%</span>

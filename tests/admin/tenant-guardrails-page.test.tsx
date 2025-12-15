@@ -44,6 +44,24 @@ vi.mock("@/lib/tenant/roles", () => ({
   getTenantRoleFromHeaders: mocks.getTenantRoleFromHeaders,
 }));
 
+vi.mock("@/app/admin/tenant/[tenantId]/TenantAdminShell", () => ({
+  TenantAdminShell: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="tenant-admin-shell">{children}</div>
+  ),
+}));
+
+vi.mock("@/app/admin/tenant/[tenantId]/guardrails/GuardrailsPreviewPanel", () => ({
+  GuardrailsPreviewPanel: ({ tenantId }: { tenantId: string }) => (
+    <div data-testid="guardrails-preview-panel">Guardrails preview for {tenantId}</div>
+  ),
+}));
+
+vi.mock("@/app/admin/tenant/[tenantId]/guardrails/OptimizationSuggestionsPanel", () => ({
+  OptimizationSuggestionsPanel: ({ tenantId }: { tenantId: string }) => (
+    <div data-testid="guardrails-optimizations">Optimization suggestions for {tenantId}</div>
+  ),
+}));
+
 vi.mock("@/components/ETEClientLayout", () => ({
   ETEClientLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -87,6 +105,15 @@ describe("tenant guardrails admin page access", () => {
       "demo",
       { roleHint: null },
     );
+  });
+
+  it("captures a stable layout snapshot for the presets page", async () => {
+    const page = await GuardrailsPage({ params: { tenantId: "demo" } });
+    render(page);
+
+    const layout = screen.getByTestId("guardrails-presets-page");
+    expect(layout).toBeInTheDocument();
+    expect(layout).toMatchSnapshot();
   });
 
   it("blocks non-admins with an access warning", async () => {
