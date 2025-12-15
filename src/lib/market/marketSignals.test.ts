@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/server/db";
+import { intelligenceCache } from "@/lib/cache/intelligenceCache";
 import { __testing, getMarketSignals } from "./marketSignals";
 
 type AggregateRow = {
@@ -110,10 +111,33 @@ describe("getMarketSignals", () => {
   });
 
   it("caches the aggregate rows for a day", async () => {
+    const getOrCreateSpy = vi.spyOn(intelligenceCache, "getOrCreate");
+
     await getMarketSignals({ region: "US" });
     await getMarketSignals({ region: "US" });
 
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(getOrCreateSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(Number),
+      expect.any(Function),
+      undefined,
+    );
+  });
+
+  it("bypasses the market signals cache when requested", async () => {
+    const getOrCreateSpy = vi.spyOn(intelligenceCache, "getOrCreate");
+
+    await getMarketSignals({ region: "US", bypassCache: true });
+    await getMarketSignals({ region: "US", bypassCache: true });
+
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
+    expect(getOrCreateSpy).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.any(Number),
+      expect.any(Function),
+      { bypassCache: true },
+    );
   });
 
   it("returns empty learning payloads in fire drill mode", async () => {

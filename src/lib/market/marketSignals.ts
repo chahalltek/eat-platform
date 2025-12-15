@@ -215,6 +215,8 @@ export async function getMarketSignals({
 
   const cacheKey = intelligenceCacheKeys.marketSignals({ systemMode, roleFamily, region });
 
+  const cacheOptions = bypassCache ? { bypassCache } : undefined;
+
   return intelligenceCache.getOrCreate(
     [cacheKey],
     INTELLIGENCE_CACHE_TTLS.marketSignalsMs,
@@ -230,7 +232,7 @@ export async function getMarketSignals({
       systemMode,
       capturedAt,
     }),
-    { bypassCache },
+    cacheOptions,
   );
 }
 
