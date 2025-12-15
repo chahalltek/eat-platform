@@ -1,9 +1,8 @@
-import type { ComponentPropsWithoutRef } from "react";
 import clsx from "clsx";
 
-import { MonoText } from "./MonoText";
+import { MonoText, type MonoTextProps } from "./MonoText";
 
-type CodePillProps = ComponentPropsWithoutRef<typeof MonoText>;
+type CodePillProps = MonoTextProps<"code">;
 
 export function CodePill({ className, children, ...rest }: CodePillProps) {
   return (
