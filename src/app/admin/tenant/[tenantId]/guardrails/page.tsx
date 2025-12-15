@@ -10,6 +10,7 @@ import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { AdminAccessDebugCard } from "./AdminAccessDebugCard";
 import { GuardrailsPreviewPanel } from "./GuardrailsPreviewPanel";
 import { OptimizationSuggestionsPanel } from "./OptimizationSuggestionsPanel";
+import { TenantAdminShell } from "../TenantAdminShell";
 
 export const dynamic = "force-dynamic";
 
@@ -57,40 +58,38 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   }
 
   return (
-    <ETEClientLayout>
-      <main className="min-h-screen bg-zinc-50 px-6 py-10">
-        <div className="mx-auto flex max-w-5xl flex-col gap-8">
-          <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin</p>
-              <h1 className="text-3xl font-semibold text-zinc-900">Guardrails presets</h1>
-              <p className="text-sm text-zinc-600">
-                Preview how shortlist guardrails behave before saving changes for tenant
-                <span className="font-semibold"> {normalizedTenantId}</span>.
-              </p>
-            </div>
+    <TenantAdminShell tenantId={normalizedTenantId}>
+      <div className="mx-auto flex max-w-5xl flex-col gap-8">
+        <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin</p>
+            <h1 className="text-3xl font-semibold text-zinc-900">Guardrails presets</h1>
+            <p className="text-sm text-zinc-600">
+              Preview how shortlist guardrails behave before saving changes for tenant
+              <span className="font-semibold"> {normalizedTenantId}</span>.
+            </p>
+          </div>
 
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
-            >
-              Back to home
-            </Link>
-          </header>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
+          >
+            Back to home
+          </Link>
+        </header>
 
-          {isGlobalWithoutMembership ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <p className="font-semibold">Limited membership context</p>
-              <p>You are accessing this tenant as a global admin without explicit tenant membership.</p>
-            </div>
-          ) : null}
+        {isGlobalWithoutMembership ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="font-semibold">Limited membership context</p>
+            <p>You are accessing this tenant as a global admin without explicit tenant membership.</p>
+          </div>
+        ) : null}
 
-          {debugEnabled ? <AdminAccessDebugCard tenantId={normalizedTenantId} enabled={debugEnabled} /> : null}
+        {debugEnabled ? <AdminAccessDebugCard tenantId={normalizedTenantId} enabled={debugEnabled} /> : null}
 
-          <OptimizationSuggestionsPanel tenantId={normalizedTenantId} />
-          <GuardrailsPreviewPanel tenantId={normalizedTenantId} />
-        </div>
-      </main>
-    </ETEClientLayout>
+        <OptimizationSuggestionsPanel tenantId={normalizedTenantId} />
+        <GuardrailsPreviewPanel tenantId={normalizedTenantId} />
+      </div>
+    </TenantAdminShell>
   );
 }

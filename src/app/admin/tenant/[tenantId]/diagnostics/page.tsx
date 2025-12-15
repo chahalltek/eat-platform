@@ -16,6 +16,7 @@ import { ETECard } from "@/components/ETECard";
 import { StatusPill } from "@/components/StatusPill";
 import { TenantTestTable } from "./TenantTestTable";
 import { TenantFireDrillCallout } from "./TenantFireDrillCallout";
+import { TenantAdminShell } from "../TenantAdminShell";
 
 export const dynamic = "force-dynamic";
 
@@ -158,7 +159,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
     const diagnostics = await buildTenantDiagnostics(requestedTenant);
 
     return (
-      <main className="min-h-screen bg-zinc-50 px-6 py-10">
+      <TenantAdminShell tenantId={requestedTenant}>
         <div className="mx-auto flex max-w-5xl flex-col gap-6">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -407,7 +408,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
             </section>
           ) : null}
         </div>
-      </main>
+      </TenantAdminShell>
     );
   } catch (error) {
     if (error instanceof TenantNotFoundError) {

@@ -12,6 +12,7 @@ import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { buildTenantDiagnostics } from "@/lib/tenant/diagnostics";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
+import { TenantAdminShell } from "../TenantAdminShell";
 
 export const dynamic = "force-dynamic";
 
@@ -349,7 +350,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   const diagnosticsStatus = diagnosticsAvailable ? "AVAILABLE" : "UNAVAILABLE";
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-6 py-10">
+    <TenantAdminShell tenantId={tenantId}>
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-3">
@@ -664,6 +665,6 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
           </div>
         </section>
       </div>
-    </main>
+    </TenantAdminShell>
   );
 }
