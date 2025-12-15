@@ -78,6 +78,14 @@ const createPrismaMock = () => {
 
 const prismaMock = createPrismaMock();
 
+const pickEnum = <T>(...candidates: Array<T | undefined>): T | undefined =>
+  candidates.find((value) => value !== undefined);
+
+const collectEnumExports = (prismaLike: any) =>
+  Object.fromEntries(
+    Object.entries(prismaLike ?? {}).filter(([, value]) => value && typeof value === "object"),
+  );
+
 function resetModelMock(model: PrismaModelMock) {
   Object.values(model).forEach((fn) => fn.mockReset());
 }
@@ -103,9 +111,15 @@ export function mockDb() {
 
     process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 
+    const prismaEnums = collectEnumExports(actual.Prisma ?? prismaClient.Prisma);
+
     const withEnums = {
-      JobCandidateStatus:
-        actual.JobCandidateStatus ?? (actual as any).Prisma?.JobCandidateStatus ?? {
+      ...prismaEnums,
+      JobCandidateStatus: pickEnum(
+        actual.JobCandidateStatus,
+        (actual as any).Prisma?.JobCandidateStatus,
+        prismaEnums.JobCandidateStatus,
+        {
           POTENTIAL: "POTENTIAL",
           SHORTLISTED: "SHORTLISTED",
           SUBMITTED: "SUBMITTED",
@@ -113,17 +127,46 @@ export function mockDb() {
           HIRED: "HIRED",
           REJECTED: "REJECTED",
         },
-      AgentRunStatus:
-        actual.AgentRunStatus ?? (actual as any).Prisma?.AgentRunStatus ?? {
+      ),
+      AgentRunStatus: pickEnum(
+        actual.AgentRunStatus,
+        (actual as any).Prisma?.AgentRunStatus,
+        prismaEnums.AgentRunStatus,
+        {
           RUNNING: "RUNNING",
           SUCCESS: "SUCCESS",
           FAILED: "FAILED",
         },
-      TenantDeletionMode:
-        actual.TenantDeletionMode ?? (actual as any).Prisma?.TenantDeletionMode ?? {
+      ),
+      TenantDeletionMode: pickEnum(
+        actual.TenantDeletionMode,
+        (actual as any).Prisma?.TenantDeletionMode,
+        prismaEnums.TenantDeletionMode,
+        {
           HARD_DELETE: "HARD_DELETE",
           SOFT_DELETE: "SOFT_DELETE",
         },
+      ),
+      HiringManagerFeedbackType: pickEnum(
+        (actual as any).HiringManagerFeedbackType,
+        (actual as any).Prisma?.HiringManagerFeedbackType,
+        prismaEnums.HiringManagerFeedbackType,
+        {
+          REQUIREMENT_CHANGED: "REQUIREMENT_CHANGED",
+          CANDIDATE_REJECTED: "CANDIDATE_REJECTED",
+          CANDIDATE_UPDATED: "CANDIDATE_UPDATED",
+          THRESHOLD_ADJUSTED: "THRESHOLD_ADJUSTED",
+        },
+      ),
+      HiringManagerFeedbackStatus: pickEnum(
+        (actual as any).HiringManagerFeedbackStatus,
+        (actual as any).Prisma?.HiringManagerFeedbackStatus,
+        prismaEnums.HiringManagerFeedbackStatus,
+        {
+          SUBMITTED: "SUBMITTED",
+          PROCESSED: "PROCESSED",
+        },
+      ),
     };
 
     return {
