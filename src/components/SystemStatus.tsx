@@ -181,7 +181,7 @@ export function SystemStatus({ statusMap, executionState, onRefresh, isRefreshin
                   <p className="text-sm text-slate-700">{description}</p>
                 </div>
 
-                <div className="flex items-center gap-3 self-start rounded-lg bg-white/80 px-3 py-2 shadow-inner md:self-center">
+                <div className="flex flex-wrap items-center gap-2 self-start rounded-lg bg-white/80 px-3 py-2 shadow-inner md:self-center">
                   <p className="text-sm font-semibold text-slate-800">{formatStatusText(status)}</p>
                   <StatusPill status={toStatusPill(status)} label={formatStatusText(status)} />
                 </div>

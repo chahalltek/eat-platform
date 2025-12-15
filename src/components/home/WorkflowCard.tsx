@@ -281,8 +281,8 @@ export function WorkflowCard({
       | Zone C – CTA (anchored bottom)    |
       -------------------------------------
       */}
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-2">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300">Workflow</p>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">{link.label}</h2>
@@ -293,13 +293,13 @@ export function WorkflowCard({
         </div>
         <span
           className={clsx(
-            "mt-1 flex items-center gap-2 self-start rounded-full border px-3 py-1 text-xs font-semibold leading-none shadow-sm sm:self-center",
+            "mt-1 flex max-w-[14rem] flex-wrap items-center gap-2 self-start rounded-full border px-3 py-1 text-xs font-semibold leading-tight shadow-sm sm:self-center",
             badgeStyles[badgeState],
             isBadgeAnimating && "status-change-animate",
           )}
         >
           <span className="h-2 w-2 rounded-full bg-current opacity-80" aria-hidden />
-          {formatStatusText(badgeState)}
+          <span className="break-words text-pretty">{formatStatusText(badgeState)}</span>
         </span>
       </header>
 
