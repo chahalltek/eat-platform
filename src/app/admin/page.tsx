@@ -1,6 +1,8 @@
 import {
   BanknotesIcon,
   BoltIcon,
+  BuildingOffice2Icon,
+  FunnelIcon,
   ExclamationTriangleIcon,
   PlayCircleIcon,
   ServerStackIcon,
@@ -174,6 +176,57 @@ export default async function AdminHealthPage() {
             </Link>
           </div>
         </header>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">Control panels</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Jump to the admin tools for tenant operating mode changes and feature flag toggles.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Link
+              href="/admin/tenants"
+              className="group flex items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200">
+                <BuildingOffice2Icon className="h-6 w-6" aria-hidden />
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Tenant control center</p>
+                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">Mode & plans</span>
+                </div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  Open tenant profiles to switch between sandbox, pilot, production, or fire drill modes and manage plan settings.
+                </p>
+                <span className="text-sm font-semibold text-indigo-600 transition group-hover:text-indigo-700 dark:text-indigo-300 dark:group-hover:text-indigo-200">
+                  Go to tenants
+                </span>
+              </div>
+            </Link>
+            <Link
+              href="/admin/feature-flags"
+              className="group flex items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                <FunnelIcon className="h-6 w-6" aria-hidden />
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Feature flag control</p>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-100">Toggles</span>
+                </div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  Manage platform flags from a single panel and jump to the tenant diagnostics test panel to validate toggles.
+                </p>
+                <span className="text-sm font-semibold text-indigo-600 transition group-hover:text-indigo-700 dark:text-indigo-300 dark:group-hover:text-indigo-200">
+                  Open feature flags
+                </span>
+              </div>
+            </Link>
+          </div>
+        </section>
 
         <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Agents" value={snapshot.agents.totalAgents} icon={WrenchScrewdriverIcon} helper="Unique agent names" />
