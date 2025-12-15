@@ -125,7 +125,9 @@ export function CandidatesClient() {
         </div>
       ) : null}
 
-      {!errorContent && candidates.length > 0 ? <CandidateTable rows={candidates} /> : null}
+       {!errorContent && candidates.length > 0 ? (
+        <CandidateTable candidates={candidates} />
+      ) : null}
     </>
   );
 }
