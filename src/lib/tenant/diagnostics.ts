@@ -320,7 +320,7 @@ const AGENT_RUN_STATUS =
     PARTIAL: "PARTIAL",
   };
 
-async function evaluateFireDrillStatus(tenantId: string) {
+async function evaluateFireDrillStatus(tenantId: string): Promise<TenantDiagnostics["fireDrill"]> {
   const since = new Date(Date.now() - INCIDENT_WINDOW_MINUTES * 60 * 1000);
 
   try {
@@ -413,7 +413,7 @@ async function evaluateFireDrillStatus(tenantId: string) {
       suggested,
       windowMinutes: INCIDENT_WINDOW_MINUTES,
       reason: suggested ? `Consider enabling Fire Drill mode: ${reasons[0]}.` : null,
-    } as const;
+    };
   } catch (error) {
     console.error("Unable to evaluate Fire Drill status", error);
     return {
@@ -422,7 +422,7 @@ async function evaluateFireDrillStatus(tenantId: string) {
       suggested: false,
       windowMinutes: INCIDENT_WINDOW_MINUTES,
       reason: null,
-    } as const;
+    };
   }
 }
 
