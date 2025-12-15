@@ -54,21 +54,27 @@ export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardra
   try {
     storedConfig = await prisma.tenantConfig.findFirst({ where: { tenantId: resolvedTenantId } });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2022" &&
-      typeof error.meta?.column === "string" &&
-      error.meta.column.includes("TenantConfig.preset")
-    ) {
-      console.error({
-        event: "SCHEMA_MISMATCH",
-        message: "TenantConfig.preset column missing. Falling back to default guardrails.",
-        missingColumn: "TenantConfig.preset",
-        tenantId: resolvedTenantId,
-        error,
-      });
+    const missingColumn =
+      error instanceof Prisma.PrismaClientKnownRequestError && typeof error.meta?.column === "string"
+        ? error.meta.column
+        : null;
 
-      storedConfig = null;
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022" && missingColumn) {
+      const isTenantConfigColumn = missingColumn.includes("TenantConfig.");
+
+      if (isTenantConfigColumn) {
+        console.error({
+          event: "SCHEMA_MISMATCH",
+          message: "TenantConfig column missing. Falling back to default guardrails.",
+          missingColumn,
+          tenantId: resolvedTenantId,
+          error,
+        });
+
+        storedConfig = null;
+      } else {
+        throw error;
+      }
     } else {
       throw error;
     }
