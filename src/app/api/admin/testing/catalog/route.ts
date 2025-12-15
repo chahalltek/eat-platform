@@ -1,17 +1,19 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getTenantTestRunnerCatalog } from "@/lib/testing/testCatalog";
 =======
+=======
+>>>>>>> theirs
 import { NextRequest, NextResponse } from "next/server";
 
 import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getAdminTestingCatalog } from "@/lib/admin/testing/catalog";
->>>>>>> theirs
 
 const CACHE_CONTROL_VALUE = "private, max-age=300";
 
@@ -26,12 +28,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-<<<<<<< ours
-  const catalog = getTenantTestRunnerCatalog();
-  const response = NextResponse.json({ count: catalog.length, items: catalog });
-=======
   const response = NextResponse.json(getAdminTestingCatalog());
->>>>>>> theirs
 
   response.headers.set("Cache-Control", CACHE_CONTROL_VALUE);
   response.headers.set("CDN-Cache-Control", CACHE_CONTROL_VALUE);

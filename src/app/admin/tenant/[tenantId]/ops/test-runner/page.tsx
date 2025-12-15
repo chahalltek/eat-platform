@@ -2,18 +2,11 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { TestCatalogItem } from "@/lib/testing/testCatalog";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
-<<<<<<< ours
-import { TenantAdminShell } from "../../TenantAdminShell";
-import { OpsTestRunnerClient } from "./OpsTestRunnerClient";
-
-=======
->>>>>>> theirs
 export const dynamic = "force-dynamic";
 
 function AccessDenied() {
@@ -47,40 +40,5 @@ export default async function TenantTestRunnerPage({ params }: { params: { tenan
     return <AccessDenied />;
   }
 
-<<<<<<< ours
-  const headerStore = await headers();
-  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
-  const host = headerStore.get("host") ?? process.env.VERCEL_URL;
-  const baseUrl = host?.startsWith("http") ? host : `${protocol}://${host ?? "localhost:3000"}`;
-
-  const response = await fetch(`${baseUrl}/api/admin/testing/catalog`, {
-    headers: {
-      cookie: headerStore.get("cookie") ?? "",
-    },
-    next: { revalidate: 0 },
-  });
-
-  if (!response.ok) {
-    return (
-      <TenantAdminShell tenantId={targetTenantId}>
-        <div className="mx-auto max-w-4xl space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
-          <p className="text-lg font-semibold">Unable to load the test runner catalog</p>
-          <p className="text-sm">Status {response.status}: {response.statusText || "Unknown error"}</p>
-          <p className="text-sm text-amber-800">Try refreshing the page or check your admin session.</p>
-        </div>
-      </TenantAdminShell>
-    );
-  }
-
-  const payload = (await response.json()) as { items?: TestCatalogItem[] };
-  const catalog = payload.items ?? [];
-
-  return (
-    <TenantAdminShell tenantId={targetTenantId}>
-      <OpsTestRunnerClient catalog={catalog} />
-    </TenantAdminShell>
-  );
-=======
   redirect(`/admin/tenant/${targetTenantId}/test-runner/ete`);
->>>>>>> theirs
 }

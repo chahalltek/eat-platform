@@ -1,11 +1,7 @@
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
-<<<<<<< ours
-import { getOpsTestRegistry } from "@/lib/ops/testCatalog";
-=======
 import { getAdminTestingCatalog } from "@/lib/admin/testing/catalog";
->>>>>>> theirs
 
 import { AdminEteTestsClient } from "./AdminEteTestsClient";
 
@@ -32,18 +28,11 @@ export default async function AdminEteTestsPage() {
     return <AccessDenied />;
   }
 
-  const registry = getOpsTestRegistry();
-
   return (
     <ETEClientLayout showFireDrillBanner={false}>
       <AdminEteTestsClient
-<<<<<<< ours
-        quickCommands={registry.quickCommands}
-        tests={registry.catalog}
-=======
         quickCommands={catalog.quickCommands}
         tests={catalog.tests}
->>>>>>> theirs
         isVercelLimited={Boolean(process.env.VERCEL)}
       />
     </ETEClientLayout>
