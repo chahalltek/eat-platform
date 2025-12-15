@@ -12,12 +12,34 @@ import {
 
 export { guardrailsSchema, defaultTenantGuardrails, type TenantGuardrails } from "./guardrails.shared";
 
-async function ensureTenantConfigTable() {
-  if (await isTableAvailable("TenantConfig")) {
+async function ensureTenantConfigPresetColumn() {
+  const [{ exists } = { exists: false }] = await prisma.$queryRaw<{ exists: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_name = 'TenantConfig'
+        AND column_name = 'preset'
+    ) as "exists";
+  `;
+
+  if (exists) return true;
+
+  try {
+    await prisma.$executeRaw`ALTER TABLE "TenantConfig" ADD COLUMN "preset" TEXT`;
+    console.info("Added missing TenantConfig.preset column to align guardrail lookups.");
     return true;
+  } catch (error) {
+    console.error("Failed to add TenantConfig.preset column", error);
+    return false;
+  }
+}
+
+async function ensureTenantConfigTable() {
+  if (!(await isTableAvailable("TenantConfig"))) {
+    return false;
   }
 
-  return false;
+  return ensureTenantConfigPresetColumn();
 }
 
 export async function loadTenantGuardrails(tenantId: string): Promise<TenantGuardrails> {
