@@ -299,6 +299,13 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
         </div>
       </div>
 
+      <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-100">
+        <p className="font-semibold">Usage</p>
+        <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+          This panel is a catalog of checks. Execution is disabled in Vercel deployments; copy commands to run locally or in CI.
+        </p>
+      </div>
+
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
           <thead className="bg-zinc-50">
