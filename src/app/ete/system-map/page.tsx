@@ -5,6 +5,26 @@ import { ClientActionLink } from "@/components/ClientActionLink";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { StatusPill } from "@/components/StatusPill";
 
+function getDocLastUpdated(docPath: string): { lastUpdatedIso: string } | null {
+  if (!fs.existsSync(docPath)) {
+    return null;
+  }
+
+  const stats = fs.statSync(docPath);
+
+  return { lastUpdatedIso: stats.mtime.toISOString() };
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "Unknown";
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) return "Unknown";
+
+  return parsedDate.toLocaleDateString(undefined, { dateStyle: "medium" });
+}
+
 const systemNodes = [
   {
     id: "intake",
