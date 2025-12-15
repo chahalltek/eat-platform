@@ -9,7 +9,6 @@ const coverageOverrides: UserConfig = {
       reporter: ["text", "json", "lcov", "html"],
       reportsDirectory: "./coverage",
       include: ["src/**/*.{ts,tsx}"],
-      all: true,
       thresholds: {
         lines: 100,
         functions: 100,
