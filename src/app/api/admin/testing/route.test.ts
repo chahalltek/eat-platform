@@ -17,45 +17,56 @@ vi.mock("@/lib/matching/confidence", () => ({
   computeMatchConfidence: mockComputeMatchConfidence,
 }));
 
-import { POST } from "./route";
+import { POST as CanonicalPOST } from "../ete/tests/route";
+import { POST as AliasPOST } from "./route";
 
-describe("POST /api/admin/testing", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockComputeMatchScore.mockReturnValue({ score: 0, breakdown: [] });
-    mockComputeMatchConfidence.mockReturnValue({ score: 0, factors: [] });
+const testRoutes = [
+  { label: "/api/admin/ete/tests (canonical)", handler: CanonicalPOST, url: "http://localhost/api/admin/ete/tests" },
+  { label: "/api/admin/testing (alias)", handler: AliasPOST, url: "http://localhost/api/admin/testing" },
+] as const;
+
+describe("admin ETE test runner routes", () => {
+  it("keeps the legacy alias wired to the canonical handler", () => {
+    expect(AliasPOST).toBe(CanonicalPOST);
   });
 
-  const buildRequest = (body: unknown = {}) =>
-    makeRequest({ method: "POST", url: "http://localhost/api/admin/testing", json: body });
+  describe.each(testRoutes)("POST %s", ({ handler, url }) => {
+    const buildRequest = (body: unknown = {}) => makeRequest({ method: "POST", url, json: body });
 
-  it("rejects unauthenticated callers", async () => {
-    mockGetCurrentUser.mockResolvedValue(null);
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockComputeMatchScore.mockReturnValue({ score: 0, breakdown: [] });
+      mockComputeMatchConfidence.mockReturnValue({ score: 0, factors: [] });
+    });
 
-    const response = await POST(buildRequest());
+    it("rejects unauthenticated callers", async () => {
+      mockGetCurrentUser.mockResolvedValue(null);
 
-    expect(response.status).toBe(401);
-    expect(mockComputeMatchScore).not.toHaveBeenCalled();
-  });
+      const response = await handler(buildRequest());
 
-  it("blocks non-admin users", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "user-1", role: "RECRUITER" });
+      expect(response.status).toBe(401);
+      expect(mockComputeMatchScore).not.toHaveBeenCalled();
+    });
 
-    const response = await POST(buildRequest({ scoring: true }));
+    it("blocks non-admin users", async () => {
+      mockGetCurrentUser.mockResolvedValue({ id: "user-1", role: "RECRUITER" });
 
-    expect(response.status).toBe(403);
-    expect(mockComputeMatchScore).not.toHaveBeenCalled();
-  });
+      const response = await handler(buildRequest({ scoring: true }));
 
-  it("allows admins to run requested tests", async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN" });
+      expect(response.status).toBe(403);
+      expect(mockComputeMatchScore).not.toHaveBeenCalled();
+    });
 
-    const response = await POST(buildRequest({ scoring: true }));
-    const body = await response.json();
+    it("allows admins to run requested tests", async () => {
+      mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN" });
 
-    expect(response.status).toBe(200);
-    expect(Array.isArray(body)).toBe(true);
-    expect(mockComputeMatchScore).toHaveBeenCalled();
-    expect(mockComputeMatchConfidence).toHaveBeenCalled();
+      const response = await handler(buildRequest({ scoring: true }));
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(body)).toBe(true);
+      expect(mockComputeMatchScore).toHaveBeenCalled();
+      expect(mockComputeMatchConfidence).toHaveBeenCalled();
+    });
   });
 });

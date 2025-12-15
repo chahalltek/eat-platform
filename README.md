@@ -5,6 +5,10 @@ The ETE platform is a [Next.js](https://nextjs.org) application with CI guardrai
 
 - [API map](docs/architecture/api-map.md) — route groups, ownership (EAT vs. ETE), and where to add new endpoints.
 - [EAT vs. ETE blueprint](docs/architecture/eat-vs-ete.md) — the platform-first intent, current split, and realignment plan.
+
+### Admin ETE test runner
+- Canonical path: `/api/admin/ete/tests` (legacy alias: `/api/admin/testing`).
+- POST endpoint is for operator automation, UI is catalog only.
 =======
 ## Architecture
 - [API map](./docs/architecture/api-map.md) – overview of `src/app/api/*` route groups grouped by platform primitives vs. ETE experiences.
