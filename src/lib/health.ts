@@ -2,16 +2,21 @@ import { AgentRunStatus, Prisma, prisma } from "@/server/db";
 import { verifyLLMProvider } from "@/server/ai/gateway";
 import { getOpenAIApiKey } from "@/server/config/secrets";
 
-export type HealthCheckName = "environment" | "database" | "prisma" | "openai";
+export type HealthCheckName =
+  | "environment"
+  | "database"
+  | "prisma"
+  | "schema-drift"
+  | "openai";
 
 export type HealthCheckResult = {
   name: HealthCheckName;
-  status: "ok" | "error";
+  status: "ok" | "error" | "degraded";
   message: string;
 };
 
 export type HealthReport = {
-  status: "ok" | "error";
+  status: "ok" | "error" | "degraded";
   timestamp: string;
   checks: HealthCheckResult[];
 };
@@ -85,6 +90,36 @@ async function checkPrismaSchema(): Promise<HealthCheckResult> {
   }
 }
 
+async function checkSchemaDrift(): Promise<HealthCheckResult> {
+  try {
+    await prisma.$queryRaw`SELECT preset FROM "TenantConfig" LIMIT 1`;
+
+    return {
+      name: "schema-drift",
+      status: "ok",
+      message: "Schema drift check passed",
+    };
+  } catch (error) {
+    const errorMessage = formatError(error);
+    const isMissingPresetColumn = /tenantconfig.*preset/i.test(errorMessage) || /column .*preset/i.test(errorMessage);
+
+    if (isMissingPresetColumn) {
+      return {
+        name: "schema-drift",
+        status: "degraded",
+        message:
+          "Missing column TenantConfig.preset. Apply migration 20271215144900_ensure_tenant_config_preset_column.",
+      };
+    }
+
+    return {
+      name: "schema-drift",
+      status: "error",
+      message: `Schema drift check failed: ${errorMessage}`,
+    };
+  }
+}
+
 async function checkOpenAI(): Promise<HealthCheckResult> {
   const apiKey = getOpenAIApiKey();
 
@@ -116,15 +151,20 @@ async function checkOpenAI(): Promise<HealthCheckResult> {
 export async function runHealthChecks(): Promise<HealthReport> {
   const checks: HealthCheckResult[] = [checkRequiredEnvs()];
 
-  const [database, prismaSchema, openai] = await Promise.all([
+  const [database, prismaSchema, schemaDrift, openai] = await Promise.all([
     checkDatabase(),
     checkPrismaSchema(),
+    checkSchemaDrift(),
     checkOpenAI(),
   ]);
 
-  checks.push(database, prismaSchema, openai);
+  checks.push(database, prismaSchema, schemaDrift, openai);
 
-  const status = checks.every((check) => check.status === "ok") ? "ok" : "error";
+  const status = checks.every((check) => check.status === "ok")
+    ? "ok"
+    : checks.some((check) => check.status === "error")
+      ? "error"
+      : "degraded";
   const report: HealthReport = { status, timestamp: new Date().toISOString(), checks };
 
   console.log("[health]", JSON.stringify(report, null, 2));

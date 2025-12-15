@@ -16,6 +16,9 @@ export default async function HealthPage() {
     console.error("[health] Failed to persist AgentRunLog", error);
   }
 
+  const pageStatus = report.status === "ok" ? "ok" : report.status === "degraded" ? "warning" : "error";
+  const pageLabel = report.status === "ok" ? "Healthy" : report.status === "degraded" ? "Degraded" : "Unhealthy";
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
       <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-8 px-6 py-14 sm:px-10">
@@ -41,7 +44,7 @@ export default async function HealthPage() {
         <ETECard className="gap-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
-              <StatusPill status={report.status === "ok" ? "ok" : "error"} label={report.status === "ok" ? "Healthy" : "Unhealthy"} />
+              <StatusPill status={pageStatus} label={pageLabel} />
               <span className="text-sm text-zinc-600 dark:text-zinc-400">
                 Last checked at {new Date(report.timestamp).toLocaleString()}
               </span>
@@ -60,8 +63,8 @@ export default async function HealthPage() {
                     <h2 className="text-lg font-semibold capitalize text-zinc-900 dark:text-zinc-50">{check.name}</h2>
                   </div>
                   <StatusPill
-                    status={check.status === "ok" ? "ok" : "error"}
-                    label={check.status === "ok" ? "Pass" : "Fail"}
+                    status={check.status === "ok" ? "ok" : check.status === "degraded" ? "warning" : "error"}
+                    label={check.status === "ok" ? "Pass" : check.status === "degraded" ? "Degraded" : "Fail"}
                   />
                 </div>
                 <p className="text-sm text-zinc-700 dark:text-zinc-300">{check.message}</p>

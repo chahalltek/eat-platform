@@ -28,6 +28,14 @@ describe("GET /api/health", () => {
     ],
   };
 
+  const degradedReport = {
+    status: "degraded" as const,
+    timestamp: "2025-01-01T00:00:02.000Z",
+    checks: [
+      { name: "schema-drift", status: "degraded" as const, message: "Missing preset" },
+    ],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -54,6 +62,18 @@ describe("GET /api/health", () => {
     expect(recordHealthCheck).toHaveBeenCalledWith(errorReport);
     expect(response.status).toBe(503);
     expect(payload).toEqual(errorReport);
+  });
+
+  it("returns 503 when a check is degraded", async () => {
+    vi.mocked(runHealthChecks).mockResolvedValue(degradedReport);
+
+    const response = await GET();
+    const payload = await response.json();
+
+    expect(runHealthChecks).toHaveBeenCalledTimes(1);
+    expect(recordHealthCheck).toHaveBeenCalledWith(degradedReport);
+    expect(response.status).toBe(503);
+    expect(payload).toEqual(degradedReport);
   });
 
   it("logs when persisting the health check fails", async () => {
