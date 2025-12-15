@@ -285,6 +285,27 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
             </DiagnosticCard>
 
             <DiagnosticCard
+              title="Config schema"
+              status={diagnostics.configSchema.status === "ok" ? "ok" : "warn"}
+              description="Tenant config table readiness for guardrails and LLM controls."
+            >
+              <div className="space-y-2 text-sm">
+                <p>
+                  {diagnostics.configSchema.status === "ok"
+                    ? "Config schema matches guardrail expectations."
+                    : "Config schema out of date; defaults applied where necessary."}
+                </p>
+                {diagnostics.configSchema.missingColumns.length > 0 ? (
+                  <p className="text-xs text-amber-700">
+                    Missing columns: {diagnostics.configSchema.missingColumns.join(", ")}
+                  </p>
+                ) : diagnostics.configSchema.reason ? (
+                  <p className="text-xs text-amber-700">{diagnostics.configSchema.reason}</p>
+                ) : null}
+              </div>
+            </DiagnosticCard>
+
+            <DiagnosticCard
               title="LLM provider & model"
               status={mapLlmStatus(diagnostics.llm.status)}
               description="Allowed provider, model, and agent access for LLM usage."

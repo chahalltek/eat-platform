@@ -11,7 +11,7 @@ import { resolveRetentionPolicy } from "@/lib/retention";
 import { DEFAULT_GUARDRAILS, loadTenantGuardrailConfig } from "@/lib/guardrails/config";
 import {
   defaultTenantGuardrails,
-  loadTenantGuardrails,
+  loadTenantGuardrailsWithSchemaStatus,
   type TenantGuardrails,
 } from "@/lib/tenant/guardrails";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
@@ -41,6 +41,11 @@ export type TenantDiagnostics = {
   guardrailsPreset: GuardrailsPreset;
   guardrailsStatus: string;
   guardrailsRecommendation: string | null;
+  configSchema: {
+    status: "ok" | "fallback";
+    missingColumns: string[];
+    reason: string | null;
+  };
   plan: {
     id: string | null;
     name: string | null;
@@ -497,7 +502,7 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     guardrails,
     fireDrill,
     tenantMode,
-    tenantGuardrails,
+    tenantGuardrailsResult,
     atsSync,
   ] = await Promise.all([
     Promise.resolve()
@@ -518,9 +523,9 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     }),
     evaluateFireDrillStatus(tenantId),
     loadTenantMode(tenantId),
-    loadTenantGuardrails(tenantId).catch((error) => {
+    loadTenantGuardrailsWithSchemaStatus(tenantId).catch((error) => {
       console.error("Unable to load tenant guardrails", error);
-      return defaultTenantGuardrails;
+      return { guardrails: defaultTenantGuardrails, schemaStatus: { status: "fallback", missingColumns: [], reason: null } };
     }),
     loadLatestAtsSync(tenantId),
   ]);
@@ -539,6 +544,20 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
   const fireDrillImpact = fireDrill?.fireDrillImpact ?? [];
   const guardrailsStatus = buildGuardrailsStatus(guardrails, fireDrill);
 
+  const configSchema = tenantGuardrailsResult.schemaStatus.status === "fallback"
+    ? {
+        status: "fallback" as const,
+        missingColumns: tenantGuardrailsResult.schemaStatus.missingColumns,
+        reason:
+          tenantGuardrailsResult.schemaStatus.reason ??
+          (tenantGuardrailsResult.schemaStatus.missingColumns.length > 0
+            ? `Missing columns: ${tenantGuardrailsResult.schemaStatus.missingColumns.join(", ")}`
+            : "Config schema out of date; guardrails defaults are being used."),
+      }
+    : { status: "ok" as const, missingColumns: [], reason: null };
+
+  const tenantGuardrails = tenantGuardrailsResult.guardrails;
+
   return {
     tenantId,
     mode,
@@ -551,6 +570,7 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     guardrailsPreset,
     guardrailsStatus,
     guardrailsRecommendation: buildGuardrailsRecommendation(guardrailsPreset),
+    configSchema,
     plan: mapPlan(plan),
     auditLogging: { enabled: auditEventCount > 0, eventsRecorded: auditEventCount },
     dataExport: { enabled: true },

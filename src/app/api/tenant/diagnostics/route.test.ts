@@ -97,6 +97,7 @@ describe("GET /api/tenant/diagnostics", () => {
       guardrailsRecommendation: "Guardrails customized from default values.",
       fireDrill: { enabled: false, fireDrillImpact: [], suggested: false, reason: null, windowMinutes: 30 },
       guardrailsStatus: "Guardrails healthy",
+      configSchema: { status: "ok", missingColumns: [], reason: null },
       ats: { provider: "bullhorn", status: "ok", lastRunAt: null, nextAttemptAt: null, summary: null, errorMessage: null, retryCount: 0 },
     };
     mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN", tenantId: "tenant-a" });
@@ -132,6 +133,7 @@ describe("GET /api/tenant/diagnostics", () => {
       fireDrill: { enabled: false, fireDrillImpact: [] },
       sso: { configured: true, issuerUrl: null },
       guardrailsStatus: "Guardrails healthy",
+      configSchema: { status: "ok", missingColumns: [], reason: null },
     };
     mockGetCurrentUser.mockResolvedValue({ id: "sysadmin", role: "ADMIN", tenantId: "tenant-a" });
     mockGetCurrentTenantId.mockResolvedValue("tenant-b");

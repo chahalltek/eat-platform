@@ -13,6 +13,7 @@ const mockIsFeatureEnabledForTenant = vi.hoisted(() => vi.fn());
 const mockLoadGuardrails = vi.hoisted(() => vi.fn());
 const mockLoadTenantMode = vi.hoisted(() => vi.fn());
 const mockLoadTenantGuardrails = vi.hoisted(() => vi.fn());
+const mockLoadTenantGuardrailsWithSchemaStatus = vi.hoisted(() => vi.fn());
 const prismaMock = vi.hoisted(() => ({
   tenant: { findUnique: vi.fn() },
   securityEventLog: { count: vi.fn() },
@@ -84,6 +85,7 @@ vi.mock("@/lib/tenant/guardrails", async (importOriginal) => {
   return {
     ...actual,
     loadTenantGuardrails: mockLoadTenantGuardrails,
+    loadTenantGuardrailsWithSchemaStatus: mockLoadTenantGuardrailsWithSchemaStatus,
   };
 });
 
@@ -113,6 +115,18 @@ describe("buildTenantDiagnostics", () => {
         maxTokens: 600,
         verbosityCap: 2000,
       },
+    });
+    mockLoadTenantGuardrailsWithSchemaStatus.mockResolvedValue({
+      guardrails: {
+        llm: {
+          provider: "openai",
+          model: "gpt-4.1-mini",
+          allowedAgents: ["EXPLAIN", "RINA", "RUA"],
+          maxTokens: 600,
+          verbosityCap: 2000,
+        },
+      },
+      schemaStatus: { status: "ok", missingColumns: [], reason: null },
     });
     prismaMock.securityEventLog.count.mockResolvedValue(5);
     prismaMock.agentRunLog.count.mockResolvedValue(0);
@@ -184,6 +198,7 @@ describe("buildTenantDiagnostics", () => {
       confidencePassingScore: 70,
       source: "database",
     });
+    expect(diagnostics.configSchema).toEqual({ status: "ok", missingColumns: [], reason: null });
     expect(diagnostics.llm).toEqual({
       provider: "openai",
       model: "gpt-4.1-mini",
@@ -258,6 +273,18 @@ describe("buildTenantDiagnostics", () => {
         verbosityCap: undefined,
       },
     });
+    mockLoadTenantGuardrailsWithSchemaStatus.mockResolvedValue({
+      guardrails: {
+        llm: {
+          provider: "disabled",
+          model: "gpt-4.1-mini",
+          allowedAgents: ["EXPLAIN"],
+          maxTokens: undefined,
+          verbosityCap: undefined,
+        },
+      },
+      schemaStatus: { status: "ok", missingColumns: [], reason: null },
+    });
     prismaMock.securityEventLog.count.mockResolvedValue(0);
     prismaMock.tenant.findUnique.mockResolvedValue({
       id: "tenant-b",
@@ -293,6 +320,28 @@ describe("buildTenantDiagnostics", () => {
     expect(diagnostics.llm.status).toBe("disabled");
   });
 
+  it("surfaces config schema mismatches when guardrails fall back", async () => {
+    mockLoadTenantGuardrailsWithSchemaStatus.mockResolvedValue({
+      guardrails: {
+        llm: {
+          provider: "disabled",
+          model: "gpt-4.1-mini",
+          allowedAgents: ["EXPLAIN"],
+        },
+      },
+      schemaStatus: { status: "fallback", missingColumns: ["preset", "networkLearning"], reason: null },
+    });
+
+    const diagnostics = await buildTenantDiagnostics("tenant-a");
+
+    expect(diagnostics.configSchema).toEqual({
+      status: "fallback",
+      missingColumns: ["preset", "networkLearning"],
+      reason: "Missing columns: preset, networkLearning",
+    });
+    expect(diagnostics.llm.status).toBe("disabled");
+  });
+
   it("prefers tenant config rows when present", async () => {
     prismaMock.tenant.findUnique.mockResolvedValue({
       id: "tenant-c",
@@ -321,12 +370,14 @@ describe("buildTenantDiagnostics", () => {
     mockIsFeatureEnabledForTenant.mockRejectedValue(new Error("flags offline"));
     mockLoadGuardrails.mockRejectedValue(new Error("guardrails table missing"));
     mockLoadTenantGuardrails.mockRejectedValue(new Error("guardrails unavailable"));
+    mockLoadTenantGuardrailsWithSchemaStatus.mockRejectedValue(new Error("guardrails unavailable"));
 
     const diagnostics = await buildTenantDiagnostics("tenant-a");
 
     expect(diagnostics.plan).toEqual({ id: null, name: null, isTrial: false, trialEndsAt: null, limits: null });
     expect(diagnostics.featureFlags).toEqual({ enabled: false, enabledFlags: [] });
     expect(diagnostics.guardrails.source).toBe("default");
+    expect(diagnostics.configSchema.status).toBe("fallback");
     expect(diagnostics.llm).toMatchObject({ status: "ready", fireDrillOverride: false });
   });
 

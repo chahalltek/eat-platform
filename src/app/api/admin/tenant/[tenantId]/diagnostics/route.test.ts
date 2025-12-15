@@ -63,6 +63,7 @@ describe("GET /api/admin/tenant/[tenantId]/diagnostics", () => {
       modeNotice: null,
       fireDrill: { enabled: false, fireDrillImpact: [], suggested: false, reason: null, windowMinutes: 30 },
       guardrailsStatus: "Guardrails healthy",
+      configSchema: { status: "ok", missingColumns: [], reason: null },
       sso: { configured: true, issuerUrl: null },
       auditLogging: { enabled: true, eventsRecorded: 3 },
       ats: { provider: "bullhorn", status: "failed", lastRunAt: "2024-03-01T00:03:00.000Z", nextAttemptAt: null, summary: null, errorMessage: "boom", retryCount: 0 },
