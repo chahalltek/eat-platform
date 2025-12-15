@@ -457,12 +457,10 @@ export function GuardrailsPreviewPanel({ tenantId }: { tenantId: string }) {
 
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="space-y-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-emerald-800">
-                  <CheckCircleIcon className="h-5 w-5" />
-                  <h3 className="text-base font-semibold">Shortlisted ({shortlist.length})</h3>
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              <div className="flex items-center gap-2 text-emerald-800">
+                <CheckCircleIcon className="h-5 w-5 flex-none" />
+                <h3 className="flex-1 text-base font-semibold">Shortlisted ({shortlist.length})</h3>
+                <span className="ml-auto text-xs font-semibold uppercase tracking-wide text-emerald-700">
                   Limit {config.shortlistLimit}
                 </span>
               </div>
@@ -506,12 +504,10 @@ export function GuardrailsPreviewPanel({ tenantId }: { tenantId: string }) {
             </div>
 
             <div className="space-y-3 rounded-xl border border-rose-100 bg-rose-50 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-rose-800">
-                  <StopIcon className="h-5 w-5" />
-                  <h3 className="text-base font-semibold">Rejected ({rejected.length})</h3>
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-wide text-rose-700">Guardrails applied</span>
+              <div className="flex items-center gap-2 text-rose-800">
+                <StopIcon className="h-5 w-5 flex-none" />
+                <h3 className="flex-1 text-base font-semibold">Rejected ({rejected.length})</h3>
+                <span className="ml-auto text-xs font-semibold uppercase tracking-wide text-rose-700">Guardrails applied</span>
               </div>
               <div className="space-y-2">
                 {isLoading ? <p className="text-sm text-rose-900">Loading preview…</p> : null}
