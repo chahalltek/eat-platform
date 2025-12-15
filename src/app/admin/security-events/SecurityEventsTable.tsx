@@ -1,4 +1,5 @@
-import type { SecurityEventRecord } from '@/lib/audit/securityEvents';
+import { MonoText } from "@/components/MonoText";
+import type { SecurityEventRecord } from "@/lib/audit/securityEvents";
 
 type SecurityEventRow = Omit<SecurityEventRecord, 'createdAt'> & { createdAt: string };
 
@@ -36,9 +37,15 @@ export function SecurityEventsTable({ events }: Props) {
           {events.map((event) => (
             <tr key={event.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 font-medium text-gray-900">{event.eventType}</td>
-              <td className="px-4 py-3 text-gray-700">{event.userId ?? 'User not recorded'}</td>
-              <td className="px-4 py-3 text-gray-700">{event.tenantId}</td>
-              <td className="px-4 py-3 font-mono text-xs text-gray-600 whitespace-pre-wrap">
+              <td className="px-4 py-3 text-gray-700">
+                <MonoText className="text-xs text-gray-700">
+                  {event.userId ?? 'User not recorded'}
+                </MonoText>
+              </td>
+              <td className="px-4 py-3 text-gray-700">
+                <MonoText className="text-xs text-gray-700">{event.tenantId}</MonoText>
+              </td>
+              <td className="px-4 py-3 font-mono text-xs text-gray-600 whitespace-pre-wrap break-words">
                 {formatMetadata(event.metadata)}
               </td>
               <td className="px-4 py-3 text-gray-600">{new Date(event.createdAt).toLocaleString()}</td>

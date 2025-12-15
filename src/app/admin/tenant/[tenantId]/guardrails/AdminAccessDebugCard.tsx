@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
 
+import { CodePill } from "@/components/CodePill";
+import { MonoText } from "@/components/MonoText";
+
 type WhoAmIResponse = {
   user: { id: string; email: string | null; displayName: string | null; role: string | null; tenantId?: string | null } | null;
   roles: string[];
@@ -55,28 +58,42 @@ export function AdminAccessDebugCard({ tenantId, enabled }: Props) {
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">
             <span>Admin access debug</span>
-            {debug?.environment ? <span className="rounded-full bg-white px-2 py-1">{debug.environment}</span> : null}
-            <span className="rounded-full bg-white px-2 py-1">Tenant: {tenantId || "(none)"}</span>
+            {debug?.environment ? <CodePill className="bg-white text-indigo-800">{debug.environment}</CodePill> : null}
+            <CodePill className="bg-white text-indigo-800">Tenant: {tenantId || "(none)"}</CodePill>
           </div>
           {error ? (
             <p className="text-amber-800">{error}</p>
           ) : (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <div className="space-y-1">
+              <div className="space-y-1 break-words">
                 <p className="font-semibold">Identity</p>
-                <p>User ID: {debug?.user?.id ?? "(none)"}</p>
+                <p>
+                  User ID: <MonoText className="text-sm text-indigo-900">{debug?.user?.id ?? "(none)"}</MonoText>
+                </p>
                 <p>Display: {debug?.user?.displayName ?? "(none)"}</p>
-                <p>Email: {debug?.user?.email ?? "(none)"}</p>
+                <p>
+                  Email: <MonoText className="text-sm text-indigo-900">{debug?.user?.email ?? "(none)"}</MonoText>
+                </p>
                 <p>Role: {debug?.user?.role ?? "(none)"}</p>
-                <p>Session tenant: {debug?.tenant.session ?? "(none)"}</p>
+                <p>
+                  Session tenant: <MonoText className="text-sm text-indigo-900">{debug?.tenant.session ?? "(none)"}</MonoText>
+                </p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 break-words">
                 <p className="font-semibold">Access evaluation</p>
                 <p>Has access: {debug?.access?.hasAccess ? "yes" : "no"}</p>
                 <p>Global admin: {debug?.access?.isGlobalAdmin ? "yes" : "no"}</p>
                 <p>Header role hint: {debug?.roleHint ?? debug?.access?.roleHint ?? "(none)"}</p>
-                <p>Membership: {debug?.access?.membership ? `${debug.access.membership.role} (${debug.access.membership.tenantId})` : "none"}</p>
-                <p>Reason: {debug?.access?.reason ?? "(not available)"}</p>
+                <p>
+                  Membership: {debug?.access?.membership ? (
+                    <MonoText className="text-sm text-indigo-900">
+                      {`${debug.access.membership.role} (${debug.access.membership.tenantId})`}
+                    </MonoText>
+                  ) : (
+                    "none"
+                  )}
+                </p>
+                <p className="break-words">Reason: {debug?.access?.reason ?? "(not available)"}</p>
               </div>
             </div>
           )}

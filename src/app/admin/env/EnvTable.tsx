@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { FilterFn } from "@tanstack/react-table";
 
+import { MonoText } from "@/components/MonoText";
 import { StandardTable } from "@/components/table/StandardTable";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
 import type { ETETableColumn } from "@/components/table/tableTypes";
@@ -22,13 +23,19 @@ export function EnvTable({ entries }: { entries: EnvEntry[] }) {
       createTextColumn<EnvEntry, "key">({
         accessorKey: "key",
         header: "Key",
-        cell: ({ getValue }) => <span className="font-mono text-xs">{getValue<string>()}</span>,
+        cell: ({ getValue }) => (
+          <MonoText className="text-xs text-slate-800 dark:text-slate-100">{getValue<string>()}</MonoText>
+        ),
       }),
       createTextColumn<EnvEntry, "value">({
         accessorKey: "value",
         header: "Value",
         sortable: false,
-        cell: ({ getValue }) => <span className="font-mono text-xs">{getValue<string | null>() ?? "—"}</span>,
+        cell: ({ getValue }) => (
+          <MonoText className="text-xs text-slate-800 dark:text-slate-100">
+            {getValue<string | null>() ?? "—"}
+          </MonoText>
+        ),
       }),
       createStatusBadgeColumn<EnvEntry, "redacted">({
         accessorKey: "redacted",

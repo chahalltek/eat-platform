@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { CodePill } from "@/components/CodePill";
+import { MonoText } from "@/components/MonoText";
 import { ADMIN_AUDIT_ACTIONS, type AdminAuditAction } from "@/lib/audit/adminAudit";
 
 export type AuditLogRow = {
@@ -110,7 +112,8 @@ export function AuditLogTable({ initialEntries, tenantId }: { initialEntries: Au
         <div className="space-y-1">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Audit activity</h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            Track admin changes to system mode, guardrails, and agent kill switches for tenant {tenantId}.
+            Track admin changes to system mode, guardrails, and agent kill switches for tenant{" "}
+            <MonoText className="text-sm text-indigo-800 dark:text-indigo-200">{tenantId}</MonoText>.
           </p>
         </div>
         <div className="flex flex-wrap gap-3 text-sm">
@@ -199,15 +202,23 @@ export function AuditLogTable({ initialEntries, tenantId }: { initialEntries: Au
               filteredEntries.map((row) => (
                 <tr key={row.id}>
                   <td className="px-4 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                    <div className="flex flex-col">
+                    <div className="flex flex-col gap-1">
                       <span>{ACTION_LABELS[row.action]}</span>
-                      <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{row.tenantId}</span>
+                      <CodePill className="bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200">
+                        {row.tenantId}
+                      </CodePill>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-800 dark:text-zinc-100">
-                    {row.actorId ?? "—"}
+                    {row.actorId ? (
+                      <CodePill className="bg-zinc-100 text-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200">
+                        {row.actorId}
+                      </CodePill>
+                    ) : (
+                      "—"
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-zinc-800 dark:text-zinc-100">{formatMeta(row)}</td>
+                  <td className="px-4 py-3 break-words text-sm text-zinc-800 dark:text-zinc-100">{formatMeta(row)}</td>
                   <td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200">
                     {new Date(row.createdAt).toLocaleString()}
                   </td>
