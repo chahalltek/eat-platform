@@ -21,6 +21,35 @@ describe("loadTenantConfig", () => {
     vi.restoreAllMocks();
   });
 
+  it("returns the stored config when the schema is migrated", async () => {
+    mockFindUnique.mockResolvedValueOnce({
+      preset: "balanced",
+      scoring: { thresholds: { minMatchScore: 0.9, shortlistMinScore: 0.65, shortlistMaxCandidates: 5 } },
+      explain: { includeWeights: true },
+      safety: { confidenceBands: { medium: 0.62 } },
+      llm: { model: "gpt-4o" },
+      networkLearning: { enabled: true },
+    });
+
+    const result = await loadTenantConfig("tenant-123");
+
+    expect(result).toMatchObject({
+      preset: "balanced",
+      scoring: {
+        ...defaultTenantGuardrails.scoring,
+        thresholds: { ...defaultTenantGuardrails.scoring.thresholds, minMatchScore: 0.9 },
+      },
+      explain: { ...defaultTenantGuardrails.explain, includeWeights: true },
+      safety: {
+        ...defaultTenantGuardrails.safety,
+        confidenceBands: { ...defaultTenantGuardrails.safety.confidenceBands, medium: 0.62 },
+      },
+      llm: { ...defaultTenantGuardrails.llm, model: "gpt-4o" },
+      networkLearning: { enabled: true },
+      _source: "db",
+    });
+  });
+
   it("falls back to defaults when the preset column is missing", async () => {
     const missingColumnError = new Prisma.PrismaClientKnownRequestError(
       "Missing column preset",
