@@ -8,7 +8,7 @@ type TenantAdminShellProps = PropsWithChildren<{
   tenantId: string;
 }>;
 
-export async function TenantAdminShell({ tenantId, children }: TenantAdminShellProps) {
+export function TenantAdminShell({ tenantId, children }: TenantAdminShellProps) {
   return (
     <ETEClientLayout contentClassName="pt-0">
       <div className="flex gap-8">

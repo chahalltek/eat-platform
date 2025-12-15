@@ -25,7 +25,13 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("next/headers", () => ({
+  __esModule: true,
   headers: mocks.headers,
+}));
+
+vi.mock("next/navigation", () => ({
+  __esModule: true,
+  usePathname: () => "/admin/tenant/demo/guardrails",
 }));
 
 vi.mock("@/lib/auth/user", () => ({
@@ -98,7 +104,8 @@ describe("tenant guardrails admin page access", () => {
     const page = await GuardrailsPage({ params: { tenantId: "demo" } });
     render(page);
 
-    expect(await screen.findByText(/guardrails presets/i)).toBeInTheDocument();
+    const guardrailsHeadings = await screen.findAllByText(/guardrails presets/i);
+    expect(guardrailsHeadings.length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText(/admin access required/i)).not.toBeInTheDocument();
     expect(mocks.resolveTenantAdminAccess).toHaveBeenCalledWith(
       { id: "admin-1", role: "ADMIN", tenantId: "demo" },

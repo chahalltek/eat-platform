@@ -11,8 +11,22 @@ vi.mock("next/link", () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
 }));
 
+vi.mock("next/headers", () => ({
+  __esModule: true,
+  headers: () => new Headers(),
+}));
+
+vi.mock("next/navigation", () => ({
+  __esModule: true,
+  usePathname: () => "/admin/tenant/demo/operations-runbook",
+}));
+
 vi.mock("@/components/EteLogo", () => ({
   EteLogo: () => <div data-testid="ete-logo" />,
+}));
+
+vi.mock("@/components/ETEClientLayout", () => ({
+  ETEClientLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("@/lib/auth/user", () => ({
