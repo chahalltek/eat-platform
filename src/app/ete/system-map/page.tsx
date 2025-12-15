@@ -25,6 +25,27 @@ const systemNodes = [
     tags: ["Resume parsing", "Title normalization"],
   },
   {
+    id: "adapter",
+    name: "ATS Adapter / Sync",
+    type: "Integration",
+    summary: "Ingests ATS jobs and candidates, then keeps them synchronized.",
+    tags: ["API ingress", "Webhook sync"],
+  },
+  {
+    id: "feature-flags",
+    name: "Feature Flags",
+    type: "Config",
+    summary: "Toggles capabilities, thresholds, and rollout states globally.",
+    tags: ["Rollout", "Rules"],
+  },
+  {
+    id: "runtime-controls",
+    name: "Runtime Controls",
+    type: "Ops",
+    summary: "Mode switches, kill switches, and fire drills for operational safety.",
+    tags: ["Mode", "Kill switch"],
+  },
+  {
     id: "scoring",
     name: "Scoring engine",
     type: "Engine",
@@ -39,6 +60,13 @@ const systemNodes = [
     tags: ["Quality gates", "Narratives"],
   },
   {
+    id: "agent-sync",
+    name: "Agent Sync / Expand",
+    type: "Coordination",
+    summary: "Synchronizes agent runs and expands workloads across downstream steps.",
+    tags: ["Fan-out", "Scheduling"],
+  },
+  {
     id: "database",
     name: "Database",
     type: "Data",
@@ -46,39 +74,50 @@ const systemNodes = [
     tags: ["Job library", "Run history"],
   },
   {
+    id: "diagnostics",
+    name: "Diagnostics / Audit log",
+    type: "Observability",
+    summary: "Traces agent calls, inputs, and outcomes for troubleshooting.",
+    tags: ["Audit trail", "Metrics"],
+  },
+  {
     id: "tenant",
     name: "Tenant Config",
     type: "Config",
-    summary: "Feature flags, thresholds, and experience toggles per tenant.",
-    tags: ["Feature flags", "Weights"],
+    summary: "Tenant-level thresholds and experience toggles.",
+    tags: ["Weights", "UX toggles"],
   },
 ] as const;
 
 const flowSequences = [
   {
     label: "Role flow",
-    steps: ["Intake", "RUA", "Database"],
+    steps: ["Intake (RUA)", "Normalize", "Role profile"],
     note: "Role is stored and later used by matching and scoring agents.",
   },
   {
     label: "Resume flow",
-    steps: ["Intake", "RINA", "Database", "Scoring engine", "Confidence / Explain"],
+    steps: ["Profile (RINA)", "Normalize", "Database (results)", "Scoring engine", "Confidence / Explain"],
   },
   {
     label: "Scoring flow",
-    steps: [
-      "Role + Candidates",
-      "MATCH",
-      "Scoring engine",
-      "Confidence / Explain",
-      "Database (results)",
-    ],
+    steps: ["Role + Candidates", "Shortlist", "Database (results)", "Confidence / Explain"],
     note: "Uses roles from RUA and candidates from RINA / PROFILE to rank matches.",
   },
   {
+    label: "OPS flow",
+    steps: ["Agent endpoints", "Agent log + Audit", "Diagnostics UI"],
+    note: "Debug agent runs with linked inputs, outputs, and traces.",
+  },
+  {
+    label: "ATS flow",
+    steps: ["ATS Adapter / Sync", "Jobs + Candidates", "Database", "Downstream agents"],
+    arrowVariant: "dashed",
+  },
+  {
     label: "Guardrails",
-    steps: ["Tenant Config", "Scoring engine", "Confidence / Explain"],
-    subtitles: ["rules", "calculations", "interpretation"],
+    steps: ["Runtime controls", "Feature Flags", "Tenant Config", "Confidence / Explain"],
+    subtitles: ["mode", "rollout", "tenant", "interpretation"],
     arrowVariant: "dashed",
   },
 ] satisfies {
@@ -177,11 +216,12 @@ export default function SystemMapPage() {
         <div className="space-y-3 rounded-2xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70 lg:col-span-2">
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Data flow highlights</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-            <li>Job descriptions land in Intake and flow through RUA before any scoring is permitted.</li>
-            <li>Resumes move Intake → RINA → Database (Job Library) → Scoring engine; downstream agents only touch normalized profiles.</li>
-            <li>Scoring engine requires both role and candidate profiles; outputs are immutable inputs to Confidence / Explain.</li>
-            <li>Confidence / Explain block bad data and record rationales alongside scores for auditability.</li>
-            <li>Tenant Config injects feature flags and weighting rules; if disabled, dependent steps halt instead of falling back.</li>
+            <li>Roles: Intake (RUA) normalizes job descriptions into role profiles stored in the database for matching.</li>
+            <li>Candidates: Profile (RINA) normalizes resumes; results live in the database before scoring and explanation.</li>
+            <li>Shortlist: scoring uses the persisted role + candidate profiles, writes shortlist outputs, and Confidence / Explain stamps rationales.</li>
+            <li>ATS: adapters sync jobs and candidates into the database, then downstream agents consume the normalized records.</li>
+            <li>OPS: agent endpoints log inputs/outputs into audit trails that surface in the diagnostics UI.</li>
+            <li>Guardrails: runtime controls, feature flags, and tenant config govern agent activation, weighting, and interpretation.</li>
           </ul>
         </div>
 
