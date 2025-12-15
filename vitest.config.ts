@@ -22,8 +22,13 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "lcov", "html"],
       reportsDirectory: "./coverage",
-      exclude: [],
-      include: ["src/coverageTarget.ts"],
+      include: [
+        "src/lib/**/*.{ts,tsx}",
+        "src/server/**/*.{ts,tsx}",
+        "src/app/**/*.{ts,tsx}",
+        "src/components/**/*.{ts,tsx}",
+      ],
+      exclude: ["src/**/__mocks__/**", "**/__generated__/**", "src/**/types/**"],
       thresholds: {
         lines: 100,
         functions: 100,
