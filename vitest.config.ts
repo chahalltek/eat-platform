@@ -18,6 +18,9 @@ export default defineConfig({
     clearMocks: true,
     mockReset: true,
     include: ["**/*.{test,spec}.{ts,tsx}"],
+    exclude: [
+      "tests/admin-layout/**", // Playwright E2E suite runs via its own runner
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "json-summary", "lcov", "html"],
