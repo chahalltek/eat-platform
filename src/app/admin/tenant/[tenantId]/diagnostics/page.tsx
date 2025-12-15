@@ -22,7 +22,7 @@ import { TenantAdminShell } from "../TenantAdminShell";
 
 export const dynamic = "force-dynamic";
 
-type Status = "ok" | "warn" | "off";
+type Status = "ok" | "warn" | "off" | "fault";
 
 type ModeValue = TenantDiagnostics["mode"] | { mode: TenantDiagnostics["mode"] };
 
@@ -51,9 +51,16 @@ function DiagnosticCard({
   description: string;
   children: ReactNode;
 }) {
-  const pillStatus = status === "warn" ? "warning" : status === "off" ? "off" : "ok";
+  const pillStatus =
+    status === "warn" ? "warning" : status === "off" ? "off" : status === "fault" ? "fault" : "ok";
   const pillLabel =
-    status === "warn" ? "Action needed" : status === "off" ? "Disabled" : "Enabled";
+    status === "warn"
+      ? "Action needed"
+      : status === "off"
+        ? "Disabled"
+        : status === "fault"
+          ? "Fault"
+          : "Enabled";
 
   return (
     <ETECard className="gap-3">
@@ -305,6 +312,27 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
                   </p>
                 ) : diagnostics.configSchema.reason ? (
                   <p className="text-xs text-amber-700">{diagnostics.configSchema.reason}</p>
+                ) : null}
+              </div>
+            </DiagnosticCard>
+
+            <DiagnosticCard
+              title="Schema drift"
+              status={diagnostics.schemaDrift.status === "ok" ? "ok" : "fault"}
+              description="Checks TenantConfig columns for recent migrations."
+            >
+              <div className="space-y-2 text-sm">
+                <p>
+                  {diagnostics.schemaDrift.status === "ok"
+                    ? "TenantConfig columns match expected schema."
+                    : "Detected schema drift in TenantConfig; apply the latest migrations."}
+                </p>
+                {diagnostics.schemaDrift.missingColumns.length > 0 ? (
+                  <p className="text-xs text-rose-700 dark:text-rose-300">
+                    Missing columns: {diagnostics.schemaDrift.missingColumns.join(", ")}
+                  </p>
+                ) : diagnostics.schemaDrift.reason ? (
+                  <p className="text-xs text-rose-700 dark:text-rose-300">{diagnostics.schemaDrift.reason}</p>
                 ) : null}
               </div>
             </DiagnosticCard>

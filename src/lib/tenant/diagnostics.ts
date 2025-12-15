@@ -46,6 +46,11 @@ export type TenantDiagnostics = {
     missingColumns: string[];
     reason: string | null;
   };
+  schemaDrift: {
+    status: "ok" | "fault";
+    missingColumns: string[];
+    reason: string | null;
+  };
   plan: {
     id: string | null;
     name: string | null;
@@ -315,6 +320,7 @@ const EXPLAIN_FAILURE_THRESHOLD = 0.3;
 const LLM_FAILURE_THRESHOLD = 0.25;
 const MATCH_FAILURE_THRESHOLD = 0.25;
 const FIRE_DRILL_IMPACT = ["Agent dispatch paused", "Guardrails forced to conservative"] as const;
+const TENANT_CONFIG_EXPECTED_COLUMNS = ["preset", "llm", "networkLearningOptIn", "networkLearning"] as const;
 
 const AGENT_RUN_STATUS =
   AgentRunStatus ??
@@ -431,6 +437,42 @@ async function evaluateFireDrillStatus(tenantId: string): Promise<TenantDiagnost
   }
 }
 
+async function evaluateTenantConfigSchemaDrift(): Promise<TenantDiagnostics["schemaDrift"]> {
+  try {
+    const columns = await prisma.$queryRaw<Array<{ column_name?: string }>>`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = current_schema()
+        AND table_name = 'TenantConfig'
+    `;
+
+    const presentColumns = columns
+      .map((column) => column.column_name?.toLowerCase?.())
+      .filter((value): value is string => Boolean(value));
+
+    const missingColumns = TENANT_CONFIG_EXPECTED_COLUMNS.filter(
+      (name) => !presentColumns.includes(name.toLowerCase()),
+    );
+
+    if (missingColumns.length === 0) {
+      return { status: "ok", missingColumns, reason: null };
+    }
+
+    return {
+      status: "fault",
+      missingColumns,
+      reason: `Missing columns: ${missingColumns.join(", ")}`,
+    };
+  } catch (error) {
+    console.error("Unable to evaluate TenantConfig schema drift", error);
+    return {
+      status: "fault",
+      missingColumns: [...TENANT_CONFIG_EXPECTED_COLUMNS],
+      reason: "TenantConfig schema could not be inspected; check recent migrations.",
+    };
+  }
+}
+
 async function countAuditEvents(tenantId: string) {
   try {
     return await prisma.securityEventLog.count({ where: { tenantId } });
@@ -504,6 +546,7 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     tenantMode,
     tenantGuardrailsResult,
     atsSync,
+    schemaDrift,
   ] = await Promise.all([
     Promise.resolve()
       .then(() => getAppConfig())
@@ -528,6 +571,7 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
       return { guardrails: defaultTenantGuardrails, schemaStatus: { status: "fallback", missingColumns: [], reason: null } };
     }),
     loadLatestAtsSync(tenantId),
+    evaluateTenantConfigSchemaDrift(),
   ]);
 
   if (!tenant) {
@@ -571,6 +615,7 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     guardrailsStatus,
     guardrailsRecommendation: buildGuardrailsRecommendation(guardrailsPreset),
     configSchema,
+    schemaDrift,
     plan: mapPlan(plan),
     auditLogging: { enabled: auditEventCount > 0, eventsRecorded: auditEventCount },
     dataExport: { enabled: true },

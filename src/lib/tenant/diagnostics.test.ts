@@ -18,6 +18,7 @@ const prismaMock = vi.hoisted(() => ({
   tenant: { findUnique: vi.fn() },
   securityEventLog: { count: vi.fn() },
   agentRunLog: { count: vi.fn(), findFirst: vi.fn() },
+  $queryRaw: vi.fn(),
 }));
 
 vi.mock("@/lib/config/configValidator", () => ({
@@ -128,6 +129,12 @@ describe("buildTenantDiagnostics", () => {
       },
       schemaStatus: { status: "ok", missingColumns: [], reason: null },
     });
+    prismaMock.$queryRaw.mockResolvedValue([
+      { column_name: "preset" },
+      { column_name: "llm" },
+      { column_name: "networkLearningOptIn" },
+      { column_name: "networkLearning" },
+    ]);
     prismaMock.securityEventLog.count.mockResolvedValue(5);
     prismaMock.agentRunLog.count.mockResolvedValue(0);
     prismaMock.agentRunLog.findFirst.mockResolvedValue(null);
@@ -199,6 +206,7 @@ describe("buildTenantDiagnostics", () => {
       source: "database",
     });
     expect(diagnostics.configSchema).toEqual({ status: "ok", missingColumns: [], reason: null });
+    expect(diagnostics.schemaDrift).toEqual({ status: "ok", missingColumns: [], reason: null });
     expect(diagnostics.llm).toEqual({
       provider: "openai",
       model: "gpt-4.1-mini",
@@ -340,6 +348,33 @@ describe("buildTenantDiagnostics", () => {
       reason: "Missing columns: preset, networkLearning",
     });
     expect(diagnostics.llm.status).toBe("disabled");
+  });
+
+  it("flags schema drift when TenantConfig columns are missing", async () => {
+    prismaMock.$queryRaw.mockResolvedValue([{ column_name: "preset" }]);
+
+    const diagnostics = await buildTenantDiagnostics("tenant-a");
+
+    expect(diagnostics.schemaDrift).toEqual({
+      status: "fault",
+      missingColumns: ["llm", "networkLearningOptIn", "networkLearning"],
+      reason: "Missing columns: llm, networkLearningOptIn, networkLearning",
+    });
+  });
+
+  it("treats schema drift probes as faults when the inspection fails", async () => {
+    prismaMock.$queryRaw.mockRejectedValue(new Error("offline"));
+
+    const diagnostics = await buildTenantDiagnostics("tenant-a");
+
+    expect(diagnostics.schemaDrift.status).toBe("fault");
+    expect(diagnostics.schemaDrift.missingColumns).toEqual([
+      "preset",
+      "llm",
+      "networkLearningOptIn",
+      "networkLearning",
+    ]);
+    expect(diagnostics.schemaDrift.reason).toContain("could not be inspected");
   });
 
   it("prefers tenant config rows when present", async () => {
