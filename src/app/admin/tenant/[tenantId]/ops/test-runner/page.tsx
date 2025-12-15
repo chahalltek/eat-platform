@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import type { TestCatalogItem } from "@/lib/testing/testCatalog";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -7,9 +8,12 @@ import { getCurrentTenantId } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
+<<<<<<< ours
 import { TenantAdminShell } from "../../TenantAdminShell";
 import { OpsTestRunnerClient } from "./OpsTestRunnerClient";
 
+=======
+>>>>>>> theirs
 export const dynamic = "force-dynamic";
 
 function AccessDenied() {
@@ -43,6 +47,7 @@ export default async function TenantTestRunnerPage({ params }: { params: { tenan
     return <AccessDenied />;
   }
 
+<<<<<<< ours
   const headerStore = await headers();
   const protocol = headerStore.get("x-forwarded-proto") ?? "http";
   const host = headerStore.get("host") ?? process.env.VERCEL_URL;
@@ -75,4 +80,7 @@ export default async function TenantTestRunnerPage({ params }: { params: { tenan
       <OpsTestRunnerClient catalog={catalog} />
     </TenantAdminShell>
   );
+=======
+  redirect(`/admin/tenant/${targetTenantId}/test-runner/ete`);
+>>>>>>> theirs
 }
