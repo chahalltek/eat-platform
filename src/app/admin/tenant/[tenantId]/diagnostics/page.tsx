@@ -160,6 +160,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
   try {
     const diagnostics = await buildTenantDiagnostics(requestedTenant);
+    const executionDisabled = Boolean(process.env.VERCEL);
 
     return (
       <TenantAdminShell tenantId={requestedTenant}>
@@ -188,7 +189,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
           <TenantFireDrillCallout fireDrill={diagnostics.fireDrill} />
 
-          <TenantTestTable tenantId={requestedTenant} />
+          <TenantTestTable tenantId={requestedTenant} executionDisabled={executionDisabled} />
 
           <section className="grid gap-4 md:grid-cols-2">
             <DiagnosticCard

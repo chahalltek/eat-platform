@@ -2,6 +2,7 @@
 
 import {
   BoltIcon,
+  ChatBubbleLeftEllipsisIcon,
   ClipboardDocumentCheckIcon,
   ClipboardDocumentListIcon,
   CommandLineIcon,
@@ -113,7 +114,7 @@ export function EteTestRunnerClient({
             {isVercelLimited ? (
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-100">
                 <BoltIcon className="h-4 w-4" />
-                Copy-only in Vercel deployments
+                Catalog only (execution disabled in this environment)
               </div>
             ) : null}
           </div>
@@ -196,14 +197,14 @@ export function EteTestRunnerClient({
                 ))}
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className={cn("grid gap-3", item.slackSnippet ? "md:grid-cols-3" : "md:grid-cols-2")}> 
                 <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-800 shadow-inner dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
                   <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
                     <div className="flex items-center gap-2">
                       <CommandLineIcon className="h-4 w-4" />
                       Local command
                     </div>
-                    <CopyButton text={item.localCommand} label="Copy" />
+                    <CopyButton text={item.localCommand} label="Copy local" />
                   </div>
                   <code className="block whitespace-pre-wrap font-mono text-sm leading-relaxed text-indigo-700 dark:text-indigo-200">{item.localCommand}</code>
                 </div>
@@ -214,7 +215,7 @@ export function EteTestRunnerClient({
                       <ShieldCheckIcon className="h-4 w-4" />
                       CI snippet
                     </div>
-                    {item.ciStep ? <CopyButton text={item.ciStep} label="Copy" /> : null}
+                    {item.ciStep ? <CopyButton text={item.ciStep} label="Copy GH Actions" /> : null}
                   </div>
                   {item.ciStep ? (
                     <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.ciStep}</pre>
@@ -222,11 +223,24 @@ export function EteTestRunnerClient({
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">Not yet published to CI.</p>
                   )}
                 </div>
+
+                {item.slackSnippet ? (
+                  <div className="rounded-xl border border-indigo-100 bg-white p-4 text-sm text-zinc-800 shadow-inner dark:border-indigo-900 dark:bg-zinc-900 dark:text-zinc-100">
+                    <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
+                      <div className="flex items-center gap-2">
+                        <ChatBubbleLeftEllipsisIcon className="h-4 w-4" />
+                        Slack-ready snippet
+                      </div>
+                      <CopyButton text={item.slackSnippet} label="Copy Slack snippet" />
+                    </div>
+                    <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.slackSnippet}</pre>
+                  </div>
+                ) : null}
               </div>
 
               <div className="flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-3 text-xs font-semibold text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
                 <BoltIcon className="h-4 w-4" />
-                Copy and paste; no commands are executed from this page.
+                {isVercelLimited ? "Catalog only in this environment — copy and paste into local shells or CI." : "Copy and paste; no commands are executed from this page."}
               </div>
             </article>
           ))}

@@ -177,7 +177,7 @@ function evaluateTest(key: TestKey, diagnostics: TenantDiagnostics): Pick<TestSt
   }
 }
 
-export function TenantTestTable({ tenantId }: { tenantId: string }) {
+export function TenantTestTable({ tenantId, executionDisabled = false }: { tenantId: string; executionDisabled?: boolean }) {
   const [results, setResults] = useState<Record<TestKey, TestState>>(initialState);
   const [runningAll, setRunningAll] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -199,6 +199,8 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
   };
 
   const runTest = async (key: TestKey) => {
+    if (executionDisabled) return;
+
     setResults((prev) => ({ ...prev, [key]: { ...prev[key], status: "running", message: "Running..." } }));
 
     try {
@@ -224,6 +226,8 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
   };
 
   const runAllTests = async () => {
+    if (executionDisabled) return;
+
     setRunningAll(true);
     for (const test of TESTS) {
       await runTest(test.key);
@@ -285,14 +289,16 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
               {seeding ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <SparklesIcon className="h-4 w-4" aria-hidden />} Seed sample data
             </button>
 
-            <button
-              type="button"
-              onClick={runAllTests}
-              disabled={runningAll}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
-            >
-              {runningAll ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <PlayIcon className="h-4 w-4" aria-hidden />} Run all tests
-            </button>
+            {executionDisabled ? null : (
+              <button
+                type="button"
+                onClick={runAllTests}
+                disabled={runningAll}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
+              >
+                {runningAll ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <PlayIcon className="h-4 w-4" aria-hidden />} Run all tests
+              </button>
+            )}
           </div>
 
           <p className={`text-xs ${seedHelperText.className}`}>{seedHelperText.text}</p>
@@ -302,7 +308,7 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
       <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-100">
         <p className="font-semibold">Usage</p>
         <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
-          This panel is a catalog of checks. Execution is disabled in Vercel deployments; copy commands to run locally or in CI.
+          Catalog only (execution disabled in this environment). Copy commands into local shells or CI workflows to run checks.
         </p>
       </div>
 
@@ -341,19 +347,21 @@ export function TenantTestTable({ tenantId }: { tenantId: string }) {
                     <StatusBadge status={state.status} message={state.message} />
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => runTest(test.key)}
-                      disabled={isRunning}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-800 transition hover:border-indigo-200 hover:text-indigo-700 disabled:cursor-not-allowed disabled:border-zinc-100 disabled:text-zinc-400"
-                    >
-                      {isRunning ? (
-                        <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden />
-                      ) : (
-                        <PlayIcon className="h-4 w-4" aria-hidden />
-                      )}
-                      Run
-                    </button>
+                    {executionDisabled ? null : (
+                      <button
+                        type="button"
+                        onClick={() => runTest(test.key)}
+                        disabled={isRunning}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-800 transition hover:border-indigo-200 hover:text-indigo-700 disabled:cursor-not-allowed disabled:border-zinc-100 disabled:text-zinc-400"
+                      >
+                        {isRunning ? (
+                          <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden />
+                        ) : (
+                          <PlayIcon className="h-4 w-4" aria-hidden />
+                        )}
+                        Run
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
