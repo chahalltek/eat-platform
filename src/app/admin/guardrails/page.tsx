@@ -1,9 +1,13 @@
 import Link from "next/link";
 
+import { BoltIcon, BeakerIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
+
 import { ETECard } from "@/components/ETECard";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
+import { getCurrentTenantId } from "@/lib/tenant";
 import { getTenantMode } from "@/lib/tenantMode";
 
 import { GuardrailsPresetPanel } from "./GuardrailsPresetPanel";
@@ -45,6 +49,7 @@ export default async function GuardrailsAdminPage() {
   }
 
   const initialMode = await getTenantMode();
+  const tenantId = await getCurrentTenantId();
 
   return (
     <ETEClientLayout>
@@ -65,6 +70,62 @@ export default async function GuardrailsAdminPage() {
             Back to home
           </Link>
         </header>
+
+        <section className="space-y-5 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Ops console</p>
+              <h2 className="text-xl font-semibold text-zinc-900">Deep links</h2>
+              <p className="text-sm text-zinc-600">
+                Jump directly into Ops Console tools to validate guardrails and runtime behavior.
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+              Guardrails ops
+            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                label: "Open Test Runner",
+                description: "Validate guardrail behavior against the latest E2E scenarios.",
+                href: "/admin/ete/tests",
+                icon: <BeakerIcon className="h-6 w-6" aria-hidden />,
+              },
+              {
+                label: "Open Runtime Controls",
+                description: "Triage feature flags and runtime protections for incidents.",
+                href: "/admin/feature-flags",
+                icon: <BoltIcon className="h-6 w-6" aria-hidden />,
+              },
+              {
+                label: "Open Diagnostics",
+                description: "Inspect tenant diagnostics, guardrail previews, and health signals.",
+                href: `/admin/tenant/${tenantId}/diagnostics`,
+                icon: <WrenchScrewdriverIcon className="h-6 w-6" aria-hidden />,
+              },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="group flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
+              >
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                  {link.icon}
+                </span>
+                <div className="space-y-2">
+                  <p className="text-base font-semibold text-zinc-900">{link.label}</p>
+                  <p className="text-sm text-zinc-600">{link.description}</p>
+                </div>
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 transition group-hover:text-indigo-700">
+                  Launch
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <SystemModePanel initialMode={initialMode} />
 
