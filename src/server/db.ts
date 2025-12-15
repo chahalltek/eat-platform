@@ -9,8 +9,42 @@ if (process.env.NODE_ENV === "test" && !process.env.PRISMA_CLIENT_ENGINE_TYPE) {
 
 const FALLBACK_DATABASE_URL = "postgresql://placeholder.invalid:5432/placeholder";
 
-if (!process.env.DATABASE_URL) {
+function resolveDatabaseUrl(env: NodeJS.ProcessEnv) {
+  return (
+    env.DATABASE_URL ??
+    env.POSTGRES_PRISMA_URL ??
+    env.POSTGRES_URL_NON_POOLING ??
+    env.POSTGRES_URL ??
+    null
+  );
+}
+
+function describeDatabaseUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.host || "unknown-host";
+    const databaseName = parsed.pathname?.replace(/^\//, "") || "unknown-db";
+
+    return `${parsed.protocol}//${host}/${databaseName}`;
+  } catch {
+    return "an invalid DATABASE_URL";
+  }
+}
+
+const resolvedDatabaseUrl = resolveDatabaseUrl(process.env);
+
+if (resolvedDatabaseUrl) {
+  process.env.DATABASE_URL = resolvedDatabaseUrl;
+} else if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = FALLBACK_DATABASE_URL;
+}
+
+if (process.env.NODE_ENV !== "test") {
+  if (resolvedDatabaseUrl) {
+    console.log(`[startup] DATABASE_URL configured for ${describeDatabaseUrl(process.env.DATABASE_URL!)}`);
+  } else {
+    console.warn("[startup] DATABASE_URL is not set; using placeholder database URL.");
+  }
 }
 
 type PrismaAction =

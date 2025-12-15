@@ -9,10 +9,18 @@ const args = process.argv.slice(2);
 const checkOnly = args.includes('--ci');
 const prismaArgs = checkOnly ? [] : args.filter((arg) => arg !== '--ci');
 
+const { resolveDatabaseUrl } = require('./utils/resolve-database-url');
+
 const resolvedEnv = (process.env.DEPLOYMENT_ENV || process.env.VERCEL_ENV || process.env.NODE_ENV || '').toLowerCase();
 const isProduction = resolvedEnv === 'production' || resolvedEnv === 'prod';
 const overrideSafety = process.env.DB_SAFETY_OVERRIDE === 'true';
 const enforceSafety = isProduction && !checkOnly;
+
+const resolvedDatabaseUrl = resolveDatabaseUrl(process.env);
+
+if (resolvedDatabaseUrl) {
+  process.env.DATABASE_URL = resolvedDatabaseUrl;
+}
 
 function fail(message) {
   console.error(`\n[db-safety] ${message}\n`);

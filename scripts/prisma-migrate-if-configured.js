@@ -1,6 +1,12 @@
 const { spawnSync } = require('child_process');
 
-const dbUrl = process.env.DATABASE_URL;
+const { resolveDatabaseUrl } = require('./utils/resolve-database-url');
+
+const dbUrl = resolveDatabaseUrl(process.env);
+
+if (dbUrl) {
+  process.env.DATABASE_URL = dbUrl;
+}
 
 if (!dbUrl) {
   console.log('[vercel-build] DATABASE_URL not set; skipping `prisma migrate deploy`.');
