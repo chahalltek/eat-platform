@@ -1,4 +1,5 @@
 import { DEFAULT_TENANT_ID } from "./config";
+import { isBootstrapTenant } from "../tenant/bootstrap";
 import { normalizeRole, USER_ROLES, type UserRole } from "./roles";
 import type { IdentityUser } from "./types";
 
@@ -90,6 +91,10 @@ function hasTenantAccess(user: PermissionUser, tenantId?: string | null) {
   }
 
   if (role === USER_ROLES.SYSTEM_ADMIN) {
+    return true;
+  }
+
+  if (role === USER_ROLES.ADMIN && isBootstrapTenant(tenantId ?? DEFAULT_TENANT_ID)) {
     return true;
   }
 

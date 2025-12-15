@@ -123,7 +123,14 @@ describe("RBAC permission matrix", () => {
     expect(canViewAgentLogs(buildUser(USER_ROLES.ADMIN, null), undefined)).toBe(true);
 
     const crossTenantDefaultUser = buildUser(USER_ROLES.ADMIN, "tenant-b");
-    expect(canViewCandidates(crossTenantDefaultUser, DEFAULT_TENANT_ID)).toBe(false);
+    expect(canViewCandidates(crossTenantDefaultUser, DEFAULT_TENANT_ID)).toBe(true);
+  });
+
+  it("restricts bootstrap tenant access to admins", () => {
+    const bootstrapTenant = DEFAULT_TENANT_ID;
+
+    expect(canViewCandidates(buildUser(USER_ROLES.ADMIN, "tenant-b"), bootstrapTenant)).toBe(true);
+    expect(canViewCandidates(buildUser(USER_ROLES.MANAGER, "tenant-b"), bootstrapTenant)).toBe(false);
   });
 
   it("denies everything for unknown roles", () => {

@@ -1,6 +1,10 @@
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { prisma } from "@/server/db";
 
+export function isBootstrapTenant(tenantId: string) {
+  return tenantId.trim() === DEFAULT_TENANT_ID;
+}
+
 export async function ensureDefaultTenantExists() {
   await prisma.tenant.upsert({
     where: { id: DEFAULT_TENANT_ID },
