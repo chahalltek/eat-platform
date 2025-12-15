@@ -22,7 +22,6 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "json-summary", "lcov", "html"],
       reportsDirectory: "./coverage",
-<<<<<<< ours
       include: [
         "src/lib/**/*.{ts,tsx}",
         "src/server/**/*.{ts,tsx}",
@@ -36,8 +35,6 @@ export default defineConfig({
         branches: 100,
         statements: 100,
       },
-=======
->>>>>>> theirs
     },
   },
   resolve: {
