@@ -136,6 +136,24 @@ const statusLegend = [
   { status: "off" as const, label: "Disabled" },
 ];
 
+const apiSurface = [
+  {
+    label: "Agent APIs",
+    path: "/api/agents/*",
+    context: "and job-scoped routes (matcher)",
+  },
+  {
+    label: "Admin APIs",
+    path: "/api/admin/*",
+    context: "",
+  },
+  {
+    label: "Tenant Ops APIs",
+    path: "/api/tenant/*",
+    context: "",
+  },
+] as const;
+
 export default function SystemMapPage() {
   return (
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-10">
@@ -150,6 +168,27 @@ export default function SystemMapPage() {
           </div>
           <ClientActionLink href="/">Back to Console</ClientActionLink>
         </div>
+      </section>
+
+      <section className="grid gap-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-5 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70 md:grid-cols-[1.1fr_2fr]">
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">API Surface</p>
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Where these calls live (non-exhaustive)</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            Quick pointers so you know where to look without turning this into an endpoint catalog.
+          </p>
+        </div>
+        <ul className="grid gap-2 rounded-2xl border border-indigo-100 bg-white/80 p-4 text-sm leading-relaxed text-zinc-700 shadow-sm dark:border-indigo-800 dark:bg-zinc-950/60 dark:text-zinc-200 sm:grid-cols-2">
+          {apiSurface.map((item) => (
+            <li key={item.label} className="flex flex-col gap-1 rounded-xl bg-indigo-50/60 p-3 ring-1 ring-indigo-100 dark:bg-indigo-900/30 dark:ring-indigo-800/60">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-200">{item.label}</span>
+              <span className="font-mono text-[13px] font-semibold text-indigo-900 dark:text-indigo-100">{item.path}</span>
+              {item.context ? (
+                <span className="text-xs text-indigo-900/80 dark:text-indigo-100/80">{item.context}</span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
