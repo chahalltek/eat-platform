@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { ETECard } from "@/components/ETECard";
+import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
 import { getCurrentUser } from "@/lib/auth/user";
 import { canManageFeatureFlags, canManageTenants } from "@/lib/auth/permissions";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
@@ -102,7 +103,9 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
           <ETECard className="gap-4 border-indigo-100 shadow-sm">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-zinc-900">Feature flags</h2>
+                <AdminCardTitle className="text-lg" stabilizeHeight>
+                  Feature flags
+                </AdminCardTitle>
                 <p className="text-sm text-zinc-600">
                   Toggle platform capabilities for this tenant. Scoped changes only affect <span className="font-semibold">{tenantId}</span>.
                 </p>

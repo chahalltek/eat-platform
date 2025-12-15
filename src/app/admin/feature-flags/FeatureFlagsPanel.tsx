@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { ETECard } from "@/components/ETECard";
+import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
 
 export type FeatureFlagListItem = {
   name: string;
@@ -76,7 +77,7 @@ export function FeatureFlagsPanel({ initialFlags }: FeatureFlagsPanelProps) {
   return (
     <ETECard className="space-y-4">
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold text-zinc-900">Feature Flags</h2>
+        <AdminCardTitle className="text-xl">Feature Flags</AdminCardTitle>
         <p className="text-sm text-zinc-600">
           Toggle features on or off without redeploying. Changes apply across the UI and API.
         </p>

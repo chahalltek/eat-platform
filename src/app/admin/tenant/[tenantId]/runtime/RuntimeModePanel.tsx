@@ -2,8 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
 import { ETECard } from "@/components/ETECard";
+import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
+import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
 
 const MODE_LABELS: Record<SystemModeName, string> = {
   pilot: "Pilot",
@@ -74,7 +75,9 @@ export function RuntimeModePanel({ tenantId, mode, canEdit, safetyReason, showRe
     <ETECard className="gap-4 border-indigo-100 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900">Mode</h2>
+          <AdminCardTitle className="text-lg" stabilizeHeight>
+            Mode
+          </AdminCardTitle>
           <p className="text-sm text-zinc-600">
             Swap between predefined runtime profiles. Changes impact guardrails, agents, and scoring defaults.
           </p>

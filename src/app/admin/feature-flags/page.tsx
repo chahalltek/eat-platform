@@ -1,11 +1,12 @@
 import Link from "next/link";
 
+import { ETEClientLayout } from "@/components/ETEClientLayout";
+import { ETECard } from "@/components/ETECard";
+import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
-import { ETEClientLayout } from "@/components/ETEClientLayout";
-import { ETECard } from "@/components/ETECard";
 
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 
@@ -59,7 +60,9 @@ export default async function FeatureFlagsPage() {
         <ETECard className="gap-4 border-indigo-100 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-zinc-900">Test Panel</h2>
+              <AdminCardTitle className="text-lg" stabilizeHeight>
+                Test Panel
+              </AdminCardTitle>
               <p className="text-sm text-zinc-600">
                 Run quick checks on ETE agents, data, and scoring for this tenant.
               </p>
@@ -77,7 +80,9 @@ export default async function FeatureFlagsPage() {
         <ETECard className="gap-4 border-emerald-100 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-zinc-900">EDGE Talent Engine Test Plan</h2>
+              <AdminCardTitle className="text-lg" stabilizeHeight>
+                EDGE Talent Engine Test Plan
+              </AdminCardTitle>
               <p className="text-sm text-zinc-600">
                 Interactive checklist for validating the EDGE Talent Engine before release. Track charter items and detailed coverage.
               </p>

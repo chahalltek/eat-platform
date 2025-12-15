@@ -12,8 +12,9 @@ import {
 } from "@/lib/tenant/diagnostics";
 import { getTenantMembershipsForUser, resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-import { ETECard } from "@/components/ETECard";
 import { StatusPill } from "@/components/StatusPill";
+import { ETECard } from "@/components/ETECard";
+import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
 import { TenantTestTable } from "./TenantTestTable";
 import { TenantFireDrillCallout } from "./TenantFireDrillCallout";
 import { TenantAdminShell } from "../TenantAdminShell";
@@ -59,7 +60,9 @@ function DiagnosticCard({
         <div className="flex items-start gap-3">
           <StatusIcon status={status} />
           <div className="flex-1">
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
+            <AdminCardTitle as="h3" className="text-base dark:text-zinc-50" stabilizeHeight>
+              {title}
+            </AdminCardTitle>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
           </div>
         </div>

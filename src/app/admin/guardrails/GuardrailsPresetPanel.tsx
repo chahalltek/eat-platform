@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ETECard } from "@/components/ETECard";
+import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
 
 const PRESET_CONFIGS = {
   Conservative: {
@@ -165,7 +166,9 @@ export function GuardrailsPresetPanel({ initialConfig }: GuardrailsPresetPanelPr
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Guardrails</p>
-          <h2 className="text-2xl font-semibold text-zinc-900">Preset picker</h2>
+          <AdminCardTitle className="text-2xl" stabilizeHeight>
+            Preset picker
+          </AdminCardTitle>
           <p className="text-sm text-zinc-600">
             Select a guardrail stance, then adjust scoring and token settings before applying updates.
           </p>
@@ -230,9 +233,14 @@ export function GuardrailsPresetPanel({ initialConfig }: GuardrailsPresetPanelPr
       </div>
 
       <div className="grid gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h3 id="default-guardrails" className="text-lg font-semibold text-zinc-900 underline underline-offset-4">
+        <AdminCardTitle
+          as="h3"
+          id="default-guardrails"
+          className="text-lg underline underline-offset-4"
+          stabilizeHeight
+        >
           Guardrails global rules
-        </h3>
+        </AdminCardTitle>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-zinc-800">Model ID</label>
@@ -268,9 +276,14 @@ export function GuardrailsPresetPanel({ initialConfig }: GuardrailsPresetPanelPr
       </div>
 
       <div className="grid gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h3 id="interaction-safeguards" className="text-lg font-semibold text-zinc-900 underline underline-offset-4">
+        <AdminCardTitle
+          as="h3"
+          id="interaction-safeguards"
+          className="text-lg underline underline-offset-4"
+          stabilizeHeight
+        >
           Interaction safeguards
-        </h3>
+        </AdminCardTitle>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-zinc-800">Rule support</label>
@@ -374,7 +387,9 @@ export function GuardrailsPresetPanel({ initialConfig }: GuardrailsPresetPanelPr
             <div className="flex items-start gap-3">
               <ShieldCheckIcon className="mt-0.5 h-6 w-6 text-indigo-600" aria-hidden />
               <div className="space-y-2">
-                <h4 className="text-lg font-semibold text-zinc-900">Apply the {pendingPreset} preset?</h4>
+                <AdminCardTitle as="h4" className="text-lg">
+                  Apply the {pendingPreset} preset?
+                </AdminCardTitle>
                 <p className="text-sm text-zinc-600">
                   Apply the "{pendingPreset}" preset? This will overwrite current guardrail settings. You can still tweak them later.
                 </p>
