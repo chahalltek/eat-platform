@@ -230,27 +230,31 @@ export async function isEnabled(tenantId: string, name: FeatureFlagName): Promis
   return getFeatureFlag(tenantId, name);
 }
 
-export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): Promise<FeatureFlagRecord> {
-  const tenantId = await getCurrentTenantId();
+export async function setFeatureFlag(
+  name: FeatureFlagName,
+  enabled: boolean,
+  tenantId?: string,
+): Promise<FeatureFlagRecord> {
+  const resolvedTenantId = tenantId ?? (await getCurrentTenantId());
 
   if (!(await isTableAvailable('FeatureFlag'))) {
     const fallback = buildFallbackFlag(name, enabled);
 
-    flagCache.set(cacheKey(tenantId, name), fallback.enabled);
-    await writeFallbackOverride(tenantId, name, enabled);
+    flagCache.set(cacheKey(resolvedTenantId, name), fallback.enabled);
+    await writeFallbackOverride(resolvedTenantId, name, enabled);
 
     return fallback;
   }
 
   const flag = await prisma.$transaction(async (tx) => {
-    const existing = await tx.featureFlag.findFirst({ where: { tenantId, name } });
+    const existing = await tx.featureFlag.findFirst({ where: { tenantId: resolvedTenantId, name } });
 
     if (existing) {
       return tx.featureFlag.update({ where: { id: existing.id }, data: { enabled } });
     }
 
     return tx.featureFlag.create({
-      data: { tenantId, name, enabled, description: DEFAULT_FLAG_DESCRIPTIONS[name] },
+      data: { tenantId: resolvedTenantId, name, enabled, description: DEFAULT_FLAG_DESCRIPTIONS[name] },
     });
   }).catch((error) => {
     if (
@@ -263,8 +267,8 @@ export async function setFeatureFlag(name: FeatureFlagName, enabled: boolean): P
     throw error;
   });
 
-  flagCache.set(cacheKey(tenantId, name), flag.enabled);
-  await writeFallbackOverride(tenantId, name, enabled);
+  flagCache.set(cacheKey(resolvedTenantId, name), flag.enabled);
+  await writeFallbackOverride(resolvedTenantId, name, enabled);
 
   return {
     name: flag.name as FeatureFlagName,
