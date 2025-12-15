@@ -1,7 +1,6 @@
-import { Prisma } from "@prisma/client";
-
 import { prisma } from "@/server/db";
 import { defaultTenantGuardrails } from "./defaultTenantConfig";
+import { withTenantConfigSchemaFallback } from "@/lib/tenant/tenantConfigSchemaFallback";
 
 function coerceGuardrailSection(value: unknown) {
   return value && typeof value === "object" ? value : {};
@@ -30,22 +29,13 @@ function mergeSafetySection(value: unknown) {
 }
 
 export async function loadTenantConfig(tenantId: string) {
-  const existing = await prisma.tenantConfig
-    .findUnique({
-      where: { tenantId },
-    })
-    .catch((error) => {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
-        console.error(
-          "TenantConfig column missing (likely preset). Run prisma migrations to align the database schema.",
-          error,
-        );
-
-        return null;
-      }
-
-      throw error;
-    });
+  const existing = await withTenantConfigSchemaFallback(
+    () =>
+      prisma.tenantConfig.findUnique({
+        where: { tenantId },
+      }),
+    { tenantId },
+  );
 
   if (!existing) {
     return {

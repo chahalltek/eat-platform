@@ -1,6 +1,7 @@
 import "server-only";
 
 import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db";
+import { withTenantConfigSchemaFallback } from "./tenantConfigSchemaFallback";
 
 import {
   defaultTenantGuardrails,
@@ -47,7 +48,10 @@ export async function loadTenantGuardrails(tenantId: string): Promise<TenantGuar
     return defaultTenantGuardrails;
   }
 
-  const record = await prisma.tenantConfig.findFirst({ where: { tenantId } }).catch((error) => {
+  const record = await withTenantConfigSchemaFallback(
+    () => prisma.tenantConfig.findFirst({ where: { tenantId } }),
+    { tenantId },
+  ).catch((error) => {
     if (isPrismaUnavailableError(error)) return null;
 
     throw error;

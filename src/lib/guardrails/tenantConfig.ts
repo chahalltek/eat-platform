@@ -1,8 +1,7 @@
-import { Prisma } from "@prisma/client";
-
 import { prisma } from "@/server/db";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { guardrailsPresets, type GuardrailsConfig, type GuardrailsPresetName } from "./presets";
+import { withTenantConfigSchemaFallback } from "@/lib/tenant/tenantConfigSchemaFallback";
 
 type JsonObject = Record<string, unknown>;
 
@@ -49,36 +48,10 @@ const balancedPreset = guardrailsPresets.balanced;
 export async function loadTenantConfig(tenantId?: string): Promise<TenantGuardrailsConfig> {
   const resolvedTenantId = tenantId ?? (await getCurrentTenantId());
 
-  let storedConfig: Record<string, unknown> | null = null;
-
-  try {
-    storedConfig = await prisma.tenantConfig.findFirst({ where: { tenantId: resolvedTenantId } });
-  } catch (error) {
-    const missingColumn =
-      error instanceof Prisma.PrismaClientKnownRequestError && typeof error.meta?.column === "string"
-        ? error.meta.column
-        : null;
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022" && missingColumn) {
-      const isTenantConfigColumn = missingColumn.includes("TenantConfig.");
-
-      if (isTenantConfigColumn) {
-        console.error({
-          event: "SCHEMA_MISMATCH",
-          message: "TenantConfig column missing. Falling back to default guardrails.",
-          missingColumn,
-          tenantId: resolvedTenantId,
-          error,
-        });
-
-        storedConfig = null;
-      } else {
-        throw error;
-      }
-    } else {
-      throw error;
-    }
-  }
+  const storedConfig = await withTenantConfigSchemaFallback(
+    () => prisma.tenantConfig.findFirst({ where: { tenantId: resolvedTenantId } }),
+    { tenantId: resolvedTenantId },
+  );
 
   const preset = normalizePreset((storedConfig?.preset as string | null | undefined) ?? null);
   const presetConfig = preset ? guardrailsPresets[preset] : balancedPreset;

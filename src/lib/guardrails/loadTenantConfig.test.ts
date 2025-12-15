@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { defaultTenantGuardrails } from "./defaultTenantConfig";
 import { loadTenantConfig } from "./loadTenantConfig";
+import { resetTenantConfigSchemaFallbackForTests } from "@/lib/tenant/tenantConfigSchemaFallback";
 
 const { mockFindUnique } = vi.hoisted(() => ({
   mockFindUnique: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock("@/server/db", () => ({
 describe("loadTenantConfig", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    resetTenantConfigSchemaFallbackForTests();
   });
 
   it("returns the stored config when the schema is migrated", async () => {

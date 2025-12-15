@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { guardrailsPresets } from "./presets";
 import { loadTenantConfig } from "./tenantConfig";
+import { resetTenantConfigSchemaFallbackForTests } from "@/lib/tenant/tenantConfigSchemaFallback";
 
 const { mockFindFirst } = vi.hoisted(() => ({
   mockFindFirst: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock("@/lib/tenant", () => ({
 describe("loadTenantConfig", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    resetTenantConfigSchemaFallbackForTests();
   });
 
   it("falls back to balanced defaults when the preset column is missing", async () => {
@@ -33,7 +35,7 @@ describe("loadTenantConfig", () => {
     });
 
     mockFindFirst.mockRejectedValueOnce(missingColumnError);
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = await loadTenantConfig("tenant-abc");
 
@@ -49,8 +51,9 @@ describe("loadTenantConfig", () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: "SCHEMA_MISMATCH",
-        missingColumn: "TenantConfig.preset",
+        event: "tenant_config_schema_mismatch",
+        message:
+          "TenantConfig column missing (likely preset). Run prisma migrations to align the database schema.",
         tenantId: "tenant-abc",
       }),
     );
