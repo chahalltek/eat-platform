@@ -13,7 +13,7 @@ import { getCurrentTenantId } from '@/lib/tenant';
 import { onCandidateChanged } from '@/lib/orchestration/triggers';
 import { getCurrentUser } from '@/lib/auth/user';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
-import type { IdentityUser } from '@/lib/auth/identityProvider';
+import type { IdentityUser } from '@/lib/auth/types';
 
 export async function POST(req: NextRequest) {
   try {

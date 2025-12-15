@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import type { IdentityUser } from "@/lib/auth/identityProvider";
+import type { IdentityUser } from "@/lib/auth/types";
 
 type UserSessionActionsProps = {
   user?: IdentityUser | null;

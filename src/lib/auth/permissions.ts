@@ -1,6 +1,6 @@
 import { DEFAULT_TENANT_ID } from "./config";
 import { normalizeRole, USER_ROLES, type UserRole } from "./roles";
-import type { IdentityUser } from "./identityProvider";
+import type { IdentityUser } from "./types";
 
 type PermissionUser = Pick<IdentityUser, "role" | "tenantId" | "id"> | null;
 

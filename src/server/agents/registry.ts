@@ -5,7 +5,7 @@ import { runIntake, type IntakeInput } from "@/server/agents/intake";
 import { runNextBestAction, type NextBestActionInput } from "@/server/agents/nextBestAction";
 import { runRina, type RinaInput } from "@/lib/agents/rina";
 import { runRua, type RuaInput } from "@/lib/agents/rua";
-import { type IdentityUser } from "@/lib/auth/identityProvider";
+import { type IdentityUser } from "@/lib/auth/types";
 import { runConfidenceAssessment, type ConfidenceAgentInput } from "@/server/agents/confidence";
 
 export type AgentRunContext = {

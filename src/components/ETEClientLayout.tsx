@@ -7,7 +7,7 @@ import { AgentFailureBanner } from "@/components/AgentFailureBanner";
 import { FireDrillBanner } from "@/components/FireDrillBanner";
 import { UserSessionActions } from "@/components/auth/UserSessionActions";
 import { getAgentFailureCount } from "@/lib/agents/failures";
-import type { IdentityUser } from "@/lib/auth/identityProvider";
+import type { IdentityUser } from "@/lib/auth/types";
 import { getCurrentUser } from "@/lib/auth/user";
 import type { SystemModeName } from "@/lib/modes/systemModes";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";

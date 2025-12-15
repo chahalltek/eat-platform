@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { HiringManagerFeedbackStatus, HiringManagerFeedbackType, Prisma } from "@prisma/client";
 import { z } from "zod";
 
-import type { IdentityUser } from "@/lib/auth/identityProvider";
+import type { IdentityUser } from "@/lib/auth/types";
 import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";

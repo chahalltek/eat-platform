@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import type { IdentityUser } from "./identityProvider";
+import type { IdentityUser } from "./types";
 import { DEFAULT_TENANT_ID } from "./config";
 import { isAdminRole } from "./roles";
 import { getCurrentUser } from "./user";

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { prisma } from "@/server/db";
-import type { IdentityUser } from "@/lib/auth/identityProvider";
+import type { IdentityUser } from "@/lib/auth/types";
 import { Prisma } from "@prisma/client";
 
 export type ConfidenceAgentInput = {

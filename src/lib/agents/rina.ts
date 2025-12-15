@@ -10,7 +10,7 @@ import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/server/db';
-import type { IdentityUser } from '@/lib/auth/identityProvider';
+import type { IdentityUser } from '@/lib/auth/types';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 
 export {

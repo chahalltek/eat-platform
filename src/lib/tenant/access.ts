@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { IdentityUser } from "@/lib/auth/identityProvider";
+import type { IdentityUser } from "@/lib/auth/types";
 import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { prisma } from "@/server/db";
 import { normalizeTenantRole, TENANT_ROLES, type TenantRole } from "./roles";
