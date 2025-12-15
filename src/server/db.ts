@@ -1,5 +1,3 @@
-import "server-only";
-
 import { Prisma, PrismaClient } from "@prisma/client";
 
 import { getCurrentTenantId } from "@/lib/tenant";
