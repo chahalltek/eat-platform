@@ -1,4 +1,5 @@
-import { mergeConfig, type UserConfig } from "vitest/config";
+import type { UserConfig } from "vite";
+import { mergeConfig } from "vitest/config";
 import baseConfig from "./vitest.config";
 
 const coverageOverrides: UserConfig = {
