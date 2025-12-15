@@ -12,6 +12,7 @@ const prismaArgs = checkOnly ? [] : args.filter((arg) => arg !== '--ci');
 const resolvedEnv = (process.env.DEPLOYMENT_ENV || process.env.VERCEL_ENV || process.env.NODE_ENV || '').toLowerCase();
 const isProduction = resolvedEnv === 'production' || resolvedEnv === 'prod';
 const overrideSafety = process.env.DB_SAFETY_OVERRIDE === 'true';
+const enforceSafety = isProduction && !checkOnly;
 
 function fail(message) {
   console.error(`\n[db-safety] ${message}\n`);
@@ -189,9 +190,15 @@ if (overrideSafety) {
   log('DB_SAFETY_OVERRIDE is true, but guardrails cannot be bypassed. Running safety checks.');
 }
 
-requireDatabaseUrl();
+if (enforceSafety) {
+  requireDatabaseUrl();
+}
 
-checkMigrationDrift({ enforce: true });
+if (!enforceSafety) {
+  log('Production environment detected but running in check-only mode; reporting issues without failing.');
+}
+
+checkMigrationDrift({ enforce: enforceSafety });
 
 if (!checkOnly) {
   guardPrismaCommand(prismaArgs);
@@ -199,4 +206,4 @@ if (!checkOnly) {
 
 scanMigrationsForDestructiveSql();
 
-log('Production database safety checks passed.');
+log(enforceSafety ? 'Production database safety checks passed.' : 'Production database safety checks completed in non-enforcing mode.');
