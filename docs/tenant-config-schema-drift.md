@@ -38,4 +38,4 @@ psql "$DATABASE_URL" -c '\d "TenantConfig"'
 DATABASE_URL="$DATABASE_URL" npx prisma migrate status --schema prisma/schema.prisma
 ```
 
-If `preset` or `llm` are missing from the column list, deploy the migrations above (starting with `20270815120000_usage_metering`) to realign the table with the Prisma client.
+If `preset` or `llm` are missing from the column list, deploy the migrations above (starting with `20270815120000_usage_metering`) to realign the table with the Prisma client. The safety net migration `20280520120000_ensure_tenant_config_llm_and_preset` re-applies all four guardrail columns so that a fresh `prisma migrate deploy` will bring long-lived databases back into alignment even if earlier patches were skipped.
