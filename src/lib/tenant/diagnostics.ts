@@ -8,8 +8,12 @@ import type { SystemModeName } from "@/lib/modes/systemModes";
 import { getTenantPlan } from "@/lib/subscriptionPlans";
 import { prisma } from "@/server/db";
 import { resolveRetentionPolicy } from "@/lib/retention";
-import { loadTenantGuardrailConfig } from "@/lib/guardrails/config";
-import { loadTenantGuardrails, type TenantGuardrails } from "@/lib/tenant/guardrails";
+import { DEFAULT_GUARDRAILS, loadTenantGuardrailConfig } from "@/lib/guardrails/config";
+import {
+  defaultTenantGuardrails,
+  loadTenantGuardrails,
+  type TenantGuardrails,
+} from "@/lib/tenant/guardrails";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { getAzureOpenAIApiKey, getOpenAIApiKey } from "@/server/config/secrets";
 
@@ -92,15 +96,17 @@ function isSsoConfigured(config: ReturnType<typeof getAppConfig>) {
 }
 
 function mapPlan(plan: Awaited<ReturnType<typeof getTenantPlan>> | null) {
-  if (!plan) {
+  if (!plan?.plan) {
     return { id: null, name: null, isTrial: false, trialEndsAt: null, limits: null };
   }
+
+  const subscription = plan.subscription ?? { isTrial: false, endAt: null };
 
   return {
     id: plan.plan.id,
     name: plan.plan.name,
-    isTrial: plan.subscription.isTrial,
-    trialEndsAt: plan.subscription.endAt ? plan.subscription.endAt.toISOString() : null,
+    isTrial: subscription.isTrial ?? false,
+    trialEndsAt: subscription.endAt ? subscription.endAt.toISOString() : null,
     limits: plan.plan.limits,
   } as const;
 }
@@ -280,18 +286,23 @@ export async function loadLatestAtsSync(tenantId: string): Promise<TenantDiagnos
 }
 
 async function resolveEnabledFlags(tenantId: string) {
-  const enabledFlags: FeatureFlagName[] = [];
+  try {
+    const enabledFlags: FeatureFlagName[] = [];
 
-  for (const name of Object.values(FEATURE_FLAGS) as FeatureFlagName[]) {
-    if (await isFeatureEnabledForTenant(tenantId, name)) {
-      enabledFlags.push(name);
+    for (const name of Object.values(FEATURE_FLAGS) as FeatureFlagName[]) {
+      if (await isFeatureEnabledForTenant(tenantId, name)) {
+        enabledFlags.push(name);
+      }
     }
-  }
 
-  return {
-    enabledFlags,
-    enabled: enabledFlags.length > 0,
-  } as const;
+    return {
+      enabledFlags,
+      enabled: enabledFlags.length > 0,
+    } as const;
+  } catch (error) {
+    console.error("Unable to resolve feature flags", error);
+    return { enabled: false, enabledFlags: [] } as const;
+  }
 }
 
 const INCIDENT_WINDOW_MINUTES = 30;
@@ -312,96 +323,107 @@ const AGENT_RUN_STATUS =
 async function evaluateFireDrillStatus(tenantId: string) {
   const since = new Date(Date.now() - INCIDENT_WINDOW_MINUTES * 60 * 1000);
 
-  const [
-    explainTotal,
-    explainFailures,
-    llmTotal,
-    llmFailures,
-    matchTotal,
-    matchFailures,
-    fireDrillEnabled,
-  ] = await Promise.all([
-    prisma.agentRunLog.count({
-      where: { tenantId, agentName: { contains: "EXPLAIN", mode: "insensitive" }, startedAt: { gte: since } },
-    }),
-    prisma.agentRunLog.count({
-      where: {
-        tenantId,
-        agentName: { contains: "EXPLAIN", mode: "insensitive" },
-        status: AGENT_RUN_STATUS.FAILED,
-        startedAt: { gte: since },
-      },
-    }),
-    prisma.agentRunLog.count({
-      where: {
-        tenantId,
-        OR: [
-          { agentName: { contains: "RINA", mode: "insensitive" } },
-          { agentName: { contains: "RUA", mode: "insensitive" } },
-        ],
-        startedAt: { gte: since },
-      },
-    }),
-    prisma.agentRunLog.count({
-      where: {
-        tenantId,
-        OR: [
-          { agentName: { contains: "RINA", mode: "insensitive" } },
-          { agentName: { contains: "RUA", mode: "insensitive" } },
-        ],
-        status: AGENT_RUN_STATUS.FAILED,
-        startedAt: { gte: since },
-      },
-    }),
-    prisma.agentRunLog.count({
-      where: {
-        tenantId,
-        OR: [
-          { agentName: { contains: "MATCH", mode: "insensitive" } },
-          { agentName: { contains: "CONFIDENCE", mode: "insensitive" } },
-          { agentName: { contains: "RANK", mode: "insensitive" } },
-        ],
-        startedAt: { gte: since },
-      },
-    }),
-    prisma.agentRunLog.count({
-      where: {
-        tenantId,
-        OR: [
-          { agentName: { contains: "MATCH", mode: "insensitive" } },
-          { agentName: { contains: "CONFIDENCE", mode: "insensitive" } },
-          { agentName: { contains: "RANK", mode: "insensitive" } },
-        ],
-        status: AGENT_RUN_STATUS.FAILED,
-        startedAt: { gte: since },
-      },
-    }),
-    isFeatureEnabledForTenant(tenantId, FEATURE_FLAGS.FIRE_DRILL_MODE),
-  ]);
+  try {
+    const [
+      explainTotal,
+      explainFailures,
+      llmTotal,
+      llmFailures,
+      matchTotal,
+      matchFailures,
+      fireDrillEnabled,
+    ] = await Promise.all([
+      prisma.agentRunLog.count({
+        where: { tenantId, agentName: { contains: "EXPLAIN", mode: "insensitive" }, startedAt: { gte: since } },
+      }),
+      prisma.agentRunLog.count({
+        where: {
+          tenantId,
+          agentName: { contains: "EXPLAIN", mode: "insensitive" },
+          status: AGENT_RUN_STATUS.FAILED,
+          startedAt: { gte: since },
+        },
+      }),
+      prisma.agentRunLog.count({
+        where: {
+          tenantId,
+          OR: [
+            { agentName: { contains: "RINA", mode: "insensitive" } },
+            { agentName: { contains: "RUA", mode: "insensitive" } },
+          ],
+          startedAt: { gte: since },
+        },
+      }),
+      prisma.agentRunLog.count({
+        where: {
+          tenantId,
+          OR: [
+            { agentName: { contains: "RINA", mode: "insensitive" } },
+            { agentName: { contains: "RUA", mode: "insensitive" } },
+          ],
+          status: AGENT_RUN_STATUS.FAILED,
+          startedAt: { gte: since },
+        },
+      }),
+      prisma.agentRunLog.count({
+        where: {
+          tenantId,
+          OR: [
+            { agentName: { contains: "MATCH", mode: "insensitive" } },
+            { agentName: { contains: "CONFIDENCE", mode: "insensitive" } },
+            { agentName: { contains: "RANK", mode: "insensitive" } },
+          ],
+          startedAt: { gte: since },
+        },
+      }),
+      prisma.agentRunLog.count({
+        where: {
+          tenantId,
+          OR: [
+            { agentName: { contains: "MATCH", mode: "insensitive" } },
+            { agentName: { contains: "CONFIDENCE", mode: "insensitive" } },
+            { agentName: { contains: "RANK", mode: "insensitive" } },
+          ],
+          status: AGENT_RUN_STATUS.FAILED,
+          startedAt: { gte: since },
+        },
+      }),
+      isFeatureEnabledForTenant(tenantId, FEATURE_FLAGS.FIRE_DRILL_MODE),
+    ]);
 
-  const reasons: string[] = [];
+    const reasons: string[] = [];
 
-  if (explainTotal > 0 && explainFailures / explainTotal > EXPLAIN_FAILURE_THRESHOLD) {
-    reasons.push("elevated EXPLAIN errors were observed");
+    if (explainTotal > 0 && explainFailures / explainTotal > EXPLAIN_FAILURE_THRESHOLD) {
+      reasons.push("elevated EXPLAIN errors were observed");
+    }
+
+    if (llmTotal > 0 && llmFailures / llmTotal > LLM_FAILURE_THRESHOLD) {
+      reasons.push("LLM producer failures exceeded thresholds");
+    }
+
+    if (matchTotal > 0 && matchFailures / matchTotal > MATCH_FAILURE_THRESHOLD) {
+      reasons.push("MATCH or CONFIDENCE failures exceeded thresholds");
+    }
+
+    const suggested = !fireDrillEnabled && reasons.length > 0;
+
+    return {
+      enabled: fireDrillEnabled,
+      fireDrillImpact: fireDrillEnabled ? [...FIRE_DRILL_IMPACT] : [],
+      suggested,
+      windowMinutes: INCIDENT_WINDOW_MINUTES,
+      reason: suggested ? `Consider enabling Fire Drill mode: ${reasons[0]}.` : null,
+    } as const;
+  } catch (error) {
+    console.error("Unable to evaluate Fire Drill status", error);
+    return {
+      enabled: false,
+      fireDrillImpact: [],
+      suggested: false,
+      windowMinutes: INCIDENT_WINDOW_MINUTES,
+      reason: null,
+    } as const;
   }
-
-  if (llmTotal > 0 && llmFailures / llmTotal > LLM_FAILURE_THRESHOLD) {
-    reasons.push("LLM producer failures exceeded thresholds");
-  }
-
-  if (matchTotal > 0 && matchFailures / matchTotal > MATCH_FAILURE_THRESHOLD) {
-    reasons.push("MATCH or CONFIDENCE failures exceeded thresholds");
-  }
-
-  const suggested = !fireDrillEnabled && reasons.length > 0;
-
-  return {
-    enabled: fireDrillEnabled,
-    fireDrillImpact: fireDrillEnabled ? [...FIRE_DRILL_IMPACT] : [],
-    suggested,
-    windowMinutes: INCIDENT_WINDOW_MINUTES,
-    reason: suggested ? `Consider enabling Fire Drill mode: ${reasons[0]}.` : null,
-  } as const;
 }
 
 async function countAuditEvents(tenantId: string) {
@@ -478,15 +500,28 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     tenantGuardrails,
     atsSync,
   ] = await Promise.all([
-    getAppConfig(),
-    getTenantPlan(tenantId),
+    Promise.resolve()
+      .then(() => getAppConfig())
+      .catch(() => ({} as ReturnType<typeof getAppConfig>)),
+    Promise.resolve()
+      .then(() => getTenantPlan(tenantId))
+      .catch((error) => {
+      console.error("Unable to load tenant plan", error);
+      return null;
+    }),
     prisma.tenant.findUnique({ where: { id: tenantId }, include: { config: true } }),
     countAuditEvents(tenantId),
     resolveEnabledFlags(tenantId),
-    loadTenantGuardrailConfig(tenantId),
+    loadTenantGuardrailConfig(tenantId).catch((error) => {
+      console.error("Unable to load guardrail config", error);
+      return DEFAULT_GUARDRAILS;
+    }),
     evaluateFireDrillStatus(tenantId),
     loadTenantMode(tenantId),
-    loadTenantGuardrails(tenantId),
+    loadTenantGuardrails(tenantId).catch((error) => {
+      console.error("Unable to load tenant guardrails", error);
+      return defaultTenantGuardrails;
+    }),
     loadLatestAtsSync(tenantId),
   ]);
 
@@ -494,9 +529,10 @@ export async function buildTenantDiagnostics(tenantId: string): Promise<TenantDi
     throw new TenantNotFoundError(tenantId);
   }
 
-  const guardrailsPreset = (tenant?.config?.preset as GuardrailsPreset | null) ?? normalizeGuardrailsPreset(plan) ?? "custom";
+  const configRecord = Array.isArray(tenant?.config) ? tenant?.config?.[0] : tenant?.config;
+  const guardrailsPreset = (configRecord?.preset as GuardrailsPreset | null) ?? normalizeGuardrailsPreset(plan) ?? "custom";
 
-  const configuredMode = (tenant?.config as { mode?: string | null } | null)?.mode ?? null;
+  const configuredMode = (configRecord as { mode?: string | null } | null)?.mode ?? null;
   const modeNotice = configuredMode ? null : tenantMode.source === "fallback" ? "Mode not found; defaulting to diagnostics." : null;
   const mode = (configuredMode as SystemModeName | null) ?? tenantMode.mode;
 

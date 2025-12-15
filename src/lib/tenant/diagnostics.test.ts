@@ -61,13 +61,23 @@ vi.mock("@/server/db", async (importOriginal) => {
   };
 });
 
-vi.mock("@/lib/guardrails/config", () => ({
-  loadTenantGuardrailConfig: mockLoadGuardrails,
-}));
+vi.mock("@/lib/guardrails/config", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/guardrails/config")>();
 
-vi.mock("@/lib/tenant/guardrails", () => ({
-  loadTenantGuardrails: mockLoadTenantGuardrails,
-}));
+  return {
+    ...actual,
+    loadTenantGuardrailConfig: mockLoadGuardrails,
+  };
+});
+
+vi.mock("@/lib/tenant/guardrails", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/tenant/guardrails")>();
+
+  return {
+    ...actual,
+    loadTenantGuardrails: mockLoadTenantGuardrails,
+  };
+});
 
 describe("buildTenantDiagnostics", () => {
   beforeEach(() => {
@@ -273,6 +283,43 @@ describe("buildTenantDiagnostics", () => {
     expect(diagnostics.rateLimits[0].override).toBeNull();
     expect(diagnostics.guardrails.source).toBe("default");
     expect(diagnostics.llm.status).toBe("disabled");
+  });
+
+  it("prefers tenant config rows when present", async () => {
+    prismaMock.tenant.findUnique.mockResolvedValue({
+      id: "tenant-c",
+      dataRetentionDays: 30,
+      deletionMode: TenantDeletionMode.SOFT_DELETE,
+      config: [{ preset: "aggressive", mode: "sandbox" }],
+    });
+    mockLoadTenantMode.mockResolvedValue({
+      mode: "pilot",
+      guardrailsPreset: "balanced",
+      agentsEnabled: [],
+      source: "database",
+    });
+
+    const diagnostics = await buildTenantDiagnostics("tenant-c");
+
+    expect(diagnostics.guardrailsPreset).toBe("aggressive");
+    expect(diagnostics.mode).toBe("sandbox");
+  });
+
+  it("recovers when optional subsystems fail", async () => {
+    mockGetAppConfig.mockImplementation(() => {
+      throw new Error("no config");
+    });
+    mockGetTenantPlan.mockRejectedValue(new Error("plan unavailable"));
+    mockIsFeatureEnabledForTenant.mockRejectedValue(new Error("flags offline"));
+    mockLoadGuardrails.mockRejectedValue(new Error("guardrails table missing"));
+    mockLoadTenantGuardrails.mockRejectedValue(new Error("guardrails unavailable"));
+
+    const diagnostics = await buildTenantDiagnostics("tenant-a");
+
+    expect(diagnostics.plan).toEqual({ id: null, name: null, isTrial: false, trialEndsAt: null, limits: null });
+    expect(diagnostics.featureFlags).toEqual({ enabled: false, enabledFlags: [] });
+    expect(diagnostics.guardrails.source).toBe("default");
+    expect(diagnostics.llm).toMatchObject({ status: "ready", fireDrillOverride: false });
   });
 
   it("includes fire drill status when enabled", async () => {
