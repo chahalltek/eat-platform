@@ -72,13 +72,13 @@ describe('POST /api/match', () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe('jobReqId and candidateId must be non-empty strings');
-    expect(mocks.getCurrentUserMock).toHaveBeenCalledTimes(1);
-    expect(requireRecruiterOrAdminSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.getCurrentUserMock).not.toHaveBeenCalled();
+    expect(requireRecruiterOrAdminSpy).not.toHaveBeenCalled();
     expect(mocks.handleMatchAgentPostMock).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith('Match payload validation failed', {
       body: { candidateId: 123, jobReqId: '   ' },
       issues: expect.stringContaining('non-empty string'),
-      userId: 'user-123',
+      userId: undefined,
     });
 
     warnSpy.mockRestore();

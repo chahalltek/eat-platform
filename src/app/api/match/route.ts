@@ -28,14 +28,6 @@ export async function POST(req: NextRequest) {
     return killSwitchResponse;
   }
 
-  const roleCheck = await requireRecruiterOrAdmin(req);
-
-  if (!roleCheck.ok) {
-    return roleCheck.response;
-  }
-
-  const currentUser = roleCheck.user;
-
   let body: unknown;
 
   try {
@@ -48,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   if (!parsedBody.success) {
     const issues = parsedBody.error.issues.map((issue) => issue.message).join("; ");
-    console.warn("Match payload validation failed", { issues, body, userId: currentUser?.id });
+    console.warn("Match payload validation failed", { issues, body, userId: undefined });
     return NextResponse.json(
       { error: "jobReqId and candidateId must be non-empty strings" },
       { status: 400 },
@@ -56,6 +48,14 @@ export async function POST(req: NextRequest) {
   }
 
   const { jobReqId, candidateId } = parsedBody.data;
+
+  const roleCheck = await requireRecruiterOrAdmin(req);
+
+  if (!roleCheck.ok) {
+    return roleCheck.response;
+  }
+
+  const currentUser = roleCheck.user;
   const tenantId = (currentUser.tenantId ?? DEFAULT_TENANT_ID).trim();
 
   try {
