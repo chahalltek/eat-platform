@@ -60,7 +60,7 @@ export function mockGetCurrentUser(defaultUser: IdentityUser | null = {
   role: null,
   tenantId: null,
 }) {
-  const fn = vi.fn<[], Promise<IdentityUser | null>>();
+  const fn = vi.fn<() => Promise<IdentityUser | null>>();
   fn.mockResolvedValue(defaultUser);
   return fn;
 }
