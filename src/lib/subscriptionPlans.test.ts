@@ -10,10 +10,13 @@ const prismaMock = vi.hoisted(() => ({
   },
 }));
 
+const isTableAvailableMock = vi.hoisted(() => vi.fn());
+const isPrismaUnavailableErrorMock = vi.hoisted(() => vi.fn());
+
 vi.mock('./prisma', () => ({
   prisma: prismaMock,
-  isTableAvailable: vi.fn().mockResolvedValue(true),
-  isPrismaUnavailableError: vi.fn(() => false),
+  isTableAvailable: isTableAvailableMock,
+  isPrismaUnavailableError: isPrismaUnavailableErrorMock,
 }));
 
 describe('getTenantPlan', () => {
@@ -21,6 +24,10 @@ describe('getTenantPlan', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-05-01T00:00:00.000Z'));
     prismaMock.tenantSubscription.findFirst.mockReset();
+    isTableAvailableMock.mockReset();
+    isPrismaUnavailableErrorMock.mockReset();
+    isTableAvailableMock.mockResolvedValue(true);
+    isPrismaUnavailableErrorMock.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -77,13 +84,24 @@ describe('getTenantPlan', () => {
   });
 
   it('returns null when the subscription table is missing', async () => {
+    isTableAvailableMock.mockResolvedValue(false);
+
+    await expect(getTenantPlan('tenant-1')).resolves.toBeNull();
+
+    expect(prismaMock.tenantSubscription.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('returns null when Prisma reports the table is unavailable', async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError('Missing table', {
       code: 'P2021',
       clientVersion: '5.19.0',
     });
 
-    prismaMock.tenantSubscription.findFirst.mockRejectedValue(prismaError);
+    isTableAvailableMock.mockRejectedValue(prismaError);
+    isPrismaUnavailableErrorMock.mockReturnValue(true);
 
-    await expect(getTenantPlan('tenant-1')).resolves.toBeNull();
+    await expect(getTenantPlan('tenant-3')).resolves.toBeNull();
+
+    expect(prismaMock.tenantSubscription.findFirst).not.toHaveBeenCalled();
   });
 });
