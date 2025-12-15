@@ -22,6 +22,8 @@ export type CandidateRow = {
   updatedAt: string;
 };
 
+export const CANDIDATE_TABLE_LABEL = "Candidate table";
+
 const multiSelectFilter: FilterFn<CandidateRow> = (row, columnId, filterValue) => {
   const selections = Array.isArray(filterValue) ? (filterValue as string[]) : [];
   if (!selections.length) return true;
@@ -168,6 +170,7 @@ export function CandidateTable({
           filterFns: { status: multiSelectFilter, location: multiSelectFilter },
           globalFilterFn,
         }}
+        tableLabel={CANDIDATE_TABLE_LABEL}
         renderToolbar={(table) => (
           <TableToolbar>
             <TableSearchInput

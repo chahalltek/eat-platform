@@ -6,7 +6,7 @@ import "@testing-library/jest-dom/vitest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
-import { CandidateTable, type CandidateRow } from "./CandidateTable";
+import { CANDIDATE_TABLE_LABEL, CandidateTable, type CandidateRow } from "./CandidateTable";
 
 const candidates: CandidateRow[] = [
   {
@@ -48,7 +48,8 @@ const candidates: CandidateRow[] = [
 ];
 
 function getRenderedNames() {
-  return screen
+  const table = screen.getByRole("table", { name: CANDIDATE_TABLE_LABEL });
+  return within(table)
     .getAllByRole("row")
     .slice(1)
     .map((row) => within(row).queryByRole("link")?.textContent ?? row.textContent?.trim() ?? "");
@@ -65,6 +66,27 @@ describe("CandidateTable", () => {
         dispatchEvent: vi.fn(),
       }),
     });
+
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+        takeRecords() {
+          return [];
+        }
+      },
+    );
   });
 
   it("renders candidate data with expected columns", () => {
@@ -77,7 +99,8 @@ describe("CandidateTable", () => {
     expect(screen.getByRole("columnheader", { name: /score/i })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /last updated/i })).toBeInTheDocument();
 
-    const rows = screen.getAllByRole("row");
+    const table = screen.getByRole("table", { name: CANDIDATE_TABLE_LABEL });
+    const rows = within(table).getAllByRole("row");
     expect(rows).toHaveLength(candidates.length + 1);
     expect(screen.getAllByText("Frontend Engineer")).toHaveLength(2);
     expect(screen.getAllByText("—")).toHaveLength(3);

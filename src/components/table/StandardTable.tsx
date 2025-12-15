@@ -23,6 +23,7 @@ type StandardTableProps<TData> = {
   renderToolbar?: (table: Table<TData>) => React.ReactNode;
   emptyState?: React.ReactNode;
   getRowOptions?: (row: Row<TData>) => RowOptions<TData>;
+  tableLabel?: string;
 };
 
 export function StandardTable<TData>({
@@ -34,6 +35,7 @@ export function StandardTable<TData>({
   renderToolbar,
   emptyState,
   getRowOptions,
+  tableLabel,
 }: StandardTableProps<TData>) {
   return (
     <ETETable data={data} columns={columns} sorting={sorting} filtering={filtering} variant={variant}>
@@ -45,7 +47,8 @@ export function StandardTable<TData>({
             {renderToolbar ? <TableToolbar>{renderToolbar(table)}</TableToolbar> : null}
 
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <table className={classNames.table}>
+              <table className={classNames.table} aria-label={tableLabel}>
+                {tableLabel ? <caption className="sr-only">{tableLabel}</caption> : null}
                 <thead className={classNames.header}>
                   {headerGroups.map((headerGroup) => (
                     <tr key={headerGroup.id} className={classNames.headerRow}>

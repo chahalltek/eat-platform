@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AgentRunLogsTable,
   AgentRunLogTableRow,
+  AGENT_RUN_LOGS_TABLE_LABEL,
   formatDurationMs,
 } from "./agent-run-logs-table";
 
@@ -27,6 +28,27 @@ beforeAll(() => {
       dispatchEvent: vi.fn(),
     })),
   });
+
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return [];
+      }
+    },
+  );
 });
 
 const baseLog: AgentRunLogTableRow = {
@@ -68,9 +90,11 @@ const sampleLogs: AgentRunLogTableRow[] = [
   },
 ];
 
-function getBodyRows() {
-  return screen
+function getTableRows() {
+  const table = screen.getByRole("table", { name: AGENT_RUN_LOGS_TABLE_LABEL });
+  return within(table)
     .getAllByRole("row")
+    .slice(1)
     .filter((row) => row.querySelector("td"));
 }
 
@@ -95,12 +119,12 @@ describe("AgentRunLogsTable", () => {
     expect(screen.getByText("No runs match the selected filters.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Clear"));
-    expect(getBodyRows()).toHaveLength(sampleLogs.length);
+    expect(getTableRows()).toHaveLength(sampleLogs.length);
 
     const successCheckbox = screen.getByLabelText("Success");
     fireEvent.click(successCheckbox);
 
-    const rowsAfterFilter = getBodyRows();
+    const rowsAfterFilter = getTableRows();
     expect(rowsAfterFilter).toHaveLength(1);
     expect(within(rowsAfterFilter[0]).getByText("Agent Alpha")).toBeInTheDocument();
   });
@@ -113,7 +137,7 @@ describe("AgentRunLogsTable", () => {
 
     fireEvent.click(screen.getByLabelText("AI failure"));
 
-    const rowsAfterFilter = getBodyRows();
+    const rowsAfterFilter = getTableRows();
     expect(rowsAfterFilter).toHaveLength(1);
     expect(within(rowsAfterFilter[0]).getByText("Agent Beta")).toBeInTheDocument();
   });
@@ -122,13 +146,13 @@ describe("AgentRunLogsTable", () => {
     render(<AgentRunLogsTable logs={sampleLogs} selectedId="base" onSelect={() => {}} />);
 
     fireEvent.change(screen.getByPlaceholderText(/search runs/i), { target: { value: "Recruiter" } });
-    expect(getBodyRows()).toHaveLength(sampleLogs.length);
+    expect(getTableRows()).toHaveLength(sampleLogs.length);
 
     const agentFilter = screen.getByRole("button", { name: /Agent: All/i });
     fireEvent.click(agentFilter);
     fireEvent.click(screen.getByLabelText("Agent Gamma"));
 
-    const rowsAfterFilter = getBodyRows();
+    const rowsAfterFilter = getTableRows();
     expect(rowsAfterFilter).toHaveLength(1);
     expect(within(rowsAfterFilter[0]).getByText("Agent Gamma")).toBeInTheDocument();
   });
@@ -136,13 +160,13 @@ describe("AgentRunLogsTable", () => {
   it("sorts by timestamp when the header is toggled", () => {
     render(<AgentRunLogsTable logs={sampleLogs} selectedId="base" onSelect={() => {}} />);
 
-    let rows = getBodyRows();
+    let rows = getTableRows();
     expect(within(rows[0]).getByText("Agent Gamma")).toBeInTheDocument();
 
     const timestampHeader = screen.getByRole("button", { name: /Timestamp/ });
     fireEvent.click(timestampHeader);
 
-    rows = getBodyRows();
+    rows = getTableRows();
     expect(within(rows[0]).getByText("Agent Alpha")).toBeInTheDocument();
   });
 
@@ -150,7 +174,7 @@ describe("AgentRunLogsTable", () => {
     const handleSelect = vi.fn();
     render(<AgentRunLogsTable logs={sampleLogs} selectedId="base" onSelect={handleSelect} />);
 
-    const rows = getBodyRows();
+    const rows = getTableRows();
     fireEvent.click(rows[1]);
 
     expect(handleSelect).toHaveBeenCalledWith("fail-1");

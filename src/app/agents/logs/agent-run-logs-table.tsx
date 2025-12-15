@@ -52,6 +52,8 @@ const ERROR_CATEGORY_FILTER_OPTIONS = (Object.keys(ERROR_CATEGORY_LABELS) as (ke
   label: ERROR_CATEGORY_LABELS[value],
 }));
 
+export const AGENT_RUN_LOGS_TABLE_LABEL = "Agent run logs";
+
 export function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
   return date.toLocaleString();
@@ -194,6 +196,7 @@ export function AgentRunLogsTable({
           </>
         )}
         emptyState={<p className="py-4 text-center text-sm text-slate-600">No runs match the selected filters.</p>}
+        tableLabel={AGENT_RUN_LOGS_TABLE_LABEL}
         getRowOptions={(row) => ({
           onClick: () => onSelect(row.original.id),
           selected: row.original.id === selectedId,
