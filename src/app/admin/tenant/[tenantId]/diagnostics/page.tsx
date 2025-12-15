@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { CheckCircleIcon, ExclamationTriangleIcon, XCircleIcon } from "@heroicons/react/24/solid";
 
 import { getCurrentUser } from "@/lib/auth/user";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentTenantId } from "@/lib/tenant";
 import {
   buildTenantDiagnostics,
@@ -133,6 +134,8 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
   const normalizedCurrentTenantId = currentTenantId?.trim?.() ?? "";
   const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
+  const bootstrapTenantId =
+    access.isGlobalAdmin && requestedTenant === DEFAULT_TENANT_ID ? requestedTenant : null;
 
   if (!access.hasAccess) {
     return (
@@ -163,7 +166,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
     const executionDisabled = Boolean(process.env.VERCEL);
 
     return (
-      <TenantAdminShell tenantId={requestedTenant}>
+      <TenantAdminShell tenantId={requestedTenant} bootstrapTenantId={bootstrapTenantId}>
         <div className="mx-auto flex max-w-5xl flex-col gap-6">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>

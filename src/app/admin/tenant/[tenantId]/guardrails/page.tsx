@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
@@ -54,13 +55,15 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   const normalizedTenantId = tenantId || currentTenantId || "";
   const debugEnabled = !isTestEnv && (baseDebugEnabled || access.isGlobalAdmin);
   const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
+  const bootstrapTenantId =
+    access.isGlobalAdmin && normalizedTenantId === DEFAULT_TENANT_ID ? normalizedTenantId : null;
 
   if (!access.hasAccess) {
     return <AccessDenied tenantId={normalizedTenantId} debugEnabled={debugEnabled} />;
   }
 
   return (
-    <TenantAdminShell tenantId={normalizedTenantId}>
+    <TenantAdminShell tenantId={normalizedTenantId} bootstrapTenantId={bootstrapTenantId}>
       <div data-testid="guardrails-presets-page" className="mx-auto flex max-w-5xl flex-col gap-8">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>

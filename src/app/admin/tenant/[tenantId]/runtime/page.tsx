@@ -5,12 +5,14 @@ import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { ETECard } from "@/components/ETECard";
 import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
 import { getCurrentUser } from "@/lib/auth/user";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { canManageFeatureFlags, canManageTenants } from "@/lib/auth/permissions";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { withTenantContext } from "@/lib/tenant";
 import { getTenantMode } from "@/lib/tenantMode";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { BootstrapAccessBanner } from "../BootstrapAccessBanner";
 import { RuntimeModePanel } from "./RuntimeModePanel";
 import { RuntimeFeatureFlagsPanel } from "./RuntimeFeatureFlagsPanel";
 
@@ -42,6 +44,7 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
   const user = await getCurrentUser();
   const headerRole = getTenantRoleFromHeaders(await headers());
   const access = await resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole });
+  const bootstrapTenantId = access.isGlobalAdmin && tenantId === DEFAULT_TENANT_ID ? tenantId : null;
   const safety = buildSafetyContext();
 
   const [mode, flags] = await withTenantContext(tenantId, async () => {
@@ -77,6 +80,8 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
               Back to home
             </Link>
           </header>
+
+          {bootstrapTenantId ? <BootstrapAccessBanner tenantId={bootstrapTenantId} /> : null}
 
           {safety.locked ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

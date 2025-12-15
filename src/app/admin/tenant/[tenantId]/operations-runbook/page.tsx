@@ -8,6 +8,7 @@ import { HARD_FEATURE_FLAGS, getSecurityMode, isHardFeatureEnabled } from "@/con
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
 import type { AgentName } from "@/lib/agents/agentAvailability";
 import { getCurrentUser } from "@/lib/auth/user";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { buildTenantDiagnostics } from "@/lib/tenant/diagnostics";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
@@ -242,6 +243,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   }
 
   const access = await resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole });
+  const bootstrapTenantId = access.isGlobalAdmin && tenantId === DEFAULT_TENANT_ID ? tenantId : null;
 
   if (!access.hasAccess) {
     return (
@@ -350,7 +352,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   const diagnosticsStatus = diagnosticsAvailable ? "AVAILABLE" : "UNAVAILABLE";
 
   return (
-    <TenantAdminShell tenantId={tenantId}>
+    <TenantAdminShell tenantId={tenantId} bootstrapTenantId={bootstrapTenantId}>
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-3">
