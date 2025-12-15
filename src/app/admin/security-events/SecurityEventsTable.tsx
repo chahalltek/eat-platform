@@ -23,6 +23,7 @@ export function SecurityEventsTable({ events }: Props) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+<<<<<<< ours
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -49,10 +50,36 @@ export function SecurityEventsTable({ events }: Props) {
                 {formatMetadata(event.metadata)}
               </td>
               <td className="px-4 py-3 text-gray-600">{new Date(event.createdAt).toLocaleString()}</td>
+=======
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Event</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">User</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Tenant</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Metadata</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Timestamp</th>
+>>>>>>> theirs
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100 bg-white text-sm">
+            {events.map((event) => (
+              <tr key={event.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-900">{event.eventType}</td>
+                <td className="px-4 py-3 text-gray-700">{event.userId ?? 'User not recorded'}</td>
+                <td className="px-4 py-3 text-gray-700">{event.tenantId}</td>
+                <td className="px-4 py-3 align-top text-gray-700">
+                  <div className="max-w-3xl whitespace-pre-wrap break-words font-mono text-xs text-gray-600 leading-snug line-clamp-2">
+                    {formatMetadata(event.metadata)}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-gray-600">{new Date(event.createdAt).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

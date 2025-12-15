@@ -463,34 +463,40 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
             </div>
           </div>
           <div className="overflow-hidden rounded-xl border border-zinc-100">
-            <table className="min-w-full divide-y divide-zinc-100 text-sm">
-              <thead className="bg-zinc-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Mode</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Behavior Summary</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">When to Use</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {Object.entries(MODE_DEFINITIONS).map(([mode, details]) => {
-                  const isActive = mode === currentMode;
-                  return (
-                    <tr
-                      key={mode}
-                      className={
-                        isActive
-                          ? "bg-indigo-50/70 text-indigo-900"
-                          : "bg-white text-zinc-800 hover:bg-zinc-50"
-                      }
-                    >
-                      <td className="px-4 py-3 font-semibold">{details.label}</td>
-                      <td className="px-4 py-3">{details.summary}</td>
-                      <td className="px-4 py-3">{details.usage}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-zinc-100 text-sm">
+                <thead className="bg-zinc-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Mode</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Behavior Summary</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">When to Use</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {Object.entries(MODE_DEFINITIONS).map(([mode, details]) => {
+                    const isActive = mode === currentMode;
+                    return (
+                      <tr
+                        key={mode}
+                        className={
+                          isActive
+                            ? "bg-indigo-50/70 text-indigo-900"
+                            : "bg-white text-zinc-800 hover:bg-zinc-50"
+                        }
+                      >
+                        <td className="px-4 py-3 font-semibold">{details.label}</td>
+                        <td className="px-4 py-3 align-top">
+                          <p className="max-w-2xl text-sm leading-snug text-zinc-700 line-clamp-2">{details.summary}</p>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <p className="max-w-xl text-sm leading-snug text-zinc-700 line-clamp-2">{details.usage}</p>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
@@ -500,58 +506,62 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
             <p className="text-sm text-zinc-600">Effective column reflects both mode allowances and kill switch state.</p>
           </div>
           <div className="overflow-hidden rounded-xl border border-zinc-100">
-            <table className="min-w-full divide-y divide-zinc-100 text-sm">
-              <thead className="bg-zinc-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Agent</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Description</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Enabled by Mode</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Kill Switch</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Effective</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {agentRows.map((agent) => {
-                  const killSwitchState = agent.killSwitch;
-                  const killSwitchActiveLabel = killSwitchState?.latched ? "off" : "on";
-                  return (
-                    <tr key={agent.key} className="bg-white text-zinc-800 hover:bg-zinc-50">
-                      <td className="px-4 py-3 font-semibold">{agent.key}</td>
-                      <td className="px-4 py-3">{agent.description}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            agent.modeAllows
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-rose-50 text-rose-700"
-                          }`}
-                        >
-                          {agent.modeAllows ? "yes" : "no"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            killSwitchState?.latched ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
-                          }`}
-                        >
-                          {killSwitchState ? killSwitchActiveLabel : "on"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            agent.effective ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
-                          }`}
-                        >
-                          {agent.effective ? "yes" : "no"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-zinc-100 text-sm">
+                <thead className="bg-zinc-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Agent</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Description</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Enabled by Mode</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Kill Switch</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Effective</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {agentRows.map((agent) => {
+                    const killSwitchState = agent.killSwitch;
+                    const killSwitchActiveLabel = killSwitchState?.latched ? "off" : "on";
+                    return (
+                      <tr key={agent.key} className="bg-white text-zinc-800 hover:bg-zinc-50">
+                        <td className="px-4 py-3 font-semibold">{agent.key}</td>
+                        <td className="px-4 py-3 align-top">
+                          <p className="max-w-xl text-sm leading-snug text-zinc-700 line-clamp-2">{agent.description}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              agent.modeAllows
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-rose-50 text-rose-700"
+                            }`}
+                          >
+                            {agent.modeAllows ? "yes" : "no"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              killSwitchState?.latched ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
+                            }`}
+                          >
+                            {killSwitchState ? killSwitchActiveLabel : "on"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              agent.effective ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+                            }`}
+                          >
+                            {agent.effective ? "yes" : "no"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
           <div className="space-y-2 rounded-xl bg-zinc-50 p-4 text-sm text-zinc-700">
             <p>

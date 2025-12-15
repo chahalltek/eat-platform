@@ -408,10 +408,18 @@ export function InsightsAdminClient({
                 snapshots.map((snapshot) => (
                   <tr key={snapshot.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
                     <td className="px-3 py-3">
-                      <div className="font-semibold text-zinc-900 dark:text-zinc-50">{snapshot.title}</div>
-                      <div className="text-xs text-zinc-500">{snapshot.contentJson.chart.series[0]?.label ?? snapshot.releaseId}</div>
+                      <div className="max-w-[18rem] font-semibold leading-snug text-zinc-900 line-clamp-2 dark:text-zinc-50" title={snapshot.title}>
+                        {snapshot.title}
+                      </div>
+                      <div className="text-xs text-zinc-500 line-clamp-2">
+                        {snapshot.contentJson.chart.series[0]?.label ?? snapshot.releaseId}
+                      </div>
                     </td>
-                    <td className="px-3 py-3 text-zinc-700 dark:text-zinc-200">{snapshot.releaseId}</td>
+                    <td className="px-3 py-3 text-zinc-700 dark:text-zinc-200">
+                      <span className="block max-w-[12rem] truncate" title={snapshot.releaseId}>
+                        {snapshot.releaseId}
+                      </span>
+                    </td>
                     <td className="px-3 py-3 text-zinc-700 dark:text-zinc-200">{snapshot.audience}</td>
                     <td className="px-3 py-3">
                       <StatusBadge status={snapshot.status} />
