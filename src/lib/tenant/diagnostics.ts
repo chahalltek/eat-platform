@@ -285,7 +285,7 @@ export async function loadLatestAtsSync(tenantId: string): Promise<TenantDiagnos
   }
 }
 
-async function resolveEnabledFlags(tenantId: string) {
+async function resolveEnabledFlags(tenantId: string): Promise<TenantDiagnostics["featureFlags"]> {
   try {
     const enabledFlags: FeatureFlagName[] = [];
 
@@ -298,10 +298,10 @@ async function resolveEnabledFlags(tenantId: string) {
     return {
       enabledFlags,
       enabled: enabledFlags.length > 0,
-    } as const;
+    };
   } catch (error) {
     console.error("Unable to resolve feature flags", error);
-    return { enabled: false, enabledFlags: [] } as const;
+    return { enabled: false, enabledFlags: [] };
   }
 }
 
