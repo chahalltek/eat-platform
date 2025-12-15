@@ -33,6 +33,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       recruiterId,
       jobId,
       topN,
+      request: req,
     });
 
     return NextResponse.json(result, { status: 200 });

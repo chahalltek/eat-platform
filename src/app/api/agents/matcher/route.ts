@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
       recruiterId,
       jobId,
       topN,
+      request: req,
     });
 
     return NextResponse.json(result, { status: 200 });

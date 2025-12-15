@@ -1,3 +1,5 @@
+import { type NextRequest } from "next/server";
+
 import { MatchResult } from "@/server/db";
 
 import { AgentRetryMetadata, withAgentRun } from "@/lib/agents/agentRun";
@@ -14,6 +16,7 @@ export type RunMatcherInput = {
   recruiterId?: string;
   jobId: string;
   topN?: number;
+  request?: NextRequest;
 };
 
 export type RunMatcherResult = {
@@ -30,7 +33,7 @@ export type RunMatcherResult = {
   agentRunId: string;
 };
 
-type MatcherAgentInput = { jobReqId: string; recruiterId?: string; limit?: number };
+type MatcherAgentInput = { jobReqId: string; recruiterId?: string; limit?: number; request?: NextRequest };
 type MatcherAgentResult = { matches: MatchResult[] };
 type MatcherAgentDependencies = { explainMatch?: typeof generateMatchExplanation };
 
@@ -61,12 +64,12 @@ export async function generateMatchExplanation(match: MatchResult): Promise<Matc
 }
 
 export async function runMatcherAgent(
-  { jobReqId, recruiterId: recruiterIdFromInput, limit = 200 }: MatcherAgentInput,
+  { jobReqId, recruiterId: recruiterIdFromInput, limit = 200, request }: MatcherAgentInput,
   deps: MatcherAgentDependencies = {},
   retryMetadata?: AgentRetryMetadata,
 ): Promise<[MatcherAgentResult, string]> {
   const recruiterId =
-    recruiterIdFromInput ?? (await getCurrentUser().then((user) => user?.id ?? null));
+    recruiterIdFromInput ?? (await getCurrentUser(request).then((user) => user?.id ?? null));
 
   if (!recruiterId) {
     throw new Error("Current user is required to run matcher agent");
@@ -105,10 +108,10 @@ export async function runMatcher(
   input: RunMatcherInput,
   retryMetadata?: AgentRetryMetadata,
 ): Promise<RunMatcherResult> {
-  const { jobId, topN, recruiterId } = input;
+  const { jobId, topN, recruiterId, request } = input;
 
   const [result, agentRunId] = await runMatcherAgent(
-    { jobReqId: jobId, recruiterId, limit: topN },
+    { jobReqId: jobId, recruiterId, limit: topN, request },
     {},
     retryMetadata,
   );
