@@ -42,20 +42,6 @@ const systemNodes = [
     tags: ["API ingress", "Webhook sync"],
   },
   {
-    id: "feature-flags",
-    name: "Feature Flags",
-    type: "Config",
-    summary: "Toggles capabilities, thresholds, and rollout states globally.",
-    tags: ["Rollout", "Rules"],
-  },
-  {
-    id: "runtime-controls",
-    name: "Runtime Controls",
-    type: "Ops",
-    summary: "Mode switches, kill switches, and fire drills for operational safety.",
-    tags: ["Mode", "Kill switch"],
-  },
-  {
     id: "scoring",
     name: "Scoring engine",
     type: "Engine",
@@ -91,11 +77,6 @@ const systemNodes = [
     tags: ["Audit trail", "Metrics"],
   },
   {
-    id: "tenant",
-    name: "Tenant Config",
-    type: "Config",
-    summary: "Tenant-level thresholds and experience toggles.",
-    tags: ["Weights", "UX toggles"],
     id: "tenant-config",
     name: "Tenant Config",
     type: "Control plane",
@@ -115,7 +96,6 @@ const systemNodes = [
     type: "Control plane",
     summary: "Modes and safety latches that fail closed and log why.",
     tags: ["Pilot mode", "Kill switch", "Fire drill"],
-
   },
 ] as const;
 
@@ -151,10 +131,6 @@ const flowSequences = [
   },
   {
     label: "Guardrails",
-
-    steps: ["Runtime controls", "Feature Flags", "Tenant Config", "Confidence / Explain"],
-    subtitles: ["mode", "rollout", "tenant", "interpretation"],
-
     steps: [
       "Tenant Config",
       "Feature Flags",
