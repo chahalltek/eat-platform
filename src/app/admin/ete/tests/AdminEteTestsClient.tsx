@@ -56,7 +56,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-100"
+      className="relative inline-flex shrink-0 items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-100"
     >
       {copied ? (
         <>
