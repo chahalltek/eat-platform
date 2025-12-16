@@ -66,17 +66,17 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="relative inline-flex shrink-0 items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-900"
+      className="relative inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-indigo-100 bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white dark:border-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-100"
     >
       {copied ? (
         <>
-          <ClipboardDocumentCheckIcon className="h-5 w-5" />
-          Copied
+          <ClipboardDocumentCheckIcon className="h-4 w-4" />
+          <span className="whitespace-nowrap">Copied</span>
         </>
       ) : (
         <>
-          <ClipboardDocumentListIcon className="h-5 w-5" />
-          {label}
+          <ClipboardDocumentListIcon className="h-4 w-4" />
+          <span className="whitespace-nowrap">{label}</span>
         </>
       )}
     </button>
