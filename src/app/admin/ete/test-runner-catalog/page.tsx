@@ -1,12 +1,14 @@
 import { BoltIcon, CommandLineIcon, LockClosedIcon, ShieldCheckIcon, TagIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import { EteLogo } from "@/components/EteLogo";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { getETEAdminTestCatalog } from "@/lib/testing/testCatalog";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +36,10 @@ function AccessDenied() {
 export default async function EteTestRunnerCatalogPage() {
   const user = await getCurrentUser();
   const tenantId = await getCurrentTenantId();
-  const userTenant = (user?.tenantId ?? DEFAULT_TENANT_ID).trim();
-  const isAuthorized = user && isAdminOrDataAccessRole(user.role) && userTenant === (tenantId ?? DEFAULT_TENANT_ID).trim();
+  const headerRole = getTenantRoleFromHeaders(await headers());
+  const access = await resolveTenantAdminAccess(user, (tenantId ?? DEFAULT_TENANT_ID).trim(), { roleHint: headerRole });
 
-  if (!isAuthorized) {
+  if (!access.hasAccess) {
     return <AccessDenied />;
   }
 
