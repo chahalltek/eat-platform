@@ -23,6 +23,8 @@ The deployed database is missing the `preset` and `llm` columns, which triggers 
 - `20270815120000_usage_metering` adds `preset`, `llm`, `networkLearningOptIn`, and `networkLearning` to `TenantConfig`.
 - `20271201120000_backfill_tenant_config_preset` re-applies the same columns to close the drift.
 - `20271215144900_ensure_tenant_config_preset_column`, `20271220120000_add_missing_tenant_config_preset`, and `20271221120000_add_missing_tenant_config_llm_column` exist solely to patch environments where the earlier migrations were skipped.
+- `20280520120000_ensure_tenant_config_llm_and_preset` re-applies all four guardrail columns.
+- `20280521120000_ensure_tenant_config_network_learning_opt_in` ensures `networkLearningOptIn` and `networkLearning` exist for tenants that still lack them.
 
 Because those migrations are absent from the deployed environment, the table only contains the original guardrail columns (`scoring`, `explain`, `safety`, timestamps, and `tenantId`).
 
