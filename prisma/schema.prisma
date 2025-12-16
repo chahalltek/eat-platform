@@ -212,7 +212,7 @@ model AuditLog {
   id        String   @id @default(cuid())
   tenantId  String   @default("default-tenant")
   actorId   String?
-  action    String // "MODE_CHANGED", "GUARDRAILS_UPDATED", "AGENT_FLAG_TOGGLED"
+  action    String // "MODE_CHANGED", "GUARDRAILS_UPDATED", "AGENT_FLAG_TOGGLED", "KILL_SWITCH_TOGGLED"
   meta      Json?
   createdAt DateTime @default(now())
 

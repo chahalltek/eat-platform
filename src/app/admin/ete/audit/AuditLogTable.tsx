@@ -19,6 +19,7 @@ const ACTION_LABELS: Record<AdminAuditAction, string> = {
   [ADMIN_AUDIT_ACTIONS.MODE_CHANGED]: "Mode changed",
   [ADMIN_AUDIT_ACTIONS.GUARDRAILS_UPDATED]: "Guardrails updated",
   [ADMIN_AUDIT_ACTIONS.AGENT_FLAG_TOGGLED]: "Agent flag toggled",
+  [ADMIN_AUDIT_ACTIONS.KILL_SWITCH_TOGGLED]: "Kill switch toggled",
 };
 
 function formatMeta(row: AuditLogRow) {
@@ -40,6 +41,13 @@ function formatMeta(row: AuditLogRow) {
     const agent = typeof meta.agentName === "string" ? meta.agentName : "agent";
     const latched = meta.latched === true ? "disabled" : "enabled";
     return `${agent} ${latched}`;
+  }
+
+  if (row.action === ADMIN_AUDIT_ACTIONS.KILL_SWITCH_TOGGLED) {
+    const key = typeof meta.key === "string" ? meta.key : "kill switch";
+    const latched = meta.latched === true ? "latched" : "unlatched";
+    const reason = typeof meta.reason === "string" && meta.reason.trim().length > 0 ? meta.reason : "no reason";
+    return `${key} ${latched}${meta.latched === true ? ` (${reason})` : ""}`;
   }
 
   return "—";
