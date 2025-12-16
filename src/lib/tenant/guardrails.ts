@@ -46,30 +46,46 @@ export type TenantConfigSchemaStatus = {
   reason: string | null;
 };
 
-async function ensureTenantConfigPresetColumn(): Promise<TenantConfigSchemaStatus> {
-  const [{ exists } = { exists: false }] = await prisma.$queryRaw<{ exists: boolean }[]>`
-    SELECT EXISTS (
-      SELECT 1
-      FROM information_schema.columns
-      WHERE table_name = 'TenantConfig'
-        AND column_name = 'preset'
-    ) as "exists";
-  `;
+async function ensureTenantConfigColumns(): Promise<TenantConfigSchemaStatus> {
+  const requiredColumns: { name: string; addColumnSql: Prisma.Sql }[] = [
+    { name: "preset", addColumnSql: Prisma.sql`ALTER TABLE "TenantConfig" ADD COLUMN "preset" TEXT` },
+    { name: "llm", addColumnSql: Prisma.sql`ALTER TABLE "TenantConfig" ADD COLUMN "llm" JSONB` },
+  ];
 
-  if (exists) return { status: "ok", missingColumns: [], reason: null };
+  const missingColumns: string[] = [];
 
-  try {
-    await prisma.$executeRaw`ALTER TABLE "TenantConfig" ADD COLUMN "preset" TEXT`;
-    console.info("Added missing TenantConfig.preset column to align guardrail lookups.");
-    return { status: "ok", missingColumns: [], reason: null };
-  } catch (error) {
-    console.error("Failed to add TenantConfig.preset column", error);
+  for (const { name, addColumnSql } of requiredColumns) {
+    const [{ exists } = { exists: false }] = await prisma.$queryRaw<{ exists: boolean }[]>(
+      Prisma.sql`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_name = 'TenantConfig'
+            AND column_name = ${name}
+        ) as "exists";
+      `,
+    );
+
+    if (exists) continue;
+
+    try {
+      await prisma.$executeRaw(addColumnSql);
+      console.info(`Added missing TenantConfig.${name} column to align guardrail lookups.`);
+    } catch (error) {
+      console.error(`Failed to add TenantConfig.${name} column`, error);
+      missingColumns.push(name);
+    }
+  }
+
+  if (missingColumns.length > 0) {
     return {
       status: "fallback",
-      missingColumns: ["preset"],
-      reason: "TenantConfig.preset column is missing or could not be added.",
+      missingColumns,
+      reason: `TenantConfig column(s) missing or could not be added: ${missingColumns.join(", ")}.`,
     } satisfies TenantConfigSchemaStatus;
   }
+
+  return { status: "ok", missingColumns: [], reason: null };
 }
 
 async function ensureTenantConfigSchema(): Promise<TenantConfigSchemaStatus> {
@@ -81,7 +97,7 @@ async function ensureTenantConfigSchema(): Promise<TenantConfigSchemaStatus> {
     } satisfies TenantConfigSchemaStatus;
   }
 
-  return ensureTenantConfigPresetColumn();
+  return ensureTenantConfigColumns();
 }
 
 async function loadTenantGuardrailsInternal(tenantId: string) {

@@ -13,6 +13,13 @@ export type TenantConfigSchemaFallbackResult<T> = {
 let hasLoggedTenantConfigSchemaMismatch = false;
 let hasTenantConfigSchemaMismatch = false;
 
+function buildMissingColumnMessage(error: Prisma.PrismaClientKnownRequestError) {
+  const column = (error.meta as { column?: string } | null | undefined)?.column;
+  const suffix = column ? ` (${column})` : "";
+
+  return `TenantConfig column missing${suffix}. Run prisma migrations to align the database schema.`;
+}
+
 function logTenantConfigSchemaMismatch({ tenantId }: FallbackContext, error: Prisma.PrismaClientKnownRequestError) {
   if (hasLoggedTenantConfigSchemaMismatch) return;
 
@@ -20,8 +27,7 @@ function logTenantConfigSchemaMismatch({ tenantId }: FallbackContext, error: Pri
 
   console.warn({
     event: "tenant_config_schema_mismatch",
-    message:
-      "TenantConfig column missing (likely preset). Run prisma migrations to align the database schema.",
+    message: buildMissingColumnMessage(error),
     tenantId: tenantId ?? null,
     meta: error.meta,
   });
@@ -42,8 +48,7 @@ export async function withTenantConfigSchemaFallback<T>(
       return {
         result: null,
         schemaMismatch: true,
-        reason:
-          "TenantConfig column missing (likely preset). Run prisma migrations to align the database schema.",
+        reason: buildMissingColumnMessage(error),
       } satisfies TenantConfigSchemaFallbackResult<T>;
     }
 

@@ -54,7 +54,7 @@ describe("loadTenantConfig", () => {
       expect.objectContaining({
         event: "tenant_config_schema_mismatch",
         message:
-          "TenantConfig column missing (likely preset). Run prisma migrations to align the database schema.",
+          "TenantConfig column missing (TenantConfig.preset). Run prisma migrations to align the database schema.",
         tenantId: "tenant-abc",
       }),
     );
