@@ -76,4 +76,14 @@ describe("GET /api/admin/tenant/[tenantId]/guardrails/performance", () => {
     expect(payload).toEqual(report);
     expect(mocks.buildGuardrailPerformanceReport).toHaveBeenCalledWith("demo");
   });
+
+  it("allows global admins without tenant membership", async () => {
+    mocks.resolveTenantAdminAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
+
+    const request = new Request("http://localhost/api/admin/tenant/demo/guardrails/performance");
+    const response = await GET(request, { params: Promise.resolve({ tenantId: "demo" }) });
+
+    expect(response.status).toBe(200);
+    expect(mocks.buildGuardrailPerformanceReport).toHaveBeenCalledWith("demo");
+  });
 });

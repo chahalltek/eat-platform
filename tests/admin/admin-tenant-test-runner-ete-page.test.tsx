@@ -63,4 +63,31 @@ describe("Tenant ETE test runner page", () => {
     expect(cards).toHaveLength(catalog.length);
     expect(cards[0]).toHaveTextContent("ETE catalog registry");
   });
+
+  it("lets global admins without tenant membership load the test runner", async () => {
+    const catalog = [{ id: "smoke", title: "Smoke", description: "", tags: [], localCommand: "npm test" }];
+
+    mocks.getCurrentUser.mockResolvedValue({ id: "global-admin", role: "ADMIN", tenantId: "demo" });
+    mocks.getTenantRoleFromHeaders.mockResolvedValue(null);
+    mocks.resolveTenantAdminAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
+    mocks.getTenantTestRunnerCatalog.mockReturnValue(catalog);
+
+    const page = await EteTestRunnerPage({ params: { tenantId: "demo" } });
+    render(page);
+
+    expect(await screen.findByTestId("ete-layout")).toBeInTheDocument();
+    expect(screen.getAllByText(/smoke/i).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("blocks non-admins that lack tenant membership", async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: "user-2", role: "USER", tenantId: "demo" });
+    mocks.getTenantRoleFromHeaders.mockResolvedValue(null);
+    mocks.resolveTenantAdminAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
+
+    const page = await EteTestRunnerPage({ params: { tenantId: "demo" } });
+    render(page);
+
+    expect(screen.getByText(/admin access required/i)).toBeInTheDocument();
+    expect(screen.getByText(/switch to a tenant admin account/i)).toBeInTheDocument();
+  });
 });
