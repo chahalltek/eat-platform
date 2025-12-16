@@ -85,3 +85,22 @@ export async function getCurrentTenantId(req?: NextRequest) {
 
   return tenantId;
 }
+
+export function getTenantFromParamsOrSession(
+  paramsTenantId: string | null | undefined,
+  sessionTenantId: string | null | undefined,
+) {
+  const normalizedParamsTenantId = paramsTenantId?.trim?.();
+
+  if (normalizedParamsTenantId) {
+    return normalizedParamsTenantId;
+  }
+
+  const normalizedSessionTenantId = sessionTenantId?.trim?.();
+
+  if (normalizedSessionTenantId) {
+    return normalizedSessionTenantId;
+  }
+
+  return DEFAULT_TENANT_ID;
+}

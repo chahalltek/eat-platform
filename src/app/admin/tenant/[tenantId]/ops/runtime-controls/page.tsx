@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { getCurrentUser } from "@/lib/auth/user";
 import { canAccessRuntimeControls } from "@/lib/auth/runtimeControlsAccess";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
 
 import { TenantAdminShell } from "../../TenantAdminShell";
 import { RuntimeControlsDashboard } from "./RuntimeControlsDashboard";
@@ -27,7 +27,7 @@ function AccessDenied() {
 
 export default async function TenantRuntimeControlsPage({ params }: { params: { tenantId?: string } }) {
   const user = await getCurrentUser();
-  const tenantId = params.tenantId?.trim?.() ?? (await getCurrentTenantId()) ?? "";
+  const tenantId = getTenantFromParamsOrSession(params.tenantId, await getCurrentTenantId());
 
   if (!canAccessRuntimeControls(user)) {
     return <AccessDenied />;

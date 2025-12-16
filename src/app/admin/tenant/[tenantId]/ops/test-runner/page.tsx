@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth/user";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
@@ -32,7 +32,7 @@ export default async function TenantTestRunnerPage({ params }: { params: { tenan
   const tenantId = params.tenantId?.trim?.() ?? "";
   const headerRole = getTenantRoleFromHeaders(await headers());
   const currentTenantId = await getCurrentTenantId();
-  const targetTenantId = tenantId || currentTenantId || "";
+  const targetTenantId = getTenantFromParamsOrSession(tenantId, currentTenantId);
 
   const access = await resolveTenantAdminAccess(user, targetTenantId, { roleHint: headerRole });
   const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;

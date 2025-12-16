@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { requireAdminOrDataAccess } from "@/lib/auth/requireRole";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
 import { buildTenantExportArchive } from "@/lib/export/tenantExport";
 import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { user } = roleCheck;
-  const tenantId = await getCurrentTenantId(req);
+  const tenantId = getTenantFromParamsOrSession(req.nextUrl.searchParams.get("tenantId"), await getCurrentTenantId(req));
 
   const userTenant = (user.tenantId ?? DEFAULT_TENANT_ID).trim();
 

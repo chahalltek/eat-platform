@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
@@ -52,8 +52,8 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   }
 
   const currentTenantId = await getCurrentTenantId();
-  const access = await resolveTenantAdminAccess(user, tenantId || currentTenantId, { roleHint: headerRole });
-  const normalizedTenantId = tenantId || currentTenantId || "";
+  const normalizedTenantId = getTenantFromParamsOrSession(tenantId, currentTenantId);
+  const access = await resolveTenantAdminAccess(user, normalizedTenantId, { roleHint: headerRole });
   const debugEnabled = !isTestEnv && (baseDebugEnabled || access.isGlobalAdmin);
   const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
   const bootstrapTenantId =

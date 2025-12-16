@@ -1,14 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/user";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
 import { buildTenantDiagnostics, TenantNotFoundError } from "@/lib/tenant/diagnostics";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser(req);
-  const tenantId = await getCurrentTenantId(req);
+  const tenantId = getTenantFromParamsOrSession(req.nextUrl.searchParams.get("tenantId"), await getCurrentTenantId(req));
   const headerRole = getTenantRoleFromHeaders(req.headers);
 
   if (!user) {
