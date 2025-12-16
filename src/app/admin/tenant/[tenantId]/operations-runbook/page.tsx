@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import { NextRequest } from "next/server";
 import { ExclamationTriangleIcon, ShieldExclamationIcon } from "@heroicons/react/24/solid";
 import { ArrowTopRightOnSquareIcon, FireIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 
@@ -7,12 +8,10 @@ import { EteLogo } from "@/components/EteLogo";
 import { HARD_FEATURE_FLAGS, getSecurityMode, isHardFeatureEnabled } from "@/config/featureFlags";
 import { listAgentKillSwitches } from "@/lib/agents/killSwitch";
 import type { AgentName } from "@/lib/agents/agentAvailability";
-import { getCurrentUser } from "@/lib/auth/user";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { buildTenantDiagnostics } from "@/lib/tenant/diagnostics";
-import { resolveTenantAdminAccess } from "@/lib/tenant/access";
-import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { TenantAdminShell } from "../TenantAdminShell";
 
 export const dynamic = "force-dynamic";
@@ -222,9 +221,7 @@ function badgeToneClass(tone: "positive" | "negative" | "neutral" | "caution") {
 }
 
 export default async function OperationsRunbookPage({ params }: { params: { tenantId: string } }) {
-  const user = await getCurrentUser();
   const tenantId = params.tenantId?.trim?.() ?? "";
-  const headerRole = getTenantRoleFromHeaders(await headers());
 
   if (!tenantId) {
     return (
@@ -242,13 +239,14 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
     );
   }
 
-  const allowAnonymousDefaultTenant = tenantId === DEFAULT_TENANT_ID && !user;
-  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole });
-  const bootstrapTenantId = access.isGlobalAdmin && tenantId === DEFAULT_TENANT_ID ? tenantId : null;
-  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
-  const canViewRunbook = allowAnonymousDefaultTenant || access.hasAccess || isGlobalWithoutMembership;
+  const headerList = await headers();
+  const requestUrl = new URL(
+    `/admin/tenant/${tenantId}/operations-runbook`,
+    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost",
+  );
+  const accessResult = await requireGlobalOrTenantAdmin(new NextRequest(requestUrl, { headers: headerList }), tenantId);
 
-  if (!canViewRunbook) {
+  if (!accessResult.ok) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -265,6 +263,10 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
       </main>
     );
   }
+
+  const { access } = accessResult;
+  const bootstrapTenantId = access.isGlobalAdmin && tenantId === DEFAULT_TENANT_ID ? tenantId : null;
+  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membershipRole;
 
   let diagnosticsAvailable = false;
   let jobIntentStatus: JobIntentStatus = "UNKNOWN";
