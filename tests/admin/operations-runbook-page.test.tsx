@@ -97,4 +97,22 @@ describe("Operations runbook readiness summary", () => {
     const jobIntentLabel = screen.getByText(/Job intent pipeline/i);
     expect(jobIntentLabel.nextElementSibling?.textContent).toContain("UNKNOWN");
   });
+
+  it("allows read-only access for the default tenant when unauthenticated", async () => {
+    mocks.getCurrentUser.mockResolvedValue(null);
+    mocks.resolveTenantAdminAccess.mockResolvedValue({
+      hasAccess: false,
+      isGlobalAdmin: false,
+      membership: null,
+      roleHint: null,
+      reason: "No authenticated user",
+    });
+    mocks.buildTenantDiagnostics.mockResolvedValue({ jobIntent: { status: "ready" } });
+
+    const page = await OperationsRunbookPage({ params: { tenantId: "default-tenant" } });
+    render(page);
+
+    expect(screen.getByText(/Operational Readiness Summary/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Admin access required/i)).not.toBeInTheDocument();
+  });
 });

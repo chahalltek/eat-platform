@@ -226,7 +226,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   const tenantId = params.tenantId?.trim?.() ?? "";
   const headerRole = getTenantRoleFromHeaders(await headers());
 
-  if (!user || !tenantId) {
+  if (!tenantId) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -242,11 +242,13 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
     );
   }
 
+  const allowAnonymousDefaultTenant = tenantId === DEFAULT_TENANT_ID && !user;
   const access = await resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole });
   const bootstrapTenantId = access.isGlobalAdmin && tenantId === DEFAULT_TENANT_ID ? tenantId : null;
   const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
+  const canViewRunbook = allowAnonymousDefaultTenant || access.hasAccess || isGlobalWithoutMembership;
 
-  if (!access.hasAccess && !isGlobalWithoutMembership) {
+  if (!canViewRunbook) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
