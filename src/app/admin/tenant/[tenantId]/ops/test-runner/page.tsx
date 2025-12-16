@@ -40,5 +40,5 @@ export default async function TenantTestRunnerPage({ params }: { params: { tenan
     return <AccessDenied />;
   }
 
-  redirect(`/admin/tenant/${targetTenantId}/test-runner/ete`);
+  redirect(`/admin/tenant/${targetTenantId}/ops/test-runner/ete`);
 }

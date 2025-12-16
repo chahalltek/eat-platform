@@ -40,7 +40,7 @@ vi.mock("@/lib/testing/testCatalog", () => ({
   getTenantTestRunnerCatalog: mocks.getTenantTestRunnerCatalog,
 }));
 
-import EteTestRunnerPage from "@/app/admin/tenant/[tenantId]/test-runner/ete/page";
+import EteTestRunnerPage from "@/app/admin/tenant/[tenantId]/ops/test-runner/ete/page";
 
 describe("Tenant ETE test runner page", () => {
   it("renders the catalog when access is granted", async () => {
