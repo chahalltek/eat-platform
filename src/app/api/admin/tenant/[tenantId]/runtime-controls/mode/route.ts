@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { logModeChange } from "@/lib/audit/adminAudit";
 import { logRuntimeModeChanged } from "@/lib/audit/securityEvents";
-import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
+import { getCurrentUser } from "@/lib/auth/user";
 import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
 import {
   isRuntimeControlsWriteEnabled,
@@ -10,6 +10,8 @@ import {
   persistRuntimeControlMode,
 } from "@/lib/runtimeControls/mode";
 import { prisma } from "@/server/db";
+import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +38,17 @@ export async function POST(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
-  const access = await requireGlobalOrTenantAdmin(request, tenantId);
+  const user = await getCurrentUser(request);
+  const roleHint = getTenantRoleFromHeaders(request.headers);
 
-  if (!access.ok) {
-    return access.response;
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint });
+
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   if (!isRuntimeControlsWriteEnabled()) {
@@ -70,10 +79,10 @@ export async function POST(
   const updated = await persistRuntimeControlMode(tenant, mode);
 
   await Promise.all([
-    logModeChange({ tenantId, actorId: access.user.id, previousMode: previous.mode, newMode: mode }),
+    logModeChange({ tenantId, actorId: user.id, previousMode: previous.mode, newMode: mode }),
     logRuntimeModeChanged({
       tenantId,
-      userId: access.user.id,
+      userId: user.id,
       previousMode: previous.mode,
       newMode: mode,
       source: updated.source,

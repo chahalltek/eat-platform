@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
-const mockRequireGlobalOrTenantAdmin = vi.hoisted(() => vi.fn());
+const mockGetCurrentUser = vi.hoisted(() => vi.fn());
+const mockResolveTenantAccess = vi.hoisted(() => vi.fn());
 const mockIsRuntimeControlsWriteEnabled = vi.hoisted(() => vi.fn());
 const mockLoadRuntimeControlMode = vi.hoisted(() => vi.fn());
 const mockPersistRuntimeControlMode = vi.hoisted(() => vi.fn());
@@ -16,8 +16,16 @@ const prismaMock = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/lib/auth/requireGlobalOrTenantAdmin", () => ({
-  requireGlobalOrTenantAdmin: mockRequireGlobalOrTenantAdmin,
+vi.mock("@/lib/auth/user", () => ({
+  getCurrentUser: mockGetCurrentUser,
+}));
+
+vi.mock("@/lib/tenant/access", () => ({
+  resolveTenantAdminAccess: mockResolveTenantAccess,
+}));
+
+vi.mock("@/lib/tenant/roles", () => ({
+  getTenantRoleFromHeaders: () => null,
 }));
 
 vi.mock("@/lib/runtimeControls/mode", () => ({
@@ -53,11 +61,8 @@ describe("POST /api/admin/tenant/[tenantId]/runtime-controls/mode", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsRuntimeControlsWriteEnabled.mockReturnValue(true);
-    mockRequireGlobalOrTenantAdmin.mockResolvedValue({
-      ok: true,
-      user: { id: "admin-1" },
-      access: { actorId: "admin-1", isGlobalAdmin: false, tenantId: "tenant-123", membershipRole: "admin" },
-    });
+    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN" });
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
     mockLoadRuntimeControlMode.mockResolvedValue({ mode: "pilot", source: "database" });
     mockPersistRuntimeControlMode.mockResolvedValue({
       id: "tenant-123",
@@ -69,12 +74,20 @@ describe("POST /api/admin/tenant/[tenantId]/runtime-controls/mode", () => {
   });
 
   it("rejects unauthorized callers", async () => {
-    const unauthorizedResponse = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    mockRequireGlobalOrTenantAdmin.mockResolvedValue({ ok: false, response: unauthorizedResponse });
+    mockGetCurrentUser.mockResolvedValue(null);
 
     const response = await POST(buildRequest({ json: { mode: "pilot" } }), params);
 
     expect(response.status).toBe(401);
+    expect(mockPersistRuntimeControlMode).not.toHaveBeenCalled();
+  });
+
+  it("enforces tenant admin access", async () => {
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
+
+    const response = await POST(buildRequest({ json: { mode: "pilot" } }), params);
+
+    expect(response.status).toBe(403);
     expect(mockPersistRuntimeControlMode).not.toHaveBeenCalled();
   });
 

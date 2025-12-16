@@ -1,18 +1,26 @@
 import { Prisma } from "@prisma/client";
-import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
-const mockRequireGlobalOrTenantAdmin = vi.hoisted(() => vi.fn());
+const mockGetCurrentUser = vi.hoisted(() => vi.fn());
+const mockResolveTenantAccess = vi.hoisted(() => vi.fn());
 const mockLoadTenantMode = vi.hoisted(() => vi.fn());
 const mockListFeatureFlags = vi.hoisted(() => vi.fn());
 const mockLoadGuardrails = vi.hoisted(() => vi.fn());
 const mockGetKillSwitchState = vi.hoisted(() => vi.fn());
 const mockWithTenantContext = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/auth/requireGlobalOrTenantAdmin", () => ({
-  requireGlobalOrTenantAdmin: mockRequireGlobalOrTenantAdmin,
+vi.mock("@/lib/auth/user", () => ({
+  getCurrentUser: mockGetCurrentUser,
+}));
+
+vi.mock("@/lib/tenant/access", () => ({
+  resolveTenantAdminAccess: mockResolveTenantAccess,
+}));
+
+vi.mock("@/lib/tenant/roles", () => ({
+  getTenantRoleFromHeaders: () => null,
 }));
 
 vi.mock("@/lib/modes/loadTenantMode", () => ({
@@ -49,11 +57,8 @@ describe("GET /api/admin/tenant/[tenantId]/runtime-controls", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireGlobalOrTenantAdmin.mockResolvedValue({
-      ok: true,
-      user: { id: "user-1" },
-      access: { actorId: "user-1", isGlobalAdmin: false, tenantId: "tenant-123", membershipRole: "admin" },
-    });
+    mockGetCurrentUser.mockResolvedValue({ id: "user-1", role: "ADMIN" });
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
     mockLoadTenantMode.mockResolvedValue({ mode: "pilot", source: "database" });
     mockWithTenantContext.mockImplementation((tenantId: string, callback: () => Promise<unknown>) => callback());
     mockListFeatureFlags.mockResolvedValue([{ name: "flag-a", enabled: true, updatedAt: new Date(), description: null }]);
@@ -61,13 +66,21 @@ describe("GET /api/admin/tenant/[tenantId]/runtime-controls", () => {
     mockGetKillSwitchState.mockReturnValue({ latched: false });
   });
 
-  it("enforces tenant admin access", async () => {
-    const forbidden = NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    mockRequireGlobalOrTenantAdmin.mockResolvedValue({ ok: false, response: forbidden });
+  it("rejects unauthenticated callers", async () => {
+    mockGetCurrentUser.mockResolvedValue(null);
 
     const response = await GET(request, params);
 
-    expect(response).toBe(forbidden);
+    expect(response.status).toBe(401);
+    expect(mockLoadTenantMode).not.toHaveBeenCalled();
+  });
+
+  it("enforces tenant admin access", async () => {
+    mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
+
+    const response = await GET(request, params);
+
+    expect(response.status).toBe(403);
     expect(mockLoadTenantMode).not.toHaveBeenCalled();
   });
 

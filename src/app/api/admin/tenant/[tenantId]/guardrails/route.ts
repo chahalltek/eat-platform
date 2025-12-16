@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { logGuardrailsUpdate } from "@/lib/audit/adminAudit";
-import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
+import { getCurrentUser } from "@/lib/auth/user";
+import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { defaultTenantGuardrails, guardrailsSchema, loadTenantGuardrails, saveTenantGuardrails } from "@/lib/tenant/guardrails";
 
 export const dynamic = "force-dynamic";
@@ -15,9 +17,17 @@ export async function GET(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
-  const access = await requireGlobalOrTenantAdmin(request, tenantId);
-  if (!access.ok) {
-    return access.response;
+  const user = await getCurrentUser(request);
+  const roleHint = getTenantRoleFromHeaders(request.headers);
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint });
+
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const guardrails = await loadTenantGuardrails(tenantId);
@@ -31,9 +41,17 @@ export async function PUT(
 ) {
   const { tenantId } = await params;
   try {
-    const access = await requireGlobalOrTenantAdmin(request, tenantId);
-    if (!access.ok) {
-      return access.response;
+    const user = await getCurrentUser(request);
+    const roleHint = getTenantRoleFromHeaders(request.headers);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const access = await resolveTenantAdminAccess(user, tenantId, { roleHint });
+
+    if (!access.hasAccess) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const payload = guardrailsSchema.parse(await request.json()) as GuardrailsPayload;
@@ -42,7 +60,7 @@ export async function PUT(
 
     await logGuardrailsUpdate({
       tenantId,
-      actorId: access.access.actorId,
+      actorId: user.id,
       preset: payload.preset ?? null,
       scoringStrategy: payload.scoring.strategy,
       thresholds: payload.scoring.thresholds,

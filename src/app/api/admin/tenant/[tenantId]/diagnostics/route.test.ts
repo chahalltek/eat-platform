@@ -1,13 +1,21 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { NextResponse } from "next/server";
 
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
-const mockRequireGlobalOrTenantAdmin = vi.hoisted(() => vi.fn());
+const mockGetCurrentUser = vi.hoisted(() => vi.fn());
+const mockResolveTenantAdminAccess = vi.hoisted(() => vi.fn());
 const mockBuildTenantDiagnostics = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/auth/requireGlobalOrTenantAdmin", () => ({
-  requireGlobalOrTenantAdmin: mockRequireGlobalOrTenantAdmin,
+vi.mock("@/lib/auth/user", () => ({
+  getCurrentUser: mockGetCurrentUser,
+}));
+
+vi.mock("@/lib/tenant/access", () => ({
+  resolveTenantAdminAccess: mockResolveTenantAdminAccess,
+}));
+
+vi.mock("@/lib/tenant/roles", () => ({
+  getTenantRoleFromHeaders: () => null,
 }));
 
 vi.mock("@/lib/tenant/diagnostics", async () => {
@@ -24,34 +32,29 @@ import { GET } from "./route";
 describe("GET /api/admin/tenant/[tenantId]/diagnostics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireGlobalOrTenantAdmin.mockResolvedValue({
-      ok: false,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    });
+    mockGetCurrentUser.mockResolvedValue({ id: "admin-1", role: "ADMIN" });
+    mockResolveTenantAdminAccess.mockResolvedValue({ hasAccess: true, isGlobalAdmin: true, membership: null });
   });
 
   const buildRequest = () =>
     makeRequest({ method: "GET", url: "http://localhost/api/admin/tenant/tenant-a/diagnostics" });
 
   it("rejects unauthenticated callers", async () => {
+    mockGetCurrentUser.mockResolvedValue(null);
+
     const response = await GET(buildRequest(), { params: Promise.resolve({ tenantId: "tenant-a" }) });
 
     expect(response.status).toBe(401);
     expect(mockBuildTenantDiagnostics).not.toHaveBeenCalled();
-    expect(mockRequireGlobalOrTenantAdmin).toHaveBeenCalledWith(expect.any(Request), "tenant-a");
   });
 
   it("enforces tenant or global admin access", async () => {
-    mockRequireGlobalOrTenantAdmin.mockResolvedValue({
-      ok: false,
-      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
-    });
+    mockResolveTenantAdminAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
 
     const response = await GET(buildRequest(), { params: Promise.resolve({ tenantId: "tenant-a" }) });
 
     expect(response.status).toBe(403);
     expect(mockBuildTenantDiagnostics).not.toHaveBeenCalled();
-    expect(mockRequireGlobalOrTenantAdmin).toHaveBeenCalledWith(expect.any(Request), "tenant-a");
   });
 
   it("returns diagnostics for authorized callers", async () => {
@@ -66,11 +69,6 @@ describe("GET /api/admin/tenant/[tenantId]/diagnostics", () => {
       auditLogging: { enabled: true, eventsRecorded: 3 },
       ats: { provider: "bullhorn", status: "failed", lastRunAt: "2024-03-01T00:03:00.000Z", nextAttemptAt: null, summary: null, errorMessage: "boom", retryCount: 0 },
     };
-    mockRequireGlobalOrTenantAdmin.mockResolvedValue({
-      ok: true,
-      user: { id: "admin-1", role: "ADMIN", email: null, displayName: null, tenantId: "tenant-a" },
-      access: { actorId: "admin-1", isGlobalAdmin: true, tenantId: "tenant-a", membershipRole: null },
-    });
     mockBuildTenantDiagnostics.mockResolvedValue(payload);
 
     const response = await GET(buildRequest(), { params: Promise.resolve({ tenantId: "tenant-a" }) });
@@ -82,11 +80,6 @@ describe("GET /api/admin/tenant/[tenantId]/diagnostics", () => {
   });
 
   it("maps missing tenants to 404", async () => {
-    mockRequireGlobalOrTenantAdmin.mockResolvedValue({
-      ok: true,
-      user: { id: "admin-1", role: "ADMIN", email: null, displayName: null, tenantId: "tenant-a" },
-      access: { actorId: "admin-1", isGlobalAdmin: true, tenantId: "tenant-a", membershipRole: null },
-    });
     const { TenantNotFoundError } = await import("@/lib/tenant/diagnostics");
     mockBuildTenantDiagnostics.mockRejectedValue(new TenantNotFoundError("tenant-a"));
 

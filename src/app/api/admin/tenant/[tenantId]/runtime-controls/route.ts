@@ -1,13 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
+import { getCurrentUser } from "@/lib/auth/user";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { getKillSwitchState, KILL_SWITCHES } from "@/lib/killSwitch";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { SYSTEM_MODES } from "@/lib/modes/systemModes";
 import { withTenantContext } from "@/lib/tenant";
+import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { defaultTenantGuardrails, loadTenantGuardrailsWithSchemaStatus } from "@/lib/tenant/guardrails";
+import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { isPrismaUnavailableError } from "@/server/db";
 
 export const dynamic = "force-dynamic";
@@ -69,10 +71,17 @@ async function safeLoadGuardrails(tenantId: string, warnings: string[]) {
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
-  const access = await requireGlobalOrTenantAdmin(request, tenantId);
+  const user = await getCurrentUser(request);
+  const roleHint = getTenantRoleFromHeaders(request.headers);
 
-  if (!access.ok) {
-    return access.response;
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint });
+
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const warnings: string[] = [];
