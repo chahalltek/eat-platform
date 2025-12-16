@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 
 import { getSystemExecutionState, getSystemStatus } from "@/lib/systemStatus";
 import { getRedactedExecutionState, getRedactedSystemStatus, isPublicDemoMode } from "@/lib/demoMode";
+import { requireRuntimeControlsAccess } from "@/lib/auth/runtimeControlsAccess";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   try {
+    const access = await requireRuntimeControlsAccess();
+
+    if (!access.ok) {
+      return access.response;
+    }
+
     if (isPublicDemoMode()) {
       return NextResponse.json({
         statusMap: getRedactedSystemStatus(),

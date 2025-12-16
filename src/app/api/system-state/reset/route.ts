@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 
 import { getRedactedExecutionState, getRedactedSystemStatus, isPublicDemoMode } from "@/lib/demoMode";
-import { normalizeRole, isAdminRole } from "@/lib/auth/roles";
-import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { AgentRunStatus } from "@/server/db";
 import { prisma } from "@/lib/prisma";
 import { getSystemExecutionState, getSystemStatus } from "@/lib/systemStatus";
+import { requireRuntimeControlsAccess } from "@/lib/auth/runtimeControlsAccess";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function POST() {
   try {
+    const access = await requireRuntimeControlsAccess();
+
+    if (!access.ok) {
+      return access.response;
+    }
+
     if (isPublicDemoMode()) {
       return NextResponse.json(
         {
@@ -22,18 +27,6 @@ export async function POST() {
         },
         { status: 403 },
       );
-    }
-
-    const user = await getCurrentUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const role = normalizeRole(user.role);
-
-    if (!role || !isAdminRole(role)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const tenantId = await getCurrentTenantId();
