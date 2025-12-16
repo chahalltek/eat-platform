@@ -2,6 +2,7 @@ import type { LearningAggregate, TenantConfig, TenantLearningSignal } from "@/se
 
 import { prisma } from "@/server/db";
 import { startTiming } from "@/lib/observability/timing";
+import { withTenantConfigSchemaFallback } from "@/lib/tenant/tenantConfigSchemaFallback";
 
 type BenchmarkBasis = "industry" | "region" | "size";
 
@@ -130,10 +131,16 @@ async function loadLatestAggregates(windowDays: number, signalType: string, role
 }
 
 async function loadTenantConfig(tenantId: string) {
-  return prisma.tenantConfig.findUnique({
-    where: { tenantId },
-    select: { networkLearningOptIn: true, networkLearning: true },
-  });
+  const { result, schemaMismatch } = await withTenantConfigSchemaFallback(
+    () =>
+      prisma.tenantConfig.findUnique({
+        where: { tenantId },
+        select: { networkLearningOptIn: true, networkLearning: true },
+      }),
+    { tenantId },
+  );
+
+  return schemaMismatch ? null : result;
 }
 
 export async function getClientRelativeBenchmarks({

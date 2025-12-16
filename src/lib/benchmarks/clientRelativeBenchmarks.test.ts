@@ -2,6 +2,7 @@ import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/server/db";
+import { withTenantConfigSchemaFallback } from "@/lib/tenant/tenantConfigSchemaFallback";
 import { __testing, getClientRelativeBenchmarks } from "./clientRelativeBenchmarks";
 
 vi.mock("@/server/db", () => ({
@@ -10,6 +11,13 @@ vi.mock("@/server/db", () => ({
     tenantLearningSignal: { findMany: vi.fn() },
     learningAggregate: { findFirst: vi.fn(), findMany: vi.fn() },
   },
+}));
+
+vi.mock("@/lib/tenant/tenantConfigSchemaFallback", () => ({
+  withTenantConfigSchemaFallback: vi.fn(async (operation: () => unknown) => ({
+    result: await operation(),
+    schemaMismatch: false,
+  })),
 }));
 
 vi.mock("@/lib/observability/timing", () => ({
@@ -106,5 +114,18 @@ describe("client-relative benchmarking", () => {
     expect(__testing.determineSizeCohort(20)).toBe("emerging");
     expect(__testing.determineSizeCohort(120)).toBe("growth");
     expect(__testing.determineSizeCohort(250)).toBe("enterprise");
+  });
+
+  it("falls back to opt-out when the TenantConfig schema is missing columns", async () => {
+    (withTenantConfigSchemaFallback as unknown as Mock).mockResolvedValueOnce({
+      result: null,
+      schemaMismatch: true,
+      reason: "TenantConfig column missing",
+    });
+
+    const result = await getClientRelativeBenchmarks({ tenantId: "t-1" });
+
+    expect(result.optedIn).toBe(false);
+    expect(prisma.tenantLearningSignal.findMany).not.toHaveBeenCalled();
   });
 });
