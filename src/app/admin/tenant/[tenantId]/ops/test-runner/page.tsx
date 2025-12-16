@@ -35,8 +35,9 @@ export default async function TenantTestRunnerPage({ params }: { params: { tenan
   const targetTenantId = tenantId || currentTenantId || "";
 
   const access = await resolveTenantAdminAccess(user, targetTenantId, { roleHint: headerRole });
+  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
 
-  if (!access.hasAccess) {
+  if (!access.hasAccess && !isGlobalWithoutMembership) {
     return <AccessDenied />;
   }
 

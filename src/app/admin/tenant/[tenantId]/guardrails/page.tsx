@@ -59,7 +59,7 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   const bootstrapTenantId =
     access.isGlobalAdmin && normalizedTenantId === DEFAULT_TENANT_ID ? normalizedTenantId : null;
 
-  if (!access.hasAccess) {
+  if (!access.hasAccess && !access.isGlobalAdmin) {
     return <AccessDenied tenantId={normalizedTenantId} debugEnabled={debugEnabled} />;
   }
 

@@ -244,8 +244,9 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
 
   const access = await resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole });
   const bootstrapTenantId = access.isGlobalAdmin && tenantId === DEFAULT_TENANT_ID ? tenantId : null;
+  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
 
-  if (!access.hasAccess) {
+  if (!access.hasAccess && !isGlobalWithoutMembership) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -354,6 +355,13 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
   return (
     <TenantAdminShell tenantId={tenantId} bootstrapTenantId={bootstrapTenantId}>
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        {isGlobalWithoutMembership ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="font-semibold">Limited membership context</p>
+            <p>You are accessing this tenant as a global admin without explicit tenant membership.</p>
+          </div>
+        ) : null}
+
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-3">
             <EteLogo variant="horizontal" />

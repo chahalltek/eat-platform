@@ -144,7 +144,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
   const bootstrapTenantId =
     access.isGlobalAdmin && requestedTenant === DEFAULT_TENANT_ID ? requestedTenant : null;
 
-  if (!access.hasAccess) {
+  if (!access.hasAccess && !access.isGlobalAdmin) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
