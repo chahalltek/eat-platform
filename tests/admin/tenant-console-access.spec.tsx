@@ -88,6 +88,8 @@ vi.mock("@/lib/auth/user", () => ({
 
 vi.mock("@/lib/tenant", () => ({
   getCurrentTenantId: mocks.getCurrentTenantId,
+  getTenantFromParamsOrSession: (requested: string | null, sessionTenantId: string | null) =>
+    requested ?? sessionTenantId ?? "",
   withTenantContext: async <T,>(tenantId: string, cb: () => Promise<T>) => cb(),
 }));
 

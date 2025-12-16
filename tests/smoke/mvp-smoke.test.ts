@@ -25,7 +25,11 @@ vi.mock("@/lib/tenant/diagnostics", async () => {
     buildTenantDiagnostics: mocks.mockBuildTenantDiagnostics,
   };
 });
-vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: vi.fn().mockResolvedValue("tenant-a") }));
+vi.mock("@/lib/tenant", () => ({
+  getCurrentTenantId: vi.fn().mockResolvedValue("tenant-a"),
+  getTenantFromParamsOrSession: (requested: string | null, sessionTenantId: string | null) =>
+    requested ?? sessionTenantId ?? "",
+}));
 vi.mock("@/lib/tenant/roles", () => ({ getTenantRoleFromHeaders: vi.fn().mockReturnValue(null) }));
 vi.mock("@/lib/auth/requireRole", () => ({ requireRecruiterOrAdmin: mocks.mockRequireRecruiterOrAdmin }));
 vi.mock("@/lib/agents/tenantScope", () => ({

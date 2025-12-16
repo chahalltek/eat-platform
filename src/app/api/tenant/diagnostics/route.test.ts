@@ -12,6 +12,8 @@ vi.mock("@/lib/auth/user", () => ({
 
 vi.mock("@/lib/tenant", () => ({
   getCurrentTenantId: mockGetCurrentTenantId,
+  getTenantFromParamsOrSession: (requested: string | null, sessionTenantId: string | null) =>
+    requested ?? sessionTenantId ?? "",
 }));
 
 vi.mock("@/lib/tenant/diagnostics", async () => {
