@@ -17,6 +17,7 @@ export const SECURITY_EVENT_TYPES = {
   KILL_SWITCH_UPDATED: 'KILL_SWITCH_UPDATED',
   KILL_SWITCH_BLOCKED: 'KILL_SWITCH_BLOCKED',
   HITL_APPROVAL_CHECK: 'HITL_APPROVAL_CHECK',
+  RUNTIME_MODE_CHANGED: 'RUNTIME_MODE_CHANGED',
 } as const;
 
 export type SecurityEventType = (typeof SECURITY_EVENT_TYPES)[keyof typeof SECURITY_EVENT_TYPES];
@@ -227,6 +228,24 @@ export async function logComplianceAlert(params: {
       scope: params.scope,
       violations: params.violations,
       severity: params.severity ?? 'medium',
+    },
+  });
+}
+
+export async function logRuntimeModeChanged(params: {
+  tenantId?: string;
+  userId?: string | null;
+  previousMode: string | null;
+  newMode: string;
+  source?: string;
+}) {
+  return recordSecurityEvent({
+    ...params,
+    eventType: SECURITY_EVENT_TYPES.RUNTIME_MODE_CHANGED,
+    metadata: {
+      previousMode: params.previousMode,
+      newMode: params.newMode,
+      source: params.source ?? null,
     },
   });
 }
