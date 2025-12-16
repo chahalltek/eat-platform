@@ -21,7 +21,6 @@ const ACTION_LABELS: Record<AdminAuditAction, string> = {
   [ADMIN_AUDIT_ACTIONS.AGENT_FLAG_TOGGLED]: "Agent flag toggled",
   [ADMIN_AUDIT_ACTIONS.KILL_SWITCH_TOGGLED]: "Kill switch toggled",
   [ADMIN_AUDIT_ACTIONS.FEATURE_FLAG_TOGGLED]: "Feature flag toggled",
-  [ADMIN_AUDIT_ACTIONS.FEATURE_FLAG_TOGGLED]: "Feature flag toggled",
 };
 
 function formatMeta(row: AuditLogRow) {
