@@ -178,7 +178,7 @@ const statusLegend = [
 ];
 
 const apiMapDocPath = path.join(process.cwd(), "docs/architecture/api-map.md");
-const apiMapDocUrl = "https://github.com/edgeandnode/eat-platform/blob/main/docs/architecture/api-map.md";
+const apiMapDocUrl = "https://github.com/edgeandnode/ete-platform/blob/main/docs/architecture/api-map.md";
 
 const apiMapDocMetadata = getDocLastUpdated(apiMapDocPath);
 const apiMapLastUpdatedIso = apiMapDocMetadata?.lastUpdatedIso ?? null;
