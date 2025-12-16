@@ -1,26 +1,16 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 
-import { getCurrentUser } from "@/lib/auth/user";
-import { getCurrentTenantId } from "@/lib/tenant";
-import { resolveTenantAdminAccess } from "@/lib/tenant/access";
-import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
+import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
 
 import { TenantExportButton } from "./TenantExportButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function TenantAdminPage() {
-  const user = await getCurrentUser();
-  const [tenantId, roleHint] = await Promise.all([
-    getCurrentTenantId(),
-    (async () => getTenantRoleFromHeaders(await headers()))(),
-  ]);
+  const { tenantId, access, isAllowed, isGlobalWithoutMembership, bootstrapTenantId } =
+    await getTenantAdminPageAccess();
 
-  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint });
-  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
-
-  if (!access.hasAccess) {
+  if (!isAllowed) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">

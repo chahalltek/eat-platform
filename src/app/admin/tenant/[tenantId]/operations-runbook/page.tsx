@@ -1,6 +1,9 @@
 import Link from "next/link";
+<<<<<<< ours
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
+=======
+>>>>>>> theirs
 import { ExclamationTriangleIcon, ShieldExclamationIcon } from "@heroicons/react/24/solid";
 import { ArrowTopRightOnSquareIcon, FireIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 
@@ -12,6 +15,10 @@ import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import { buildTenantDiagnostics } from "@/lib/tenant/diagnostics";
+<<<<<<< ours
+=======
+import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
+>>>>>>> theirs
 import { TenantAdminShell } from "../TenantAdminShell";
 
 export const dynamic = "force-dynamic";
@@ -221,6 +228,7 @@ function badgeToneClass(tone: "positive" | "negative" | "neutral" | "caution") {
 }
 
 export default async function OperationsRunbookPage({ params }: { params: { tenantId: string } }) {
+<<<<<<< ours
   const tenantId = params.tenantId?.trim?.() ?? "";
 
   if (!tenantId) {
@@ -245,6 +253,18 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost",
   );
   const accessResult = await requireGlobalOrTenantAdmin(new NextRequest(requestUrl, { headers: headerList }), tenantId);
+=======
+  const {
+    tenantId,
+    access,
+    isAllowed: canViewRunbook,
+    isGlobalWithoutMembership,
+    bootstrapTenantId,
+  } = await getTenantAdminPageAccess({
+    tenantId: params.tenantId,
+    allowAnonymousDefaultTenant: true,
+  });
+>>>>>>> theirs
 
   if (!accessResult.ok) {
     return (

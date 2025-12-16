@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+<<<<<<< ours
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
+=======
+import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
+>>>>>>> theirs
 
 export const dynamic = "force-dynamic";
 
@@ -28,16 +31,17 @@ function AccessDenied() {
 }
 
 export default async function TenantTestRunnerPage({ params }: { params: { tenantId?: string } }) {
+<<<<<<< ours
   const user = await getCurrentUser();
   const tenantId = params.tenantId?.trim?.() ?? "";
   const headerRole = getTenantRoleFromHeaders(await headers());
   const currentTenantId = await getCurrentTenantId();
   const targetTenantId = getTenantFromParamsOrSession(tenantId, currentTenantId);
+=======
+  const { tenantId: targetTenantId, isAllowed } = await getTenantAdminPageAccess({ tenantId: params.tenantId });
+>>>>>>> theirs
 
-  const access = await resolveTenantAdminAccess(user, targetTenantId, { roleHint: headerRole });
-  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
-
-  if (!access.hasAccess && !isGlobalWithoutMembership) {
+  if (!isAllowed) {
     return <AccessDenied />;
   }
 

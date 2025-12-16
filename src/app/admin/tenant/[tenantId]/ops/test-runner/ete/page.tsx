@@ -1,10 +1,7 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
-import { getCurrentUser } from "@/lib/auth/user";
-import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
 import { getTenantTestRunnerCatalog } from "@/lib/testing/testCatalog";
 
 import { EteTestRunnerClient } from "./EteTestRunnerClient";
@@ -28,17 +25,9 @@ function AccessDenied({ message }: { message: string }) {
 }
 
 export default async function EteTestRunnerPage({ params }: { params: { tenantId?: string } }) {
-  const user = await getCurrentUser();
-  const requestedTenant = params.tenantId?.trim?.() ?? "";
-  const headerRole = getTenantRoleFromHeaders(await headers());
+  const { tenantId: requestedTenant, isAllowed } = await getTenantAdminPageAccess({ tenantId: params.tenantId });
 
-  if (!user || !requestedTenant) {
-    return <AccessDenied message="You need a tenant admin role to view the ETE test runner catalog." />;
-  }
-
-  const access = await resolveTenantAdminAccess(user, requestedTenant, { roleHint: headerRole });
-
-  if (!access.hasAccess) {
+  if (!isAllowed) {
     return <AccessDenied message="Switch to a tenant admin account to view this test runner." />;
   }
 

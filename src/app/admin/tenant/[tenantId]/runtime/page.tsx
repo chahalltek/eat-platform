@@ -1,17 +1,14 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { ETECard } from "@/components/ETECard";
 import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
-import { getCurrentUser } from "@/lib/auth/user";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { canManageFeatureFlags, canManageTenants } from "@/lib/auth/permissions";
-import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { withTenantContext } from "@/lib/tenant";
 import { getTenantMode } from "@/lib/tenantMode";
 import { listFeatureFlags } from "@/lib/featureFlags";
-import { resolveTenantAdminAccess } from "@/lib/tenant/access";
+import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
 import { BootstrapAccessBanner } from "../BootstrapAccessBanner";
 import { RuntimeModePanel } from "./RuntimeModePanel";
 import { RuntimeFeatureFlagsPanel } from "./RuntimeFeatureFlagsPanel";
@@ -40,11 +37,9 @@ function buildSafetyContext() {
 }
 
 export default async function TenantRuntimeControlsPage({ params }: { params: { tenantId?: string } }) {
-  const tenantId = params.tenantId?.trim?.() ?? "";
-  const user = await getCurrentUser();
-  const headerRole = getTenantRoleFromHeaders(await headers());
-  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint: headerRole });
-  const bootstrapTenantId = access.isGlobalAdmin && tenantId === DEFAULT_TENANT_ID ? tenantId : null;
+  const { tenantId = "", access, isAllowed, user, bootstrapTenantId } = await getTenantAdminPageAccess({
+    tenantId: params.tenantId,
+  });
   const safety = buildSafetyContext();
 
   const [mode, flags] = await withTenantContext(tenantId, async () => {
@@ -90,7 +85,7 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
             </div>
           ) : null}
 
-          {!access.hasAccess ? (
+          {!isAllowed ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               <p className="font-semibold">Admin role required</p>
               <p>You can view runtime settings, but only tenant administrators can make changes.</p>
@@ -100,8 +95,8 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
           <RuntimeModePanel
             tenantId={tenantId}
             mode={mode}
-            canEdit={canEditMode && access.hasAccess}
-            showRestrictedMessage={!canEditMode || !access.hasAccess}
+            canEdit={canEditMode && isAllowed}
+            showRestrictedMessage={!canEditMode || !isAllowed}
             safetyReason={safety.locked ? safety.reason : null}
           />
 
@@ -126,8 +121,8 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
                 ...flag,
                 updatedAt: flag.updatedAt.toISOString(),
               }))}
-              canEdit={canEditFlags && access.hasAccess}
-              showRestrictedMessage={!canEditFlags || !access.hasAccess}
+              canEdit={canEditFlags && isAllowed}
+              showRestrictedMessage={!canEditFlags || !isAllowed}
               safetyReason={safety.locked ? safety.reason : null}
             />
           </ETECard>

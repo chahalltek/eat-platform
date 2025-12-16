@@ -1,12 +1,15 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+<<<<<<< ours
 import { getCurrentUser } from "@/lib/auth/user";
 import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
+=======
+import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
+>>>>>>> theirs
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 
 import { AdminAccessDebugCard } from "./AdminAccessDebugCard";
@@ -40,13 +43,12 @@ function AccessDenied({ tenantId, debugEnabled }: { tenantId: string; debugEnabl
 }
 
 export default async function GuardrailsPage({ params }: { params: { tenantId?: string } }) {
-  const user = await getCurrentUser();
-  const tenantId = params.tenantId?.trim?.() ?? "";
-  const headerRole = getTenantRoleFromHeaders(await headers());
+  const { tenantId, access, isAllowed, isGlobalWithoutMembership, bootstrapTenantId } =
+    await getTenantAdminPageAccess({ tenantId: params.tenantId });
   const isTestEnv = process.env.NODE_ENV === "test";
   const baseDebugEnabled = process.env.NODE_ENV !== "production";
-  const deniedDebugEnabled = !isTestEnv && baseDebugEnabled;
 
+<<<<<<< ours
   if (!user) {
     return <AccessDenied tenantId={tenantId} debugEnabled={deniedDebugEnabled} />;
   }
@@ -54,12 +56,12 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   const currentTenantId = await getCurrentTenantId();
   const normalizedTenantId = getTenantFromParamsOrSession(tenantId, currentTenantId);
   const access = await resolveTenantAdminAccess(user, normalizedTenantId, { roleHint: headerRole });
+=======
+  const normalizedTenantId = tenantId || "";
+>>>>>>> theirs
   const debugEnabled = !isTestEnv && (baseDebugEnabled || access.isGlobalAdmin);
-  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
-  const bootstrapTenantId =
-    access.isGlobalAdmin && normalizedTenantId === DEFAULT_TENANT_ID ? normalizedTenantId : null;
 
-  if (!access.hasAccess && !access.isGlobalAdmin) {
+  if (!isAllowed) {
     return <AccessDenied tenantId={normalizedTenantId} debugEnabled={debugEnabled} />;
   }
 

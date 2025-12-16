@@ -1,20 +1,15 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { CheckCircleIcon, ExclamationTriangleIcon, XCircleIcon } from "@heroicons/react/24/solid";
 
-import { DEFAULT_TENANT_ID, ROLE_HEADER, USER_HEADER } from "@/lib/auth/config";
-import { getCurrentUser } from "@/lib/auth/user";
-import { normalizeRole } from "@/lib/auth/roles";
-import type { IdentityUser } from "@/lib/auth/types";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import {
   buildTenantDiagnostics,
   TenantNotFoundError,
   type TenantDiagnostics,
 } from "@/lib/tenant/diagnostics";
-import { getTenantMembershipsForUser, resolveTenantAdminAccess } from "@/lib/tenant/access";
-import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
+import { getTenantMembershipsForUser } from "@/lib/tenant/access";
+import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
 import { StatusPill } from "@/components/StatusPill";
 import { ETECard } from "@/components/ETECard";
 import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
@@ -114,30 +109,19 @@ function mapAtsStatus(status: TenantDiagnostics["ats"]["status"]): Status {
 }
 
 export default async function TenantDiagnosticsPage({ params }: { params: { tenantId?: string } }) {
-  const [user, headerList] = await Promise.all([getCurrentUser(), headers()]);
-  const requestedTenant = params.tenantId?.trim?.() ?? "";
-  const headerRole = getTenantRoleFromHeaders(headerList);
+  const {
+    tenantId: requestedTenant,
+    user,
+    access,
+    isAllowed,
+    isGlobalWithoutMembership,
+    bootstrapTenantId,
+  } = await getTenantAdminPageAccess({
+    tenantId: params.tenantId,
+    allowHeaderUserFallback: true,
+  });
 
-  const headerUser: IdentityUser | null = (() => {
-    const headerUserId = headerList.get(USER_HEADER)?.trim();
-    if (!headerUserId) return null;
-
-    const headerEmail = headerList.get("x-eat-user-email")?.trim() ?? null;
-    const headerName = headerList.get("x-eat-user-name")?.trim() ?? headerEmail;
-    const headerRoleValue = normalizeRole(headerList.get(ROLE_HEADER)) ?? null;
-
-    return {
-      id: headerUserId,
-      email: headerEmail,
-      displayName: headerName,
-      role: headerRoleValue,
-      tenantId: headerList.get("x-eat-tenant-id")?.trim() ?? DEFAULT_TENANT_ID,
-    } satisfies IdentityUser;
-  })();
-
-  const resolvedUser = user ?? headerUser;
-
-  if (!resolvedUser || !requestedTenant) {
+  if (!user || !requestedTenant) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -155,17 +139,9 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
     );
   }
 
-  const [currentTenantId, access] = await Promise.all([
-    getCurrentTenantId(),
-    resolveTenantAdminAccess(resolvedUser, requestedTenant, { roleHint: headerRole }),
-  ]);
+  const normalizedCurrentTenantId = (user.tenantId ?? DEFAULT_TENANT_ID).trim();
 
-  const normalizedCurrentTenantId = currentTenantId?.trim?.() ?? "";
-  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
-  const bootstrapTenantId =
-    access.isGlobalAdmin && requestedTenant === DEFAULT_TENANT_ID ? requestedTenant : null;
-
-  if (!access.hasAccess && !access.isGlobalAdmin) {
+  if (!isAllowed) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -184,7 +160,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
   }
 
   const tenantRoles = access.isGlobalAdmin
-    ? await getTenantMembershipsForUser(resolvedUser.id)
+    ? await getTenantMembershipsForUser(user.id)
     : access.membership
       ? [access.membership]
       : [];
@@ -474,9 +450,9 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
                 {JSON.stringify(
                   {
                     user: {
-                      id: resolvedUser.id,
-                      email: resolvedUser.email,
-                      role: resolvedUser.role,
+                      id: user.id,
+                      email: user.email,
+                      role: user.role,
                     },
                     tenantId: requestedTenant,
                     currentTenantId: normalizedCurrentTenantId,
