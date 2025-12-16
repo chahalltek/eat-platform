@@ -2,14 +2,7 @@ import Link from "next/link";
 
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-<<<<<<< ours
-import { getCurrentUser } from "@/lib/auth/user";
-import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
-import { resolveTenantAdminAccess } from "@/lib/tenant/access";
-import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-=======
 import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
->>>>>>> theirs
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 
 import { AdminAccessDebugCard } from "./AdminAccessDebugCard";
@@ -48,17 +41,7 @@ export default async function GuardrailsPage({ params }: { params: { tenantId?: 
   const isTestEnv = process.env.NODE_ENV === "test";
   const baseDebugEnabled = process.env.NODE_ENV !== "production";
 
-<<<<<<< ours
-  if (!user) {
-    return <AccessDenied tenantId={tenantId} debugEnabled={deniedDebugEnabled} />;
-  }
-
-  const currentTenantId = await getCurrentTenantId();
-  const normalizedTenantId = getTenantFromParamsOrSession(tenantId, currentTenantId);
-  const access = await resolveTenantAdminAccess(user, normalizedTenantId, { roleHint: headerRole });
-=======
   const normalizedTenantId = tenantId || "";
->>>>>>> theirs
   const debugEnabled = !isTestEnv && (baseDebugEnabled || access.isGlobalAdmin);
 
   if (!isAllowed) {
