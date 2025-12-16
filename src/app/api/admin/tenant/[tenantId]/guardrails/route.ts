@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { logGuardrailsUpdate } from "@/lib/audit/adminAudit";
-import { requireTenantAdmin } from "@/lib/auth/requireTenantAdmin";
+import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
 import { defaultTenantGuardrails, guardrailsSchema, loadTenantGuardrails, saveTenantGuardrails } from "@/lib/tenant/guardrails";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export async function GET(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
-  const access = await requireTenantAdmin(request, tenantId);
+  const access = await requireGlobalOrTenantAdmin(request, tenantId);
   if (!access.ok) {
     return access.response;
   }
@@ -31,7 +31,7 @@ export async function PUT(
 ) {
   const { tenantId } = await params;
   try {
-    const access = await requireTenantAdmin(request, tenantId);
+    const access = await requireGlobalOrTenantAdmin(request, tenantId);
     if (!access.ok) {
       return access.response;
     }
@@ -42,7 +42,7 @@ export async function PUT(
 
     await logGuardrailsUpdate({
       tenantId,
-      actorId: access.user.id,
+      actorId: access.access.actorId,
       preset: payload.preset ?? null,
       scoringStrategy: payload.scoring.strategy,
       thresholds: payload.scoring.thresholds,
