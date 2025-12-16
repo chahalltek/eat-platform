@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { logGuardrailsUpdate } from "@/lib/audit/adminAudit";
-<<<<<<< ours
 import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
-=======
-import { getCurrentUser } from "@/lib/auth/user";
-import { resolveTenantAdminAccess } from "@/lib/tenant/access";
-import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
->>>>>>> theirs
 import { defaultTenantGuardrails, guardrailsSchema, loadTenantGuardrails, saveTenantGuardrails } from "@/lib/tenant/guardrails";
 
 export const dynamic = "force-dynamic";
@@ -21,23 +15,9 @@ export async function GET(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
-<<<<<<< ours
   const access = await requireGlobalOrTenantAdmin(request, tenantId);
   if (!access.ok) {
     return access.response;
-=======
-  const user = await getCurrentUser(request);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const roleHint = getTenantRoleFromHeaders(request.headers);
-  const access = await resolveTenantAdminAccess(user, tenantId, { roleHint });
-
-  if (!access.hasAccess) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
->>>>>>> theirs
   }
 
   const guardrails = await loadTenantGuardrails(tenantId);
@@ -51,23 +31,9 @@ export async function PUT(
 ) {
   const { tenantId } = await params;
   try {
-<<<<<<< ours
     const access = await requireGlobalOrTenantAdmin(request, tenantId);
     if (!access.ok) {
       return access.response;
-=======
-    const user = await getCurrentUser(request);
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const roleHint = getTenantRoleFromHeaders(request.headers);
-    const access = await resolveTenantAdminAccess(user, tenantId, { roleHint });
-
-    if (!access.hasAccess) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
->>>>>>> theirs
     }
 
     const payload = guardrailsSchema.parse(await request.json()) as GuardrailsPayload;
@@ -76,11 +42,7 @@ export async function PUT(
 
     await logGuardrailsUpdate({
       tenantId,
-<<<<<<< ours
       actorId: access.access.actorId,
-=======
-      actorId: user.id,
->>>>>>> theirs
       preset: payload.preset ?? null,
       scoringStrategy: payload.scoring.strategy,
       thresholds: payload.scoring.thresholds,

@@ -33,6 +33,7 @@
     "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^5.19.0",
     "@tanstack/react-table": "^8.21.3",

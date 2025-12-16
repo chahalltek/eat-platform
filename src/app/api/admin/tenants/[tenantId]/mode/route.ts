@@ -74,13 +74,12 @@ export async function GET(
   return NextResponse.json({ tenantId, mode, warnings });
 }
 
-export async function PATCH(
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
   const user = await getCurrentUser(request);
-  const warnings: string[] = [];
 
   if (!canManageTenants(user)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -107,27 +106,39 @@ export async function PATCH(
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
 
-<<<<<<< ours
-  const updated = await updateTenantMode(tenantId, mode).catch((error) => {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
-      return handleSchemaMismatch(warnings, mode);
+  let previousMode: SystemModeName | null = null;
+
+  try {
+    previousMode = await getTenantMode(tenantId);
+  } catch (error) {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2022") {
+      throw error;
     }
 
-    throw error;
-  });
+    previousMode = handleSchemaMismatch([]);
+  }
 
-  return NextResponse.json({ tenant: updated, warnings });
-=======
-  const previousMode = await getTenantMode(tenantId);
-  const updated = await updateTenantMode(tenantId, mode);
+  let updated;
+
+  try {
+    updated = await updateTenantMode(tenantId, mode);
+  } catch (error) {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2022") {
+      throw error;
+    }
+
+    const fallbackMode = handleSchemaMismatch([], mode);
+    updated = { id: tenantId, mode: fallbackMode, name: tenantId } as const;
+  }
 
   await logModeChange({
     tenantId,
     actorId: user?.id ?? null,
-    previousMode,
+    previousMode: previousMode ?? null,
     newMode: mode,
   });
 
   return NextResponse.json({ tenant: updated });
->>>>>>> theirs
 }
+
+export const PATCH = POST;

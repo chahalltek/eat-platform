@@ -29,27 +29,13 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
   const user = await getCurrentUser();
   const tenantId = params.tenantId?.trim?.() ?? (await getCurrentTenantId()) ?? "";
 
-<<<<<<< ours
-  const access = await resolveTenantAdminAccess(user, targetTenantId, { roleHint: headerRole });
-  const isGlobalWithoutMembership = access.isGlobalAdmin && !access.membership;
-
-  if (!access.hasAccess && !isGlobalWithoutMembership) {
-=======
   if (!canAccessRuntimeControls(user)) {
->>>>>>> theirs
     return <AccessDenied />;
   }
 
   return (
     <TenantAdminShell tenantId={tenantId}>
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        {isGlobalWithoutMembership ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <p className="font-semibold">Limited membership context</p>
-            <p>You are accessing this tenant as a global admin without explicit tenant membership.</p>
-          </div>
-        ) : null}
-
         <header className="flex flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Ops</p>
           <h1 className="text-3xl font-semibold text-zinc-900">Runtime controls</h1>
@@ -58,7 +44,7 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
           </p>
         </header>
 
-        <RuntimeControlsDashboard tenantId={targetTenantId} />
+        <RuntimeControlsDashboard tenantId={tenantId} />
       </div>
     </TenantAdminShell>
   );

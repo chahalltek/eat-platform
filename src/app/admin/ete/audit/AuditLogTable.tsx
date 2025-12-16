@@ -19,11 +19,9 @@ const ACTION_LABELS: Record<AdminAuditAction, string> = {
   [ADMIN_AUDIT_ACTIONS.MODE_CHANGED]: "Mode changed",
   [ADMIN_AUDIT_ACTIONS.GUARDRAILS_UPDATED]: "Guardrails updated",
   [ADMIN_AUDIT_ACTIONS.AGENT_FLAG_TOGGLED]: "Agent flag toggled",
-<<<<<<< ours
   [ADMIN_AUDIT_ACTIONS.KILL_SWITCH_TOGGLED]: "Kill switch toggled",
-=======
   [ADMIN_AUDIT_ACTIONS.FEATURE_FLAG_TOGGLED]: "Feature flag toggled",
->>>>>>> theirs
+  [ADMIN_AUDIT_ACTIONS.FEATURE_FLAG_TOGGLED]: "Feature flag toggled",
 };
 
 function formatMeta(row: AuditLogRow) {
@@ -47,18 +45,18 @@ function formatMeta(row: AuditLogRow) {
     return `${agent} ${latched}`;
   }
 
-<<<<<<< ours
   if (row.action === ADMIN_AUDIT_ACTIONS.KILL_SWITCH_TOGGLED) {
     const key = typeof meta.key === "string" ? meta.key : "kill switch";
     const latched = meta.latched === true ? "latched" : "unlatched";
     const reason = typeof meta.reason === "string" && meta.reason.trim().length > 0 ? meta.reason : "no reason";
     return `${key} ${latched}${meta.latched === true ? ` (${reason})` : ""}`;
-=======
+  }
+
   if (row.action === ADMIN_AUDIT_ACTIONS.FEATURE_FLAG_TOGGLED) {
-    const flag = typeof meta.flagName === "string" ? meta.flagName : "feature flag";
+    const flag = typeof meta.flagName === "string" ? meta.flagName : typeof meta.flagKey === "string" ? meta.flagKey : "feature flag";
     const enabled = meta.enabled === true ? "enabled" : "disabled";
-    return `${flag} ${enabled}`;
->>>>>>> theirs
+    const scope = typeof meta.scope === "string" ? meta.scope : null;
+    return `${flag} ${enabled}${scope ? ` (${scope})` : ""}`;
   }
 
   return "—";
