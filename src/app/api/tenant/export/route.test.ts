@@ -8,7 +8,8 @@ vi.mock("@/lib/auth/requireRole", () => ({
   requireAdminOrDataAccess: vi.fn(),
 }));
 
-vi.mock("@/lib/tenant", () => ({
+vi.mock("@/lib/tenant", async () => ({
+  ...(await vi.importActual<typeof import("@/lib/tenant")>("@/lib/tenant")),
   getCurrentTenantId: vi.fn(),
 }));
 
