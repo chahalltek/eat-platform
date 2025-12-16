@@ -9,9 +9,13 @@ export const ADMIN_AUDIT_ACTIONS = {
   GUARDRAILS_UPDATED: 'GUARDRAILS_UPDATED',
   AGENT_FLAG_TOGGLED: 'AGENT_FLAG_TOGGLED',
 <<<<<<< ours
+<<<<<<< ours
   FEATURE_FLAG_TOGGLED: 'FEATURE_FLAG_TOGGLED',
 =======
   KILL_SWITCH_TOGGLED: 'KILL_SWITCH_TOGGLED',
+>>>>>>> theirs
+=======
+  FEATURE_FLAG_TOGGLED: 'FEATURE_FLAG_TOGGLED',
 >>>>>>> theirs
 } as const;
 
@@ -186,17 +190,27 @@ export async function logAgentFlagToggle(params: {
 }
 
 <<<<<<< ours
+<<<<<<< ours
 export async function logFeatureFlagToggle(params: {
   tenantId?: string;
   actorId?: string | null;
   flagKey: string;
   enabled: boolean;
   scope: 'tenant' | 'global';
+=======
+export async function logFeatureFlagToggle(params: {
+  tenantId?: string;
+  actorId?: string | null;
+  flagName: string;
+  enabled: boolean;
+  previousEnabled?: boolean | null;
+>>>>>>> theirs
 }) {
   return recordAuditLog({
     ...params,
     action: ADMIN_AUDIT_ACTIONS.FEATURE_FLAG_TOGGLED,
     meta: {
+<<<<<<< ours
       flagKey: params.flagKey,
       enabled: params.enabled,
       scope: params.scope,
@@ -217,6 +231,11 @@ export async function logKillSwitchToggle(params: {
       latched: params.latched,
       reason: params.reason ?? null,
       latchedAt: params.latchedAt ?? null,
+>>>>>>> theirs
+=======
+      flagName: params.flagName,
+      enabled: params.enabled,
+      previousEnabled: params.previousEnabled ?? null,
 >>>>>>> theirs
     },
   });

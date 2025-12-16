@@ -6,6 +6,8 @@ const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockResolveTenantAccess = vi.hoisted(() => vi.fn());
 const mockUpdateTenantMode = vi.hoisted(() => vi.fn());
 const mockCanManageTenants = vi.hoisted(() => vi.fn());
+const mockGetTenantMode = vi.hoisted(() => vi.fn());
+const mockLogModeChange = vi.hoisted(() => vi.fn());
 
 const prismaMock = vi.hoisted(() => ({
   tenant: {
@@ -26,11 +28,16 @@ vi.mock("@/lib/tenant/roles", () => ({
 }));
 
 vi.mock("@/lib/tenantMode", () => ({
+  getTenantMode: mockGetTenantMode,
   updateTenantMode: mockUpdateTenantMode,
 }));
 
 vi.mock("@/lib/auth/permissions", () => ({
   canManageTenants: mockCanManageTenants,
+}));
+
+vi.mock("@/lib/audit/adminAudit", () => ({
+  logModeChange: mockLogModeChange,
 }));
 
 vi.mock("@/server/db", () => ({
@@ -49,6 +56,7 @@ describe("POST /api/admin/tenant/[tenantId]/mode", () => {
     prismaMock.tenant.findUnique.mockResolvedValue({ id: "tenant-a" });
     mockCanManageTenants.mockReturnValue(false);
     mockResolveTenantAccess.mockResolvedValue({ hasAccess: false, isGlobalAdmin: false, membership: null });
+    mockGetTenantMode.mockResolvedValue("pilot");
     mockUpdateTenantMode.mockResolvedValue({ id: "tenant-a", name: "Tenant A", mode: "pilot" });
   });
 
@@ -115,5 +123,11 @@ describe("POST /api/admin/tenant/[tenantId]/mode", () => {
     expect(response.status).toBe(200);
     expect(body).toEqual({ tenant: { id: "tenant-a", name: "Tenant A", mode: "pilot" } });
     expect(mockUpdateTenantMode).toHaveBeenCalledWith("tenant-a", "pilot");
+    expect(mockLogModeChange).toHaveBeenCalledWith({
+      tenantId: "tenant-a",
+      actorId: "admin-1",
+      previousMode: "pilot",
+      newMode: "pilot",
+    });
   });
 });

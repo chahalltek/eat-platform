@@ -4,9 +4,10 @@ import { canManageTenants } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
+import { logModeChange } from "@/lib/audit/adminAudit";
 import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
 import { prisma } from "@/server/db";
-import { updateTenantMode } from "@/lib/tenantMode";
+import { getTenantMode, updateTenantMode } from "@/lib/tenantMode";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,15 @@ export async function POST(
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
 
+  const previousMode = await getTenantMode(tenantId);
   const updated = await updateTenantMode(tenantId, mode);
+
+  await logModeChange({
+    tenantId,
+    actorId: user.id,
+    previousMode,
+    newMode: mode,
+  });
 
   return NextResponse.json({ tenant: updated });
 }

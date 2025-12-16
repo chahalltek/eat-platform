@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { logFeatureFlagToggle } from "@/lib/audit/adminAudit";
 import { canManageTenants } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { FEATURE_FLAGS, setFeatureFlag } from "@/lib/featureFlags";
@@ -30,6 +31,13 @@ export async function POST(request: NextRequest) {
 
   const enabled = typeof flag.enabled === "boolean" ? flag.enabled : true;
   const name = flag.name ?? FEATURE_FLAGS.FIRE_DRILL_MODE;
+
+  await logFeatureFlagToggle({
+    tenantId,
+    actorId: user.id,
+    flagName: name,
+    enabled,
+  });
 
   return NextResponse.json({ enabled, name });
 }

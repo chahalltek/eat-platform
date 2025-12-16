@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/user";
+import { logFeatureFlagToggle } from "@/lib/audit/adminAudit";
 import { parseFeatureFlagName, setFeatureFlag } from "@/lib/featureFlags";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
@@ -51,6 +52,13 @@ export async function POST(
   }
 
   const updatedFlag = await setFeatureFlag(parsedName, enabled, tenantId);
+
+  await logFeatureFlagToggle({
+    tenantId,
+    actorId: user.id,
+    flagName: parsedName,
+    enabled: updatedFlag.enabled,
+  });
 
   return NextResponse.json(updatedFlag);
 }

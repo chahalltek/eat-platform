@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { canManageTenants } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
+import { logModeChange } from "@/lib/audit/adminAudit";
 import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
 import { Prisma, prisma } from "@/server/db";
 import { getTenantMode, updateTenantMode } from "@/lib/tenantMode";
@@ -106,6 +107,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
   }
 
+<<<<<<< ours
   const updated = await updateTenantMode(tenantId, mode).catch((error) => {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
       return handleSchemaMismatch(warnings, mode);
@@ -115,4 +117,17 @@ export async function PATCH(
   });
 
   return NextResponse.json({ tenant: updated, warnings });
+=======
+  const previousMode = await getTenantMode(tenantId);
+  const updated = await updateTenantMode(tenantId, mode);
+
+  await logModeChange({
+    tenantId,
+    actorId: user?.id ?? null,
+    previousMode,
+    newMode: mode,
+  });
+
+  return NextResponse.json({ tenant: updated });
+>>>>>>> theirs
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logFeatureFlagToggle } from '@/lib/audit/adminAudit';
 import { getCurrentUser } from '@/lib/auth/user';
 import {
   describeFeatureFlag,
@@ -7,23 +8,24 @@ import {
   parseFeatureFlagName,
   setFeatureFlag,
 } from '@/lib/featureFlags';
+import { getCurrentTenantId } from '@/lib/tenant';
 import { canManageFeatureFlags } from '@/lib/auth/permissions';
 
 async function requireAdmin(request: NextRequest) {
   const user = await getCurrentUser(request);
 
   if (!canManageFeatureFlags(user)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return { response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }), user } as const;
   }
 
-  return null;
+  return { response: null, user } as const;
 }
 
 export async function GET(request: NextRequest) {
-  const guardResponse = await requireAdmin(request);
+  const { response } = await requireAdmin(request);
 
-  if (guardResponse) {
-    return guardResponse;
+  if (response) {
+    return response;
   }
 
   const flags = await listFeatureFlags();
@@ -32,10 +34,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const guardResponse = await requireAdmin(request);
+  const { response, user } = await requireAdmin(request);
 
-  if (guardResponse) {
-    return guardResponse;
+  if (response) {
+    return response;
   }
 
   let body: unknown;
@@ -53,7 +55,15 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'name and enabled are required' }, { status: 400 });
   }
 
-  const updatedFlag = await setFeatureFlag(parsedName, enabled);
+  const tenantId = await getCurrentTenantId(request);
+  const updatedFlag = await setFeatureFlag(parsedName, enabled, tenantId);
+
+  await logFeatureFlagToggle({
+    tenantId,
+    actorId: user?.id ?? null,
+    flagName: parsedName,
+    enabled: updatedFlag.enabled,
+  });
 
   return NextResponse.json({
     ...updatedFlag,

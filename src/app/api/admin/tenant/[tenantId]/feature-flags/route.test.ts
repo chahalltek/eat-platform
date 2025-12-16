@@ -6,6 +6,7 @@ const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockResolveTenantAccess = vi.hoisted(() => vi.fn());
 const mockSetFeatureFlag = vi.hoisted(() => vi.fn());
 const mockCanManageFeatureFlags = vi.hoisted(() => vi.fn());
+const mockLogFeatureFlagToggle = vi.hoisted(() => vi.fn());
 
 const prismaMock = vi.hoisted(() => ({
   tenant: {
@@ -33,6 +34,10 @@ vi.mock("@/lib/featureFlags", async () => {
     setFeatureFlag: mockSetFeatureFlag,
   };
 });
+
+vi.mock("@/lib/audit/adminAudit", () => ({
+  logFeatureFlagToggle: mockLogFeatureFlagToggle,
+}));
 
 vi.mock("@/lib/auth/permissions", () => ({
   canManageFeatureFlags: mockCanManageFeatureFlags,
@@ -130,5 +135,11 @@ describe("POST /api/admin/tenant/[tenantId]/feature-flags", () => {
       updatedAt: "2024-01-01T00:00:00.000Z",
     });
     expect(mockSetFeatureFlag).toHaveBeenCalledWith("scoring", true, "tenant-a");
+    expect(mockLogFeatureFlagToggle).toHaveBeenCalledWith({
+      tenantId: "tenant-a",
+      actorId: "admin-1",
+      flagName: "scoring",
+      enabled: true,
+    });
   });
 });
