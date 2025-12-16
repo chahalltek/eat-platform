@@ -3,14 +3,14 @@ import { Prisma } from "@/server/db";
 import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db";
 import { SYSTEM_MODES, type SystemModeName } from "./systemModes";
 
+export type ModeSource = "database" | "fallback";
+
 const DEFAULT_MODE: SystemModeName = "pilot";
 const DEFAULT_DEFINITION = SYSTEM_MODES[DEFAULT_MODE];
 
 function isMissingTableError(error: unknown) {
   return Boolean(error && typeof error === "object" && (error as { code?: unknown }).code === "P2021");
 }
-
-type ModeSource = "database" | "fallback";
 
 function buildFallbackMode(): { mode: SystemModeName; guardrailsPreset: string; agentsEnabled: string[]; source: ModeSource } {
   return {
@@ -21,7 +21,9 @@ function buildFallbackMode(): { mode: SystemModeName; guardrailsPreset: string; 
   };
 }
 
-export async function loadTenantMode(tenantId: string) {
+export async function loadTenantMode(
+  tenantId: string,
+): Promise<{ mode: SystemModeName; guardrailsPreset: string; agentsEnabled: string[]; source: ModeSource }>{
   try {
     const tenantModeAvailable = await isTableAvailable("TenantMode");
     if (!tenantModeAvailable) {

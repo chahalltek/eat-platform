@@ -1,6 +1,6 @@
 import { describeKillSwitch, getKillSwitchState, KILL_SWITCHES, type KillSwitchName, type KillSwitchState } from "@/lib/killSwitch";
 import { listFeatureFlags, type FeatureFlagRecord } from "@/lib/featureFlags";
-import { loadTenantMode } from "@/lib/modes/loadTenantMode";
+import { loadTenantMode, type ModeSource } from "@/lib/modes/loadTenantMode";
 import { type SystemModeName } from "@/lib/modes/systemModes";
 import { withTenantContext } from "@/lib/tenant";
 
@@ -28,7 +28,7 @@ export type RuntimeControlsContract = {
     name: SystemModeName;
     guardrailsPreset: string;
     agentsEnabled: string[];
-    source: "database" | "fallback";
+    source: ModeSource;
   };
   controls: {
     safety: RuntimeControlDescriptor[];
