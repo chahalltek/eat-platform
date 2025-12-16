@@ -3,8 +3,10 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { CheckCircleIcon, ExclamationTriangleIcon, XCircleIcon } from "@heroicons/react/24/solid";
 
+import { DEFAULT_TENANT_ID, ROLE_HEADER, USER_HEADER } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
-import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { normalizeRole } from "@/lib/auth/roles";
+import type { IdentityUser } from "@/lib/auth/types";
 import { getCurrentTenantId } from "@/lib/tenant";
 import {
   buildTenantDiagnostics,
@@ -112,11 +114,30 @@ function mapAtsStatus(status: TenantDiagnostics["ats"]["status"]): Status {
 }
 
 export default async function TenantDiagnosticsPage({ params }: { params: { tenantId?: string } }) {
-  const user = await getCurrentUser();
+  const [user, headerList] = await Promise.all([getCurrentUser(), headers()]);
   const requestedTenant = params.tenantId?.trim?.() ?? "";
-  const headerRole = getTenantRoleFromHeaders(await headers());
+  const headerRole = getTenantRoleFromHeaders(headerList);
 
-  if (!user || !requestedTenant) {
+  const headerUser: IdentityUser | null = (() => {
+    const headerUserId = headerList.get(USER_HEADER)?.trim();
+    if (!headerUserId) return null;
+
+    const headerEmail = headerList.get("x-eat-user-email")?.trim() ?? null;
+    const headerName = headerList.get("x-eat-user-name")?.trim() ?? headerEmail;
+    const headerRoleValue = normalizeRole(headerList.get(ROLE_HEADER)) ?? null;
+
+    return {
+      id: headerUserId,
+      email: headerEmail,
+      displayName: headerName,
+      role: headerRoleValue,
+      tenantId: headerList.get("x-eat-tenant-id")?.trim() ?? DEFAULT_TENANT_ID,
+    } satisfies IdentityUser;
+  })();
+
+  const resolvedUser = user ?? headerUser;
+
+  if (!resolvedUser || !requestedTenant) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
@@ -136,7 +157,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
   const [currentTenantId, access] = await Promise.all([
     getCurrentTenantId(),
-    resolveTenantAdminAccess(user, requestedTenant, { roleHint: headerRole }),
+    resolveTenantAdminAccess(resolvedUser, requestedTenant, { roleHint: headerRole }),
   ]);
 
   const normalizedCurrentTenantId = currentTenantId?.trim?.() ?? "";
@@ -163,7 +184,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
   }
 
   const tenantRoles = access.isGlobalAdmin
-    ? await getTenantMembershipsForUser(user.id)
+    ? await getTenantMembershipsForUser(resolvedUser.id)
     : access.membership
       ? [access.membership]
       : [];
