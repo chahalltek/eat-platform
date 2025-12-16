@@ -23,7 +23,11 @@ export async function GET(req: NextRequest) {
     return roleCheck.response;
   }
 
-  const tenantId = (await getUserTenantId(req)) ?? DEFAULT_TENANT_ID;
+  const tenantId =
+    req.nextUrl.searchParams.get("tenantId")?.trim() ??
+    req.headers.get("x-eat-tenant-id")?.trim() ??
+    (await getUserTenantId(req)) ??
+    DEFAULT_TENANT_ID;
 
   try {
     const candidates = await prisma.candidate.findMany({
@@ -94,7 +98,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  const tenantId = (parsedBody.tenantId || (await getUserTenantId(req)) || DEFAULT_TENANT_ID).trim();
+  const tenantId =
+    (parsedBody.tenantId ||
+      req.headers.get("x-eat-tenant-id")?.trim() ||
+      (await getUserTenantId(req)) ||
+      DEFAULT_TENANT_ID
+    ).trim();
   const { profile } = parsedBody;
   const jobReqId = parsedBody.jobReqId?.trim();
 

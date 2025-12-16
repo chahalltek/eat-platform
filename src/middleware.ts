@@ -62,6 +62,25 @@ const EXEC_ROLES = new Set<UserRole>([
   USER_ROLES.SYSTEM_ADMIN,
 ]);
 
+const ADMIN_TENANT_PATH_PATTERNS = [
+  /^\/api\/admin\/tenant\/([^/]+)/,
+  /^\/api\/admin\/tenants\/([^/]+)/,
+  /^\/admin\/tenant\/([^/]+)/,
+  /^\/admin\/tenants\/([^/]+)/,
+];
+
+function extractTenantIdFromPath(path: string) {
+  for (const pattern of ADMIN_TENANT_PATH_PATTERNS) {
+    const match = path.match(pattern);
+
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
 function buildLoginRedirect(request: NextRequest) {
   const loginUrl = request.nextUrl.clone();
   loginUrl.pathname = '/login';
@@ -126,10 +145,20 @@ export async function middleware(request: NextRequest) {
   const resolvedUserId = queryUserId || session?.userId || headerUserId || DEFAULT_USER_ID;
 
   const queryTenantId = searchParams.get(TENANT_QUERY_PARAM)?.trim();
-  const resolvedTenantId =
-    session?.tenantId || queryTenantId || headerTenantId || DEFAULT_TENANT_ID;
+  const pathTenantId = extractTenantIdFromPath(requestPath);
+  const sessionTenantId = session?.tenantId?.trim();
 
   const normalizedRole = normalizeRole(session?.role ?? headerRole ?? DEFAULT_USER_ROLE);
+
+  const isGlobalAdmin =
+    normalizedRole === USER_ROLES.ADMIN || normalizedRole === USER_ROLES.SYSTEM_ADMIN;
+  const resolvedTenantId =
+    (isGlobalAdmin && (pathTenantId || queryTenantId || headerTenantId)) ||
+    sessionTenantId ||
+    pathTenantId ||
+    queryTenantId ||
+    headerTenantId ||
+    DEFAULT_TENANT_ID;
 
   if (!normalizedRole) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

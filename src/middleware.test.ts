@@ -91,6 +91,15 @@ describe('middleware role enforcement', () => {
     expect(response.headers.get(ROLE_HEADER)).toBe('ADMIN');
   });
 
+  it('sets tenant header from admin path for global admins', async () => {
+    mockSessionRole('ADMIN');
+
+    const response = await middleware(createRequest('/api/admin/tenant/other-tenant/mode'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get(TENANT_HEADER)).toBe('other-tenant');
+  });
+
   it('allows admin pages for data access users', async () => {
     mockSessionRole('DATA_ACCESS');
 
