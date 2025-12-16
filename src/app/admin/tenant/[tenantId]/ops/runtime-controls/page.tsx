@@ -7,6 +7,7 @@ import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 
 import { TenantAdminShell } from "../../TenantAdminShell";
+import { RuntimeControlsDashboard } from "./RuntimeControlsDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -52,16 +53,7 @@ export default async function TenantRuntimeControlsPage({ params }: { params: { 
           </p>
         </header>
 
-        <section className="space-y-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-sm text-emerald-900">
-          <p className="font-semibold">Controls under construction</p>
-          <p className="text-emerald-800">
-            Soon you will be able to manage runtime toggles like execution mode, kill switches, and rollout gates directly from
-            here.
-          </p>
-          <p className="text-xs text-emerald-700">
-            For now, use the Operations Runbook and Diagnostics to verify current system posture.
-          </p>
-        </section>
+        <RuntimeControlsDashboard tenantId={targetTenantId} />
       </div>
     </TenantAdminShell>
   );
