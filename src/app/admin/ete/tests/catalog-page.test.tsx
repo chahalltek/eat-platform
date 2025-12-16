@@ -77,7 +77,7 @@ describe("CatalogPageClient", () => {
     render(<CatalogPageClient />);
 
     const list = await screen.findByRole("list", { name: /catalog items/i });
-    const runtimeItem = within(list).getByText(/Inspect runtime queue/i).closest("button") as HTMLButtonElement;
+    const runtimeItem = (await within(list).findByText(/Inspect runtime queue/i)).closest("button") as HTMLButtonElement;
     await user.click(runtimeItem);
 
     expect(screen.getByRole("heading", { name: /Inspect runtime queue/i })).toBeInTheDocument();

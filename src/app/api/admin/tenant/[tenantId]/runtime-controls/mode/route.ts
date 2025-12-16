@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { logModeChange } from "@/lib/audit/adminAudit";
 import { logRuntimeModeChanged } from "@/lib/audit/securityEvents";
-import { requireTenantAdmin } from "@/lib/auth/requireTenantAdmin";
+import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
 import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
 import {
   isRuntimeControlsWriteEnabled,
@@ -36,7 +36,7 @@ export async function POST(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
-  const access = await requireTenantAdmin(request, tenantId);
+  const access = await requireGlobalOrTenantAdmin(request, tenantId);
 
   if (!access.ok) {
     return access.response;

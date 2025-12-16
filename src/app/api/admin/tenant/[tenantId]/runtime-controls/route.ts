@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireTenantAdmin } from "@/lib/auth/requireTenantAdmin";
+import { requireGlobalOrTenantAdmin } from "@/lib/auth/requireGlobalOrTenantAdmin";
 import { listFeatureFlags } from "@/lib/featureFlags";
 import { getKillSwitchState, KILL_SWITCHES } from "@/lib/killSwitch";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
@@ -69,7 +69,7 @@ async function safeLoadGuardrails(tenantId: string, warnings: string[]) {
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
-  const access = await requireTenantAdmin(request, tenantId);
+  const access = await requireGlobalOrTenantAdmin(request, tenantId);
 
   if (!access.ok) {
     return access.response;

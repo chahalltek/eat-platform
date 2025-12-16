@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
-const mockRequireTenantAdmin = vi.hoisted(() => vi.fn());
+const mockRequireGlobalOrTenantAdmin = vi.hoisted(() => vi.fn());
 const mockIsRuntimeControlsWriteEnabled = vi.hoisted(() => vi.fn());
 const mockLoadRuntimeControlMode = vi.hoisted(() => vi.fn());
 const mockPersistRuntimeControlMode = vi.hoisted(() => vi.fn());
@@ -16,8 +16,8 @@ const prismaMock = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/lib/auth/requireTenantAdmin", () => ({
-  requireTenantAdmin: mockRequireTenantAdmin,
+vi.mock("@/lib/auth/requireGlobalOrTenantAdmin", () => ({
+  requireGlobalOrTenantAdmin: mockRequireGlobalOrTenantAdmin,
 }));
 
 vi.mock("@/lib/runtimeControls/mode", () => ({
@@ -53,7 +53,11 @@ describe("POST /api/admin/tenant/[tenantId]/runtime-controls/mode", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsRuntimeControlsWriteEnabled.mockReturnValue(true);
-    mockRequireTenantAdmin.mockResolvedValue({ ok: true, user: { id: "admin-1" } });
+    mockRequireGlobalOrTenantAdmin.mockResolvedValue({
+      ok: true,
+      user: { id: "admin-1" },
+      access: { actorId: "admin-1", isGlobalAdmin: false, tenantId: "tenant-123", membershipRole: "admin" },
+    });
     mockLoadRuntimeControlMode.mockResolvedValue({ mode: "pilot", source: "database" });
     mockPersistRuntimeControlMode.mockResolvedValue({
       id: "tenant-123",
@@ -66,7 +70,7 @@ describe("POST /api/admin/tenant/[tenantId]/runtime-controls/mode", () => {
 
   it("rejects unauthorized callers", async () => {
     const unauthorizedResponse = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    mockRequireTenantAdmin.mockResolvedValue({ ok: false, response: unauthorizedResponse });
+    mockRequireGlobalOrTenantAdmin.mockResolvedValue({ ok: false, response: unauthorizedResponse });
 
     const response = await POST(buildRequest({ json: { mode: "pilot" } }), params);
 

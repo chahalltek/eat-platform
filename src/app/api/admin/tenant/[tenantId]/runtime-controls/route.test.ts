@@ -4,15 +4,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeRequest } from "@tests/test-utils/routeHarness";
 
-const mockRequireTenantAdmin = vi.hoisted(() => vi.fn());
+const mockRequireGlobalOrTenantAdmin = vi.hoisted(() => vi.fn());
 const mockLoadTenantMode = vi.hoisted(() => vi.fn());
 const mockListFeatureFlags = vi.hoisted(() => vi.fn());
 const mockLoadGuardrails = vi.hoisted(() => vi.fn());
 const mockGetKillSwitchState = vi.hoisted(() => vi.fn());
 const mockWithTenantContext = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/auth/requireTenantAdmin", () => ({
-  requireTenantAdmin: mockRequireTenantAdmin,
+vi.mock("@/lib/auth/requireGlobalOrTenantAdmin", () => ({
+  requireGlobalOrTenantAdmin: mockRequireGlobalOrTenantAdmin,
 }));
 
 vi.mock("@/lib/modes/loadTenantMode", () => ({
@@ -49,7 +49,11 @@ describe("GET /api/admin/tenant/[tenantId]/runtime-controls", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireTenantAdmin.mockResolvedValue({ ok: true, user: { id: "user-1" } });
+    mockRequireGlobalOrTenantAdmin.mockResolvedValue({
+      ok: true,
+      user: { id: "user-1" },
+      access: { actorId: "user-1", isGlobalAdmin: false, tenantId: "tenant-123", membershipRole: "admin" },
+    });
     mockLoadTenantMode.mockResolvedValue({ mode: "pilot", source: "database" });
     mockWithTenantContext.mockImplementation((tenantId: string, callback: () => Promise<unknown>) => callback());
     mockListFeatureFlags.mockResolvedValue([{ name: "flag-a", enabled: true, updatedAt: new Date(), description: null }]);
@@ -59,7 +63,7 @@ describe("GET /api/admin/tenant/[tenantId]/runtime-controls", () => {
 
   it("enforces tenant admin access", async () => {
     const forbidden = NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    mockRequireTenantAdmin.mockResolvedValue({ ok: false, response: forbidden });
+    mockRequireGlobalOrTenantAdmin.mockResolvedValue({ ok: false, response: forbidden });
 
     const response = await GET(request, params);
 
