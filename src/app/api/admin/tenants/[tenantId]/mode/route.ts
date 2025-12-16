@@ -80,6 +80,7 @@ export async function POST(
 ) {
   const { tenantId } = await params;
   const user = await getCurrentUser(request);
+  const warnings: string[] = [];
 
   if (!canManageTenants(user)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -115,7 +116,7 @@ export async function POST(
       throw error;
     }
 
-    previousMode = handleSchemaMismatch([]);
+    previousMode = handleSchemaMismatch(warnings);
   }
 
   let updated;
@@ -127,7 +128,7 @@ export async function POST(
       throw error;
     }
 
-    const fallbackMode = handleSchemaMismatch([], mode);
+    const fallbackMode = handleSchemaMismatch(warnings, mode);
     updated = { id: tenantId, mode: fallbackMode, name: tenantId } as const;
   }
 
@@ -138,7 +139,7 @@ export async function POST(
     newMode: mode,
   });
 
-  return NextResponse.json({ tenant: updated });
+  return NextResponse.json({ tenant: updated, warnings });
 }
 
 export const PATCH = POST;

@@ -9,6 +9,7 @@ const mockWithTenantContext = vi.hoisted(() => vi.fn());
 const mockResolveTenantAccess = vi.hoisted(() => vi.fn());
 const mockSetFeatureFlag = vi.hoisted(() => vi.fn());
 const mockCanManageTenants = vi.hoisted(() => vi.fn());
+const mockLogFeatureFlagToggle = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/user", () => ({
   getCurrentUser: mockGetCurrentUser,
@@ -34,6 +35,10 @@ vi.mock("@/lib/featureFlags", () => ({
 
 vi.mock("@/lib/auth/permissions", () => ({
   canManageTenants: mockCanManageTenants,
+}));
+
+vi.mock("@/lib/audit/adminAudit", () => ({
+  logFeatureFlagToggle: mockLogFeatureFlagToggle,
 }));
 
 import { POST } from "./route";

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getTenantMode: vi.fn(),
   updateTenantMode: vi.fn(),
   findTenant: vi.fn(),
+  logModeChange: vi.fn(),
 }));
 
 describe("/api/admin/tenants/[tenantId]/mode", () => {
@@ -26,6 +27,10 @@ describe("/api/admin/tenants/[tenantId]/mode", () => {
     vi.mock("@/lib/tenantMode", () => ({
       getTenantMode: mocks.getTenantMode,
       updateTenantMode: mocks.updateTenantMode,
+    }));
+
+    vi.mock("@/lib/audit/adminAudit", () => ({
+      logModeChange: mocks.logModeChange,
     }));
 
     vi.mock("@/server/db", async (importOriginal) => {
