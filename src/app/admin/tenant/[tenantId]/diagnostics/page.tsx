@@ -473,7 +473,11 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
               <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-900 px-3 py-2 text-xs text-zinc-100">
                 {JSON.stringify(
                   {
-                    user: { id: user.id, email: user.email, role: user.role },
+                    user: {
+                      id: resolvedUser.id,
+                      email: resolvedUser.email,
+                      role: resolvedUser.role,
+                    },
                     tenantId: requestedTenant,
                     currentTenantId: normalizedCurrentTenantId,
                     tenantRoles,
