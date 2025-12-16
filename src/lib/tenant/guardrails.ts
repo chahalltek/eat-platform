@@ -50,6 +50,11 @@ async function ensureTenantConfigColumns(): Promise<TenantConfigSchemaStatus> {
   const requiredColumns: { name: string; addColumnSql: Prisma.Sql }[] = [
     { name: "preset", addColumnSql: Prisma.sql`ALTER TABLE "TenantConfig" ADD COLUMN "preset" TEXT` },
     { name: "llm", addColumnSql: Prisma.sql`ALTER TABLE "TenantConfig" ADD COLUMN "llm" JSONB` },
+    {
+      name: "networkLearningOptIn",
+      addColumnSql: Prisma.sql`ALTER TABLE "TenantConfig" ADD COLUMN "networkLearningOptIn" BOOLEAN NOT NULL DEFAULT FALSE`,
+    },
+    { name: "networkLearning", addColumnSql: Prisma.sql`ALTER TABLE "TenantConfig" ADD COLUMN "networkLearning" JSONB` },
   ];
 
   const missingColumns: string[] = [];
