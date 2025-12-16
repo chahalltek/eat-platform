@@ -90,7 +90,7 @@ describe("CatalogPageClient", () => {
     render(<CatalogPageClient clipboard={{ writeText }} />);
 
     const list = await screen.findByRole("list", { name: /catalog items/i });
-    const items = within(list).getAllByRole("listitem");
+    const items = await within(list).findAllByRole("listitem");
     expect(items).toHaveLength(2);
     await user.click(screen.getByRole("button", { name: /copy snippet/i }));
 
