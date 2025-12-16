@@ -1,8 +1,6 @@
 import Link from "next/link";
 
-import { getCurrentUser } from "@/lib/auth/user";
-import { canAccessRuntimeControls } from "@/lib/auth/runtimeControlsAccess";
-import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
+import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
 
 import { TenantAdminShell } from "../../TenantAdminShell";
 import { RuntimeControlsDashboard } from "./RuntimeControlsDashboard";
@@ -26,15 +24,16 @@ function AccessDenied() {
 }
 
 export default async function TenantRuntimeControlsPage({ params }: { params: { tenantId?: string } }) {
-  const user = await getCurrentUser();
-  const tenantId = getTenantFromParamsOrSession(params.tenantId, await getCurrentTenantId());
+  const { tenantId = "", isAllowed, bootstrapTenantId } = await getTenantAdminPageAccess({
+    tenantId: params.tenantId,
+  });
 
-  if (!canAccessRuntimeControls(user)) {
+  if (!isAllowed) {
     return <AccessDenied />;
   }
 
   return (
-    <TenantAdminShell tenantId={tenantId}>
+    <TenantAdminShell tenantId={tenantId} bootstrapTenantId={bootstrapTenantId}>
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Ops</p>
