@@ -70,7 +70,7 @@ const TEST_CATALOG = [
 
 describe("Admin ETE tests page", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders the catalog for admins", async () => {
@@ -107,15 +107,8 @@ describe("AdminEteTestsClient", () => {
   let clipboardWrite: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     clipboardWrite = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, "clipboard", {
-      value: {
-        writeText: clipboardWrite,
-      },
-      writable: true,
-      configurable: true,
-    });
   });
 
   it("filters catalog entries based on search and updates selection", async () => {
@@ -125,6 +118,7 @@ describe("AdminEteTestsClient", () => {
         quickCommands={QUICK_COMMANDS}
         tests={TEST_CATALOG}
         isVercelLimited={false}
+        clipboard={{ writeText: clipboardWrite }}
       />,
     );
 
@@ -148,6 +142,7 @@ describe("AdminEteTestsClient", () => {
         quickCommands={QUICK_COMMANDS}
         tests={TEST_CATALOG}
         isVercelLimited
+        clipboard={{ writeText: clipboardWrite }}
       />,
     );
 

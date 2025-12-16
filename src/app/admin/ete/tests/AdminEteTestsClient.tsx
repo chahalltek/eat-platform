@@ -37,14 +37,26 @@ interface AdminEteTestsClientProps {
   quickCommands: QuickCommand[];
   tests: TestCatalogItem[];
   isVercelLimited?: boolean;
+  clipboard?: Pick<Clipboard, "writeText">;
 }
 
-function CopyButton({ text, label }: { text: string; label: string }) {
+function CopyButton({
+  text,
+  label,
+  clipboard,
+}: {
+  text: string;
+  label: string;
+  clipboard?: Pick<Clipboard, "writeText">;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
+    const activeClipboard = clipboard ?? navigator?.clipboard;
+    if (!activeClipboard?.writeText) return;
+
     try {
-      await navigator.clipboard.writeText(text);
+      await activeClipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch (error) {
@@ -99,7 +111,7 @@ function FilterPill({
   );
 }
 
-export function AdminEteTestsClient({ quickCommands, tests, isVercelLimited = false }: AdminEteTestsClientProps) {
+export function AdminEteTestsClient({ quickCommands, tests, isVercelLimited = false, clipboard }: AdminEteTestsClientProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJobTemplate, setSelectedJobTemplate] = useState<string | null>(null);
   const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null);
@@ -187,7 +199,7 @@ export function AdminEteTestsClient({ quickCommands, tests, isVercelLimited = fa
                     ))}
                   </ul>
                 </div>
-                <CopyButton text={entry.command} label="Copy command" />
+                <CopyButton text={entry.command} label="Copy command" clipboard={clipboard} />
               </div>
               <code className="block rounded-xl bg-zinc-900 px-4 py-3 text-xs text-emerald-100 shadow-inner">
                 {entry.command}
@@ -289,7 +301,7 @@ export function AdminEteTestsClient({ quickCommands, tests, isVercelLimited = fa
                     <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{selectedTest.title}</h3>
                     <p className="text-sm text-zinc-700 dark:text-zinc-300">{selectedTest.description}</p>
                   </div>
-                  <CopyButton text={selectedTest.command} label="Copy command" />
+                  <CopyButton text={selectedTest.command} label="Copy command" clipboard={clipboard} />
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
