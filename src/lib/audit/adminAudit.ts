@@ -8,6 +8,7 @@ export const ADMIN_AUDIT_ACTIONS = {
   MODE_CHANGED: 'MODE_CHANGED',
   GUARDRAILS_UPDATED: 'GUARDRAILS_UPDATED',
   AGENT_FLAG_TOGGLED: 'AGENT_FLAG_TOGGLED',
+  FEATURE_FLAG_TOGGLED: 'FEATURE_FLAG_TOGGLED',
 } as const;
 
 export type AdminAuditAction = (typeof ADMIN_AUDIT_ACTIONS)[keyof typeof ADMIN_AUDIT_ACTIONS];
@@ -176,6 +177,24 @@ export async function logAgentFlagToggle(params: {
       latched: params.latched,
       reason: params.reason ?? null,
       latchedAt: params.latchedAt ?? null,
+    },
+  });
+}
+
+export async function logFeatureFlagToggle(params: {
+  tenantId?: string;
+  actorId?: string | null;
+  flagKey: string;
+  enabled: boolean;
+  scope: 'tenant' | 'global';
+}) {
+  return recordAuditLog({
+    ...params,
+    action: ADMIN_AUDIT_ACTIONS.FEATURE_FLAG_TOGGLED,
+    meta: {
+      flagKey: params.flagKey,
+      enabled: params.enabled,
+      scope: params.scope,
     },
   });
 }

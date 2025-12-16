@@ -29,13 +29,13 @@ function describeScope(flag: FeatureFlagListItem) {
 }
 
 async function updateFlag(tenantId: string, name: string, enabled: boolean): Promise<FlagUpdateResult> {
-  const response = await fetch("/api/feature-flags", {
-    method: "PATCH",
+  const response = await fetch(`/api/admin/tenant/${tenantId}/runtime-controls/feature-flags`, {
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
       [TENANT_HEADER]: tenantId,
     },
-    body: JSON.stringify({ name, enabled }),
+    body: JSON.stringify({ flagKey: name, enabled, scope: "tenant" }),
   });
 
   if (!response.ok) {
