@@ -33,8 +33,8 @@ vi.mock("@/lib/auth/user", () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock("@/lib/auth/tenantAdmin", () => ({
-  requireTenantAdmin: vi.fn(),
+vi.mock("@/lib/tenant/access", () => ({
+  resolveTenantAdminAccess: vi.fn(),
 }));
 
 vi.mock("@/lib/agents/killSwitch", () => ({
@@ -52,13 +52,19 @@ vi.mock("@/lib/tenant/diagnostics", () => ({
 describe("verify:mvp | operations runbook readiness summary", () => {
   it("renders the operational readiness summary even when diagnostics are unavailable", async () => {
     const { getCurrentUser } = await import("@/lib/auth/user");
-    const { requireTenantAdmin } = await import("@/lib/auth/tenantAdmin");
+    const { resolveTenantAdminAccess } = await import("@/lib/tenant/access");
     const { listAgentKillSwitches } = await import("@/lib/agents/killSwitch");
     const { loadTenantMode } = await import("@/lib/modes/loadTenantMode");
     const { buildTenantDiagnostics } = await import("@/lib/tenant/diagnostics");
 
     vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1", role: "ADMIN" });
-    vi.mocked(requireTenantAdmin).mockResolvedValue({ isAdmin: true });
+    vi.mocked(resolveTenantAdminAccess).mockResolvedValue({
+      hasAccess: true,
+      isGlobalAdmin: true,
+      membership: null,
+      roleHint: null,
+      reason: "mocked",
+    });
     vi.mocked(listAgentKillSwitches).mockResolvedValue([
       {
         agentName: "ETE-TS.RUA",
