@@ -19,6 +19,7 @@
     "ci:coverage-debt": "npm run coverage && tsx scripts/coverage-debt-scan.ts",
     "ci:security-baseline": "tsx scripts/security-baseline.ts",
     "ci:client-import-guard": "node scripts/check-client-imports.js",
+    "ci:tenant-admin-guard": "tsx scripts/check-tenant-admin-guards.ts",
     "ci:todo-scan": "tsx scripts/check-todos.ts",
     "ci:conflict-scan": "node scripts/check-merge-conflicts.js",
     "predeploy": "node scripts/deployment-health.js",
