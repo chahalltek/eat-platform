@@ -17,6 +17,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { isAdminOrDataAccessRole, normalizeRole } from "@/lib/auth/roles";
 import { getPlatformHealthSnapshot } from "@/lib/metrics/platformHealth";
 import { EteLogo } from "@/components/EteLogo";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +109,9 @@ export default async function AdminHealthPage() {
   if (!isAdminOrDataAccessRole(user?.role)) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-12">
+        <div className="mb-4 flex justify-end">
+          <BackToConsoleButton />
+        </div>
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-amber-900 shadow-sm">
           <div className="flex items-center gap-3">
             <ShieldCheckIcon className="h-6 w-6" aria-hidden />
@@ -131,9 +135,7 @@ export default async function AdminHealthPage() {
             </div>
           </div>
           <div className="mt-4">
-            <Link href="/" className="text-sm font-medium text-amber-900 underline">
-              Return home
-            </Link>
+            <BackToConsoleButton />
           </div>
         </div>
       </div>
@@ -145,6 +147,9 @@ export default async function AdminHealthPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-indigo-50/40 text-zinc-900 dark:from-black dark:via-zinc-950 dark:to-zinc-900 dark:text-zinc-50">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 sm:px-10">
+        <div className="flex justify-end">
+          <BackToConsoleButton />
+        </div>
         <div className="flex flex-wrap items-center gap-4 rounded-3xl border border-indigo-100 bg-white/90 p-5 shadow-sm ring-1 ring-white/80 dark:border-indigo-900/50 dark:bg-zinc-900/60">
           <EteLogo variant="horizontal" />
           <div className="text-sm text-zinc-700 dark:text-zinc-300">

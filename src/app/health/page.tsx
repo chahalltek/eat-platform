@@ -37,7 +37,7 @@ export default async function HealthPage() {
             href="/"
             className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 transition hover:-translate-y-0.5 hover:border-indigo-200 hover:text-indigo-700 hover:shadow-sm dark:border-zinc-800 dark:text-zinc-100 dark:hover:border-indigo-600/60 dark:hover:text-indigo-200"
           >
-            Back home
+            Back to Console
           </Link>
         </div>
 

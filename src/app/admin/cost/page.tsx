@@ -4,6 +4,7 @@ import type { CostDriverType } from "@/server/db";
 import { getCurrentUser } from "@/lib/auth/user";
 import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { formatCostValue, getMonthlyCostSnapshots } from "@/lib/cost/summary";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 const DRIVER_LABELS: Record<CostDriverType, string> = {
   LLM_CALL: "LLM calls",
@@ -17,6 +18,9 @@ export default async function CostPage() {
   if (!isAdminOrDataAccessRole(user?.role)) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
+        <div className="mb-4 flex justify-end">
+          <BackToConsoleButton />
+        </div>
         <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm">
           <ShieldCheckIcon className="h-6 w-6" aria-hidden />
           <div>
@@ -34,6 +38,9 @@ export default async function CostPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mb-4 flex justify-end">
+        <BackToConsoleButton />
+      </div>
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100">
           <BanknotesIcon className="h-5 w-5" aria-hidden />

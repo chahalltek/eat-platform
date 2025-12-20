@@ -131,7 +131,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
           </p>
           <div className="mt-4">
             <Link href="/" className="text-sm font-medium text-amber-900 underline">
-              Return to home
+              Back to Console
             </Link>
           </div>
         </div>
@@ -151,7 +151,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
           </p>
           <div className="mt-4">
             <Link href="/" className="text-sm font-medium text-amber-900 underline">
-              Return to home
+              Back to Console
             </Link>
           </div>
         </div>

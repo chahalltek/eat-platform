@@ -15,7 +15,7 @@ function AccessDenied() {
         <p className="mt-2 text-sm text-amber-800">You need an admin role to adjust runtime controls.</p>
         <div className="mt-4">
           <Link href="/" className="text-sm font-medium text-amber-900 underline">
-            Return to home
+            Back to Console
           </Link>
         </div>
       </div>

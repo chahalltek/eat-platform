@@ -23,7 +23,7 @@ export default async function RinaTestPage() {
       </div>
       <div className="flex items-center gap-2">
         <ClientActionLink href="/system-map">System Map</ClientActionLink>
-        <ClientActionLink href="/">Back to home</ClientActionLink>
+        <ClientActionLink href="/">Back to Console</ClientActionLink>
       </div>
     </div>
   );
@@ -40,7 +40,7 @@ export default async function RinaTestPage() {
           </p>
           <div className="mt-4">
             <Link href="/" className="text-sm font-medium text-amber-900 underline">
-              Return to home
+              Back to Console
             </Link>
           </div>
         </div>

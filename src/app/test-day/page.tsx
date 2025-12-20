@@ -14,7 +14,7 @@ export default function TestDayPage() {
           href="/"
           className="inline-flex items-center rounded-full border border-slate-200 px-4 py-1.5 text-sm hover:bg-slate-50"
         >
-          Back to home
+          Back to Console
         </Link>
       </div>
 
@@ -55,7 +55,7 @@ export default function TestDayPage() {
           <li>Pipeline displayed: INTAKE → PROFILE → MATCH → CONFIDENCE → EXPLAIN → SHORTLIST</li>
           <li>Each agent responsibility is stated plainly.</li>
           <li>Page uses the EDGE header layout.</li>
-          <li>Back to home works.</li>
+          <li>Back to Console works.</li>
         </ul>
 
         <h3>✅ Test 3: Tenant Diagnostics</h3>
@@ -115,7 +115,7 @@ export default function TestDayPage() {
         <p>Confirm:</p>
         <ul>
           <li>Job from RUA appears.</li>
-          <li>Back to home button visible.</li>
+          <li>Back to Console button visible.</li>
           <li>Table renders cleanly.</li>
         </ul>
 
@@ -167,7 +167,7 @@ export default function TestDayPage() {
         <ul>
           <li>Same background + container.</li>
           <li>Titles look consistent.</li>
-          <li>Back to home present.</li>
+          <li>Back to Console present.</li>
         </ul>
 
         <h3>✅ Test 13: Status Language</h3>

@@ -5,6 +5,7 @@ import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
 import { prisma } from "@/server/db";
 import { MatchRunner } from "./MatchRunner";
 import { FreshnessIndicator } from "../FreshnessIndicator";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 function formatDate(date?: Date | null) {
   if (!date) return "—";
@@ -114,6 +115,7 @@ export default async function JobDetail({
           <Link href="/jobs" className="text-blue-600 hover:text-blue-800">
             Back to list
           </Link>
+          <BackToConsoleButton />
         </div>
       </div>
 

@@ -19,7 +19,7 @@ export default function TableDemoPage() {
             A lightweight integration of TanStack Table with sortable columns and a handful of mock candidates.
           </p>
           <Link href="/" className="text-sm font-semibold text-indigo-700 underline">
-            Back to home
+            Back to Console
           </Link>
         </header>
 

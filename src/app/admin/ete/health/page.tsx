@@ -106,7 +106,7 @@ function AccessDenied() {
           </p>
           <div className="mt-4">
             <Link href="/" className="text-sm font-medium text-amber-900 underline">
-              Return to home
+              Back to Console
             </Link>
           </div>
         </div>

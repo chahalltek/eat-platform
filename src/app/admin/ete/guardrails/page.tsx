@@ -21,7 +21,7 @@ function AccessDenied() {
           </p>
           <div className="mt-4">
             <Link href="/" className="text-sm font-medium text-amber-900 underline">
-              Return to home
+              Back to Console
             </Link>
           </div>
         </div>
@@ -58,7 +58,7 @@ export default async function GuardrailsPage() {
               href="/"
               className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
             >
-              Back to home
+              Back to Console
             </Link>
           </header>
 

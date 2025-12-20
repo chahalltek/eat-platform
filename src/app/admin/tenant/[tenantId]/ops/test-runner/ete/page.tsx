@@ -16,7 +16,7 @@ function AccessDenied({ message }: { message: string }) {
         <p className="mt-2 text-sm text-amber-800">{message}</p>
         <div className="mt-4">
           <Link href="/" className="text-sm font-medium text-amber-900 underline">
-            Return to home
+            Back to Console
           </Link>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { type FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { IntakeSkill, JobIntakeProfile, JobIntakeResponse, MarketSignal } from "@/types/intake";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 function mergeSkills(mustHaves: string[], skills: IntakeSkill[]) {
   const combined = new Map<string, IntakeSkill>();
@@ -147,12 +148,15 @@ export default function JobIntakePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8 space-y-8">
-      <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
         <p className="text-sm text-gray-600">Job Intake</p>
         <h1 className="text-3xl font-semibold text-gray-900">Run Job Intake</h1>
         <p className="mt-2 text-gray-600">
           Paste a job description, review the parsed profile, and save it to the job list.
         </p>
+        </div>
+        <BackToConsoleButton />
       </div>
 
       <form onSubmit={handleRunIntake} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

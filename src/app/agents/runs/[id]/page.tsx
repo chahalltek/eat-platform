@@ -1,4 +1,5 @@
 import { prisma } from '@/server/db';
+import { BackToConsoleButton } from '@/components/BackToConsoleButton';
 
 function formatDateTime(value?: Date | null) {
   if (!value) return '—';
@@ -46,15 +47,21 @@ export default async function AgentRunDetail({
       <div className="p-6">
         <h1 className="text-xl font-semibold">Agent Run</h1>
         <p className="mt-2 text-gray-600">Not found</p>
+        <div className="mt-4">
+          <BackToConsoleButton />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 p-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Agent Run Detail</h1>
-        <p className="text-gray-600">ID: {run.id}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-gray-600">ID: {run.id}</p>
+          <BackToConsoleButton />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 p-4 sm:grid-cols-2">

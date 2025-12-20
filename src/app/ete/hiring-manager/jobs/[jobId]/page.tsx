@@ -7,6 +7,7 @@ import type { Prisma } from "@/server/db";
 import type { ShortlistCandidate, ShortlistRunMeta } from "./HiringManagerView";
 import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: { include: { skills: true } } };
@@ -163,6 +164,9 @@ export default async function HiringManagerPage({ params }: { params: { jobId: s
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50">
       <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="py-10">
+        <div className="mb-4 flex justify-end">
+          <BackToConsoleButton />
+        </div>
         <HiringManagerView
           jobTitle={job.title}
           jobLocation={job.location}

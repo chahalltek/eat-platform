@@ -9,6 +9,7 @@ import { categorizeConfidence } from "./confidence";
 import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
 import { prisma } from "@/server/db";
 import { type HiringOutcomeStatus } from "@/lib/hiringOutcomes";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 export default async function JobMatchesPage({
   params,
@@ -146,6 +147,7 @@ export default async function JobMatchesPage({
           <Link href="/jobs" className="text-blue-600 hover:text-blue-800">
             Jobs list
           </Link>
+          <BackToConsoleButton />
         </div>
       </div>
 

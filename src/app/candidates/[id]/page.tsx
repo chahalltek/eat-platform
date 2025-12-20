@@ -4,6 +4,7 @@ import { JobOpportunitiesTable, type JobOpportunityRow } from "../JobOpportuniti
 import { prisma } from "@/server/db";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 type AgentRunRow = {
   id: string;
@@ -97,6 +98,9 @@ export default async function CandidateDetail({
   if (!candidate) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-10">
+        <div className="mb-4 flex justify-end">
+          <BackToConsoleButton />
+        </div>
         <h1 className="text-2xl font-semibold text-gray-900">Candidate</h1>
         <p className="mt-2 text-gray-600">No candidate found.</p>
         <div className="mt-4">
@@ -118,9 +122,12 @@ export default async function CandidateDetail({
           <h1 className="text-3xl font-semibold text-gray-900">{candidate.fullName}</h1>
           <p className="text-gray-600">ID: {candidate.id}</p>
         </div>
-        <Link href="/candidates" className="text-blue-600 hover:text-blue-800">
-          Back to list
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/candidates" className="text-blue-600 hover:text-blue-800">
+            Back to list
+          </Link>
+          <BackToConsoleButton />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:grid-cols-2">

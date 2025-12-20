@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import type { CandidateProfile, CandidateSkill } from "@/types/candidateIntake";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 type ProfileResponse = {
   profile: CandidateProfile;
@@ -99,12 +100,15 @@ export default function CandidateIntakeClient({ tenantId }: { tenantId: string }
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8 space-y-8">
-      <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
         <p className="text-sm text-gray-600">Candidate Intake</p>
         <h1 className="text-3xl font-semibold text-gray-900">Paste resume text</h1>
         <p className="mt-2 text-gray-600">
           Paste a candidate resume to generate a structured profile. Support for file uploads will be added later.
         </p>
+        </div>
+        <BackToConsoleButton />
       </div>
 
       <form onSubmit={handleRunProfile} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

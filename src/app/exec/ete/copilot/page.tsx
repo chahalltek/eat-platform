@@ -3,6 +3,7 @@ import { canUseStrategicCopilot } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { ExecAccessDenied } from "../ExecAccessDenied";
 import { StrategicCopilotClient } from "./StrategicCopilotClient";
+import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,9 @@ export default async function StrategicCopilotPage() {
   return (
     <ETEClientLayout>
       <main className="mx-auto max-w-5xl px-6 py-10">
+        <div className="mb-4 flex justify-end">
+          <BackToConsoleButton />
+        </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-300">
             ETE Strategic Copilot
