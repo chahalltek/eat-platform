@@ -162,6 +162,9 @@ const DEFAULT_DECISION_STATE: DecisionSnapshot = { favorited: false, removed: fa
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 function normalizeConfidenceToTenPoint(score?: number | null): number | null {
@@ -192,11 +195,16 @@ function formatDecisionLabel(decisionType: DecisionReceipt["decisionType"]) {
 
   return labels[decisionType];
 }
+<<<<<<< ours
+=======
+
+>>>>>>> theirs
 function toDecisionConfidence(candidate?: JobConsoleCandidate): { score: number; band: JobConsoleCandidate["confidenceBand"] } {
   const rawScore = candidate?.confidenceScore;
   const score = typeof rawScore === "number" ? rawScore : null;
   const normalized = score === null ? 5 : Math.min(10, Math.max(0, Number(((score > 10 ? score / 10 : score)).toFixed(2))));
   return { score: normalized, band: candidate?.confidenceBand ?? null };
+<<<<<<< ours
 <<<<<<< ours
 >>>>>>> theirs
 =======
@@ -337,6 +345,66 @@ function actionAlignsWithRecommendation(outcome: JobConsoleCandidate["recommende
 function deriveDefaultAnnotation(outcome: JobConsoleCandidate["recommendedOutcome"], action: DecisionStreamAction): DecisionAnnotation {
   const aligned = actionAlignsWithRecommendation(outcome, action);
   return { alignment: aligned ? "accept" : "override", rationale: "" };
+>>>>>>> theirs
+=======
+}
+
+function scrubSummaryForClient(summary?: string | null) {
+  if (!summary) return "";
+  const sentences = summary
+    .split(".")
+    .map((sentence) => sentence.trim())
+    .filter(Boolean)
+    .filter((sentence) => {
+      const lower = sentence.toLowerCase();
+      return !(
+        lower.startsWith("drivers:") ||
+        lower.startsWith("risks:") ||
+        lower.includes("bullhorn") ||
+        lower.includes("custom field payload") ||
+        lower.includes("ats")
+      );
+    });
+
+  return sentences.join(". ").trim();
+}
+
+type ClientTrustArtifact = {
+  rationaleSummary: string;
+  tradeoffsAccepted: string;
+  confidenceFraming: string;
+  monitoringPlan: string;
+  clipboardText: string;
+};
+
+function buildClientTrustArtifact(receipt: DecisionReceipt): ClientTrustArtifact {
+  const rationaleSummary =
+    scrubSummaryForClient(receipt.summary) ||
+    `${formatDecisionLabel(receipt.decisionType)} for ${receipt.candidateName}. Recruiter rationale is approved for client sharing.`;
+  const tradeoffsAccepted = receipt.tradeoff ?? "Defaulted to recruiter judgment; no special tradeoffs recorded.";
+  const normalizedConfidence = normalizeConfidenceToTenPoint(receipt.confidenceScore);
+  const confidenceFraming =
+    typeof normalizedConfidence === "number"
+      ? `${normalizedConfidence.toFixed(1)}/10 confidence shared as directional context only.`
+      : "Confidence not captured; share as recruiter-reviewed only.";
+  const monitoringPlan =
+    "Post-placement, we will monitor interview feedback and engagement. New signals will be logged without exposing internal scoring.";
+
+  const clipboardText = [
+    `Client Trust Artifact — ${formatDecisionLabel(receipt.decisionType)}`,
+    `Rationale summary: ${rationaleSummary}`,
+    `Tradeoffs accepted: ${tradeoffsAccepted}`,
+    `Confidence framing: ${confidenceFraming}`,
+    `Monitoring plan: ${monitoringPlan}`,
+  ].join("\n");
+
+  return {
+    rationaleSummary,
+    tradeoffsAccepted,
+    confidenceFraming,
+    monitoringPlan,
+    clipboardText,
+  };
 >>>>>>> theirs
 }
 
@@ -782,6 +850,20 @@ function DecisionReceiptList({ receipts }: { receipts: DecisionReceipt[] }) {
     return <p className="text-sm text-slate-600">Receipts will appear after you recommend or reject a candidate.</p>;
   }
 
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = useCallback(async (text: string, receiptId: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(receiptId);
+      setTimeout(() => setCopiedId((prev) => (prev === receiptId ? null : prev)), 2000);
+    } catch (error) {
+      console.warn("Failed to copy client artifact", error);
+      setCopiedId(null);
+    }
+  }, []);
+
   return (
     <div className="space-y-3">
       {receipts.map((receipt) => (
@@ -820,8 +902,66 @@ function DecisionReceiptList({ receipts }: { receipts: DecisionReceipt[] }) {
           <p className="text-[11px] font-semibold text-indigo-700">
             Synced to Bullhorn as {receipt.bullhornTarget === "custom_field" ? "custom field payload" : "note"}.
           </p>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setExpandedId((prev) => (prev === receipt.id ? null : receipt.id))}
+              className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-indigo-800 ring-1 ring-indigo-200 hover:bg-indigo-50"
+            >
+              {expandedId === receipt.id ? "Hide client artifact" : "Generate client artifact"}
+            </button>
+            <span className="text-[11px] text-slate-500">Opt-in only; formatted for client-safe sharing.</span>
+          </div>
+
+          {expandedId === receipt.id ? (
+            <ClientTrustArtifactCard
+              receipt={receipt}
+              copied={copiedId === receipt.id}
+              onCopy={(text) => handleCopy(text, receipt.id)}
+            />
+          ) : null}
         </div>
       ))}
+    </div>
+  );
+}
+
+function ClientTrustArtifactCard({ receipt, copied, onCopy }: { receipt: DecisionReceipt; copied: boolean; onCopy: (text: string) => void }) {
+  const artifact = buildClientTrustArtifact(receipt);
+
+  return (
+    <div className="mt-2 space-y-2 rounded-lg bg-white p-3 ring-1 ring-indigo-200">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-800">Client trust artifact</p>
+        <button
+          type="button"
+          onClick={() => onCopy(artifact.clipboardText)}
+          className={clsx(
+            "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ring-1",
+            copied ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-indigo-600 text-white ring-indigo-200 hover:bg-indigo-700",
+          )}
+        >
+          {copied ? "Copied" : "Copy for client"}
+        </button>
+      </div>
+      <ul className="list-disc space-y-1 pl-4 text-sm text-slate-800">
+        <li>
+          <span className="font-semibold text-slate-900">Rationale summary:</span> {artifact.rationaleSummary}
+        </li>
+        <li>
+          <span className="font-semibold text-slate-900">Tradeoffs accepted:</span> {artifact.tradeoffsAccepted}
+        </li>
+        <li>
+          <span className="font-semibold text-slate-900">Confidence framing:</span> {artifact.confidenceFraming}
+        </li>
+        <li>
+          <span className="font-semibold text-slate-900">Monitoring plan:</span> {artifact.monitoringPlan}
+        </li>
+      </ul>
+      <p className="text-[11px] text-slate-500">
+        Client-safe formatting only includes approved narrative context—no drivers, risks, or internal systems are exposed.
+      </p>
     </div>
   );
 }
