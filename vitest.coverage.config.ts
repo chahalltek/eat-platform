@@ -4,11 +4,17 @@ import baseConfig from "./vitest.config";
 
 const coverageOverrides: UserConfig = {
   test: {
+    environment: "node",
+    environmentMatchGlobs: [
+      ["src/app/api/**", "node"],
+      ["src/server/**", "node"],
+    ],
     coverage: {
       provider: "v8",
-      reporter: ["text", "json", "lcov", "html"],
+      reporter: ["text", "json", "html", "lcov"],
       reportsDirectory: "./coverage",
       all: true,
+<<<<<<< ours
       include: ["src/**/*.{ts,tsx}"],
       thresholds: {
         lines: 100,
@@ -29,6 +35,11 @@ const coverageOverrides: UserConfig = {
           statements: 100,
         },
       },
+=======
+      reportOnFailure: true,
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/__mocks__/**", "**/__generated__/**", "src/**/types/**"],
+>>>>>>> theirs
     },
   },
 };
