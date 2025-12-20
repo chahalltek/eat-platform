@@ -8,6 +8,7 @@ import type { ShortlistCandidate, ShortlistRunMeta } from "./HiringManagerView";
 import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: { include: { skills: true } } };
@@ -78,7 +79,96 @@ function buildWeaknesses(match: MatchResultWithCandidate, requiredSkills: string
   return combined.slice(0, 3);
 }
 
-function toShortlistCandidate(match: MatchResultWithCandidate, requiredSkills: string[]): ShortlistCandidate {
+type ConfidenceSnapshot = {
+  band: "HIGH" | "MEDIUM" | "LOW" | null;
+  score: number | null;
+  reasons: string[];
+};
+
+function extractConfidence(
+  breakdown: MatchResultWithCandidate["candidateSignalBreakdown"],
+): ConfidenceSnapshot | null {
+  if (!breakdown || typeof breakdown !== "object") return null;
+
+  const confidence = (breakdown as { confidence?: unknown }).confidence as Record<string, unknown> | undefined;
+  if (!confidence || typeof confidence !== "object") return null;
+
+  const bandValue =
+    typeof confidence.category === "string"
+      ? confidence.category
+      : typeof confidence.band === "string"
+        ? confidence.band
+        : null;
+  const band = bandValue ? bandValue.toUpperCase() : null;
+  const score = typeof confidence.score === "number" ? confidence.score : null;
+  const reasons = Array.isArray(confidence.reasons)
+    ? (confidence.reasons as unknown[])
+        .filter((reason): reason is string => typeof reason === "string" && reason.trim().length > 0)
+        .map((reason) => reason.trim())
+    : [];
+
+  if (!band && score === null && reasons.length === 0) return null;
+
+  return { band: (band as ConfidenceSnapshot["band"]) ?? null, score, reasons };
+}
+
+function normalizeConfidenceReasons(reasons: string[]): string[] {
+  const normalized = new Set<string>();
+
+  reasons.forEach((reason) => {
+    const trimmed = reason.trim().replace(/[.;\s]+$/g, "");
+    if (!trimmed) return;
+
+    const lower = trimmed.toLowerCase();
+    if (lower.includes("confidence")) return;
+    if (lower.includes("data completeness") || lower.includes("title") || lower.includes("location")) {
+      normalized.add("complete and reliable profile data");
+      return;
+    }
+    if (lower.includes("skill overlap") || lower.includes("skill coverage") || lower.includes("skills")) {
+      normalized.add("strong alignment to the required skills");
+      return;
+    }
+    if (lower.includes("recency") || lower.includes("updated")) {
+      normalized.add("recently updated candidate information");
+      return;
+    }
+
+    normalized.add(trimmed);
+  });
+
+  return Array.from(normalized).slice(0, 3);
+}
+
+function formatReasonsList(reasons: string[]): string {
+  if (reasons.length === 1) return reasons[0];
+  if (reasons.length === 2) return `${reasons[0]} and ${reasons[1]}`;
+
+  return `${reasons[0]}, ${reasons[1]}, and ${reasons[2]}`;
+}
+
+function buildConfidenceStatement(
+  confidence: ConfidenceSnapshot | null,
+  enableSignal: boolean,
+  reasons: string[],
+): string | null {
+  if (!enableSignal) return null;
+  if (!confidence || confidence.band !== "HIGH") return null;
+
+  const reasonsForStatement = reasons.length ? reasons : ["strong alignment to the role requirements"];
+
+  return `This recommendation was made with high confidence based on ${formatReasonsList(reasonsForStatement)}.`;
+}
+
+function toShortlistCandidate(
+  match: MatchResultWithCandidate,
+  requiredSkills: string[],
+  options: { enableConfidenceSignal: boolean },
+): ShortlistCandidate {
+  const confidence = extractConfidence(match.candidateSignalBreakdown);
+  const confidenceReasons = normalizeConfidenceReasons(confidence?.reasons ?? []);
+  const confidenceStatement = buildConfidenceStatement(confidence, options.enableConfidenceSignal, confidenceReasons);
+
   return {
     id: match.id,
     candidateId: match.candidateId,
@@ -92,7 +182,11 @@ function toShortlistCandidate(match: MatchResultWithCandidate, requiredSkills: s
     role: match.candidate.currentTitle ?? match.candidate.currentCompany ?? null,
     location: match.candidate.location,
     email: match.candidate.email,
-    score: match.score ?? null,
+    matchScore: match.score ?? null,
+    confidenceScore: confidence?.score ?? null,
+    confidenceBand: confidence?.band ?? null,
+    confidenceReasons,
+    confidenceStatement,
   };
 }
 
@@ -133,19 +227,22 @@ export default async function HiringManagerPage({ params }: { params: { jobId: s
     redirect("/");
   }
 
-  const job = await prisma.jobReq.findUnique({
-    where: { id: params.jobId },
-    include: {
-      customer: { select: { name: true } },
-      skills: true,
-      matchResults: {
-        include: {
-          candidate: { include: { skills: true } },
+  const [job, clientConfidenceSignalEnabled] = await Promise.all([
+    prisma.jobReq.findUnique({
+      where: { id: params.jobId },
+      include: {
+        customer: { select: { name: true } },
+        skills: true,
+        matchResults: {
+          include: {
+            candidate: { include: { skills: true } },
+          },
+          orderBy: { score: "desc" },
         },
-        orderBy: { score: "desc" },
       },
-    },
-  });
+    }),
+    isFeatureEnabled(FEATURE_FLAGS.CLIENT_CONFIDENCE_SIGNAL),
+  ]);
 
   if (!job) {
     notFound();
@@ -159,7 +256,9 @@ export default async function HiringManagerPage({ params }: { params: { jobId: s
 
   const requiredSkills = job.skills.filter((skill) => skill.required).map((skill) => skill.name);
   const shortlistMeta = normalizeShortlistRunMeta(shortlistedRuns, job.id);
-  const shortlist = job.matchResults.map((match) => toShortlistCandidate(match, requiredSkills));
+  const shortlist = job.matchResults.map((match) =>
+    toShortlistCandidate(match, requiredSkills, { enableConfidenceSignal: clientConfidenceSignalEnabled }),
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50">

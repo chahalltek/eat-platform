@@ -27,7 +27,11 @@ export type ShortlistCandidate = {
   role?: string | null;
   location?: string | null;
   email?: string | null;
-  score?: number | null;
+  matchScore?: number | null;
+  confidenceScore?: number | null;
+  confidenceBand?: "HIGH" | "MEDIUM" | "LOW" | null;
+  confidenceReasons?: string[];
+  confidenceStatement?: string | null;
 };
 
 type HiringManagerViewProps = {
@@ -66,11 +70,16 @@ export function HiringManagerView({
     setCopyStatus("idle");
   }, [selected]);
 
-  function confidenceBand(score?: number | null): string {
-    if (typeof score !== "number") return "Confidence: Not captured";
-    if (score >= 80) return "Confidence: High";
-    if (score >= 60) return "Confidence: Medium";
-    return "Confidence: Low";
+  function formatConfidence(candidate: ShortlistCandidate): string {
+    if (candidate.confidenceBand === "HIGH") return "Confidence: High";
+    if (candidate.confidenceBand === "MEDIUM") return "Confidence: Medium";
+    if (candidate.confidenceBand === "LOW") return "Confidence: Low";
+
+    if (typeof candidate.confidenceScore === "number") {
+      return `Confidence score: ${Math.round(candidate.confidenceScore)}%`;
+    }
+
+    return "Confidence: Not captured";
   }
 
   function buildJustification(candidate: ShortlistCandidate): string {
@@ -102,7 +111,11 @@ export function HiringManagerView({
       parts.push(`${index + 1}. ${risk}`);
     });
 
-    parts.push(confidenceBand(candidate.score));
+    if (candidate.confidenceStatement) {
+      parts.push(candidate.confidenceStatement);
+    }
+
+    parts.push(formatConfidence(candidate));
 
     return parts.join("\n");
   }
@@ -256,6 +269,14 @@ export function HiringManagerView({
                         {candidate.shortlistReason}
                       </p>
                     ) : null}
+                    {candidate.confidenceStatement ? (
+                      <div className="mt-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-200">
+                          Why we&apos;re confident
+                        </p>
+                        <p className="mt-1 leading-relaxed">{candidate.confidenceStatement}</p>
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     {candidate.shortlisted ? (
@@ -333,6 +354,19 @@ export function HiringManagerView({
                 <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 dark:text-indigo-300">
                   Shortlist reason: {selected.shortlistReason}
                 </p>
+              ) : null}
+              {selected.confidenceStatement ? (
+                <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/80 p-3 text-sm text-emerald-900 dark:border-emerald-800/50 dark:bg-emerald-900/30 dark:text-emerald-100">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-200">Why we&apos;re confident</p>
+                  <p className="mt-2 leading-relaxed">{selected.confidenceStatement}</p>
+                  {selected.confidenceReasons && selected.confidenceReasons.length ? (
+                    <ul className="mt-2 list-disc space-y-1 pl-4 text-xs">
+                      {selected.confidenceReasons.map((reason) => (
+                        <li key={`${selected.id}-confidence-${reason}`}>{reason}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
               ) : null}
               <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">Pass/fail is derived from stored shortlist records; actions are disabled.</p>
             </div>
