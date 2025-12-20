@@ -40,6 +40,7 @@ export type JobConsoleProps = {
   }[];
   modeLabel: string;
   modeDescription?: string | null;
+<<<<<<< ours
   defaultTradeoffs: TradeoffDeclaration;
 };
 
@@ -58,6 +59,9 @@ type DecisionReceipt = {
   createdBy?: { id?: string; name?: string | null; email?: string | null };
   bullhornNote?: string;
   bullhornTarget?: "note" | "custom_field";
+=======
+  showDecisionMomentCues?: boolean;
+>>>>>>> theirs
 };
 
 function normalizeExplanation(
@@ -885,7 +889,11 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     agentState,
     modeLabel,
     modeDescription,
+<<<<<<< ours
     defaultTradeoffs,
+=======
+    showDecisionMomentCues = false,
+>>>>>>> theirs
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
     ...candidate,
@@ -1488,7 +1496,22 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           </button>
         </div>
 
+<<<<<<< ours
         <RecommendationDiffPanel changes={changeLog} onClear={() => setChangeLog([])} />
+=======
+        {showDecisionMomentCues && visibleCandidates.length > 0 ? (
+          <div className="flex flex-col gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+            <div className="flex items-center gap-2 font-semibold">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-indigo-600" aria-hidden />
+              You are entering a decision moment
+            </div>
+            <ul className="list-disc space-y-1 pl-5 text-indigo-900/80">
+              <li>Reasoning will be saved</li>
+              <li>Outcome will sync back to Bullhorn</li>
+            </ul>
+          </div>
+        ) : null}
+>>>>>>> theirs
 
         <ResultsTable
           candidates={visibleCandidates}
