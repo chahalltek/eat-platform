@@ -62,15 +62,10 @@ export default function HelpPage() {
         </div>
       </section>
 
-<<<<<<< ours
       <div className="space-y-6">
         <DidWeReinventBullhorn entry={decisionSopContent} />
         <DidWeReinventBullhorn entry={eteVsBullhornContent} />
       </div>
-=======
-      <DidWeReinventBullhorn entry={decisionSopContent} />
-      <DidWeReinventBullhorn entry={eteVsBullhornContent} />
->>>>>>> theirs
 
       <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

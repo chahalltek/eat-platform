@@ -14,21 +14,9 @@ import {
   type DecisionStreamAction,
   type DecisionStreamItem,
 } from "@/lib/metrics/decisionStreamClient";
-<<<<<<< ours
-=======
 import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
->>>>>>> theirs
 import { formatTradeoffDeclaration, resolveTradeoffs, type TradeoffDeclaration } from "@/lib/matching/tradeoffs";
-<<<<<<< ours
 import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
-<<<<<<< ours
-import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
-=======
-import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
-import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
->>>>>>> theirs
-=======
->>>>>>> theirs
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -60,10 +48,7 @@ export type JobConsoleProps = {
   showDecisionMomentCues?: boolean;
   archetype?: NonNullable<ReturnType<typeof describeAssignment>> | null;
   showSopContextualLink?: boolean;
-<<<<<<< ours
-=======
-  bullhornWritebackEnabled: boolean;
->>>>>>> theirs
+  bullhornWritebackEnabled?: boolean;
 };
 
 type DecisionReceipt = {
@@ -1221,23 +1206,9 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     modeDescription,
     defaultTradeoffs,
     showDecisionMomentCues = false,
-<<<<<<< ours
-<<<<<<< ours
     archetype,
     showSopContextualLink = false,
-    defaultTradeoffs,
-    showDecisionMomentCues = false,
-    archetype,
-    showSopContextualLink = false,
-=======
-    showSopContextualLink = false,
-    archetype,
->>>>>>> theirs
-=======
-    archetype,
-    showSopContextualLink = false,
-    bullhornWritebackEnabled,
->>>>>>> theirs
+    bullhornWritebackEnabled = false,
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
     ...candidate,
@@ -1480,11 +1451,8 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         rationale: annotation.rationale.trim() || undefined,
       } as DecisionReceipt["recommendation"];
       const tradeoff = archetype?.defaultTradeoff ?? describeTradeoffFromStrategy(shortlistStrategy);
-<<<<<<< ours
-=======
-
       const normalizedConfidence = normalizeConfidenceToTenPoint(candidate.confidenceScore ?? 5);
->>>>>>> theirs
+      const normalizedConfidence = normalizeConfidenceToTenPoint(candidate.confidenceScore ?? 5);
 
       const payload = {
         jobId,
@@ -1499,19 +1467,6 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         bullhornTarget: "note" as const,
         shortlistStrategy,
         recommendation,
-<<<<<<< ours
-        archetype: archetype
-          ? {
-              id: archetype.id,
-              source: archetype.source ?? "auto",
-              reason: archetype.reason,
-              confidence: archetype.confidence,
-            }
-          : undefined,
-<<<<<<< ours
-=======
-=======
->>>>>>> theirs
         archetype: archetype
           ? {
               id: archetype.id,

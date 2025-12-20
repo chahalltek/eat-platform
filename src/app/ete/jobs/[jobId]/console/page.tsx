@@ -19,10 +19,7 @@ import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
 import { extractArchetypeFromIntent } from "@/lib/jobIntent";
 import { getDecisionCultureCues } from "@/lib/judgmentMemory/culturalCues";
 import { DecisionCultureCallouts } from "./DecisionCultureCallouts";
-<<<<<<< ours
-=======
 import { HARD_FEATURE_FLAGS, isHardFeatureEnabled } from "@/config/featureFlags";
->>>>>>> theirs
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: true };
@@ -150,12 +147,6 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
   const availability = await getAgentAvailability(tenantId);
   const showDecisionMomentCues = await isFeatureEnabled(FEATURE_FLAGS.DECISION_MOMENT_CUES);
   const showSopContextualLinks = await isFeatureEnabled(FEATURE_FLAGS.SOP_CONTEXTUAL_LINKS);
-<<<<<<< ours
-  const showCultureCues = await isFeatureEnabled(FEATURE_FLAGS.DECISION_CULTURE_CUES);
-<<<<<<< ours
-=======
-=======
->>>>>>> theirs
   const showCultureCues = await isFeatureEnabled(FEATURE_FLAGS.DECISION_CULTURE_CUES);
   const bullhornWritebackEnabled = isHardFeatureEnabled(HARD_FEATURE_FLAGS.REAL_ATS_WRITEBACK_ENABLED);
   const agents: JobConsoleProps["agentState"] = [
@@ -173,22 +164,9 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
   const initialCandidates = buildInitialCandidates(job.matchResults);
   const mustHaveSkills = job.skills.filter((skill) => skill.required).map((skill) => skill.name);
   const archetype = extractArchetypeFromIntent(job.jobIntent?.intent);
-<<<<<<< ours
   const cultureCues = showCultureCues
     ? await getDecisionCultureCues({ clientId: job.customerId, roleType: job.title })
     : [];
-<<<<<<< ours
-=======
-  const cultureCues = showCultureCues
-    ? await getDecisionCultureCues({ clientId: job.customerId, roleType: job.title })
-    : [];
-  const archetype = extractArchetypeFromIntent(job.jobIntent?.intent);
->>>>>>> theirs
-=======
-  const cultureCues = showCultureCues
-    ? await getDecisionCultureCues({ clientId: job.customerId, roleType: job.title })
-    : [];
->>>>>>> theirs
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50">
@@ -211,17 +189,8 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
           defaultTradeoffs={defaultTradeoffs}
           showDecisionMomentCues={showDecisionMomentCues}
           archetype={archetype}
-<<<<<<< ours
-          showSopContextualLink={showSopContextualLinks}
-<<<<<<< ours
-=======
-          showSopContextualLink={showSopContextualLinks}
-          archetype={archetype}
->>>>>>> theirs
-=======
           showSopContextualLink={showSopContextualLinks}
           bullhornWritebackEnabled={bullhornWritebackEnabled}
->>>>>>> theirs
         />
       </ETEClientLayout>
     </div>

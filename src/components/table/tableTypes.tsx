@@ -10,19 +10,6 @@ export type ETETableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
 
 export type TableAccessorKey<TData> = Extract<keyof TData, string>;
 
-<<<<<<< ours
-const STATUS_VARIANT_CLASSES = {
-  success:
-    "bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200 dark:bg-emerald-900/60 dark:text-emerald-50 dark:ring-emerald-500/60",
-  warning:
-    "bg-amber-100 text-amber-900 ring-1 ring-amber-200 dark:bg-amber-900/60 dark:text-amber-50 dark:ring-amber-500/60",
-  error:
-    "bg-rose-100 text-rose-900 ring-1 ring-rose-200 dark:bg-rose-900/60 dark:text-rose-50 dark:ring-rose-500/60",
-  info:
-    "bg-blue-100 text-blue-900 ring-1 ring-blue-200 dark:bg-blue-900/60 dark:text-blue-50 dark:ring-blue-500/60",
-  neutral:
-    "bg-slate-100 text-slate-900 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-50 dark:ring-slate-600",
-=======
 const STATUS_VARIANT_STYLES: Record<
   StatusVariant,
   { className: string; accent: string }
@@ -52,7 +39,6 @@ const STATUS_VARIANT_STYLES: Record<
       "border border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100",
     accent: "rgba(113, 113, 122, 0.34)",
   },
->>>>>>> theirs
 } as const;
 
 export type StatusVariant = keyof typeof STATUS_VARIANT_STYLES;

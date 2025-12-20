@@ -1,6 +1,8 @@
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { StatusPill } from "@/components/StatusPill";
+import { getCurrentUser } from "@/lib/auth";
+import { isAdminRole } from "@/lib/auth/roles";
 
 const modes = [
   {
@@ -135,11 +137,7 @@ const quickGuideItems = [
     description: "Follow the Fire Drill triggers and steps to stabilize the system when upstream vendors wobble.",
     href: "#fire-drill",
   },
-<<<<<<< ours
 ] as const;
-
-=======
->>>>>>> theirs
 const whereEteFitsPoints = [
   "Sourcing ends when a qualified pool exists",
   "Recruiting judgment begins when candidates are compared",
@@ -147,7 +145,6 @@ const whereEteFitsPoints = [
   "Bullhorn remains the system of record for outcomes and activity",
 ] as const;
 
-<<<<<<< ours
 const sopChangeLog = [
   {
     date: "2024-06-12",
@@ -172,10 +169,6 @@ export default async function OperationsRunbookPage() {
   const currentUser = await getCurrentUser();
   const isAdminViewer = isAdminRole(currentUser?.role);
   const changeLogVisible = !SOP_CHANGE_LOG_ADMIN_ONLY || isAdminViewer;
-
-=======
-export default function OperationsRunbookPage() {
->>>>>>> theirs
   return (
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-8">
       <nav
@@ -241,7 +234,6 @@ export default function OperationsRunbookPage() {
         </ul>
       </section>
 
-<<<<<<< ours
       <section
         id="quick-guide"
         className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
@@ -298,55 +290,7 @@ export default function OperationsRunbookPage() {
             >
               {SOP_CHANGE_LOG_ADMIN_ONLY ? "Optional: Admin visibility" : "Visible to all"}
             </span>
-=======
-      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP Touchpoints</p>
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">How SOP moments map to ETE agents</h2>
-            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
-              Explanatory mapping for the SOP only&mdash;process owners stay in control, and agents provide optional system support
-              when those steps are enabled.
-            </p>
           </div>
-          <StatusPill status="info" label="Reference only" />
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
-          <table className="min-w-full divide-y divide-indigo-100 text-sm">
-            <thead className="bg-indigo-50/80 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">SOP Moment</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Supported By (System)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-indigo-100/80 dark:divide-indigo-800/60">
-              {sopTouchpoints.map((touchpoint) => (
-                <tr key={touchpoint.moment} className="bg-white/70 text-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100">
-                  <td className="px-4 py-3 font-semibold text-indigo-900 dark:text-indigo-100">{touchpoint.moment}</td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{touchpoint.supportedBy}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="rounded-2xl bg-indigo-50/70 p-4 text-sm text-indigo-900 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
-          <p className="font-semibold">Process vs. system clarity</p>
-          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
-            This table shows where the system can assist SOP moments; it is not a mandate to run every step through the platform.
-          </p>
-        </div>
-      </section>
-
-      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Modes</p>
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Mode behaviors and recommended use</h2>
->>>>>>> theirs
-          </div>
-        </div>
 
         {changeLogVisible ? (
           <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
