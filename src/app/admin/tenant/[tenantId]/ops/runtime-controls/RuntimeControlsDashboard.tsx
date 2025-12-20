@@ -25,6 +25,7 @@ function classNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
 
+<<<<<<< ours
 type ToggleSwitchProps = {
   checked: boolean;
   disabled?: boolean;
@@ -59,6 +60,13 @@ function ToggleSwitch({
     </button>
   );
 }
+=======
+const switchTrackClasses =
+  "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-60 data-[state=checked]:bg-indigo-600 data-[state=unchecked]:bg-zinc-200 dark:data-[state=checked]:bg-indigo-500 dark:data-[state=unchecked]:bg-zinc-700";
+
+const switchThumbClasses =
+  "pointer-events-none block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0 dark:bg-zinc-900";
+>>>>>>> theirs
 
 export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardProps) {
   const [payload, setPayload] = useState<RuntimeControlPayload | null>(null);
@@ -312,10 +320,26 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                   checked={record.latched}
                   onChange={() => toggleKillSwitch(record)}
                   disabled={payload.readOnly || pendingKillSwitch === record.agentName}
+<<<<<<< ours
                   activeTrackClassName="bg-rose-500"
                   inactiveTrackClassName="bg-emerald-500"
                   srLabel="Toggle kill switch"
                 />
+=======
+                  data-state={record.latched ? "checked" : "unchecked"}
+                  className={classNames(
+                    switchTrackClasses,
+                    "data-[state=checked]:bg-indigo-600 dark:data-[state=checked]:bg-indigo-500",
+                  )}
+                >
+                  <span className="sr-only">Toggle kill switch</span>
+                  <span
+                    aria-hidden
+                    data-state={record.latched ? "checked" : "unchecked"}
+                    className={classNames(switchThumbClasses)}
+                  />
+                </Switch>
+>>>>>>> theirs
               </div>
             );
           })}
@@ -350,10 +374,26 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                   checked={flag.enabled}
                   onChange={() => toggleFlag(flag)}
                   disabled={payload.readOnly || pendingFlag === flag.name}
+<<<<<<< ours
                   activeTrackClassName="bg-indigo-600"
                   inactiveTrackClassName="bg-zinc-300"
                   srLabel="Toggle feature flag"
                 />
+=======
+                  data-state={flag.enabled ? "checked" : "unchecked"}
+                  className={classNames(
+                    switchTrackClasses,
+                    "data-[state=checked]:bg-indigo-600 dark:data-[state=checked]:bg-indigo-500",
+                  )}
+                >
+                  <span className="sr-only">Toggle feature flag</span>
+                  <span
+                    aria-hidden
+                    data-state={flag.enabled ? "checked" : "unchecked"}
+                    className={classNames(switchThumbClasses)}
+                  />
+                </Switch>
+>>>>>>> theirs
               </div>
             ))}
           </div>
