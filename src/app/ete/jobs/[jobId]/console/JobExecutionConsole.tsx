@@ -41,6 +41,23 @@ export type JobConsoleProps = {
   modeDescription?: string | null;
 };
 
+type DecisionReceipt = {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  candidateName: string;
+  decisionType: "RECOMMEND" | "SUBMIT" | "REJECT" | "PASS";
+  drivers: string[];
+  tradeoff: string | null;
+  confidenceScore: number | null;
+  risks: string[];
+  summary: string;
+  createdAt: string;
+  createdBy?: { id?: string; name?: string | null; email?: string | null };
+  bullhornNote?: string;
+  bullhornTarget?: "note" | "custom_field";
+};
+
 function normalizeExplanation(
   source: unknown,
   options?: { summaryOnly?: boolean },
@@ -127,6 +144,35 @@ type DecisionSnapshot = { favorited: boolean; removed: boolean; shortlisted: boo
 
 const DEFAULT_DECISION_STATE: DecisionSnapshot = { favorited: false, removed: false, shortlisted: false };
 
+function normalizeConfidenceToTenPoint(score?: number | null): number | null {
+  if (typeof score !== "number" || Number.isNaN(score)) return null;
+  const normalized = score > 10 ? score / 10 : score;
+  return Math.max(0, Math.min(10, Math.round(normalized * 10) / 10));
+}
+
+function mapDecisionActionToReceipt(action: DecisionStreamAction): DecisionReceipt["decisionType"] | null {
+  if (action === "SHORTLISTED" || action === "FAVORITED") return "RECOMMEND";
+  if (action === "REMOVED") return "REJECT";
+  return null;
+}
+
+function describeTradeoffFromStrategy(strategy: "quality" | "strict" | "fast") {
+  if (strategy === "fast") return "Accepted speed over precision to keep req momentum.";
+  if (strategy === "strict") return "Prioritized precision over coverage to protect quality.";
+  return "Balanced quality and coverage with recruiter judgment.";
+}
+
+function formatDecisionLabel(decisionType: DecisionReceipt["decisionType"]) {
+  const labels: Record<DecisionReceipt["decisionType"], string> = {
+    RECOMMEND: "Recommend",
+    SUBMIT: "Submit",
+    REJECT: "Reject",
+    PASS: "Pass",
+  };
+
+  return labels[decisionType];
+}
+
 function DecisionActions({
   state,
   onDecision,
@@ -178,6 +224,7 @@ function ResultsTable({
   decisionStates,
   onDecision,
   onViewed,
+  receiptsByCandidate,
 }: {
   candidates: JobConsoleCandidate[];
   expandedId: string | null;
@@ -188,6 +235,7 @@ function ResultsTable({
   decisionStates: Record<string, DecisionSnapshot>;
   onDecision: (candidate: JobConsoleCandidate, action: DecisionStreamAction) => void;
   onViewed: (candidate: JobConsoleCandidate) => void;
+  receiptsByCandidate: Record<string, DecisionReceipt[]>;
 }) {
   if (candidates.length === 0) {
     return (
@@ -230,6 +278,7 @@ function ResultsTable({
           <tbody className="divide-y divide-slate-200 bg-white">
             {candidates.map((candidate) => {
               const expanded = expandedId === candidate.candidateId;
+              const receipts = receiptsByCandidate[candidate.candidateId] ?? [];
 
               return (
                 <>
@@ -344,6 +393,16 @@ function ResultsTable({
                               )}
                             </div>
                           </div>
+
+                          <div className="space-y-2 rounded-xl bg-white p-4 ring-1 ring-slate-200">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Decision receipts</p>
+                              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                {receipts.length} recorded
+                              </span>
+                            </div>
+                            <DecisionReceiptList receipts={receipts} />
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -354,6 +413,48 @@ function ResultsTable({
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function DecisionReceiptList({ receipts }: { receipts: DecisionReceipt[] }) {
+  if (!receipts.length) {
+    return <p className="text-sm text-slate-600">Receipts will appear after you recommend or reject a candidate.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {receipts.map((receipt) => (
+        <div key={receipt.id} className="rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-slate-200">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-indigo-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-800 ring-1 ring-indigo-200">
+                {formatDecisionLabel(receipt.decisionType)}
+              </span>
+              {typeof receipt.confidenceScore === "number" ? (
+                <span className="text-[11px] font-semibold text-slate-600">{receipt.confidenceScore.toFixed(1)}/10 confidence</span>
+              ) : (
+                <span className="text-[11px] text-slate-500">Confidence pending</span>
+              )}
+            </div>
+            <span className="text-[11px] text-slate-500">
+              {new Date(receipt.createdAt).toLocaleString(undefined, {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-slate-800">{receipt.summary}</p>
+          <p className="text-xs text-slate-600">
+            Drivers: {receipt.drivers.length ? receipt.drivers.join("; ") : "Not captured"} • Risks: {receipt.risks.length ? receipt.risks.join("; ") : "Not captured"}
+          </p>
+          <p className="text-[11px] font-semibold text-indigo-700">
+            Synced to Bullhorn as {receipt.bullhornTarget === "custom_field" ? "custom field payload" : "note"}.
+          </p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -498,8 +599,31 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
   const [decisionStreamId, setDecisionStreamId] = useState<string | null>(null);
   const [decisionStates, setDecisionStates] = useState<Record<string, DecisionSnapshot>>({});
+  const [receiptsByCandidate, setReceiptsByCandidate] = useState<Record<string, DecisionReceipt[]>>({});
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
+
+  const groupReceiptsByCandidate = useCallback((receipts: DecisionReceipt[]) => {
+    const grouped = receipts.reduce((acc, receipt) => {
+      const existing = acc[receipt.candidateId] ?? [];
+      const merged = [...existing, receipt].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      return { ...acc, [receipt.candidateId]: merged };
+    }, {} as Record<string, DecisionReceipt[]>);
+
+    setReceiptsByCandidate(grouped);
+  }, []);
+
+  const appendReceipt = useCallback((receipt: DecisionReceipt) => {
+    setReceiptsByCandidate((prev) => {
+      const existing = prev[receipt.candidateId] ?? [];
+      const merged = [receipt, ...existing].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      return { ...prev, [receipt.candidateId]: merged };
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -515,6 +639,27 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       cancelled = true;
     };
   }, [jobId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const res = await fetch(`/api/decision-receipts?jobId=${jobId}`);
+        if (!res.ok) throw new Error(`Failed to load receipts with status ${res.status}`);
+        const payload = (await res.json()) as { receipts?: DecisionReceipt[] };
+        if (!cancelled && payload.receipts) {
+          groupReceiptsByCandidate(payload.receipts);
+        }
+      } catch (error) {
+        console.warn("Failed to load decision receipts", error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, groupReceiptsByCandidate]);
 
   useEffect(() => {
     try {
@@ -568,6 +713,45 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     [decisionStreamId, jobId],
   );
 
+  const persistDecisionReceipt = useCallback(
+    async (candidate: JobConsoleCandidate, action: DecisionStreamAction) => {
+      const decisionType = mapDecisionActionToReceipt(action);
+      if (!decisionType) return;
+
+      const payload = {
+        jobId,
+        candidateId: candidate.candidateId,
+        candidateName: candidate.candidateName,
+        decisionType,
+        drivers: candidate.explanation?.strengths?.slice(0, 3) ?? [],
+        risks: candidate.explanation?.risks?.slice(0, 3) ?? [],
+        confidenceScore: normalizeConfidenceToTenPoint(candidate.confidenceScore),
+        summary: candidate.explanation?.summary ?? undefined,
+        tradeoff: describeTradeoffFromStrategy(shortlistStrategy),
+        bullhornTarget: "note" as const,
+        shortlistStrategy,
+      };
+
+      try {
+        const res = await fetch("/api/decision-receipts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) throw new Error(`Decision receipt request failed with status ${res.status}`);
+
+        const body = (await res.json()) as { receipt?: DecisionReceipt };
+        if (body.receipt) {
+          appendReceipt(body.receipt);
+        }
+      } catch (error) {
+        console.warn("Failed to persist decision receipt", error);
+      }
+    },
+    [appendReceipt, jobId, shortlistStrategy],
+  );
+
   const handleDecision = useCallback(
     (candidate: JobConsoleCandidate, action: DecisionStreamAction) => {
       const labels: Record<DecisionStreamAction, string> = {
@@ -597,6 +781,8 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         setCandidates((prev) => prev.map((row) => (row.candidateId === candidate.candidateId ? { ...row, shortlisted: false } : row)));
       }
 
+      void persistDecisionReceipt(candidate, action);
+
       logDecision({
         action,
         candidateId: candidate.candidateId,
@@ -604,7 +790,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         details: { candidateName: candidate.candidateName },
       });
     },
-    [logDecision],
+    [logDecision, persistDecisionReceipt],
   );
 
   const handleViewed = useCallback(
@@ -866,6 +1052,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           decisionStates={decisionStates}
           onDecision={handleDecision}
           onViewed={handleViewed}
+          receiptsByCandidate={receiptsByCandidate}
         />
       </div>
     </div>

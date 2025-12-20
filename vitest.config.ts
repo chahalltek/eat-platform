@@ -31,10 +31,7 @@ export default defineConfig({
       reporter: ["text", "json", "json-summary", "lcov", "html"],
       reportsDirectory: "./coverage",
       all: true,
-<<<<<<< ours
-=======
       reportOnFailure: true,
->>>>>>> theirs
       include: [
         "src/lib/**/*.{ts,tsx}",
         "src/server/**/*.{ts,tsx}",
@@ -42,7 +39,6 @@ export default defineConfig({
         "src/components/**/*.{ts,tsx}",
       ],
       exclude: ["src/**/__mocks__/**", "**/__generated__/**", "src/**/types/**"],
-<<<<<<< ours
       thresholds: {
         lines: 100,
         functions: 100,
@@ -62,8 +58,6 @@ export default defineConfig({
           statements: 100,
         },
       },
-=======
->>>>>>> theirs
     },
   },
   resolve: {
