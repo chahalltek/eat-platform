@@ -70,6 +70,8 @@ type PrismaParams = {
 const TENANTED_MODELS = new Set([
   "User",
   "FeatureFlag",
+  "DecisionReceipt",
+  "JudgmentAggregate",
   "Candidate",
   "CandidateSkill",
   "Customer",

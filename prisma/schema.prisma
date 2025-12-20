@@ -54,6 +54,26 @@ enum AgentRunStatus {
   PARTIAL
 }
 
+enum JudgmentAgent {
+  MATCH
+  CONFIDENCE
+  EXPLAIN
+  SHORTLIST
+}
+
+enum JudgmentDecisionType {
+  submit
+  reject
+  override
+  confidence_adjustment
+}
+
+enum JudgmentAggregateDimension {
+  firm
+  client
+  role_type
+}
+
 enum JobCandidateStatus {
   POTENTIAL // AI suggests
   SHORTLISTED // recruiter likes
@@ -700,6 +720,48 @@ model DecisionStream {
 
   @@index([tenantId])
   @@index([tenantId, jobId, createdBy, status])
+}
+
+model DecisionReceipt {
+  id              String                   @id @default(uuid())
+  tenantId        String                   @default("default-tenant")
+  firmId          String
+  clientId        String?
+  roleType        String
+  agent           JudgmentAgent
+  decisionType    JudgmentDecisionType
+  signals         Json
+  humanOverride   Json?
+  outcome         Json?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, firmId])
+  @@index([tenantId, clientId])
+  @@index([tenantId, roleType])
+  @@index([tenantId, agent])
+  @@index([tenantId, decisionType])
+}
+
+model JudgmentAggregate {
+  id             String                      @id @default(cuid())
+  tenantId       String                      @default("default-tenant")
+  dimension      JudgmentAggregateDimension
+  dimensionValue String
+  windowStart    DateTime
+  windowEnd      DateTime
+  metric         String
+  value          Json
+  sampleSize     Int
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, dimension, dimensionValue])
+  @@index([tenantId, windowStart, windowEnd])
+  @@index([tenantId, metric])
 }
 
 model DecisionItem {

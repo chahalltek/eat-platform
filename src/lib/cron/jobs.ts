@@ -2,6 +2,7 @@ import { runScheduledComplianceScan } from "@/lib/agents/comply";
 import { captureWeeklyMatchQualitySnapshots } from "@/lib/learning/matchQuality";
 import { prisma } from "@/server/db/prisma";
 import { prismaAdmin } from "@/lib/prismaAdmin";
+import { runJudgmentMemoryAggregation } from "@/lib/judgmentMemory/aggregator";
 import { runLearningAggregation } from "@/lib/network/aggregateLearning";
 import { runTenantRetentionJob } from "@/lib/retention";
 
@@ -91,6 +92,19 @@ export const cronJobs: Record<string, CronJob> = {
 
       return {
         message: "Learning aggregates captured",
+        details: result,
+      } satisfies CronJobResult;
+    },
+  },
+  "judgment-memory-aggregate": {
+    name: "judgment-memory-aggregate",
+    description: "Batches institutional judgment signals (read-only, no enforcement).",
+    jobType: "aggregation",
+    run: async () => {
+      const result = await runJudgmentMemoryAggregation();
+
+      return {
+        message: "Judgment memory aggregates captured",
         details: result,
       } satisfies CronJobResult;
     },
