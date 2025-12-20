@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import OpenAI from 'openai';
+import { type ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 import { recordAuditEvent } from '@/lib/audit/trail';
 import { getCurrentUser, getUserRoles } from '@/lib/auth/user';
@@ -15,6 +16,11 @@ import {
 import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
 import { recordCostEvent } from '@/lib/cost/events';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
+<<<<<<< ours
+=======
+import { enforceLimits as enforceContextLimits } from '@/server/ai/safety/limits';
+import type { SafeLLMContext as LimitedSafeLLMContext } from '@/server/ai/safety/limits';
+>>>>>>> theirs
 import { getCurrentTenantId } from '@/lib/tenant';
 import { redactAny } from '@/server/ai/safety/redact';
 import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from '@/server/ai/safety/safeContext';
@@ -31,6 +37,7 @@ export type CallLLMParams = {
   approvalToken?: string;
   redactResult?: boolean;
   context?: SafeLLMContextInput | SafeLLMContext;
+<<<<<<< ours
 };
 
 type LlmLogLevel = 'metadata' | 'redacted' | 'off';
@@ -39,6 +46,9 @@ type LlmLogConfig = {
   level: LlmLogLevel;
   promptLoggingEnabled: boolean;
   promptTtlMs: number;
+=======
+  buildUserPrompt?: (context: SafeLLMContext) => string;
+>>>>>>> theirs
 };
 
 class OpenAIChatAdapter implements OpenAIAdapter {
@@ -56,7 +66,7 @@ class OpenAIChatAdapter implements OpenAIAdapter {
 
     const response = await new OpenAI({ apiKey: this.apiKey }).chat.completions.create({
       model,
-      messages,
+      messages: messages as ChatCompletionMessageParam[],
       temperature,
       max_tokens: maxTokens,
     });
@@ -165,7 +175,14 @@ export function sanitizeOutbound({
   const contextWithIds = ensureRequestIdentifiers(contextInput);
   const safeContext = buildSafeLLMContext(contextWithIds);
   const redactedContext = redactAny(safeContext) as SafeLLMContext;
+<<<<<<< ours
   const limitedContext = enforceVerbosityCap(redactedContext, verbosityCap);
+=======
+  const limitedContext = enforceVerbosityCap(
+    enforceContextLimits(redactedContext as LimitedSafeLLMContext),
+    verbosityCap,
+  ) as SafeLLMContext;
+>>>>>>> theirs
 
   return {
     context: limitedContext,
@@ -310,6 +327,10 @@ export async function callLLM({
   approvalToken,
   redactResult = true,
   context,
+<<<<<<< ours
+=======
+  buildUserPrompt,
+>>>>>>> theirs
 }: CallLLMParams): Promise<string> {
   const caller = await resolveCaller();
   const logConfig = resolveLoggingConfig();
@@ -317,10 +338,15 @@ export async function callLLM({
   let response: string | null = null;
   let status: 'success' | 'failure' = 'success';
   let resolvedModel = model ?? 'unknown';
+<<<<<<< ours
   let resolvedSystemPrompt = '';
   let resolvedUserPrompt = '';
   let sanitized: SanitizedOutbound | null = null;
   let usage: ChatCompletionUsage | null = null;
+=======
+  let resolvedSystemPrompt = typeof systemPrompt === 'string' ? systemPrompt : '';
+  let trimmedUserPrompt = typeof userPrompt === 'string' ? userPrompt : '';
+>>>>>>> theirs
 
   try {
     assertWriteCapabilityAllowed(capability, approvalToken);
@@ -332,7 +358,11 @@ export async function callLLM({
       throw new LLMUsageRestrictedError('Requested model is not permitted for this tenant.');
     }
 
+<<<<<<< ours
     sanitized = sanitizeOutbound({
+=======
+    const sanitized = sanitizeOutbound({
+>>>>>>> theirs
       contextInput: context,
       systemPrompt,
       userPrompt,
@@ -340,9 +370,20 @@ export async function callLLM({
     });
 
     resolvedSystemPrompt = sanitized.systemPrompt;
+<<<<<<< ours
     resolvedUserPrompt = llmControls.verbosityCap
       ? sanitized.userPrompt.slice(0, llmControls.verbosityCap)
       : sanitized.userPrompt;
+=======
+
+    const resolvedUserPrompt = buildUserPrompt
+      ? buildUserPrompt(sanitized.context)
+      : sanitized.userPrompt;
+
+    trimmedUserPrompt = llmControls.verbosityCap
+      ? resolvedUserPrompt.slice(0, llmControls.verbosityCap)
+      : resolvedUserPrompt;
+>>>>>>> theirs
 
     await consumeRateLimit({
       tenantId: caller.tenantId,

@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { type ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 import { ChatMessage, formatEmptyResponseError, type OpenAIAdapter } from "@/lib/llm/openaiAdapter";
 import { redactAny } from "./safety/redact";
@@ -25,7 +26,7 @@ export class OpenAIChatAdapter implements OpenAIAdapter {
 
     const request = {
       model,
-      messages: redactedMessages,
+      messages: redactedMessages as ChatCompletionMessageParam[],
       temperature,
       max_tokens: maxTokens,
     };
