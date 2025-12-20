@@ -5,6 +5,16 @@ import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { prisma } from "@/server/db/prisma";
 import { recordMetricEvent } from "@/lib/metrics/events";
 
+const recommendationFeedbackSchema = z.object({
+  recommendedOutcome: z.enum(["shortlist", "pass"]).optional(),
+  alignment: z.enum(["accept", "override", "disagree"]).default("accept"),
+  rationale: z
+    .string()
+    .trim()
+    .max(280, { message: "Rationale should be concise (under 280 chars)." })
+    .optional(),
+});
+
 export const decisionReceiptSchema = z.object({
   jobId: z.string().trim().min(1),
   candidateId: z.string().trim().min(1),
@@ -17,9 +27,11 @@ export const decisionReceiptSchema = z.object({
   summary: z.string().trim().optional(),
   bullhornTarget: z.enum(["note", "custom_field"]).default("note"),
   shortlistStrategy: z.enum(["quality", "strict", "fast"]).optional(),
+  recommendation: recommendationFeedbackSchema.optional(),
 });
 
 export type DecisionReceiptInput = z.infer<typeof decisionReceiptSchema>;
+export type RecommendationFeedback = z.infer<typeof recommendationFeedbackSchema>;
 
 export type DecisionReceiptRecord = {
   id: string;
@@ -32,6 +44,7 @@ export type DecisionReceiptRecord = {
   confidenceScore: number | null;
   risks: string[];
   summary: string;
+  recommendation: RecommendationFeedback | null;
   createdAt: string;
   createdBy: {
     id: string;
@@ -50,6 +63,25 @@ function toTenPointScale(score?: number | null): number | null {
 
 function clampEntries(entries?: string[], limit = 3): string[] {
   return (entries ?? []).map((entry) => entry.trim()).filter(Boolean).slice(0, limit);
+}
+
+function normalizeRecommendationFeedback(value?: RecommendationFeedback | null): RecommendationFeedback | null {
+  if (!value) return null;
+
+  const recommendedOutcome = value.recommendedOutcome === "shortlist" ? "shortlist" : value.recommendedOutcome === "pass" ? "pass" : undefined;
+  const alignment: RecommendationFeedback["alignment"] =
+    value.alignment === "override" || value.alignment === "disagree" ? value.alignment : "accept";
+  const rationale = typeof value.rationale === "string" ? value.rationale.trim().slice(0, 280) : "";
+
+  if (!recommendedOutcome && alignment === "accept" && rationale.length === 0) {
+    return null;
+  }
+
+  return {
+    recommendedOutcome,
+    alignment,
+    rationale: rationale.length > 0 ? rationale : undefined,
+  };
 }
 
 function defaultTradeoff(decisionType: DecisionReceiptInput["decisionType"], strategy?: DecisionReceiptInput["shortlistStrategy"]) {
@@ -71,13 +103,24 @@ function describeDecision(decisionType: DecisionReceiptInput["decisionType"]) {
   return labels[decisionType];
 }
 
-function summarizeReceipt(payload: DecisionReceiptInput & { confidenceScore: number | null; drivers: string[]; risks: string[]; tradeoff: string | null }) {
+type ReceiptSummaryInput = DecisionReceiptInput & {
+  confidenceScore: number | null;
+  drivers: string[];
+  risks: string[];
+  tradeoff: string | null;
+  recommendation?: RecommendationFeedback | null;
+};
+
+function summarizeReceipt(payload: ReceiptSummaryInput) {
   const driverSummary = payload.drivers.length ? `Drivers: ${payload.drivers.join("; ")}.` : "Drivers: Not captured.";
   const riskSummary = payload.risks.length ? `Risks: ${payload.risks.join("; ")}.` : "Risks: Not captured.";
   const confidence = typeof payload.confidenceScore === "number" ? `${payload.confidenceScore}/10 confidence.` : "Confidence not captured.";
   const tradeoff = payload.tradeoff ? `Tradeoff: ${payload.tradeoff}` : "Tradeoff: Defaulted to recruiter judgment.";
+  const recommendationSummary = payload.recommendation
+    ? `Recommendation response: ${payload.recommendation.alignment ?? "accept"}${payload.recommendation.rationale ? ` (${payload.recommendation.rationale})` : ""}.`
+    : "Recommendation response not captured.";
 
-  return `${describeDecision(payload.decisionType)} ${driverSummary} ${riskSummary} ${confidence} ${tradeoff}`;
+  return `${describeDecision(payload.decisionType)} ${driverSummary} ${riskSummary} ${confidence} ${tradeoff} ${recommendationSummary}`;
 }
 
 export async function createDecisionReceipt({
@@ -95,8 +138,11 @@ export async function createDecisionReceipt({
   const risks = clampEntries(payload.risks, 4);
   const confidenceScore = toTenPointScale(payload.confidenceScore);
   const tradeoff = payload.tradeoff?.trim() || defaultTradeoff(payload.decisionType, payload.shortlistStrategy);
+  const recommendation = normalizeRecommendationFeedback(payload.recommendation);
 
-  const baseSummary = payload.summary?.trim() || summarizeReceipt({ ...payload, drivers, risks, confidenceScore, tradeoff });
+  const baseSummary =
+    payload.summary?.trim() ||
+    summarizeReceipt({ ...payload, drivers, risks, confidenceScore, tradeoff, recommendation });
 
   const created = await prisma.metricEvent.create({
     data: {
@@ -109,6 +155,7 @@ export async function createDecisionReceipt({
         risks,
         tradeoff,
         confidenceScore,
+        recommendation,
         summary: baseSummary,
         createdBy: {
           id: user.id,
@@ -130,6 +177,8 @@ export async function createDecisionReceipt({
       candidateId: payload.candidateId,
       target: payload.bullhornTarget,
       summary: bullhornNote,
+      recommendation,
+      decisionType: payload.decisionType,
     },
   });
 
@@ -144,6 +193,7 @@ export async function createDecisionReceipt({
     confidenceScore,
     risks,
     summary: baseSummary,
+    recommendation,
     createdAt: created.createdAt.toISOString(),
     createdBy: { id: user.id, email: user.email, name: user.displayName },
     bullhornNote,
@@ -201,6 +251,7 @@ export async function listDecisionReceipts({
       const confidenceScore = typeof meta.confidenceScore === "number" ? meta.confidenceScore : null;
       const tradeoff = typeof meta.tradeoff === "string" ? meta.tradeoff : null;
       const bullhornTarget = (meta.bullhornTarget as DecisionReceiptInput["bullhornTarget"]) ?? "note";
+      const recommendation = normalizeRecommendationFeedback(meta.recommendation as RecommendationFeedback | null | undefined);
 
       const summary =
         typeof meta.summary === "string"
@@ -212,6 +263,7 @@ export async function listDecisionReceipts({
               risks,
               confidenceScore,
               tradeoff,
+              recommendation,
             });
 
       return {
@@ -225,6 +277,7 @@ export async function listDecisionReceipts({
         confidenceScore,
         risks,
         summary,
+        recommendation,
         createdAt: entry.createdAt.toISOString(),
         createdBy: {
           id: String(createdBy.id ?? ""),

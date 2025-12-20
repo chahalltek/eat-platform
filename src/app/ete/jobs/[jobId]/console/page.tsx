@@ -102,6 +102,7 @@ function buildInitialCandidates(matches: MatchResultWithCandidate[]): JobConsole
       confidenceScore: confidence.score,
       confidenceBand: confidence.band,
       shortlisted: Boolean(match.shortlisted),
+      recommendedOutcome: match.shortlisted ? "shortlist" : "pass",
       explanation,
     } satisfies JobConsoleCandidate;
   });

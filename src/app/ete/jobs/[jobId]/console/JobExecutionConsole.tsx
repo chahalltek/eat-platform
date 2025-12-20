@@ -24,6 +24,7 @@ export type JobConsoleCandidate = {
   confidenceScore: number | null;
   confidenceBand: "HIGH" | "MEDIUM" | "LOW" | null;
   shortlisted: boolean;
+  recommendedOutcome: "shortlist" | "pass";
   explanation: (Explanation & { summaryOnly?: boolean }) | null;
 };
 
@@ -59,8 +60,16 @@ type DecisionReceipt = {
   createdBy?: { id?: string; name?: string | null; email?: string | null };
   bullhornNote?: string;
   bullhornTarget?: "note" | "custom_field";
+<<<<<<< ours
 =======
   showDecisionMomentCues?: boolean;
+>>>>>>> theirs
+=======
+  recommendation?: {
+    recommendedOutcome?: "shortlist" | "pass";
+    alignment?: "accept" | "override" | "disagree";
+    rationale?: string | null;
+  };
 >>>>>>> theirs
 };
 
@@ -149,9 +158,12 @@ function ConfidenceBadge({ band }: { band: JobConsoleCandidate["confidenceBand"]
 type DecisionSnapshot = { favorited: boolean; removed: boolean; shortlisted: boolean };
 
 const DEFAULT_DECISION_STATE: DecisionSnapshot = { favorited: false, removed: false, shortlisted: false };
+<<<<<<< ours
 
 <<<<<<< ours
 <<<<<<< ours
+=======
+>>>>>>> theirs
 function normalizeConfidenceToTenPoint(score?: number | null): number | null {
   if (typeof score !== "number" || Number.isNaN(score)) return null;
   const normalized = score > 10 ? score / 10 : score;
@@ -179,12 +191,13 @@ function formatDecisionLabel(decisionType: DecisionReceipt["decisionType"]) {
   };
 
   return labels[decisionType];
-=======
+}
 function toDecisionConfidence(candidate?: JobConsoleCandidate): { score: number; band: JobConsoleCandidate["confidenceBand"] } {
   const rawScore = candidate?.confidenceScore;
   const score = typeof rawScore === "number" ? rawScore : null;
   const normalized = score === null ? 5 : Math.min(10, Math.max(0, Number(((score > 10 ? score / 10 : score)).toFixed(2))));
   return { score: normalized, band: candidate?.confidenceBand ?? null };
+<<<<<<< ours
 >>>>>>> theirs
 =======
 type ChangeSource = AgentName | "MANUAL";
@@ -302,6 +315,29 @@ function buildNarrative(agent: ChangeSource, deltas: RecommendationDelta[], shor
     whyMoved,
   };
 >>>>>>> theirs
+=======
+}
+
+type RecommendationAlignment = "accept" | "override" | "disagree";
+type DecisionAnnotation = { alignment: RecommendationAlignment; rationale: string };
+
+function describeRecommendedOutcome(outcome: JobConsoleCandidate["recommendedOutcome"]): string {
+  if (outcome === "shortlist") return "Shortlist recommended";
+  if (outcome === "pass") return "Review without shortlist";
+  return "Recommendation unavailable";
+}
+
+function actionAlignsWithRecommendation(outcome: JobConsoleCandidate["recommendedOutcome"], action: DecisionStreamAction): boolean {
+  if (action === "VIEWED") return true;
+  if (outcome === "shortlist") return action === "SHORTLISTED" || action === "FAVORITED";
+  if (outcome === "pass") return action === "REMOVED" || action === "VIEWED";
+  return true;
+}
+
+function deriveDefaultAnnotation(outcome: JobConsoleCandidate["recommendedOutcome"], action: DecisionStreamAction): DecisionAnnotation {
+  const aligned = actionAlignsWithRecommendation(outcome, action);
+  return { alignment: aligned ? "accept" : "override", rationale: "" };
+>>>>>>> theirs
 }
 
 function DecisionActions({
@@ -345,6 +381,7 @@ function DecisionActions({
   );
 }
 
+<<<<<<< ours
 type TradeoffKey = keyof TradeoffDeclaration;
 
 function TradeoffSelector({
@@ -440,6 +477,85 @@ function TradeoffSelector({
           </div>
         ))}
       </div>
+=======
+function DecisionAlignmentSelector({
+  candidateId,
+  recommendedOutcome,
+  annotation,
+  error,
+  onChange,
+}: {
+  candidateId: string;
+  recommendedOutcome: JobConsoleCandidate["recommendedOutcome"];
+  annotation: DecisionAnnotation;
+  error?: string | null;
+  onChange: (candidateId: string, annotation: DecisionAnnotation) => void;
+}) {
+  const options: Array<{ value: RecommendationAlignment; label: string; description: string }> = [
+    { value: "accept", label: "Accept recommendation", description: "Outcome aligns with system guidance." },
+    { value: "override", label: "Override recommendation", description: "Choose a different action." },
+    { value: "disagree", label: "Disagree with rationale", description: "Decision aligns, but rationale is off." },
+  ];
+
+  const requiresReason = annotation.alignment === "override" || annotation.alignment === "disagree";
+  const placeholder =
+    annotation.alignment === "disagree"
+      ? "Why does the rationale miss? (short)"
+      : "Why are you overriding? (short)";
+
+  return (
+    <div className="flex flex-col items-end gap-1 text-right">
+      <div className="flex flex-wrap items-center justify-end gap-2 text-[11px] uppercase tracking-[0.14em] text-slate-500">
+        <span className="rounded-full bg-slate-100 px-2 py-1 font-semibold text-slate-700 ring-1 ring-slate-200">
+          {describeRecommendedOutcome(recommendedOutcome)}
+        </span>
+        <span className="text-slate-400">•</span>
+        <span className="font-semibold">Decision response</span>
+      </div>
+      <div className="flex flex-wrap justify-end gap-2">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(candidateId, { ...annotation, alignment: option.value })}
+            className={clsx(
+              "rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1 transition",
+              annotation.alignment === option.value
+                ? "bg-indigo-50 text-indigo-800 ring-indigo-200"
+                : "bg-slate-50 text-slate-600 ring-slate-200 hover:bg-slate-100",
+            )}
+            aria-pressed={annotation.alignment === option.value}
+            title={option.description}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      {requiresReason ? (
+        <div className="w-full max-w-sm">
+          <label className="sr-only" htmlFor={`decision-rationale-${candidateId}`}>
+            Decision rationale for {candidateId}
+          </label>
+          <input
+            id={`decision-rationale-${candidateId}`}
+            type="text"
+            value={annotation.rationale}
+            onChange={(event) => onChange(candidateId, { ...annotation, rationale: event.target.value })}
+            placeholder={placeholder}
+            className={clsx(
+              "w-full rounded-md border px-3 py-2 text-sm",
+              error ? "border-rose-300 ring-rose-100" : "border-slate-200 ring-slate-100",
+            )}
+            maxLength={280}
+          />
+          <div className="flex items-center justify-between text-[11px] text-slate-500">
+            <span>Share a short note (280 chars max).</span>
+            <span>{annotation.rationale.length}/280</span>
+          </div>
+        </div>
+      ) : null}
+      {error ? <p className="text-[11px] font-semibold text-rose-700">{error}</p> : null}
+>>>>>>> theirs
     </div>
   );
 }
@@ -455,6 +571,9 @@ function ResultsTable({
   onDecision,
   onViewed,
   receiptsByCandidate,
+  annotations,
+  onAnnotationChange,
+  annotationErrors,
 }: {
   candidates: JobConsoleCandidate[];
   expandedId: string | null;
@@ -466,6 +585,9 @@ function ResultsTable({
   onDecision: (candidate: JobConsoleCandidate, action: DecisionStreamAction) => void;
   onViewed: (candidate: JobConsoleCandidate) => void;
   receiptsByCandidate: Record<string, DecisionReceipt[]>;
+  annotations: Record<string, DecisionAnnotation>;
+  onAnnotationChange: (candidateId: string, annotation: DecisionAnnotation) => void;
+  annotationErrors: Record<string, string | null>;
 }) {
   if (candidates.length === 0) {
     return (
@@ -543,30 +665,38 @@ function ResultsTable({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <DecisionActions
-                        state={decisionStates[candidate.candidateId] ?? DEFAULT_DECISION_STATE}
-                        onDecision={(action) => onDecision(candidate, action)}
+                    <div className="flex flex-col items-end gap-3">
+                      <DecisionAlignmentSelector
+                        candidateId={candidate.candidateId}
+                        recommendedOutcome={candidate.recommendedOutcome}
+                        annotation={annotations[candidate.candidateId] ?? { alignment: "accept", rationale: "" }}
+                        error={annotationErrors[candidate.candidateId]}
+                        onChange={onAnnotationChange}
                       />
-                      {showFireDrillBadge ? (
-                        <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-100">
-                          Fire Drill mode
-                        </span>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 rounded-md bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200"
-                        title="Copy justification"
-                        disabled
-                      >
-                        Copy justification
-                        <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Soon</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onToggle(candidate.candidateId)}
-                        disabled={explainUnavailable && !candidate.explanation}
-                        title={explainUnavailable && !candidate.explanation ? "EXPLAIN disabled in current mode." : undefined}
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <DecisionActions
+                          state={decisionStates[candidate.candidateId] ?? DEFAULT_DECISION_STATE}
+                          onDecision={(action) => onDecision(candidate, action)}
+                        />
+                        {showFireDrillBadge ? (
+                          <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-100">
+                            Fire Drill mode
+                          </span>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-md bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200"
+                          title="Copy justification"
+                          disabled
+                        >
+                          Copy justification
+                          <span className="text-[10px] uppercase tracking-[0.14em] text-slate-400">Soon</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onToggle(candidate.candidateId)}
+                          disabled={explainUnavailable && !candidate.explanation}
+                          title={explainUnavailable && !candidate.explanation ? "EXPLAIN disabled in current mode." : undefined}
                           className={clsx(
                             "text-sm font-semibold underline decoration-indigo-200 underline-offset-4",
                             explainUnavailable && !candidate.explanation
@@ -680,6 +810,13 @@ function DecisionReceiptList({ receipts }: { receipts: DecisionReceipt[] }) {
           <p className="text-xs text-slate-600">
             Drivers: {receipt.drivers.length ? receipt.drivers.join("; ") : "Not captured"} • Risks: {receipt.risks.length ? receipt.risks.join("; ") : "Not captured"}
           </p>
+          {receipt.recommendation ? (
+            <p className="text-xs text-indigo-800">
+              Recommendation: {describeRecommendedOutcome(receipt.recommendation.recommendedOutcome ?? "pass")} • Response:{" "}
+              {receipt.recommendation.alignment ?? "accept"}
+              {receipt.recommendation.rationale ? ` (${receipt.recommendation.rationale})` : ""}
+            </p>
+          ) : null}
           <p className="text-[11px] font-semibold text-indigo-700">
             Synced to Bullhorn as {receipt.bullhornTarget === "custom_field" ? "custom field payload" : "note"}.
           </p>
@@ -897,6 +1034,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
     ...candidate,
+    recommendedOutcome: candidate.recommendedOutcome ?? (candidate.shortlisted ? "shortlist" : "pass"),
     explanation: normalizeExplanation(candidate.explanation),
   });
 
@@ -914,11 +1052,16 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 <<<<<<< ours
 <<<<<<< ours
   const [receiptsByCandidate, setReceiptsByCandidate] = useState<Record<string, DecisionReceipt[]>>({});
+<<<<<<< ours
 =======
   const [tradeoffs, setTradeoffs] = useState<TradeoffDeclaration>(defaultTradeoffs);
 >>>>>>> theirs
 =======
   const [changeLog, setChangeLog] = useState<RecommendationChange[]>([]);
+>>>>>>> theirs
+=======
+  const [decisionAnnotations, setDecisionAnnotations] = useState<Record<string, DecisionAnnotation>>({});
+  const [decisionAnnotationErrors, setDecisionAnnotationErrors] = useState<Record<string, string | null>>({});
 >>>>>>> theirs
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
@@ -1107,9 +1250,15 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   );
 
   const persistDecisionReceipt = useCallback(
-    async (candidate: JobConsoleCandidate, action: DecisionStreamAction) => {
+    async (candidate: JobConsoleCandidate, action: DecisionStreamAction, annotation: DecisionAnnotation) => {
       const decisionType = mapDecisionActionToReceipt(action);
       if (!decisionType) return;
+
+      const recommendation = {
+        recommendedOutcome: candidate.recommendedOutcome,
+        alignment: annotation.alignment,
+        rationale: annotation.rationale.trim() || undefined,
+      } as DecisionReceipt["recommendation"];
 
       const payload = {
         jobId,
@@ -1123,6 +1272,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         tradeoff: describeTradeoffFromStrategy(shortlistStrategy),
         bullhornTarget: "note" as const,
         shortlistStrategy,
+        recommendation,
       };
 
       try {
@@ -1154,6 +1304,23 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         FAVORITED: "Favorited",
       };
 
+      const existingAnnotation = decisionAnnotations[candidate.candidateId];
+      const baseAnnotation = existingAnnotation ?? deriveDefaultAnnotation(candidate.recommendedOutcome, action);
+      const normalizedAnnotation: DecisionAnnotation = actionAlignsWithRecommendation(candidate.recommendedOutcome, action) || baseAnnotation.alignment !== "accept"
+        ? baseAnnotation
+        : { ...baseAnnotation, alignment: "override" };
+      const requiresReason = normalizedAnnotation.alignment === "override" || normalizedAnnotation.alignment === "disagree";
+      const rationale = normalizedAnnotation.rationale.trim();
+
+      if (requiresReason && rationale.length === 0) {
+        setDecisionAnnotations((prev) => ({ ...prev, [candidate.candidateId]: normalizedAnnotation }));
+        setDecisionAnnotationErrors((prev) => ({ ...prev, [candidate.candidateId]: "Add a short note so we can learn from the disagreement." }));
+        return;
+      }
+
+      setDecisionAnnotationErrors((prev) => ({ ...prev, [candidate.candidateId]: null }));
+      setDecisionAnnotations((prev) => ({ ...prev, [candidate.candidateId]: normalizedAnnotation }));
+
       setDecisionStates((prev) => {
         const current = prev[candidate.candidateId] ?? DEFAULT_DECISION_STATE;
         const next: DecisionSnapshot = {
@@ -1182,19 +1349,28 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         );
       }
 
-      void persistDecisionReceipt(candidate, action);
+      void persistDecisionReceipt(candidate, action, normalizedAnnotation);
 
       logDecision({
         action,
         candidateId: candidate.candidateId,
         label: labels[action],
-        details: { candidateName: candidate.candidateName },
+        details: {
+          candidateName: candidate.candidateName,
+          recommendedOutcome: candidate.recommendedOutcome,
+          recommendationAlignment: normalizedAnnotation.alignment,
+          recommendationRationale: rationale || undefined,
+        },
       });
     },
+<<<<<<< ours
 <<<<<<< ours
     [logDecision, persistDecisionReceipt],
 =======
     [logDecision, updateCandidatesWithDiff],
+>>>>>>> theirs
+=======
+    [decisionAnnotations, logDecision, persistDecisionReceipt],
 >>>>>>> theirs
   );
 
@@ -1524,6 +1700,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           onDecision={handleDecision}
           onViewed={handleViewed}
           receiptsByCandidate={receiptsByCandidate}
+          annotations={decisionAnnotations}
+          annotationErrors={decisionAnnotationErrors}
+          onAnnotationChange={(candidateId, annotation) => {
+            setDecisionAnnotations((prev) => ({ ...prev, [candidateId]: annotation }));
+            setDecisionAnnotationErrors((prev) => ({ ...prev, [candidateId]: null }));
+          }}
         />
       </div>
     </div>
