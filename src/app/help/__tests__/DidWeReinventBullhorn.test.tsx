@@ -13,7 +13,7 @@ describe("DidWeReinventBullhorn", () => {
     render(<DidWeReinventBullhorn entry={eteVsBullhornContent} />);
 
     expect(screen.getByRole("heading", { name: /did we reinvent bullhorn/i })).toBeInTheDocument();
-    expect(screen.getByText(/bullhorn is the system of record for recruiting/i)).toBeInTheDocument();
+    expect(screen.getByText(/bullhorn remains the recruiting system of record/i)).toBeInTheDocument();
   });
 
   it("renders bullet sections", () => {

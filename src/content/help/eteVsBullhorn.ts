@@ -12,13 +12,21 @@ export type HelpEntry = {
   closing: string[];
 };
 
+export const sopLanguage = {
+  systemOfRecord:
+    "Bullhorn remains the recruiting system of record—jobs, candidates, submissions, and activity stay authoritative there.",
+  decisionSupport:
+    "ETE is the intelligence and decision-support layer that captures confidence, risks, and tradeoffs so decisions stay explainable.",
+  bullhornSync: "Outcomes and rationale flow back into Bullhorn so governance and history stay centralized.",
+} as const;
+
 export const eteVsBullhornContent: HelpEntry = {
   key: "ete_vs_bullhorn",
   title: "Did we reinvent Bullhorn?",
   intro: [
     "No. And we’re very intentionally not trying to.",
-    "Bullhorn is the system of record for recruiting. It stores candidates, jobs, submissions, activity, and now uses AI to help recruiters move faster inside the ATS.",
-    "ETE exists for a different reason.",
+    sopLanguage.systemOfRecord,
+    sopLanguage.decisionSupport,
   ],
   sections: [
     {
@@ -36,23 +44,23 @@ export const eteVsBullhornContent: HelpEntry = {
         "Clarifies intake when requirements are vague or conflicting",
         "Compares candidates explicitly, not just by score",
         "Explains why one candidate is recommended over another",
-        "Captures confidence, risk, and tradeoffs at decision time",
+        sopLanguage.decisionSupport,
         "Creates a memory of why decisions were made, not just what happened",
       ],
     },
     {
       heading: "How they work together:",
       bullets: [
-        "Bullhorn for sourcing, outreach, submissions, and tracking",
-        "Step into ETE at key moments to reason, decide, and explain",
-        "Push outcomes back into Bullhorn as the system of record",
+        "Bullhorn for sourcing, outreach, submissions, and tracking as the system of record",
+        "Step into ETE at key decision moments to reason, decide, and explain",
+        sopLanguage.bullhornSync,
       ],
     },
     {
       heading: "The short version:",
       bullets: [
-        "Bullhorn’s AI accelerates recruiting activity.",
-        "ETE strengthens recruiting judgment.",
+        "Bullhorn’s AI accelerates recruiting activity as the system of record.",
+        "ETE strengthens recruiting judgment with explainable decision support.",
         "Bullhorn helps you move fast.",
         "ETE helps you choose well.",
       ],
