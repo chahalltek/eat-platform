@@ -2,7 +2,10 @@ import OpenAI from "openai";
 import { type ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 import {
+<<<<<<< ours
   ChatCompletionParams,
+=======
+>>>>>>> theirs
   ChatMessage,
   formatEmptyResponseError,
   type ChatCompletionResult,
@@ -18,7 +21,16 @@ export class OpenAIChatAdapter implements OpenAIAdapter {
     messages,
     temperature,
     maxTokens,
+<<<<<<< ours
   }: ChatCompletionParams): Promise<ChatCompletionResult> {
+=======
+  }: {
+    model: string;
+    messages: ChatMessage[];
+    temperature: number;
+    maxTokens?: number;
+  }): Promise<ChatCompletionResult> {
+>>>>>>> theirs
     if (!this.apiKey) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
