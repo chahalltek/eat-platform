@@ -109,7 +109,7 @@ class OpenAIChatAdapter implements OpenAIAdapter {
         }
       : undefined;
 
-    return { content, usage };
+    return { text: content, content, usage };
   }
 }
 
@@ -408,7 +408,7 @@ export async function callLLM({
       maxTokens: llmControls.maxTokens,
     });
 
-    response = llmResult.content;
+    response = llmResult.text ?? llmResult.content ?? null;
     usage = llmResult.usage ?? null;
 
     const latencyMs = Date.now() - startedAt;

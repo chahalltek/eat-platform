@@ -28,7 +28,15 @@ export type ChatCompletionUsage = {
 };
 
 export type ChatCompletionResult = {
-  content: string;
+  /**
+   * Primary text response from the model.
+   */
+  text: string;
+  /**
+   * Legacy alias for `text`. Kept for backwards compatibility while
+   * callers migrate to the new shape.
+   */
+  content?: string;
   usage?: ChatCompletionUsage;
 };
 

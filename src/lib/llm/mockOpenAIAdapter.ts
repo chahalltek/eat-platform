@@ -24,6 +24,6 @@ export class MockOpenAIAdapter implements OpenAIAdapter {
     }
 
     const value = typeof next === 'function' ? await next() : next;
-    return { content: value };
+    return { text: value, content: value };
   }
 }

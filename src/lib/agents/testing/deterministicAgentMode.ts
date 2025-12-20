@@ -45,7 +45,7 @@ export function enableDeterministicAgentMode(
         ],
       });
 
-      return result.content;
+      return result.text;
     }
 
     const fixture = options.llmFixtures?.[agent];
