@@ -1,6 +1,8 @@
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { StatusPill } from "@/components/StatusPill";
+import { isAdminRole } from "@/lib/auth/roles";
+import { getCurrentUser } from "@/lib/auth/user";
 
 const modes = [
   {
@@ -103,7 +105,31 @@ const fireDrillTriggers = [
   "Critical demo where reliability matters more than feature depth",
 ];
 
-export default function OperationsRunbookPage() {
+const sopChangeLog = [
+  {
+    date: "2024-06-12",
+    summary: "Added Fire Drill playbook clarifications and reinforced agent kill switch defaults.",
+    substantive: true,
+  },
+  {
+    date: "2024-05-28",
+    summary: "Updated guardrail preset mapping to highlight shortlist sizing behavior in Sandbox mode.",
+    substantive: false,
+  },
+  {
+    date: "2024-05-10",
+    summary: "Documented mode usage guidance for early pilots and production cutovers.",
+    substantive: false,
+  },
+] as const;
+
+const SOP_CHANGE_LOG_ADMIN_ONLY = true;
+
+export default async function OperationsRunbookPage() {
+  const currentUser = await getCurrentUser();
+  const isAdminViewer = isAdminRole(currentUser?.role);
+  const changeLogVisible = !SOP_CHANGE_LOG_ADMIN_ONLY || isAdminViewer;
+
   return (
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-8">
       <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
@@ -120,6 +146,69 @@ export default function OperationsRunbookPage() {
           </div>
           <ClientActionLink href="/">Back to Console</ClientActionLink>
         </div>
+      </section>
+
+      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP Change Log</p>
+            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Operations runbook updates</h2>
+            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
+              Read-only history to help audits and leadership track substantive vs. non-substantive adjustments without changing any workflows.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
+              Read-only
+            </span>
+            <span
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ring-1 ${
+                SOP_CHANGE_LOG_ADMIN_ONLY
+                  ? "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-100 dark:ring-amber-700/60"
+                  : "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-100 dark:ring-emerald-700/60"
+              }`}
+            >
+              {SOP_CHANGE_LOG_ADMIN_ONLY ? "Optional: Admin visibility" : "Visible to all"}
+            </span>
+          </div>
+        </div>
+
+        {changeLogVisible ? (
+          <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
+            <table className="min-w-full divide-y divide-indigo-100 text-sm">
+              <thead className="bg-indigo-50/80 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Summary of change</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Impact</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-indigo-100/80 dark:divide-indigo-800/60">
+                {sopChangeLog.map((entry) => (
+                  <tr key={entry.date} className="bg-white/70 text-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100">
+                    <td className="px-4 py-3 font-semibold text-indigo-900 dark:text-indigo-100">{entry.date}</td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{entry.summary}</td>
+                    <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${
+                          entry.substantive
+                            ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-100 dark:ring-emerald-800/60"
+                            : "bg-slate-50 text-slate-800 ring-1 ring-slate-100 dark:bg-slate-900/40 dark:text-slate-100 dark:ring-slate-800/60"
+                        }`}
+                      >
+                        {entry.substantive ? "Substantive" : "Non-substantive"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900 shadow-sm dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">
+            Change log is currently limited to admins for optional review. Request access if you need visibility for audits.
+          </div>
+        )}
       </section>
 
       <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
