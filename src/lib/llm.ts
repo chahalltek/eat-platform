@@ -7,13 +7,15 @@ import { recordCostEvent } from '@/lib/cost/events';
 import { logAiCall } from '@/server/audit/logger';
 import { OpenAIChatAdapter } from '@/server/ai/openaiClient';
 import type { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
+import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from '@/server/ai/safety/safeContext';
 
 type CallLLMParams = {
-  systemPrompt: string;
-  userPrompt: string;
+  systemPrompt: string | ((context: SafeLLMContext) => string);
+  userPrompt: string | ((context: SafeLLMContext) => string);
   model?: string;
   adapter?: OpenAIAdapter;
   agent: string;
+  context?: SafeLLMContextInput | SafeLLMContext;
 };
 
 export async function callLLM({
@@ -22,7 +24,11 @@ export async function callLLM({
   model,
   adapter = new OpenAIChatAdapter(),
   agent,
+  context,
 }: CallLLMParams): Promise<string> {
+  const safeContext = buildSafeLLMContext(context ?? { purpose: 'OTHER' });
+  const resolvedSystemPrompt = typeof systemPrompt === 'function' ? systemPrompt(safeContext) : systemPrompt;
+  const resolvedUserPrompt = typeof userPrompt === 'function' ? userPrompt(safeContext) : userPrompt;
   const [tenantId, userId] = await Promise.all([getCurrentTenantId(), getCurrentUserId()]);
   const llmControls = await assertLlmUsageAllowed({ tenantId, agent });
   const resolvedModel = model ?? llmControls.model;
@@ -32,8 +38,8 @@ export async function callLLM({
   }
 
   const trimmedUserPrompt = llmControls.verbosityCap
-    ? userPrompt.slice(0, llmControls.verbosityCap)
-    : userPrompt;
+    ? resolvedUserPrompt.slice(0, llmControls.verbosityCap)
+    : resolvedUserPrompt;
 
   await consumeRateLimit({
     tenantId,
@@ -45,7 +51,7 @@ export async function callLLM({
     const response = await adapter.chatCompletion({
       model: resolvedModel,
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: resolvedSystemPrompt },
         { role: 'user', content: trimmedUserPrompt },
       ],
       temperature: 0.2,
@@ -67,7 +73,7 @@ export async function callLLM({
       actorId: userId,
       agent,
       model: resolvedModel,
-      systemPromptChars: systemPrompt.length,
+      systemPromptChars: resolvedSystemPrompt.length,
       userPromptChars: trimmedUserPrompt.length,
       status: 'SUCCESS',
     });
@@ -79,7 +85,7 @@ export async function callLLM({
       actorId: userId,
       agent,
       model: resolvedModel,
-      systemPromptChars: systemPrompt.length,
+      systemPromptChars: resolvedSystemPrompt.length,
       userPromptChars: trimmedUserPrompt.length,
       status: 'FAILED',
       error: err instanceof Error ? err.message : 'Unknown error',

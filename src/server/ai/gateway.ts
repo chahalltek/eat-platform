@@ -9,18 +9,20 @@ import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenant
 import { recordCostEvent } from '@/lib/cost/events';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
 import { getCurrentTenantId } from '@/lib/tenant';
+import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from '@/server/ai/safety/safeContext';
 
 export type GatewayCapability = 'read' | 'write';
 
 export type CallLLMParams = {
-  systemPrompt: string;
-  userPrompt: string;
+  systemPrompt: string | ((context: SafeLLMContext) => string);
+  userPrompt: string | ((context: SafeLLMContext) => string);
   model?: string;
   adapter?: OpenAIAdapter;
   agent: string;
   capability?: GatewayCapability;
   approvalToken?: string;
   redactResult?: boolean;
+  context?: SafeLLMContextInput | SafeLLMContext;
 };
 
 class OpenAIChatAdapter implements OpenAIAdapter {
@@ -150,12 +152,17 @@ export async function callLLM({
   capability = 'read',
   approvalToken,
   redactResult = true,
+  context,
 }: CallLLMParams): Promise<string> {
+  const safeContext = buildSafeLLMContext(context ?? { purpose: 'OTHER' });
+  const resolvedSystemPrompt = typeof systemPrompt === 'function' ? systemPrompt(safeContext) : systemPrompt;
+  const resolvedUserPrompt = typeof userPrompt === 'function' ? userPrompt(safeContext) : userPrompt;
+
   const caller = await resolveCaller();
   let response: string | null = null;
   let status: 'success' | 'failure' = 'success';
   let resolvedModel = model ?? 'unknown';
-  let trimmedUserPrompt = userPrompt;
+  let trimmedUserPrompt = resolvedUserPrompt;
 
   try {
     assertWriteCapabilityAllowed(capability, approvalToken);
@@ -168,8 +175,8 @@ export async function callLLM({
     }
 
     trimmedUserPrompt = llmControls.verbosityCap
-      ? userPrompt.slice(0, llmControls.verbosityCap)
-      : userPrompt;
+      ? resolvedUserPrompt.slice(0, llmControls.verbosityCap)
+      : resolvedUserPrompt;
 
     await consumeRateLimit({
       tenantId: caller.tenantId,
@@ -180,7 +187,7 @@ export async function callLLM({
     response = await adapter.chatCompletion({
       model: resolvedModel,
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: resolvedSystemPrompt },
         { role: 'user', content: trimmedUserPrompt },
       ],
       temperature: 0.2,
@@ -221,7 +228,7 @@ export async function callLLM({
       approvalToken,
       status,
       roles: caller.roles,
-      systemPrompt,
+      systemPrompt: resolvedSystemPrompt,
       userPrompt: trimmedUserPrompt,
       result: response,
       redactResult,
