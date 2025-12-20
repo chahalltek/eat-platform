@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 
 import { ChatMessage, formatEmptyResponseError, type OpenAIAdapter } from "@/lib/llm/openaiAdapter";
+import { redactAny } from "./safety/redact";
 
 export class OpenAIChatAdapter implements OpenAIAdapter {
   constructor(private apiKey = process.env.OPENAI_API_KEY) {}
@@ -20,11 +21,20 @@ export class OpenAIChatAdapter implements OpenAIAdapter {
       throw new Error("OPENAI_API_KEY is not configured");
     }
 
-    const response = await new OpenAI({ apiKey: this.apiKey }).chat.completions.create({
+    const redactedMessages = redactAny(messages) as ChatMessage[];
+
+    const request = {
       model,
-      messages,
+      messages: redactedMessages,
       temperature,
       max_tokens: maxTokens,
+    };
+
+    const client = new OpenAI({ apiKey: this.apiKey });
+
+    const response = await client.chat.completions.create(request).catch(error => {
+      console.error("[openai-client] chatCompletion failed", { error, request });
+      throw error;
     });
 
     const content = response.choices[0]?.message?.content;

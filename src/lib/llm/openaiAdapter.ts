@@ -1,6 +1,16 @@
+type ToolCall = {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+};
+
 export type ChatMessage = {
-  role: 'system' | 'user';
+  role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
+  tool_calls?: ToolCall[];
 };
 
 export type ChatCompletionParams = {
