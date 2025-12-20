@@ -10,12 +10,16 @@ import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 import { prisma } from "@/server/db/prisma";
 import { getCurrentUser } from "@/lib/auth";
+<<<<<<< ours
 import {
   DEFAULT_TRADEOFF_DECLARATION,
   formatTradeoffDeclaration,
   resolveTradeoffs,
   tradeoffDeclarationSchema,
 } from "@/lib/matching/tradeoffs";
+=======
+import { extractArchetypeFromIntent } from "@/lib/jobIntent";
+>>>>>>> theirs
 
 export type RunExplainInput = {
   jobId: string;
@@ -60,7 +64,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
 
   const jobReq = await prisma.jobReq.findUnique({
     where: { id: jobId },
-    include: { skills: true },
+    include: { skills: true, jobIntent: true },
   });
 
   if (!jobReq) {
@@ -75,6 +79,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
   }
 
   const guardrails = await loadTenantConfig(tenantId);
+  const archetype = extractArchetypeFromIntent(jobReq.jobIntent?.intent);
   const guardrailsSnapshot = JSON.parse(JSON.stringify(guardrails)) as Prisma.InputJsonValue;
   const explainConfig: Prisma.InputJsonObject = {
     jobId,
@@ -145,6 +150,7 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
         match: baseMatch,
         confidence,
         config: guardrailConfig,
+        archetype,
       });
 
       const explanationWithTradeoffs = tradeoffSelection

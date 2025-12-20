@@ -1,3 +1,5 @@
+import type { ReqArchetypeId } from "@/lib/archetypes/reqArchetypes";
+
 export type JobIntentRequirement = {
   id: string;
   type: 'skill' | 'location' | 'seniority' | 'employmentType' | 'summary' | 'other';
@@ -12,6 +14,12 @@ export type JobIntentRequirement = {
 export type JobIntentMetadata = {
   sourceDescription?: string | null;
   createdFrom?: string | null;
+  archetype?: {
+    id: ReqArchetypeId | string;
+    source?: 'auto' | 'manual';
+    reason?: string;
+    confidence?: number;
+  } | null;
 };
 
 export type JobIntentPayload = {

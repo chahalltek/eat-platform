@@ -12,10 +12,14 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import type { Explanation } from "@/lib/agents/explainEngine";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+<<<<<<< ours
 import { extractTradeoffDefaultsFromScoring } from "@/lib/matching/tradeoffs";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 import { isFeatureEnabled } from "@/lib/featureFlags";
 import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
+=======
+import { extractArchetypeFromIntent } from "@/lib/jobIntent";
+>>>>>>> theirs
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: true };
@@ -125,6 +129,7 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
     where: { id: params.jobId },
     include: {
       skills: true,
+      jobIntent: true,
       matchResults: {
         include: { candidate: true },
         orderBy: { score: "desc" },
@@ -155,6 +160,7 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
 
   const initialCandidates = buildInitialCandidates(job.matchResults);
   const mustHaveSkills = job.skills.filter((skill) => skill.required).map((skill) => skill.name);
+  const archetype = extractArchetypeFromIntent(job.jobIntent?.intent);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50">
@@ -173,8 +179,12 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
           agentState={agents}
           modeLabel={modeLabel}
           modeDescription={modeDescription}
+<<<<<<< ours
           defaultTradeoffs={defaultTradeoffs}
           showDecisionMomentCues={showDecisionMomentCues}
+=======
+          archetype={archetype}
+>>>>>>> theirs
         />
       </ETEClientLayout>
     </div>

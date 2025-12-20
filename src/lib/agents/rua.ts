@@ -11,6 +11,7 @@ import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { prisma } from '@/server/db/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { buildJobIntentPayload, upsertJobIntent } from '@/lib/jobIntent';
+import { suggestReqArchetype } from '@/lib/archetypes/reqArchetypes';
 
 export type RuaInput = {
   recruiterId?: string;
@@ -70,6 +71,7 @@ ${rawJobText}
       }
 
       assertValidRuaResponse(parsed);
+      const archetype = suggestReqArchetype({ intent: parsed, rawDescription: rawJobText });
 
       const jobReq = await prisma.jobReq.create({
         data: {
@@ -101,6 +103,7 @@ ${rawJobText}
         sourceDescription: rawJobText,
         confidenceLevels: { requirements: 0.85 },
         createdFrom: 'rua',
+        archetype,
       });
 
       await upsertJobIntent(prisma, {

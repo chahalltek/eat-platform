@@ -1,6 +1,7 @@
 import { JobIntent, JobReq, JobSkill, Prisma, PrismaClient } from '@prisma/client';
 
 import type { JobIntentPayload, JobIntentRequirement } from '@/types/jobIntent';
+import { describeAssignment, type ReqArchetypeAssignment } from '@/lib/archetypes/reqArchetypes';
 
 const DEFAULT_WEIGHT = 1;
 const REQUIRED_WEIGHT = 2;
@@ -24,6 +25,7 @@ type JobIntentBuildInput = {
   sourceDescription?: string | null;
   confidenceLevels?: Record<string, number>;
   createdFrom?: string;
+  archetype?: ReqArchetypeAssignment | null;
 };
 
 function normalizeLabel(value?: string | null) {
@@ -115,6 +117,7 @@ export function buildJobIntentPayload(input: JobIntentBuildInput): JobIntentPayl
     metadata: {
       sourceDescription: input.sourceDescription ?? null,
       createdFrom: input.createdFrom ?? 'intake',
+      archetype: input.archetype ?? null,
     },
   } satisfies JobIntentPayload;
 }
@@ -166,6 +169,13 @@ export function applyJobIntent(
   }));
 
   return { ...jobReq, skills: intentSkills };
+}
+
+export function extractArchetypeFromIntent(intent: unknown) {
+  const parsed = parseJobIntentPayload(intent);
+  const archetype = (parsed?.metadata as { archetype?: ReqArchetypeAssignment | null } | undefined)?.archetype ?? null;
+
+  return describeAssignment(archetype);
 }
 
 export async function upsertJobIntent(

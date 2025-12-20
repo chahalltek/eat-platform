@@ -5,6 +5,7 @@ import type { IdentityUser } from "@/lib/auth/types";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { prisma } from "@/server/db/prisma";
 import { recordMetricEvent } from "@/lib/metrics/events";
+<<<<<<< ours
 import { recordAuditEvent } from "@/lib/audit/trail";
 
 type VocabularyEntry = {
@@ -77,6 +78,17 @@ const recommendationFeedbackSchema = z.object({
     .max(280, { message: "Rationale should be concise (under 280 chars)." })
     .optional(),
 });
+=======
+import {
+  describeAssignment,
+  type ReqArchetypeAssignment,
+  type ReqArchetypeDefinition,
+  reqArchetypeIdTuple,
+} from "@/lib/archetypes/reqArchetypes";
+import { extractArchetypeFromIntent } from "@/lib/jobIntent";
+
+const archetypeIdEnum = z.enum(reqArchetypeIdTuple);
+>>>>>>> theirs
 
 export const decisionReceiptSchema = z.object({
   jobId: z.string().trim().min(1),
@@ -90,12 +102,24 @@ export const decisionReceiptSchema = z.object({
   summary: z.string().trim().optional(),
   bullhornTarget: z.enum(["note", "custom_field"]).default("note"),
   shortlistStrategy: z.enum(["quality", "strict", "fast"]).optional(),
+<<<<<<< ours
   recommendation: recommendationFeedbackSchema.optional(),
+=======
+  archetype: z
+    .object({
+      id: archetypeIdEnum,
+      source: z.enum(["auto", "manual"]).default("manual"),
+      reason: z.string().trim().optional(),
+      confidence: z.number().min(0).max(1).optional(),
+    })
+    .optional(),
+>>>>>>> theirs
 });
 
 export type DecisionReceiptInput = z.infer<typeof decisionReceiptSchema>;
 export type RecommendationFeedback = z.infer<typeof recommendationFeedbackSchema>;
 
+<<<<<<< ours
 export type DecisionAuditContext = {
   auditEventId: string | null;
   hash: string;
@@ -115,6 +139,11 @@ export type DecisionGovernanceSignals = {
 };
 
 type BaseDecisionReceiptRecord = {
+=======
+type DecisionReceiptArchetype = ReqArchetypeAssignment & ReqArchetypeDefinition;
+
+export type DecisionReceiptRecord = {
+>>>>>>> theirs
   id: string;
   jobId: string;
   candidateId: string;
@@ -135,6 +164,7 @@ type BaseDecisionReceiptRecord = {
   bullhornNote: string;
   bullhornTarget: DecisionReceiptInput["bullhornTarget"];
 <<<<<<< ours
+<<<<<<< ours
   auditContext?: Partial<Pick<DecisionAuditContext, "auditEventId" | "hash" | "previousHash" | "chainPosition">>;
 };
 
@@ -147,6 +177,9 @@ export type DecisionReceiptRecord = BaseDecisionReceiptRecord & {
   standardizedRisks: string[];
   standardizedRiskKeys: string[];
   confidenceFrame: keyof typeof CONFIDENCE_FRAMES | null;
+>>>>>>> theirs
+=======
+  archetype: DecisionReceiptArchetype | null;
 >>>>>>> theirs
 };
 
@@ -241,6 +274,7 @@ function describeDecision(decisionType: DecisionReceiptInput["decisionType"]) {
   return labels[decisionType];
 }
 
+<<<<<<< ours
 type ReceiptSummaryInput = DecisionReceiptInput & {
   confidenceScore: number | null;
   drivers: string[];
@@ -250,10 +284,22 @@ type ReceiptSummaryInput = DecisionReceiptInput & {
 };
 
 function summarizeReceipt(payload: ReceiptSummaryInput) {
+=======
+function summarizeReceipt(
+  payload: DecisionReceiptInput & {
+    confidenceScore: number | null;
+    drivers: string[];
+    risks: string[];
+    tradeoff: string | null;
+    archetype: DecisionReceiptArchetype | null;
+  },
+) {
+>>>>>>> theirs
   const driverSummary = payload.drivers.length ? `Drivers: ${payload.drivers.join("; ")}.` : "Drivers: Not captured.";
   const riskSummary = payload.risks.length ? `Risks: ${payload.risks.join("; ")}.` : "Risks: Not captured.";
   const confidence = typeof payload.confidenceScore === "number" ? `${payload.confidenceScore}/10 confidence.` : "Confidence not captured.";
   const tradeoff = payload.tradeoff ? `Tradeoff: ${payload.tradeoff}` : "Tradeoff: Defaulted to recruiter judgment.";
+<<<<<<< ours
   const recommendationSummary = payload.recommendation
     ? `Recommendation response: ${payload.recommendation.alignment ?? "accept"}${payload.recommendation.rationale ? ` (${payload.recommendation.rationale})` : ""}.`
     : "Recommendation response not captured.";
@@ -352,6 +398,20 @@ function computeGovernanceSignals({
     overrideRate,
     explainability,
   };
+=======
+  const archetype = payload.archetype ? `Archetype: ${payload.archetype.label}.` : "";
+
+  return `${describeDecision(payload.decisionType)} ${driverSummary} ${riskSummary} ${confidence} ${tradeoff} ${archetype}`.trim();
+}
+
+async function resolveJobArchetype(jobId: string, tenantId: string): Promise<DecisionReceiptArchetype | null> {
+  const jobIntent = await prisma.jobIntent.findFirst({
+    where: { jobReqId: jobId, tenantId },
+    select: { intent: true },
+  });
+
+  return extractArchetypeFromIntent(jobIntent?.intent);
+>>>>>>> theirs
 }
 
 export async function createDecisionReceipt({
@@ -369,6 +429,7 @@ export async function createDecisionReceipt({
   const drivers = clampEntries(payload.drivers, 3);
   const risks = clampEntries(payload.risks, 4);
   const confidenceScore = toTenPointScale(payload.confidenceScore);
+<<<<<<< ours
   const tradeoff = payload.tradeoff?.trim() || defaultTradeoff(payload.decisionType, payload.shortlistStrategy);
   const recommendation = normalizeRecommendationFeedback(payload.recommendation);
   const standardizedTradeoff = standardizeTradeoff(tradeoff);
@@ -458,6 +519,18 @@ export async function createDecisionReceipt({
       governance,
     },
   });
+=======
+  const archetype =
+    describeAssignment(payload.archetype ?? null) ?? (await resolveJobArchetype(payload.jobId, normalizedTenantId));
+  const tradeoff =
+    payload.tradeoff?.trim() ||
+    archetype?.defaultTradeoff ||
+    defaultTradeoff(payload.decisionType, payload.shortlistStrategy);
+
+  const baseSummary =
+    payload.summary?.trim() ||
+    summarizeReceipt({ ...payload, drivers, risks, confidenceScore, tradeoff, archetype });
+>>>>>>> theirs
 
   const created = await prisma.metricEvent.create({
     data: {
@@ -478,6 +551,7 @@ export async function createDecisionReceipt({
         standardizedRiskKeys,
         confidenceFrame,
         summary: baseSummary,
+        archetype: archetype ? { id: archetype.id, source: archetype.source, reason: archetype.reason, confidence: archetype.confidence } : undefined,
         createdBy: {
           id: user.id,
           email: user.email,
@@ -527,6 +601,7 @@ export async function createDecisionReceipt({
     bullhornNote,
     bullhornTarget: payload.bullhornTarget,
 <<<<<<< ours
+<<<<<<< ours
     governance,
     audit: {
       auditEventId: auditEvent.id,
@@ -542,6 +617,9 @@ export async function createDecisionReceipt({
     standardizedRisks,
     standardizedRiskKeys,
     confidenceFrame,
+>>>>>>> theirs
+=======
+    archetype: archetype ?? null,
 >>>>>>> theirs
   };
 }
@@ -702,6 +780,7 @@ export async function listDecisionReceipts({
       const confidenceScore = typeof meta.confidenceScore === "number" ? meta.confidenceScore : null;
       const tradeoff = typeof meta.tradeoff === "string" ? meta.tradeoff : null;
       const bullhornTarget = (meta.bullhornTarget as DecisionReceiptInput["bullhornTarget"]) ?? "note";
+<<<<<<< ours
       const recommendation = normalizeRecommendationFeedback(meta.recommendation as RecommendationFeedback | null | undefined);
       const tradeoffVocabulary = standardizeTradeoff(tradeoff);
       const standardizedTradeoff =
@@ -722,6 +801,9 @@ export async function listDecisionReceipts({
         typeof meta.confidenceFrame === "string" && meta.confidenceFrame in CONFIDENCE_FRAMES
           ? (meta.confidenceFrame as keyof typeof CONFIDENCE_FRAMES)
           : frameConfidence(confidenceScore);
+=======
+      const archetype = describeAssignment((meta.archetype as ReqArchetypeAssignment | null | undefined) ?? null);
+>>>>>>> theirs
 
       const summary =
         typeof meta.summary === "string"
@@ -733,7 +815,11 @@ export async function listDecisionReceipts({
               risks,
               confidenceScore,
               tradeoff,
+<<<<<<< ours
               recommendation,
+=======
+              archetype,
+>>>>>>> theirs
             });
 
       return {
@@ -756,11 +842,15 @@ export async function listDecisionReceipts({
         },
         bullhornNote: `${summary} Synced as ${bullhornTarget === "custom_field" ? "custom field payload" : "note"} for auditability.`,
         bullhornTarget,
+<<<<<<< ours
         standardizedTradeoff,
         standardizedTradeoffKey,
         standardizedRisks: normalizedRiskLabels,
         standardizedRiskKeys: normalizedRiskKeys,
         confidenceFrame,
+=======
+        archetype: archetype ?? null,
+>>>>>>> theirs
       } satisfies DecisionReceiptRecord;
     })
     .filter((entry) => entry.jobId === jobId);

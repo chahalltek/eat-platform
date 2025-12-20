@@ -1,6 +1,7 @@
 import type { GuardrailsConfig } from "@/lib/guardrails/presets";
 import type { ConfidenceResult } from "./confidenceEngine.v2";
 import type { Candidate, Job, MatchResult } from "./matchEngine";
+import type { ReqArchetypeDefinition } from "@/lib/archetypes/reqArchetypes";
 
 export type Explanation = {
   summary: string;
@@ -14,6 +15,7 @@ export type ExplainInput = {
   match: MatchResult;
   confidence: ConfidenceResult;
   config: GuardrailsConfig;
+  archetype?: ReqArchetypeDefinition | null;
 };
 
 type PolishOptions = {
@@ -110,11 +112,14 @@ function buildRisks(input: ExplainInput, verbosity: Verbosity): string[] {
   return trimmed;
 }
 
-function buildSummary(strengths: string[], risks: string[]): string {
+function buildSummary(strengths: string[], risks: string[], archetype?: ReqArchetypeDefinition | null): string {
   const leadingStrength = strengths[0] ?? "Candidate shows relevant alignment.";
   const leadingRisk = risks[0];
+  const archetypeCue = archetype ? `${archetype.label} archetype: ${archetype.explainCue}` : "";
 
-  return leadingRisk ? `${leadingStrength} Top risk: ${leadingRisk}` : leadingStrength;
+  const base = leadingRisk ? `${leadingStrength} Top risk: ${leadingRisk}` : leadingStrength;
+
+  return [base, archetypeCue].filter(Boolean).join(" ");
 }
 
 export function buildExplanation(input: ExplainInput): Explanation {
@@ -123,7 +128,7 @@ export function buildExplanation(input: ExplainInput): Explanation {
   const risks = buildRisks(input, verbosity);
 
   return {
-    summary: buildSummary(strengths, risks),
+    summary: buildSummary(strengths, risks, input.archetype),
     strengths,
     risks,
   };

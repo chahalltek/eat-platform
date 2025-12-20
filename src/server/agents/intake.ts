@@ -12,6 +12,8 @@ import { recordMetricEvent } from "@/lib/metrics/events";
 import { callLLM } from "@/lib/llm";
 import { OpenAIAdapter } from "@/lib/llm/openaiAdapter";
 import { prisma } from "@/server/db/prisma";
+import { buildJobIntentPayload, upsertJobIntent } from "@/lib/jobIntent";
+import { suggestReqArchetype } from "@/lib/archetypes/reqArchetypes";
 
 export type IntakeInput = {
   jobId: string;
@@ -86,6 +88,18 @@ export async function runIntake(
 
       await prisma.$transaction(async (tx) => {
         await tx.jobSkill.deleteMany({ where: { jobReqId: job.id, tenantId: job.tenantId } });
+        const archetype = suggestReqArchetype({ intent: parsed, rawDescription: job.rawDescription });
+        const intentPayload = buildJobIntentPayload({
+          title: parsed.title,
+          location: parsed.location ?? null,
+          employmentType: parsed.employmentType ?? null,
+          seniorityLevel: parsed.seniorityLevel ?? null,
+          skills: parsed.skills,
+          sourceDescription: job.rawDescription,
+          confidenceLevels: { requirements: 0.85 },
+          createdFrom: "intake",
+          archetype,
+        });
         await tx.jobReq.update({
           where: { id: job.id },
           data: {
@@ -103,6 +117,12 @@ export async function runIntake(
               })),
             },
           },
+        });
+        await upsertJobIntent(tx, {
+          jobReqId: job.id,
+          tenantId: job.tenantId ?? DEFAULT_TENANT_ID,
+          payload: intentPayload,
+          createdById: input.recruiterId,
         });
       });
 

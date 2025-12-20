@@ -16,6 +16,7 @@ import { onJobChanged } from '@/lib/orchestration/triggers';
 import { recordMetricEvent } from '@/lib/metrics/events';
 import { recordUsageEvent } from '@/lib/usage/events';
 import { buildJobIntentPayload, upsertJobIntent } from '@/lib/jobIntent';
+import { suggestReqArchetype } from '@/lib/archetypes/reqArchetypes';
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -179,6 +180,7 @@ export async function POST(req: NextRequest) {
         skills: parsedProfile.skills,
         sourceDescription: trimmedDescription,
         confidenceLevels: { requirements: 0.85 },
+        archetype: suggestReqArchetype({ intent: parsedProfile, rawDescription: trimmedDescription }),
       });
 
       await runTransaction(async (tx) => {
@@ -331,4 +333,3 @@ export async function POST(req: NextRequest) {
     }
   });
 }
-

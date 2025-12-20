@@ -17,6 +17,7 @@ import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { callLLM } from "@/lib/llm";
 import { recordUsageEvent } from "@/lib/usage/events";
+import { extractArchetypeFromIntent } from "@/lib/jobIntent";
 
 const requestSchema = z
   .object({
@@ -119,6 +120,7 @@ type ExplanationFingerprints = {
   job: string;
   candidate: string;
   match: string;
+  archetype: string | null;
 };
 
 type PersistedExplanation = {
@@ -151,6 +153,7 @@ function buildFingerprints({
   candidate,
   match,
   confidence,
+  archetype,
 }: {
   mode: string;
   guardrails: Prisma.JsonValue;
@@ -158,6 +161,7 @@ function buildFingerprints({
   candidate: CandidateFingerprintInput;
   match: MatchResult;
   confidence: ReturnType<typeof toConfidenceBand>;
+  archetype: ReturnType<typeof extractArchetypeFromIntent>;
 }): ExplanationFingerprints {
   const normalizedJob = {
     ...job,
@@ -175,6 +179,7 @@ function buildFingerprints({
     job: stableStringify(normalizedJob),
     candidate: stableStringify(normalizedCandidate),
     match: stableStringify({ ...match, confidence }),
+    archetype: archetype?.id ?? null,
   } satisfies ExplanationFingerprints;
 }
 
@@ -265,7 +270,7 @@ export async function POST(req: NextRequest) {
       ? await scopedPrisma.match.findFirst({
           where: { id: matchId, tenantId },
           include: {
-            jobReq: { include: { skills: true } },
+            jobReq: { include: { skills: true, jobIntent: true } },
             candidate: { include: { skills: true } },
           },
         })
@@ -346,6 +351,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "EXPLAIN agent disabled" }, { status: 403 });
     }
 
+    const archetype =
+      "jobReq" in match ? extractArchetypeFromIntent(match.jobReq?.jobIntent?.intent) : null;
+
     const fingerprints = buildFingerprints({
       mode: availability.mode.mode,
       guardrails: guardrailsSnapshot,
@@ -353,6 +361,7 @@ export async function POST(req: NextRequest) {
       candidate: candidateContext,
       match: matchResult,
       confidence: confidenceBand,
+      archetype,
     });
 
     const persisted = parsePersistedExplanation(
@@ -394,6 +403,7 @@ export async function POST(req: NextRequest) {
               match: matchResult,
               confidence: confidenceBand,
               config: guardrails,
+              archetype,
             });
 
       const explanation =

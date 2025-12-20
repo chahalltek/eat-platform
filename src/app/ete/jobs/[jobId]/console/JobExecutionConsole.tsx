@@ -13,8 +13,12 @@ import {
   type DecisionStreamAction,
   type DecisionStreamItem,
 } from "@/lib/metrics/decisionStreamClient";
+<<<<<<< ours
 import { formatTradeoffDeclaration, resolveTradeoffs, type TradeoffDeclaration } from "@/lib/matching/tradeoffs";
 import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
+=======
+import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
+>>>>>>> theirs
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -42,8 +46,12 @@ export type JobConsoleProps = {
   }[];
   modeLabel: string;
   modeDescription?: string | null;
+<<<<<<< ours
   defaultTradeoffs: TradeoffDeclaration;
   showDecisionMomentCues?: boolean;
+=======
+  archetype?: NonNullable<ReturnType<typeof describeAssignment>> | null;
+>>>>>>> theirs
 };
 
 type DecisionReceipt = {
@@ -61,6 +69,7 @@ type DecisionReceipt = {
   createdBy?: { id?: string; name?: string | null; email?: string | null };
   bullhornNote?: string;
   bullhornTarget?: "note" | "custom_field";
+<<<<<<< ours
   recommendation?: {
     recommendedOutcome?: "shortlist" | "pass";
     alignment?: "accept" | "override" | "disagree";
@@ -78,6 +87,9 @@ type DecisionReceipt = {
   standardizedRisks?: string[];
   standardizedRiskKeys?: string[];
   confidenceFrame?: "HIGH" | "MEDIUM" | "LOW" | null;
+>>>>>>> theirs
+=======
+  archetype?: NonNullable<ReturnType<typeof describeAssignment>> | null;
 >>>>>>> theirs
 };
 
@@ -1195,8 +1207,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     agentState,
     modeLabel,
     modeDescription,
+<<<<<<< ours
     defaultTradeoffs,
     showDecisionMomentCues = false,
+=======
+    archetype,
+>>>>>>> theirs
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
     ...candidate,
@@ -1411,11 +1427,15 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       const decisionType = mapDecisionActionToReceipt(action);
       if (!decisionType) return;
 
+<<<<<<< ours
       const recommendation = {
         recommendedOutcome: candidate.recommendedOutcome,
         alignment: annotation.alignment,
         rationale: annotation.rationale.trim() || undefined,
       } as DecisionReceipt["recommendation"];
+=======
+      const tradeoff = archetype?.defaultTradeoff ?? describeTradeoffFromStrategy(shortlistStrategy);
+>>>>>>> theirs
 
       const payload = {
         jobId,
@@ -1426,10 +1446,21 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         risks: candidate.explanation?.risks?.slice(0, 3) ?? [],
         confidenceScore: normalizeConfidenceToTenPoint(candidate.confidenceScore),
         summary: candidate.explanation?.summary ?? undefined,
-        tradeoff: describeTradeoffFromStrategy(shortlistStrategy),
+        tradeoff,
         bullhornTarget: "note" as const,
         shortlistStrategy,
+<<<<<<< ours
         recommendation,
+=======
+        archetype: archetype
+          ? {
+              id: archetype.id,
+              source: archetype.source ?? "auto",
+              reason: archetype.reason,
+              confidence: archetype.confidence,
+            }
+          : undefined,
+>>>>>>> theirs
       };
 
       try {
@@ -1449,7 +1480,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         console.warn("Failed to persist decision receipt", error);
       }
     },
-    [appendReceipt, jobId, shortlistStrategy],
+    [appendReceipt, jobId, shortlistStrategy, archetype],
   );
 
   const handleDecision = useCallback(
@@ -1711,6 +1742,24 @@ export function JobExecutionConsole(props: JobConsoleProps) {
                   </span>
                 ))}
               </div>
+            )}
+          </div>
+          <div className="rounded-2xl bg-indigo-50 p-4 text-sm text-indigo-800 ring-1 ring-indigo-100">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600">Req archetype</p>
+            {archetype ? (
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-indigo-800 ring-1 ring-indigo-200">
+                    {archetype.label}
+                  </span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
+                    Default tradeoff: {archetype.defaultTradeoff}
+                  </span>
+                </div>
+                <p className="text-xs text-indigo-700">{archetype.explainCue}</p>
+              </div>
+            ) : (
+              <p className="text-xs text-indigo-700">No archetype assigned yet.</p>
             )}
           </div>
         </div>

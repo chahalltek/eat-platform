@@ -12,9 +12,11 @@ import { isAdminRole, normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { buildJobIntentPayload, upsertJobIntent } from "@/lib/jobIntent";
 import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
+import { suggestReqArchetype } from "@/lib/archetypes/reqArchetypes";
 
 const jobSkillSchema = z.object({
   name: z.string().min(1, "Skill name is required"),
+  normalizedName: z.string().optional(),
   required: z.boolean().optional(),
   weight: z.number().nonnegative().optional(),
 });
@@ -93,6 +95,26 @@ export async function POST(req: Request) {
     sourceDescription: parsed.data.rawDescription ?? null,
     createdFrom: "ingest",
     confidenceLevels: { requirements: 1 },
+    archetype: suggestReqArchetype({
+      intent: {
+        title: jobReq.title,
+        location: jobReq.location,
+        employmentType: jobReq.employmentType,
+        seniorityLevel: jobReq.seniorityLevel,
+        status: jobReq.status,
+        priority: null,
+        remoteType: null,
+        responsibilitiesSummary: null,
+        teamContext: null,
+        ambiguityScore: null,
+        skills: parsed.data.skills.map((skill) => ({
+          name: skill.name,
+          normalizedName: skill.normalizedName ?? skill.name,
+          isMustHave: Boolean(skill.required),
+        })),
+      },
+      rawDescription: parsed.data.rawDescription ?? null,
+    }),
   });
 
   await upsertJobIntent(prisma, {
@@ -117,4 +139,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json(jobReq, { status: 201 });
 }
-

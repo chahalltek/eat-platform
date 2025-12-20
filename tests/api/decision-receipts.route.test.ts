@@ -42,6 +42,7 @@ describe("decision receipt routes", () => {
       createdBy: { id: "user-1", email: "demo@example.com", name: "Demo User" },
       bullhornNote: "Recommendation recorded. Synced as note for auditability.",
       bullhornTarget: "note",
+      archetype: null,
     });
     mocks.listDecisionReceipts.mockResolvedValue([]);
   });
@@ -60,6 +61,7 @@ describe("decision receipt routes", () => {
         confidenceScore: 8.5,
         summary: "Recommendation recorded.",
         bullhornTarget: "note",
+        archetype: { id: "urgent_backfill", source: "manual" },
       }),
     });
 
@@ -70,7 +72,12 @@ describe("decision receipt routes", () => {
     expect(body.receipt.id).toBe("rec-1");
     expect(mocks.createDecisionReceipt).toHaveBeenCalledWith({
       tenantId: "tenant-1",
-      payload: expect.objectContaining({ decisionType: "RECOMMEND", jobId: "job-1", candidateId: "cand-1" }),
+      payload: expect.objectContaining({
+        decisionType: "RECOMMEND",
+        jobId: "job-1",
+        candidateId: "cand-1",
+        archetype: { id: "urgent_backfill", source: "manual" },
+      }),
       user: expect.objectContaining({ id: "user-1" }),
     });
   });
@@ -106,6 +113,14 @@ describe("decision receipt routes", () => {
         createdBy: { id: "user-1", email: "demo@example.com", name: "Demo User" },
         bullhornNote: "Recommendation recorded. Synced as note for auditability.",
         bullhornTarget: "note",
+        archetype: {
+          id: "urgent_backfill",
+          label: "Urgent backfill",
+          defaultTradeoff: "Favor speed and coverage to restore capacity quickly.",
+          confidenceRange: { label: "Expect medium confidence due to time pressure", min: 0.55, max: 0.8 },
+          explainCue: "Highlight immediate availability and ability to stabilize the team.",
+          source: "auto",
+        },
       },
     ]);
 
