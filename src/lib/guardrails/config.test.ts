@@ -59,4 +59,16 @@ describe("loadTenantGuardrailConfig", () => {
 
     expect(config.source).toBe("database");
   });
+
+  it("falls back to defaults when lookups fail", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mockFindUnique.mockRejectedValue(new Error("database offline"));
+
+    const config = await loadTenantGuardrailConfig("tenant-d");
+
+    expect(config).toEqual({ ...DEFAULT_GUARDRAILS, source: "default" });
+    expect(consoleSpy).toHaveBeenCalledWith("Unable to load guardrail config", expect.any(Error));
+
+    consoleSpy.mockRestore();
+  });
 });
