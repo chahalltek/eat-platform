@@ -14,7 +14,6 @@ export type DecisionStreamItem = {
   details?: Record<string, unknown>;
 };
 
-<<<<<<< ours
 function normalizeConfidenceScore(score?: number): number {
   const numeric = typeof score === "number" ? Number(score) : Number.NaN;
   if (Number.isFinite(numeric)) {
@@ -23,10 +22,7 @@ function normalizeConfidenceScore(score?: number): number {
   return 5;
 }
 
-export async function createDecisionStream(jobId: string): Promise<string | null> {
-=======
 export async function createDecisionStream(jobId: string, tradeoffs?: TradeoffDeclaration): Promise<string | null> {
->>>>>>> theirs
   try {
     const res = await fetch("/api/decision-stream", {
       method: "POST",

@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { describe, expect, beforeEach, it, vi } from "vitest";
 
 import type { IdentityUser } from "@/lib/auth/types";
@@ -149,5 +150,57 @@ describe("decision receipts governance and audit trail", () => {
     expect(latest.governance.missingSignals).toContain("risks");
 
     expect(first.governance.missingSignals).toEqual(expect.arrayContaining(["drivers", "risks", "confidence"]));
+=======
+import { describe, expect, it } from "vitest";
+
+import { CONFIDENCE_FRAMES, frameConfidence, standardizeRisks, standardizeTradeoff } from "./decisionReceipts";
+
+describe("decision vocabulary standardization", () => {
+  it("maps tradeoff hints to standardized labels", () => {
+    const fastMatch = standardizeTradeoff("Pushed speed to keep req momentum high");
+    expect(fastMatch).toMatchObject({
+      key: "speed_over_precision",
+      label: "Speed over precision to keep requisition momentum.",
+    });
+
+    const strictMatch = standardizeTradeoff("Used strict precision to protect quality");
+    expect(strictMatch).toMatchObject({
+      key: "precision_over_coverage",
+      label: "Precision over coverage to protect quality.",
+    });
+
+    const fallback = standardizeTradeoff("Custom reasoning not covered");
+    expect(fallback).toEqual({ key: "custom", label: "Custom tradeoff captured" });
+  });
+
+  it("standardizes risks while preserving free-text allowance", () => {
+    const { labels, keys } = standardizeRisks([
+      "Missing must-have coverage for skill",
+      "Low confidence band noted",
+      "Missing must-have coverage for skill",
+      "Time zone mismatch could be an issue",
+    ]);
+
+    expect(keys).toEqual(["skill_gap", "data_quality_risk", "location_mismatch"]);
+    expect(labels).toEqual([
+      "Skill or coverage gap",
+      "Data quality or confidence risk",
+      "Location or availability mismatch",
+    ]);
+  });
+});
+
+describe("confidence framing", () => {
+  it("returns band values aligned to the 10 point scale", () => {
+    expect(frameConfidence(9)).toBe("HIGH");
+    expect(frameConfidence(7)).toBe("MEDIUM");
+    expect(frameConfidence(1)).toBe("LOW");
+    expect(frameConfidence(null)).toBeNull();
+  });
+
+  it("exposes human readable frames", () => {
+    expect(CONFIDENCE_FRAMES.HIGH).toContain("High confidence framing");
+    expect(CONFIDENCE_FRAMES.LOW).toContain("Low confidence");
+>>>>>>> theirs
   });
 });

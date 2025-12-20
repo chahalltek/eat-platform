@@ -7,6 +7,67 @@ import { prisma } from "@/server/db/prisma";
 import { recordMetricEvent } from "@/lib/metrics/events";
 import { recordAuditEvent } from "@/lib/audit/trail";
 
+type VocabularyEntry = {
+  key: string;
+  label: string;
+  hints: string[];
+};
+
+const TRADEOFF_VOCABULARY: VocabularyEntry[] = [
+  {
+    key: "speed_over_precision",
+    label: "Speed over precision to keep requisition momentum.",
+    hints: ["speed", "momentum", "fast", "latency"],
+  },
+  {
+    key: "precision_over_coverage",
+    label: "Precision over coverage to protect quality.",
+    hints: ["precision", "strict", "quality", "signal"],
+  },
+  {
+    key: "balanced_quality_coverage",
+    label: "Balanced quality and coverage with recruiter judgment.",
+    hints: ["balance", "balanced", "coverage", "judgment"],
+  },
+  {
+    key: "workflow_safe_decline",
+    label: "Protected ATS workflow while declining a profile.",
+    hints: ["workflow", "ats", "declined", "pass", "reject"],
+  },
+];
+
+const RISK_VOCABULARY: VocabularyEntry[] = [
+  {
+    key: "skill_gap",
+    label: "Skill or coverage gap",
+    hints: ["skill", "must-have", "coverage", "ramp"],
+  },
+  {
+    key: "experience_gap",
+    label: "Experience below target",
+    hints: ["experience", "target", "junior", "senior"],
+  },
+  {
+    key: "location_mismatch",
+    label: "Location or availability mismatch",
+    hints: ["location", "timezone", "time zone", "commute", "availability"],
+  },
+  {
+    key: "data_quality_risk",
+    label: "Data quality or confidence risk",
+    hints: ["confidence", "data", "validation", "band"],
+  },
+];
+
+export const CONFIDENCE_FRAMES = {
+  HIGH: "High confidence framing (8-10 on a 10pt scale).",
+  MEDIUM: "Moderate confidence framing (5-7 on a 10pt scale).",
+  LOW: "Low confidence framing (0-4 on a 10pt scale).",
+} as const;
+
+const CUSTOM_TRADEOFF_LABEL = "Custom tradeoff captured";
+const CUSTOM_RISK_LABEL = "Other risk captured";
+
 const recommendationFeedbackSchema = z.object({
   recommendedOutcome: z.enum(["shortlist", "pass"]).optional(),
   alignment: z.enum(["accept", "override", "disagree"]).default("accept"),
@@ -73,12 +134,20 @@ type BaseDecisionReceiptRecord = {
   };
   bullhornNote: string;
   bullhornTarget: DecisionReceiptInput["bullhornTarget"];
+<<<<<<< ours
   auditContext?: Partial<Pick<DecisionAuditContext, "auditEventId" | "hash" | "previousHash" | "chainPosition">>;
 };
 
 export type DecisionReceiptRecord = BaseDecisionReceiptRecord & {
   governance: DecisionGovernanceSignals;
   audit: DecisionAuditContext;
+=======
+  standardizedTradeoff: string | null;
+  standardizedTradeoffKey: string | null;
+  standardizedRisks: string[];
+  standardizedRiskKeys: string[];
+  confidenceFrame: keyof typeof CONFIDENCE_FRAMES | null;
+>>>>>>> theirs
 };
 
 function toTenPointScale(score?: number | null): number | null {
@@ -89,6 +158,49 @@ function toTenPointScale(score?: number | null): number | null {
 
 function clampEntries(entries?: string[], limit = 3): string[] {
   return (entries ?? []).map((entry) => entry.trim()).filter(Boolean).slice(0, limit);
+}
+
+function matchVocabulary(value: string | null, vocabulary: VocabularyEntry[], customLabel: string): { key: string; label: string } | null {
+  if (!value) return null;
+
+  const normalized = value.toLowerCase();
+  const match = vocabulary.find((entry) => entry.hints.some((hint) => normalized.includes(hint)) || normalized.includes(entry.key.replace(/_/g, " ")));
+
+  if (match) {
+    return { key: match.key, label: match.label };
+  }
+
+  return { key: "custom", label: customLabel };
+}
+
+export function standardizeTradeoff(tradeoff: string | null): { key: string; label: string } | null {
+  return matchVocabulary(tradeoff, TRADEOFF_VOCABULARY, CUSTOM_TRADEOFF_LABEL);
+}
+
+export function standardizeRisks(risks: string[]): { labels: string[]; keys: string[] } {
+  const labels: string[] = [];
+  const keys: string[] = [];
+  const seenKeys = new Set<string>();
+
+  risks.forEach((risk) => {
+    const entry = matchVocabulary(risk, RISK_VOCABULARY, CUSTOM_RISK_LABEL);
+    if (!entry) return;
+    if (seenKeys.has(entry.key)) return;
+
+    seenKeys.add(entry.key);
+    keys.push(entry.key);
+    labels.push(entry.label);
+  });
+
+  return { labels, keys };
+}
+
+export function frameConfidence(confidenceScore: number | null): keyof typeof CONFIDENCE_FRAMES | null {
+  if (typeof confidenceScore !== "number") return null;
+  if (confidenceScore >= 8) return "HIGH";
+  if (confidenceScore >= 5) return "MEDIUM";
+  if (confidenceScore >= 0) return "LOW";
+  return null;
 }
 
 function normalizeRecommendationFeedback(value?: RecommendationFeedback | null): RecommendationFeedback | null {
@@ -259,6 +371,9 @@ export async function createDecisionReceipt({
   const confidenceScore = toTenPointScale(payload.confidenceScore);
   const tradeoff = payload.tradeoff?.trim() || defaultTradeoff(payload.decisionType, payload.shortlistStrategy);
   const recommendation = normalizeRecommendationFeedback(payload.recommendation);
+  const standardizedTradeoff = standardizeTradeoff(tradeoff);
+  const { labels: standardizedRisks, keys: standardizedRiskKeys } = standardizeRisks(risks);
+  const confidenceFrame = frameConfidence(confidenceScore);
 
   const baseSummary =
     payload.summary?.trim() ||
@@ -357,6 +472,11 @@ export async function createDecisionReceipt({
         tradeoff,
         confidenceScore,
         recommendation,
+        standardizedTradeoff: standardizedTradeoff?.label ?? null,
+        standardizedTradeoffKey: standardizedTradeoff?.key ?? null,
+        standardizedRisks,
+        standardizedRiskKeys,
+        confidenceFrame,
         summary: baseSummary,
         createdBy: {
           id: user.id,
@@ -406,6 +526,7 @@ export async function createDecisionReceipt({
     createdBy: { id: user.id, email: user.email, name: user.displayName },
     bullhornNote,
     bullhornTarget: payload.bullhornTarget,
+<<<<<<< ours
     governance,
     audit: {
       auditEventId: auditEvent.id,
@@ -415,6 +536,13 @@ export async function createDecisionReceipt({
       chainPosition: previousChainPosition + 1,
       chainValid: true,
     },
+=======
+    standardizedTradeoff: standardizedTradeoff?.label ?? null,
+    standardizedTradeoffKey: standardizedTradeoff?.key ?? null,
+    standardizedRisks,
+    standardizedRiskKeys,
+    confidenceFrame,
+>>>>>>> theirs
   };
 }
 
@@ -457,6 +585,7 @@ export async function listDecisionReceipts({
         take,
       });
 
+<<<<<<< ours
   const chronological = [...receipts].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const overrideHistory: Array<RecommendationFeedback["alignment"] | undefined> = [];
   const mapped: DecisionReceiptRecord[] = [];
@@ -561,4 +690,79 @@ export async function listDecisionReceipts({
   }
 
   return mapped.reverse().filter((entry) => entry.jobId === jobId);
+=======
+  return receipts
+    .map((entry) => {
+      const meta = (entry.meta ?? {}) as Record<string, unknown>;
+      const createdBy = (meta.createdBy as Record<string, string | null> | undefined) ?? {};
+      const jobIdFromMeta = String(meta.jobId ?? entry.entityId ?? "");
+      const decisionType = (meta.decisionType as DecisionReceiptInput["decisionType"]) ?? "RECOMMEND";
+      const drivers = Array.isArray(meta.drivers) ? (meta.drivers as string[]).filter(Boolean) : [];
+      const risks = Array.isArray(meta.risks) ? (meta.risks as string[]).filter(Boolean) : [];
+      const confidenceScore = typeof meta.confidenceScore === "number" ? meta.confidenceScore : null;
+      const tradeoff = typeof meta.tradeoff === "string" ? meta.tradeoff : null;
+      const bullhornTarget = (meta.bullhornTarget as DecisionReceiptInput["bullhornTarget"]) ?? "note";
+      const recommendation = normalizeRecommendationFeedback(meta.recommendation as RecommendationFeedback | null | undefined);
+      const tradeoffVocabulary = standardizeTradeoff(tradeoff);
+      const standardizedTradeoff =
+        typeof meta.standardizedTradeoff === "string" && meta.standardizedTradeoff.trim().length > 0 ? meta.standardizedTradeoff : tradeoffVocabulary?.label ?? null;
+      const standardizedTradeoffKey =
+        typeof meta.standardizedTradeoffKey === "string" && meta.standardizedTradeoffKey.trim().length > 0 ? meta.standardizedTradeoffKey : tradeoffVocabulary?.key ?? null;
+
+      const normalizedRiskLabels =
+        Array.isArray(meta.standardizedRisks) && meta.standardizedRisks.every((entry) => typeof entry === "string")
+          ? (meta.standardizedRisks as string[])
+          : standardizeRisks(risks).labels;
+      const normalizedRiskKeys =
+        Array.isArray(meta.standardizedRiskKeys) && meta.standardizedRiskKeys.every((entry) => typeof entry === "string")
+          ? (meta.standardizedRiskKeys as string[])
+          : standardizeRisks(risks).keys;
+
+      const confidenceFrame =
+        typeof meta.confidenceFrame === "string" && meta.confidenceFrame in CONFIDENCE_FRAMES
+          ? (meta.confidenceFrame as keyof typeof CONFIDENCE_FRAMES)
+          : frameConfidence(confidenceScore);
+
+      const summary =
+        typeof meta.summary === "string"
+          ? meta.summary
+          : summarizeReceipt({
+              ...(meta as DecisionReceiptInput),
+              decisionType,
+              drivers,
+              risks,
+              confidenceScore,
+              tradeoff,
+              recommendation,
+            });
+
+      return {
+        id: entry.id,
+        jobId: jobIdFromMeta,
+        candidateId: String(meta.candidateId ?? ""),
+        candidateName: String(meta.candidateName ?? "Unknown candidate"),
+        decisionType,
+        drivers,
+        tradeoff,
+        confidenceScore,
+        risks,
+        summary,
+        recommendation,
+        createdAt: entry.createdAt.toISOString(),
+        createdBy: {
+          id: String(createdBy.id ?? ""),
+          email: createdBy.email ?? null,
+          name: createdBy.name ?? null,
+        },
+        bullhornNote: `${summary} Synced as ${bullhornTarget === "custom_field" ? "custom field payload" : "note"} for auditability.`,
+        bullhornTarget,
+        standardizedTradeoff,
+        standardizedTradeoffKey,
+        standardizedRisks: normalizedRiskLabels,
+        standardizedRiskKeys: normalizedRiskKeys,
+        confidenceFrame,
+      } satisfies DecisionReceiptRecord;
+    })
+    .filter((entry) => entry.jobId === jobId);
+>>>>>>> theirs
 }
