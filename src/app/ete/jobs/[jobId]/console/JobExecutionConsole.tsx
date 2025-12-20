@@ -147,6 +147,7 @@ type DecisionSnapshot = { favorited: boolean; removed: boolean; shortlisted: boo
 const DEFAULT_DECISION_STATE: DecisionSnapshot = { favorited: false, removed: false, shortlisted: false };
 
 <<<<<<< ours
+<<<<<<< ours
 function normalizeConfidenceToTenPoint(score?: number | null): number | null {
   if (typeof score !== "number" || Number.isNaN(score)) return null;
   const normalized = score > 10 ? score / 10 : score;
@@ -180,6 +181,122 @@ function toDecisionConfidence(candidate?: JobConsoleCandidate): { score: number;
   const score = typeof rawScore === "number" ? rawScore : null;
   const normalized = score === null ? 5 : Math.min(10, Math.max(0, Number(((score > 10 ? score / 10 : score)).toFixed(2))));
   return { score: normalized, band: candidate?.confidenceBand ?? null };
+>>>>>>> theirs
+=======
+type ChangeSource = AgentName | "MANUAL";
+
+type RecommendationDelta = { label: string; from: string; to: string };
+
+type RecommendationChange = {
+  candidateId: string;
+  candidateName: string;
+  timestamp: string;
+  agent: ChangeSource;
+  inputChanged: string;
+  assumptionShift: string;
+  whyMoved: string;
+  deltas: RecommendationDelta[];
+};
+
+type NarrativeHints = Partial<Pick<RecommendationChange, "inputChanged" | "assumptionShift" | "whyMoved">>;
+
+function formatDeltaValue(value: unknown, options?: { shortlistLabel?: boolean }) {
+  if (options?.shortlistLabel && typeof value === "boolean") {
+    return value ? "Shortlisted" : "Not shortlisted";
+  }
+
+  if (typeof value === "number") return value.toString();
+  if (typeof value === "string") return value;
+  return "—";
+}
+
+function truncateSummary(summary?: string | null) {
+  if (!summary) return "—";
+  return summary.length > 80 ? `${summary.slice(0, 77)}…` : summary;
+}
+
+function collectDeltas(prev: JobConsoleCandidate, next: JobConsoleCandidate): RecommendationDelta[] {
+  const deltas: RecommendationDelta[] = [];
+
+  if (prev.score !== next.score) {
+    deltas.push({
+      label: "Match score",
+      from: formatDeltaValue(prev.score),
+      to: formatDeltaValue(next.score),
+    });
+  }
+
+  if (prev.confidenceScore !== next.confidenceScore) {
+    deltas.push({
+      label: "Confidence",
+      from: formatDeltaValue(prev.confidenceScore),
+      to: formatDeltaValue(next.confidenceScore),
+    });
+  }
+
+  if (prev.confidenceBand !== next.confidenceBand) {
+    deltas.push({
+      label: "Confidence band",
+      from: formatDeltaValue(prev.confidenceBand),
+      to: formatDeltaValue(next.confidenceBand),
+    });
+  }
+
+  if (prev.shortlisted !== next.shortlisted) {
+    deltas.push({
+      label: "Shortlist status",
+      from: formatDeltaValue(prev.shortlisted, { shortlistLabel: true }),
+      to: formatDeltaValue(next.shortlisted, { shortlistLabel: true }),
+    });
+  }
+
+  if (prev.explanation?.summary !== next.explanation?.summary && next.explanation?.summary) {
+    deltas.push({
+      label: "Explanation summary",
+      from: truncateSummary(prev.explanation?.summary),
+      to: truncateSummary(next.explanation.summary),
+    });
+  }
+
+  return deltas;
+}
+
+function buildNarrative(agent: ChangeSource, deltas: RecommendationDelta[], shortlistStrategy: "quality" | "strict" | "fast", hints?: NarrativeHints) {
+  const shortlistDelta = deltas.find((delta) => delta.label === "Shortlist status");
+  const confidenceDelta = deltas.find((delta) => delta.label === "Confidence band");
+  const scoreDelta = deltas.find((delta) => delta.label === "Match score");
+
+  const defaultInputByAgent: Record<ChangeSource, string> = {
+    MATCH: "MATCH recomputed candidate scores against the latest role signals.",
+    CONFIDENCE: "CONFIDENCE recalculated reliability bands.",
+    EXPLAIN: "EXPLAIN regenerated recruiter-facing context.",
+    SHORTLIST: `SHORTLIST agent re-applied guardrails using the ${shortlistStrategy} strategy.`,
+    MANUAL: "Manual override captured in the console.",
+  };
+
+  const defaultAssumptionByAgent: Record<ChangeSource, string> = {
+    MATCH: "Signal weighting and job intent were refreshed.",
+    CONFIDENCE: "Reliability thresholds shifted based on new signal mix.",
+    EXPLAIN: "Narratives were rewritten with updated inputs.",
+    SHORTLIST: "Guardrail boundaries and limits were enforced again.",
+    MANUAL: "Recruiter intent superseded automated recommendations.",
+  };
+
+  const whyMoved =
+    hints?.whyMoved ??
+    (shortlistDelta
+      ? `Recommendation ${shortlistDelta.to === "Shortlisted" ? "promoted to" : "removed from"} shortlist after ${agent.toLowerCase()} update.`
+      : confidenceDelta
+        ? "Confidence changed, adjusting recommendation strength."
+        : scoreDelta
+          ? "Match score shifted, impacting ranking."
+          : "Recommendation refreshed.");
+
+  return {
+    inputChanged: hints?.inputChanged ?? defaultInputByAgent[agent],
+    assumptionShift: hints?.assumptionShift ?? defaultAssumptionByAgent[agent],
+    whyMoved,
+  };
 >>>>>>> theirs
 }
 
@@ -689,6 +806,74 @@ function ExecutionToolbar({
   );
 }
 
+function RecommendationDiffPanel({ changes, onClear }: { changes: RecommendationChange[]; onClear: () => void }) {
+  if (changes.length === 0) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-slate-400" aria-hidden />
+          <p>No recommendation changes yet. Diffs will appear after the next run.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <section className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">What changed?</p>
+          <p className="text-sm text-indigo-900">Diff view of the latest recommendation shifts.</p>
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-xs font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-4 hover:text-indigo-900"
+        >
+          Clear history
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {changes.map((change) => (
+          <article
+            key={`${change.candidateId}-${change.timestamp}-${change.agent}`}
+            className="space-y-2 rounded-xl bg-white p-3 text-sm text-indigo-900 ring-1 ring-indigo-100"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="space-y-0.5">
+                <p className="text-base font-semibold leading-tight">{change.candidateName}</p>
+                <p className="text-xs text-indigo-700">
+                  {new Date(change.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • {change.agent}
+                </p>
+              </div>
+              <span className="rounded-full bg-indigo-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-800">
+                Diff
+              </span>
+            </div>
+            <p className="text-xs text-indigo-800">
+              <span className="font-semibold">Input changed:</span> {change.inputChanged}
+            </p>
+            <p className="text-xs text-indigo-800">
+              <span className="font-semibold">Assumption shift:</span> {change.assumptionShift}
+            </p>
+            <p className="text-xs text-indigo-800">
+              <span className="font-semibold">Why moved:</span> {change.whyMoved}
+            </p>
+            <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-indigo-900">
+              {change.deltas.map((delta) => (
+                <span key={`${delta.label}-${delta.from}-${delta.to}-${change.timestamp}`} className="rounded-full bg-indigo-50 px-2 py-1 ring-1 ring-indigo-100">
+                  {delta.label}: {delta.from} → {delta.to}
+                </span>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function JobExecutionConsole(props: JobConsoleProps) {
   const {
     jobId,
@@ -719,9 +904,13 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [decisionStreamId, setDecisionStreamId] = useState<string | null>(null);
   const [decisionStates, setDecisionStates] = useState<Record<string, DecisionSnapshot>>({});
 <<<<<<< ours
+<<<<<<< ours
   const [receiptsByCandidate, setReceiptsByCandidate] = useState<Record<string, DecisionReceipt[]>>({});
 =======
   const [tradeoffs, setTradeoffs] = useState<TradeoffDeclaration>(defaultTradeoffs);
+>>>>>>> theirs
+=======
+  const [changeLog, setChangeLog] = useState<RecommendationChange[]>([]);
 >>>>>>> theirs
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
@@ -786,6 +975,50 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       cancelled = true;
     };
   }, [jobId, groupReceiptsByCandidate]);
+
+  const recordRecommendationChanges = useCallback(
+    (prev: JobConsoleCandidate[], next: JobConsoleCandidate[], agent: ChangeSource, hints?: NarrativeHints) => {
+      if (prev.length === 0) return;
+
+      const nextById = new Map(next.map((candidate) => [candidate.candidateId, candidate]));
+      const updates: RecommendationChange[] = [];
+
+      for (const previous of prev) {
+        const current = nextById.get(previous.candidateId);
+        if (!current) continue;
+
+        const deltas = collectDeltas(previous, current);
+        if (deltas.length === 0) continue;
+
+        const narrative = buildNarrative(agent, deltas, shortlistStrategy, hints);
+
+        updates.push({
+          candidateId: current.candidateId,
+          candidateName: current.candidateName,
+          timestamp: new Date().toISOString(),
+          agent,
+          ...narrative,
+          deltas,
+        });
+      }
+
+      if (updates.length > 0) {
+        setChangeLog((existing) => [...updates, ...existing].slice(0, 12));
+      }
+    },
+    [shortlistStrategy],
+  );
+
+  const updateCandidatesWithDiff = useCallback(
+    (agent: ChangeSource, updater: (prev: JobConsoleCandidate[]) => JobConsoleCandidate[], hints?: NarrativeHints) => {
+      setCandidates((prev) => {
+        const next = updater(prev);
+        recordRecommendationChanges(prev, next, agent, hints);
+        return next;
+      });
+    },
+    [recordRecommendationChanges],
+  );
 
   useEffect(() => {
     try {
@@ -926,11 +1159,19 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       });
 
       if (action === "SHORTLISTED") {
-        setCandidates((prev) => prev.map((row) => (row.candidateId === candidate.candidateId ? { ...row, shortlisted: true } : row)));
+        updateCandidatesWithDiff(
+          "MANUAL",
+          (prev) => prev.map((row) => (row.candidateId === candidate.candidateId ? { ...row, shortlisted: true } : row)),
+          { whyMoved: "Recruiter manually promoted this candidate to the shortlist." },
+        );
       }
 
       if (action === "REMOVED") {
-        setCandidates((prev) => prev.map((row) => (row.candidateId === candidate.candidateId ? { ...row, shortlisted: false } : row)));
+        updateCandidatesWithDiff(
+          "MANUAL",
+          (prev) => prev.map((row) => (row.candidateId === candidate.candidateId ? { ...row, shortlisted: false } : row)),
+          { whyMoved: "Recruiter removed this candidate from the shortlist." },
+        );
       }
 
       void persistDecisionReceipt(candidate, action);
@@ -942,7 +1183,11 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         details: { candidateName: candidate.candidateName },
       });
     },
+<<<<<<< ours
     [logDecision, persistDecisionReceipt],
+=======
+    [logDecision, updateCandidatesWithDiff],
+>>>>>>> theirs
   );
 
   const handleViewed = useCallback(
@@ -981,6 +1226,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           }>;
         };
 
+<<<<<<< ours
         setCandidates((prev) => {
           const byId = new Map(prev.map((row) => [row.candidateId, row]));
 
@@ -1003,6 +1249,35 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 
           return Array.from(byId.values()).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
         });
+=======
+        updateCandidatesWithDiff(
+          "MATCH",
+          (prev) => {
+            const byId = new Map(prev.map((row) => [row.candidateId, row]));
+
+            for (const match of payload.matches) {
+              const existing = byId.get(match.candidateId);
+              const updated: JobConsoleCandidate = {
+                candidateId: match.candidateId,
+                candidateName: existing?.candidateName ?? `Candidate ${match.candidateId.slice(0, 6)}`,
+                score: Math.round(match.matchScore),
+                confidenceScore: Math.round(match.confidence),
+                confidenceBand: normalizeBand(match.confidenceCategory) ?? normalizeBand(categorizeConfidence(match.confidence)),
+                shortlisted: existing?.shortlisted ?? false,
+                explanation: existing?.explanation ?? normalizeExplanation("Explanation not generated yet.", { summaryOnly: true }),
+              };
+
+              byId.set(match.candidateId, updated);
+            }
+
+            return Array.from(byId.values()).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+          },
+          {
+            inputChanged: "MATCH recomputed scores using the latest job signals.",
+            assumptionShift: "Candidate similarity recalculated against refreshed role intent.",
+          },
+        );
+>>>>>>> theirs
 
         setMessage(`MATCH completed. ${formatTradeoffDeclaration(tradeoffs)}.`);
         setLastUpdated(new Date());
@@ -1015,14 +1290,17 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           results: Array<{ candidateId: string; score: number; confidenceBand: string }>;
         };
 
-        setCandidates((prev) =>
-          prev.map((row) => {
-            const updated = payload.results.find((entry) => entry.candidateId === row.candidateId);
-            if (!updated) return row;
-            const band = normalizeBand(updated.confidenceBand);
-            const confidenceScore = updated.score <= 1 ? Math.round(updated.score * 100) : Math.round(updated.score);
-            return { ...row, confidenceScore, confidenceBand: band };
-          }),
+        updateCandidatesWithDiff(
+          "CONFIDENCE",
+          (prev) =>
+            prev.map((row) => {
+              const updated = payload.results.find((entry) => entry.candidateId === row.candidateId);
+              if (!updated) return row;
+              const band = normalizeBand(updated.confidenceBand);
+              const confidenceScore = updated.score <= 1 ? Math.round(updated.score * 100) : Math.round(updated.score);
+              return { ...row, confidenceScore, confidenceBand: band };
+            }),
+          { inputChanged: "CONFIDENCE refreshed reliability scores using the latest signals." },
         );
 
         setMessage("Confidence bands refreshed.");
@@ -1034,12 +1312,15 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         if (!res.ok) throw new Error(`EXPLAIN failed with ${res.status}`);
         const payload = (await res.json()) as { explanations: Array<{ candidateId: string; explanation: Explanation }> };
 
-        setCandidates((prev) =>
-          prev.map((row) => {
-            const explanation = payload.explanations.find((entry) => entry.candidateId === row.candidateId);
-            if (!explanation) return row;
-            return { ...row, explanation: normalizeExplanation(explanation.explanation, { summaryOnly: false }) };
-          }),
+        updateCandidatesWithDiff(
+          "EXPLAIN",
+          (prev) =>
+            prev.map((row) => {
+              const explanation = payload.explanations.find((entry) => entry.candidateId === row.candidateId);
+              if (!explanation) return row;
+              return { ...row, explanation: normalizeExplanation(explanation.explanation, { summaryOnly: false }) };
+            }),
+          { inputChanged: "EXPLAIN regenerated recruiter-facing reasoning for each candidate." },
         );
 
         setMessage("Explain summaries updated.");
@@ -1060,8 +1341,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 
         const shortlistedIds = new Set(payload.shortlistedCandidates.map((entry) => entry.candidateId));
 
-        setCandidates((prev) =>
-          prev.map((row) => ({ ...row, shortlisted: shortlistedIds.has(row.candidateId) })),
+        updateCandidatesWithDiff(
+          "SHORTLIST",
+          (prev) => prev.map((row) => ({ ...row, shortlisted: shortlistedIds.has(row.candidateId) })),
+          {
+            whyMoved: `Shortlist recomputed with ${shortlistStrategy} strategy (${payload.totalMatches} matches evaluated).`,
+          },
         );
 
         setMessage(`Shortlist updated using ${shortlistStrategy} strategy.`);
@@ -1202,6 +1487,8 @@ export function JobExecutionConsole(props: JobConsoleProps) {
             Show shortlisted only
           </button>
         </div>
+
+        <RecommendationDiffPanel changes={changeLog} onClear={() => setChangeLog([])} />
 
         <ResultsTable
           candidates={visibleCandidates}
