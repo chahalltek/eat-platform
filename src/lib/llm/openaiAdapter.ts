@@ -11,6 +11,7 @@ export type ChatMessage = {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
   tool_calls?: ToolCall[];
+  tool_call_id?: string;
 };
 
 export type ChatCompletionParams = {
