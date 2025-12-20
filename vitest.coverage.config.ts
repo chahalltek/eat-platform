@@ -14,8 +14,9 @@ const coverageOverrides: UserConfig = {
       reporter: ["text", "json", "html", "lcov"],
       reportsDirectory: "./coverage",
       all: true,
-<<<<<<< ours
+      reportOnFailure: true,
       include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/__mocks__/**", "**/__generated__/**", "src/**/types/**"],
       thresholds: {
         lines: 100,
         functions: 100,
@@ -35,11 +36,6 @@ const coverageOverrides: UserConfig = {
           statements: 100,
         },
       },
-=======
-      reportOnFailure: true,
-      include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/__mocks__/**", "**/__generated__/**", "src/**/types/**"],
->>>>>>> theirs
     },
   },
 };
