@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { randomUUID } from 'crypto';
 import OpenAI from 'openai';
 import { type ChatCompletionMessageParam } from 'openai/resources/chat/completions';
@@ -26,6 +27,28 @@ import { redactAny } from '@/server/ai/safety/redact';
 import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from '@/server/ai/safety/safeContext';
 
 export type GatewayCapability = 'read' | 'write';
+=======
+import { randomUUID } from "crypto";
+
+import OpenAI from "openai";
+
+import { recordAuditEvent } from "@/lib/audit/trail";
+import { type UserRole } from "@/lib/auth/roles";
+import { getCurrentUser, getUserRoles } from "@/lib/auth/user";
+import { recordCostEvent } from "@/lib/cost/events";
+import { AIFailureError } from "@/lib/errors";
+import type { OpenAIAdapter } from "@/lib/llm/openaiAdapter";
+import { assertLlmUsageAllowed, LLMUsageRestrictedError } from "@/lib/llm/tenantControls";
+import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from "@/lib/rateLimiting/rateLimiter";
+import { getCurrentTenantId } from "@/lib/tenant";
+import { OpenAIChatAdapter } from "@/server/ai/openaiClient";
+import { assertLlmSafetyConfig, LLMSafetyConfigError } from "@/server/ai/safety/config";
+import { enforceLimits as enforceContextLimits, type SafeLLMContext as LimitedSafeLLMContext } from "@/server/ai/safety/limits";
+import { redactAny } from "@/server/ai/safety/redact";
+import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from "@/server/ai/safety/safeContext";
+
+export type GatewayCapability = "read" | "write";
+>>>>>>> theirs
 
 export type CallLLMParams = {
   systemPrompt: string | ((context: SafeLLMContext) => string);
@@ -37,6 +60,7 @@ export type CallLLMParams = {
   approvalToken?: string;
   redactResult?: boolean;
   context?: SafeLLMContextInput | SafeLLMContext;
+<<<<<<< ours
 <<<<<<< ours
 };
 
@@ -90,6 +114,11 @@ class OpenAIChatAdapter implements OpenAIAdapter {
 
 const EXECUTION_ENABLED = process.env.EXECUTION_ENABLED === 'true';
 const DEFAULT_LOG_TTL_HOURS = 24;
+=======
+};
+
+const EXECUTION_ENABLED = process.env.EXECUTION_ENABLED === "true";
+>>>>>>> theirs
 
 function redactSnippet(value?: string | null) {
   if (!value) return null;
@@ -125,8 +154,8 @@ type SanitizedOutbound = {
 function ensureRequestIdentifiers(
   contextInput: SafeLLMContextInput | SafeLLMContext | undefined,
 ): SafeLLMContextInput {
-  const resolvedContext = contextInput ?? { purpose: 'OTHER' };
-  const metadata = (resolvedContext as { metadata?: SafeLLMContext['metadata'] }).metadata ?? {};
+  const resolvedContext = contextInput ?? { purpose: "OTHER" };
+  const metadata = (resolvedContext as { metadata?: SafeLLMContext["metadata"] }).metadata ?? {};
   const requestId = metadata.requestId ?? randomUUID();
   const correlationId = metadata.correlationId ?? requestId;
 
@@ -140,11 +169,15 @@ function ensureRequestIdentifiers(
   } satisfies SafeLLMContextInput;
 }
 
+<<<<<<< ours
 function enforceVerbosityCap<T>(value: T, verbosityCap?: number): T {
+=======
+function applyVerbosityLimits<T>(value: T, verbosityCap?: number): T {
+>>>>>>> theirs
   if (!verbosityCap) return value;
 
   const clamp = (entry: unknown): unknown => {
-    if (typeof entry === 'string') {
+    if (typeof entry === "string") {
       return entry.length > verbosityCap ? entry.slice(0, verbosityCap) : entry;
     }
 
@@ -152,7 +185,7 @@ function enforceVerbosityCap<T>(value: T, verbosityCap?: number): T {
       return entry.map(clamp);
     }
 
-    if (entry && typeof entry === 'object') {
+    if (entry && typeof entry === "object") {
       if (entry instanceof Date || entry instanceof RegExp) return entry;
 
       return Object.fromEntries(
@@ -166,6 +199,11 @@ function enforceVerbosityCap<T>(value: T, verbosityCap?: number): T {
   return clamp(value) as T;
 }
 
+function sanitizePrompt(value: string): string {
+  const redacted = redactAny(value);
+  return typeof redacted === "string" ? redacted : JSON.stringify(redacted);
+}
+
 export function sanitizeOutbound({
   contextInput,
   systemPrompt,
@@ -176,6 +214,7 @@ export function sanitizeOutbound({
   const safeContext = buildSafeLLMContext(contextWithIds);
   const redactedContext = redactAny(safeContext) as SafeLLMContext;
 <<<<<<< ours
+<<<<<<< ours
   const limitedContext = enforceVerbosityCap(redactedContext, verbosityCap);
 =======
   const limitedContext = enforceVerbosityCap(
@@ -183,41 +222,47 @@ export function sanitizeOutbound({
     verbosityCap,
   ) as SafeLLMContext;
 >>>>>>> theirs
+=======
+
+  const limitedContext = applyVerbosityLimits(
+    enforceContextLimits(redactedContext as unknown as LimitedSafeLLMContext) as unknown as SafeLLMContext,
+    verbosityCap,
+  );
+
+  const resolvedSystemPrompt = typeof systemPrompt === "function" ? systemPrompt(limitedContext) : systemPrompt;
+  const resolvedUserPrompt = typeof userPrompt === "function" ? userPrompt(limitedContext) : userPrompt;
+>>>>>>> theirs
 
   return {
     context: limitedContext,
-    systemPrompt: typeof systemPrompt === 'function' ? systemPrompt(limitedContext) : systemPrompt,
-    userPrompt: typeof userPrompt === 'function' ? userPrompt(limitedContext) : userPrompt,
+    systemPrompt: sanitizePrompt(resolvedSystemPrompt),
+    userPrompt: sanitizePrompt(resolvedUserPrompt),
   };
 }
 
 async function resolveCaller() {
-  const [user, roles, tenantId] = await Promise.all([
-    getCurrentUser(),
-    getUserRoles(),
-    getCurrentTenantId(),
-  ]);
+  const [user, roles, tenantId] = await Promise.all([getCurrentUser(), getUserRoles(), getCurrentTenantId()]);
 
   if (!user) {
-    throw new Error('AI gateway requires an authenticated user');
+    throw new Error("AI gateway requires an authenticated user");
   }
 
   if (!roles.length) {
-    throw new Error('AI gateway requires a user role');
+    throw new Error("AI gateway requires a user role");
   }
 
   return { userId: user.id, roles, tenantId };
 }
 
 function assertWriteCapabilityAllowed(capability: GatewayCapability, approvalToken?: string) {
-  if (capability !== 'write') return;
+  if (capability !== "write") return;
 
   if (!EXECUTION_ENABLED) {
-    throw new Error('EXECUTION_ENABLED must be true to allow write capabilities');
+    throw new Error("EXECUTION_ENABLED must be true to allow write capabilities");
   }
 
   if (!approvalToken) {
-    throw new Error('An approval token is required for write capabilities');
+    throw new Error("An approval token is required for write capabilities");
   }
 }
 
@@ -254,7 +299,7 @@ async function recordAIAuditEvent({
   capability: GatewayCapability;
   model: string;
   approvalToken?: string;
-  status: 'success' | 'failure';
+  status: "success" | "failure";
   systemPrompt: string;
   userPrompt: string;
   roles: UserRole[];
@@ -275,8 +320,8 @@ async function recordAIAuditEvent({
   try {
     await recordAuditEvent({
       userId,
-      action: 'AI_GATEWAY_CALL',
-      resource: 'ai',
+      action: "AI_GATEWAY_CALL",
+      resource: "ai",
       resourceId: agent,
       metadata: {
         tenantId,
@@ -313,7 +358,7 @@ async function recordAIAuditEvent({
       },
     });
   } catch (error) {
-    console.error('[ai-gateway] Failed to record audit event', redactAny(error));
+    console.error("[ai-gateway] Failed to record audit event", redactAny(error));
   }
 }
 
@@ -323,19 +368,16 @@ export async function callLLM({
   model,
   adapter = new OpenAIChatAdapter(),
   agent,
-  capability = 'read',
+  capability = "read",
   approvalToken,
   redactResult = true,
   context,
-<<<<<<< ours
-=======
-  buildUserPrompt,
->>>>>>> theirs
 }: CallLLMParams): Promise<string> {
   const caller = await resolveCaller();
   const logConfig = resolveLoggingConfig();
   const startedAt = Date.now();
   let response: string | null = null;
+<<<<<<< ours
   let status: 'success' | 'failure' = 'success';
   let resolvedModel = model ?? 'unknown';
 <<<<<<< ours
@@ -347,20 +389,30 @@ export async function callLLM({
   let resolvedSystemPrompt = typeof systemPrompt === 'string' ? systemPrompt : '';
   let trimmedUserPrompt = typeof userPrompt === 'string' ? userPrompt : '';
 >>>>>>> theirs
+=======
+  let status: "success" | "failure" = "success";
+  let resolvedModel = model ?? "unknown";
+  let resolvedSystemPrompt = "";
+  let trimmedUserPrompt = "";
+>>>>>>> theirs
 
   try {
     assertWriteCapabilityAllowed(capability, approvalToken);
+    assertLlmSafetyConfig();
 
     const llmControls = await assertLlmUsageAllowed({ tenantId: caller.tenantId, agent });
     resolvedModel = model ?? llmControls.model;
 
     if (resolvedModel !== llmControls.model) {
-      throw new LLMUsageRestrictedError('Requested model is not permitted for this tenant.');
+      throw new LLMUsageRestrictedError("Requested model is not permitted for this tenant.");
     }
 
 <<<<<<< ours
+<<<<<<< ours
     sanitized = sanitizeOutbound({
 =======
+=======
+>>>>>>> theirs
     const sanitized = sanitizeOutbound({
 >>>>>>> theirs
       contextInput: context,
@@ -374,6 +426,7 @@ export async function callLLM({
     resolvedUserPrompt = llmControls.verbosityCap
       ? sanitized.userPrompt.slice(0, llmControls.verbosityCap)
       : sanitized.userPrompt;
+<<<<<<< ours
 =======
 
     const resolvedUserPrompt = buildUserPrompt
@@ -383,6 +436,8 @@ export async function callLLM({
     trimmedUserPrompt = llmControls.verbosityCap
       ? resolvedUserPrompt.slice(0, llmControls.verbosityCap)
       : resolvedUserPrompt;
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
     await consumeRateLimit({
@@ -394,8 +449,13 @@ export async function callLLM({
     const llmResult = await adapter.chatCompletion({
       model: resolvedModel,
       messages: [
+<<<<<<< ours
         { role: 'system', content: resolvedSystemPrompt },
         { role: 'user', content: resolvedUserPrompt },
+=======
+        { role: "system", content: resolvedSystemPrompt },
+        { role: "user", content: trimmedUserPrompt },
+>>>>>>> theirs
       ],
       temperature: 0.2,
       maxTokens: llmControls.maxTokens,
@@ -408,9 +468,9 @@ export async function callLLM({
 
     void recordCostEvent({
       tenantId: caller.tenantId,
-      driver: 'LLM_CALL',
+      driver: "LLM_CALL",
       value: 1,
-      unit: 'call',
+      unit: "call",
       sku: resolvedModel,
       feature: agent,
       metadata: {
@@ -426,7 +486,7 @@ export async function callLLM({
 
     return response;
   } catch (err) {
-    status = 'failure';
+    status = "failure";
 
     if (isRateLimitError(err)) {
       throw err;
@@ -436,8 +496,13 @@ export async function callLLM({
       throw err;
     }
 
-    console.error('Error calling LLM:', redactAny(err));
-    throw new AIFailureError('LLM call failed');
+    if (err instanceof LLMSafetyConfigError) {
+      console.error("[ai-gateway] LLM safety check failed", redactAny(err));
+      throw new AIFailureError(err.message);
+    }
+
+    console.error("Error calling LLM:", redactAny(err));
+    throw new AIFailureError("LLM call failed");
   } finally {
     await recordAIAuditEvent({
       userId: caller.userId,
@@ -462,11 +527,11 @@ export async function callLLM({
   }
 }
 
-export async function verifyLLMProvider(model = 'gpt-4o-mini') {
+export async function verifyLLMProvider(model = "gpt-4o-mini") {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not configured');
+    throw new Error("OPENAI_API_KEY is not configured");
   }
 
   const client = new OpenAI({ apiKey });

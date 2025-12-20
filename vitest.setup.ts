@@ -1,5 +1,9 @@
 import { describe, test, vi } from "vitest";
 
+if (!process.env.REQUIRE_LLM_SAFETY) {
+  process.env.REQUIRE_LLM_SAFETY = "true";
+}
+
 const testWithIntegration = test as typeof test & {
   integration: typeof test.skip;
 };
