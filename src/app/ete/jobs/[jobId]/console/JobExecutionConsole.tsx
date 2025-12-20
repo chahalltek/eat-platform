@@ -14,13 +14,20 @@ import {
   type DecisionStreamAction,
   type DecisionStreamItem,
 } from "@/lib/metrics/decisionStreamClient";
+<<<<<<< ours
+=======
+import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
+>>>>>>> theirs
 import { formatTradeoffDeclaration, resolveTradeoffs, type TradeoffDeclaration } from "@/lib/matching/tradeoffs";
 <<<<<<< ours
 import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
+<<<<<<< ours
 import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
 =======
 import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
 import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
@@ -53,6 +60,10 @@ export type JobConsoleProps = {
   showDecisionMomentCues?: boolean;
   archetype?: NonNullable<ReturnType<typeof describeAssignment>> | null;
   showSopContextualLink?: boolean;
+<<<<<<< ours
+=======
+  bullhornWritebackEnabled: boolean;
+>>>>>>> theirs
 };
 
 type DecisionReceipt = {
@@ -402,9 +413,11 @@ function buildClientTrustArtifact(receipt: DecisionReceipt): ClientTrustArtifact
 function DecisionActions({
   state,
   onDecision,
+  confidenceMissing,
 }: {
   state: DecisionSnapshot;
   onDecision: (action: DecisionStreamAction) => void;
+  confidenceMissing?: boolean;
 }) {
   const buttons: Array<{ label: string; action: DecisionStreamAction; active: boolean; tone: string }> = [
     { label: "Shortlist", action: "SHORTLISTED", active: state.shortlisted, tone: "emerald" },
@@ -419,23 +432,30 @@ function DecisionActions({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2" aria-label="Decision actions">
-      {buttons.map((button) => (
-        <button
-          key={button.action}
-          type="button"
-          onClick={() => onDecision(button.action)}
-          className={clsx(
-            "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ring-1",
-            toneClasses[button.tone],
-            button.active ? "opacity-100" : "opacity-80",
-          )}
-          aria-pressed={button.active}
-        >
-          {button.action === "FAVORITED" ? "⭐" : <span className="h-2 w-2 rounded-full bg-current" aria-hidden />}
-          {button.label}
-        </button>
-      ))}
+    <div className="flex flex-col gap-1" aria-label="Decision actions">
+      <div className="flex flex-wrap items-center gap-2">
+        {buttons.map((button) => (
+          <button
+            key={button.action}
+            type="button"
+            onClick={() => onDecision(button.action)}
+            className={clsx(
+              "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ring-1",
+              toneClasses[button.tone],
+              button.active ? "opacity-100" : "opacity-80",
+            )}
+            aria-pressed={button.active}
+          >
+            {button.action === "FAVORITED" ? "⭐" : <span className="h-2 w-2 rounded-full bg-current" aria-hidden />}
+            {button.label}
+          </button>
+        ))}
+      </div>
+      {confidenceMissing ? (
+        <p className="text-[10px] text-slate-500">
+          Confidence will be captured at 5/10 until a band is available. Add rationale to proceed.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -558,11 +578,13 @@ function DecisionAlignmentSelector({
     { value: "disagree", label: "Disagree with rationale", description: "Decision aligns, but rationale is off." },
   ];
 
-  const requiresReason = annotation.alignment === "override" || annotation.alignment === "disagree";
+  const requiresReason = true;
   const placeholder =
     annotation.alignment === "disagree"
-      ? "Why does the rationale miss? (short)"
-      : "Why are you overriding? (short)";
+      ? "Why does the rationale miss? (required)"
+      : annotation.alignment === "override"
+        ? "Why are you overriding? (required)"
+        : "What is the rationale for this decision? (required)";
 
   return (
     <div className="flex flex-col items-end gap-1 text-right">
@@ -608,9 +630,10 @@ function DecisionAlignmentSelector({
               error ? "border-rose-300 ring-rose-100" : "border-slate-200 ring-slate-100",
             )}
             maxLength={280}
+            required
           />
           <div className="flex items-center justify-between text-[11px] text-slate-500">
-            <span>Share a short note (280 chars max).</span>
+            <span className="font-semibold text-slate-600">Rationale required for every decision.</span>
             <span>{annotation.rationale.length}/280</span>
           </div>
         </div>
@@ -737,6 +760,7 @@ function ResultsTable({
                         <DecisionActions
                           state={decisionStates[candidate.candidateId] ?? DEFAULT_DECISION_STATE}
                           onDecision={(action) => onDecision(candidate, action)}
+                          confidenceMissing={candidate.confidenceScore == null}
                         />
                         {showFireDrillBadge ? (
                           <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 ring-1 ring-amber-100">
@@ -1198,6 +1222,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     defaultTradeoffs,
     showDecisionMomentCues = false,
 <<<<<<< ours
+<<<<<<< ours
     archetype,
     showSopContextualLink = false,
     defaultTradeoffs,
@@ -1207,6 +1232,11 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 =======
     showSopContextualLink = false,
     archetype,
+>>>>>>> theirs
+=======
+    archetype,
+    showSopContextualLink = false,
+    bullhornWritebackEnabled,
 >>>>>>> theirs
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
@@ -1231,9 +1261,11 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [changeLog, setChangeLog] = useState<RecommendationChange[]>([]);
   const [decisionAnnotations, setDecisionAnnotations] = useState<Record<string, DecisionAnnotation>>({});
   const [decisionAnnotationErrors, setDecisionAnnotationErrors] = useState<Record<string, string | null>>({});
+  const [showBullhornNote, setShowBullhornNote] = useState(true);
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
   const tradeoffStorageKey = useMemo(() => `ete-job-console-tradeoffs-${jobId}`, [jobId]);
+  const bullhornNoteStorageKey = useMemo(() => `ete-bullhorn-note-${jobId}`, [jobId]);
 
   const groupReceiptsByCandidate = useCallback((receipts: DecisionReceipt[]) => {
     const grouped = receipts.reduce((acc, receipt) => {
@@ -1339,6 +1371,15 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     [recordRecommendationChanges],
   );
 
+  const dismissBullhornNote = useCallback(() => {
+    setShowBullhornNote(false);
+    try {
+      sessionStorage.setItem(bullhornNoteStorageKey, "dismissed");
+    } catch (err) {
+      console.warn("Failed to persist bullhorn microcopy dismissal", err);
+    }
+  }, [bullhornNoteStorageKey]);
+
   useEffect(() => {
     try {
       const cached = sessionStorage.getItem(storageKey);
@@ -1377,6 +1418,17 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       console.warn("Failed to cache tradeoff selections", err);
     }
   }, [tradeoffs, tradeoffStorageKey]);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(bullhornNoteStorageKey);
+      if (stored === "dismissed") {
+        setShowBullhornNote(false);
+      }
+    } catch (err) {
+      console.warn("Failed to read bullhorn microcopy state", err);
+    }
+  }, [bullhornNoteStorageKey]);
 
   const disabled: Record<AgentName, boolean> = useMemo(() => {
     const stateByAgent = new Map(agentState.map((entry) => [entry.name, entry.enabled]));
@@ -1428,6 +1480,11 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         rationale: annotation.rationale.trim() || undefined,
       } as DecisionReceipt["recommendation"];
       const tradeoff = archetype?.defaultTradeoff ?? describeTradeoffFromStrategy(shortlistStrategy);
+<<<<<<< ours
+=======
+
+      const normalizedConfidence = normalizeConfidenceToTenPoint(candidate.confidenceScore ?? 5);
+>>>>>>> theirs
 
       const payload = {
         jobId,
@@ -1436,12 +1493,13 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         decisionType,
         drivers: candidate.explanation?.strengths?.slice(0, 3) ?? [],
         risks: candidate.explanation?.risks?.slice(0, 3) ?? [],
-        confidenceScore: normalizeConfidenceToTenPoint(candidate.confidenceScore),
+        confidenceScore: normalizedConfidence,
         summary: candidate.explanation?.summary ?? undefined,
         tradeoff,
         bullhornTarget: "note" as const,
         shortlistStrategy,
         recommendation,
+<<<<<<< ours
         archetype: archetype
           ? {
               id: archetype.id,
@@ -1452,6 +1510,8 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           : undefined,
 <<<<<<< ours
 =======
+=======
+>>>>>>> theirs
         archetype: archetype
           ? {
               id: archetype.id,
@@ -1460,7 +1520,6 @@ export function JobExecutionConsole(props: JobConsoleProps) {
               confidence: archetype.confidence,
             }
           : undefined,
->>>>>>> theirs
       };
 
       try {
@@ -1497,12 +1556,14 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       const normalizedAnnotation: DecisionAnnotation = actionAlignsWithRecommendation(candidate.recommendedOutcome, action) || baseAnnotation.alignment !== "accept"
         ? baseAnnotation
         : { ...baseAnnotation, alignment: "override" };
-      const requiresReason = normalizedAnnotation.alignment === "override" || normalizedAnnotation.alignment === "disagree";
-      const rationale = normalizedAnnotation.rationale.trim();
+      const rationale = (normalizedAnnotation.rationale ?? "").trim();
 
-      if (requiresReason && rationale.length === 0) {
+      if (rationale.length === 0) {
         setDecisionAnnotations((prev) => ({ ...prev, [candidate.candidateId]: normalizedAnnotation }));
-        setDecisionAnnotationErrors((prev) => ({ ...prev, [candidate.candidateId]: "Add a short note so we can learn from the disagreement." }));
+        setDecisionAnnotationErrors((prev) => ({
+          ...prev,
+          [candidate.candidateId]: "Add a short rationale before recording this decision.",
+        }));
         return;
       }
 
@@ -1823,6 +1884,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
             <p className="text-sm text-slate-600">
               Run MATCH to populate scores, CONFIDENCE to classify reliability, EXPLAIN for recruiter-friendly summaries, and SHORTLIST to flag recommendations.
             </p>
+            {showDecisionMomentCues ? (
+              <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-800 ring-1 ring-indigo-200">
+                <span className="h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
+                Decision moment — rationale and confidence will be recorded
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-col items-start gap-2 sm:items-end">
             {showSopContextualLink ? <SopContextualLink context="submission" /> : null}
@@ -1848,6 +1915,26 @@ export function JobExecutionConsole(props: JobConsoleProps) {
             </button>
           </div>
         </div>
+
+        {showBullhornNote ? (
+          <div className="flex flex-wrap items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700">
+            <span className="rounded-full bg-indigo-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-800">
+              Bullhorn
+            </span>
+            <p className="flex-1 text-sm text-slate-800">
+              {bullhornWritebackEnabled
+                ? "This outcome will be recorded in Bullhorn as the system of record."
+                : "This outcome will be available for recording in Bullhorn (system of record)."}
+            </p>
+            <button
+              type="button"
+              onClick={dismissBullhornNote}
+              className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
+            >
+              Got it
+            </button>
+          </div>
+        ) : null}
 
         {showDecisionMomentCues && visibleCandidates.length > 0 ? (
           <div className="flex flex-col gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
