@@ -26,6 +26,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "json-summary", "lcov", "html"],
       reportsDirectory: "./coverage",
+      all: true,
       include: [
         "src/lib/**/*.{ts,tsx}",
         "src/server/**/*.{ts,tsx}",
@@ -38,6 +39,19 @@ export default defineConfig({
         functions: 100,
         branches: 100,
         statements: 100,
+        perFile: true,
+        "src/lib/**": {
+          lines: 100,
+          functions: 100,
+          branches: 100,
+          statements: 100,
+        },
+        "src/server/**": {
+          lines: 100,
+          functions: 100,
+          branches: 100,
+          statements: 100,
+        },
       },
     },
   },
