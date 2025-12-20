@@ -358,14 +358,24 @@ export default async function Home() {
                   <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Data + Controls</span>
                 </div>
               </div>
-              <Link
-                href="/system-map"
-                title="View agents, data flows, and dependencies"
-                className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-zinc-800 dark:text-slate-100 dark:hover:border-slate-600"
-              >
-                <span className="inline-flex h-2 w-2 rounded-full bg-slate-400 shadow-sm" aria-hidden />
-                <span className="text-[13px] uppercase tracking-[0.14em] text-slate-700 dark:text-slate-200">System Map</span>
-              </Link>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Link
+                  href="/help"
+                  title="Read quick answers and explainers"
+                  className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-zinc-800 dark:text-slate-100 dark:hover:border-slate-600"
+                >
+                  <span className="inline-flex h-2 w-2 rounded-full bg-indigo-400 shadow-sm" aria-hidden />
+                  <span className="text-[13px] uppercase tracking-[0.14em] text-slate-700 dark:text-slate-200">Help / FAQ</span>
+                </Link>
+                <Link
+                  href="/system-map"
+                  title="View agents, data flows, and dependencies"
+                  className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-zinc-800 dark:text-slate-100 dark:hover:border-slate-600"
+                >
+                  <span className="inline-flex h-2 w-2 rounded-full bg-slate-400 shadow-sm" aria-hidden />
+                  <span className="text-[13px] uppercase tracking-[0.14em] text-slate-700 dark:text-slate-200">System Map</span>
+                </Link>
+              </div>
             </div>
           </header>
 
