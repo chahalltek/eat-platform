@@ -1,9 +1,11 @@
+import { createHash } from "node:crypto";
 import { z } from "zod";
 
 import type { IdentityUser } from "@/lib/auth/types";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { prisma } from "@/server/db/prisma";
 import { recordMetricEvent } from "@/lib/metrics/events";
+import { recordAuditEvent } from "@/lib/audit/trail";
 
 const recommendationFeedbackSchema = z.object({
   recommendedOutcome: z.enum(["shortlist", "pass"]).optional(),
@@ -33,7 +35,25 @@ export const decisionReceiptSchema = z.object({
 export type DecisionReceiptInput = z.infer<typeof decisionReceiptSchema>;
 export type RecommendationFeedback = z.infer<typeof recommendationFeedbackSchema>;
 
-export type DecisionReceiptRecord = {
+export type DecisionAuditContext = {
+  auditEventId: string | null;
+  hash: string;
+  computedHash: string;
+  previousHash: string | null;
+  chainPosition: number;
+  chainValid: boolean;
+};
+
+export type DecisionGovernanceSignals = {
+  missingSignals: Array<"summary" | "drivers" | "risks" | "confidence" | "recommendation">;
+  overconfidence: boolean;
+  repeatedOverrides: boolean;
+  overrideCount: number;
+  overrideRate: number;
+  explainability: string[];
+};
+
+type BaseDecisionReceiptRecord = {
   id: string;
   jobId: string;
   candidateId: string;
@@ -53,6 +73,12 @@ export type DecisionReceiptRecord = {
   };
   bullhornNote: string;
   bullhornTarget: DecisionReceiptInput["bullhornTarget"];
+  auditContext?: Partial<Pick<DecisionAuditContext, "auditEventId" | "hash" | "previousHash" | "chainPosition">>;
+};
+
+export type DecisionReceiptRecord = BaseDecisionReceiptRecord & {
+  governance: DecisionGovernanceSignals;
+  audit: DecisionAuditContext;
 };
 
 function toTenPointScale(score?: number | null): number | null {
@@ -123,6 +149,99 @@ function summarizeReceipt(payload: ReceiptSummaryInput) {
   return `${describeDecision(payload.decisionType)} ${driverSummary} ${riskSummary} ${confidence} ${tradeoff} ${recommendationSummary}`;
 }
 
+type HashInput = {
+  tenantId: string;
+  jobId: string;
+  candidateId: string;
+  decisionType: DecisionReceiptInput["decisionType"];
+  drivers: string[];
+  risks: string[];
+  tradeoff: string | null;
+  confidenceScore: number | null;
+  summary: string;
+  recommendation: RecommendationFeedback | null;
+  createdAt: string;
+  createdBy: { id: string; email?: string | null; name?: string | null };
+  previousHash: string | null;
+};
+
+function computeDecisionHash(payload: HashInput) {
+  const normalized = {
+    tenantId: payload.tenantId,
+    jobId: payload.jobId,
+    candidateId: payload.candidateId,
+    decisionType: payload.decisionType,
+    drivers: [...payload.drivers].sort(),
+    risks: [...payload.risks].sort(),
+    tradeoff: payload.tradeoff,
+    confidenceScore: payload.confidenceScore,
+    summary: payload.summary,
+    recommendation: payload.recommendation
+      ? {
+          recommendedOutcome: payload.recommendation.recommendedOutcome ?? null,
+          alignment: payload.recommendation.alignment ?? null,
+          rationale: payload.recommendation.rationale ?? null,
+        }
+      : null,
+    createdAt: payload.createdAt,
+    createdBy: payload.createdBy,
+    previousHash: payload.previousHash,
+  };
+
+  return createHash("sha256").update(JSON.stringify(normalized)).digest("hex");
+}
+
+function computeGovernanceSignals({
+  drivers,
+  risks,
+  confidenceScore,
+  summary,
+  recommendation,
+  overrideHistory,
+}: {
+  drivers: string[];
+  risks: string[];
+  confidenceScore: number | null;
+  summary: string;
+  recommendation: RecommendationFeedback | null;
+  overrideHistory: Array<RecommendationFeedback["alignment"] | undefined>;
+}): DecisionGovernanceSignals {
+  const missingSignals: DecisionGovernanceSignals["missingSignals"] = [];
+  if (!summary.trim()) missingSignals.push("summary");
+  if (!drivers.length) missingSignals.push("drivers");
+  if (!risks.length) missingSignals.push("risks");
+  if (confidenceScore === null) missingSignals.push("confidence");
+  if (!recommendation) missingSignals.push("recommendation");
+
+  const overrideCount = overrideHistory.filter(
+    (alignment) => alignment === "override" || alignment === "disagree",
+  ).length;
+  const overrideRate = overrideHistory.length ? Math.min(1, overrideCount / overrideHistory.length) : 0;
+  const repeatedOverrides = overrideCount >= 2 && overrideRate >= 0.5;
+  const overconfidence = confidenceScore !== null && confidenceScore >= 8 && (!drivers.length || !risks.length);
+
+  const explainability: string[] = [];
+  explainability.push(drivers.length ? `${drivers.length} drivers captured` : "Drivers missing");
+  explainability.push(risks.length ? `${risks.length} risks captured` : "Risks missing");
+  explainability.push(
+    confidenceScore !== null ? `Confidence recorded (${confidenceScore.toFixed(1)}/10)` : "Confidence missing",
+  );
+  explainability.push(
+    recommendation
+      ? `Recommendation alignment: ${recommendation.alignment ?? "accept"}`
+      : "Recommendation rationale missing",
+  );
+
+  return {
+    missingSignals,
+    overconfidence,
+    repeatedOverrides,
+    overrideCount,
+    overrideRate,
+    explainability,
+  };
+}
+
 export async function createDecisionReceipt({
   tenantId,
   payload,
@@ -133,6 +252,7 @@ export async function createDecisionReceipt({
   user: IdentityUser;
 }): Promise<DecisionReceiptRecord> {
   const normalizedTenantId = (tenantId ?? user.tenantId ?? DEFAULT_TENANT_ID).trim();
+  const createdAt = new Date();
 
   const drivers = clampEntries(payload.drivers, 3);
   const risks = clampEntries(payload.risks, 4);
@@ -144,11 +264,92 @@ export async function createDecisionReceipt({
     payload.summary?.trim() ||
     summarizeReceipt({ ...payload, drivers, risks, confidenceScore, tradeoff, recommendation });
 
+  const previousReceipts = await prisma.metricEvent.findMany({
+    where: {
+      tenantId: normalizedTenantId,
+      eventType: "DECISION_RECEIPT_CREATED",
+      meta: {
+        path: ["jobId"],
+        equals: payload.jobId,
+      },
+      AND: [
+        {
+          meta: {
+            path: ["candidateId"],
+            equals: payload.candidateId,
+          },
+        },
+      ],
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const previousMeta = (previousReceipts.at(-1)?.meta ?? {}) as Record<string, unknown>;
+  const previousAudit = (previousMeta.audit as Record<string, unknown> | undefined) ?? {};
+  const previousHash = typeof previousAudit.hash === "string" ? previousAudit.hash : null;
+  const previousChainPosition =
+    typeof previousAudit.chainPosition === "number" ? previousAudit.chainPosition : previousReceipts.length;
+
+  const overrideHistory = previousReceipts
+    .map((entry) => {
+      const meta = (entry.meta ?? {}) as Record<string, unknown>;
+      const rec = normalizeRecommendationFeedback(meta.recommendation as RecommendationFeedback | null | undefined);
+      return rec?.alignment;
+    })
+    .filter(Boolean);
+
+  const governance = computeGovernanceSignals({
+    drivers,
+    risks,
+    confidenceScore,
+    summary: baseSummary,
+    recommendation,
+    overrideHistory: [...overrideHistory, recommendation?.alignment],
+  });
+
+  const hash = computeDecisionHash({
+    tenantId: normalizedTenantId,
+    jobId: payload.jobId,
+    candidateId: payload.candidateId,
+    decisionType: payload.decisionType,
+    drivers,
+    risks,
+    tradeoff,
+    confidenceScore,
+    summary: baseSummary,
+    recommendation,
+    createdAt: createdAt.toISOString(),
+    createdBy: {
+      id: user.id,
+      email: user.email,
+      name: user.displayName,
+    },
+    previousHash,
+  });
+
+  const auditEvent = await recordAuditEvent({
+    userId: user.id,
+    action: "DECISION_RECEIPT_RECORDED",
+    resource: "decision-receipt",
+    resourceId: payload.candidateId,
+    metadata: {
+      tenantId: normalizedTenantId,
+      jobId: payload.jobId,
+      candidateId: payload.candidateId,
+      decisionType: payload.decisionType,
+      hash,
+      previousHash,
+      chainPosition: previousChainPosition + 1,
+      governance,
+    },
+  });
+
   const created = await prisma.metricEvent.create({
     data: {
       tenantId: normalizedTenantId,
       eventType: "DECISION_RECEIPT_CREATED",
       entityId: payload.jobId,
+      createdAt,
       meta: {
         ...payload,
         drivers,
@@ -161,6 +362,13 @@ export async function createDecisionReceipt({
           id: user.id,
           email: user.email,
           name: user.displayName,
+        },
+        governance,
+        audit: {
+          hash,
+          previousHash,
+          chainPosition: previousChainPosition + 1,
+          auditEventId: auditEvent.id,
         },
       },
     },
@@ -198,6 +406,15 @@ export async function createDecisionReceipt({
     createdBy: { id: user.id, email: user.email, name: user.displayName },
     bullhornNote,
     bullhornTarget: payload.bullhornTarget,
+    governance,
+    audit: {
+      auditEventId: auditEvent.id,
+      hash,
+      computedHash: hash,
+      previousHash,
+      chainPosition: previousChainPosition + 1,
+      chainValid: true,
+    },
   };
 }
 
@@ -236,57 +453,112 @@ export async function listDecisionReceipts({
           }
         : {}),
     },
-    orderBy: { createdAt: "desc" },
-    take,
-  });
+        orderBy: { createdAt: "desc" },
+        take,
+      });
 
-  return receipts
-    .map((entry) => {
-      const meta = (entry.meta ?? {}) as Record<string, unknown>;
-      const createdBy = (meta.createdBy as Record<string, string | null> | undefined) ?? {};
-      const jobIdFromMeta = String(meta.jobId ?? entry.entityId ?? "");
-      const decisionType = (meta.decisionType as DecisionReceiptInput["decisionType"]) ?? "RECOMMEND";
-      const drivers = Array.isArray(meta.drivers) ? (meta.drivers as string[]).filter(Boolean) : [];
-      const risks = Array.isArray(meta.risks) ? (meta.risks as string[]).filter(Boolean) : [];
-      const confidenceScore = typeof meta.confidenceScore === "number" ? meta.confidenceScore : null;
-      const tradeoff = typeof meta.tradeoff === "string" ? meta.tradeoff : null;
-      const bullhornTarget = (meta.bullhornTarget as DecisionReceiptInput["bullhornTarget"]) ?? "note";
-      const recommendation = normalizeRecommendationFeedback(meta.recommendation as RecommendationFeedback | null | undefined);
+  const chronological = [...receipts].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  const overrideHistory: Array<RecommendationFeedback["alignment"] | undefined> = [];
+  const mapped: DecisionReceiptRecord[] = [];
 
-      const summary =
-        typeof meta.summary === "string"
-          ? meta.summary
-          : summarizeReceipt({
-              ...(meta as DecisionReceiptInput),
-              decisionType,
-              drivers,
-              risks,
-              confidenceScore,
-              tradeoff,
-              recommendation,
-            });
+  for (const entry of chronological) {
+    const meta = (entry.meta ?? {}) as Record<string, unknown>;
+    const createdBy = (meta.createdBy as Record<string, string | null> | undefined) ?? {};
+    const jobIdFromMeta = typeof meta.jobId === "string" ? meta.jobId : entry.entityId ?? "";
+    const decisionType = (meta.decisionType as DecisionReceiptInput["decisionType"]) ?? "RECOMMEND";
+    const drivers = Array.isArray(meta.drivers) ? (meta.drivers as string[]).filter(Boolean) : [];
+    const risks = Array.isArray(meta.risks) ? (meta.risks as string[]).filter(Boolean) : [];
+    const confidenceScore = typeof meta.confidenceScore === "number" ? toTenPointScale(meta.confidenceScore) : null;
+    const tradeoff = typeof meta.tradeoff === "string" ? meta.tradeoff : null;
+    const bullhornTarget = (meta.bullhornTarget as DecisionReceiptInput["bullhornTarget"]) ?? "note";
+    const recommendation = normalizeRecommendationFeedback(meta.recommendation as RecommendationFeedback | null | undefined);
 
-      return {
-        id: entry.id,
-        jobId: jobIdFromMeta,
-        candidateId: String(meta.candidateId ?? ""),
-        candidateName: String(meta.candidateName ?? "Unknown candidate"),
-        decisionType,
-        drivers,
-        tradeoff,
-        confidenceScore,
-        risks,
-        summary,
-        recommendation,
-        createdAt: entry.createdAt.toISOString(),
-        createdBy: {
-          id: String(createdBy.id ?? ""),
-          email: createdBy.email ?? null,
-          name: createdBy.name ?? null,
-        },
-        bullhornNote: `${summary} Synced as ${bullhornTarget === "custom_field" ? "custom field payload" : "note"} for auditability.`,
-        bullhornTarget,
-      } satisfies DecisionReceiptRecord;
-    })
-    .filter((entry) => entry.jobId === jobId);
+    const summary =
+      typeof meta.summary === "string"
+        ? meta.summary
+        : summarizeReceipt({
+            ...(meta as DecisionReceiptInput),
+            decisionType,
+            drivers,
+            risks,
+            confidenceScore,
+            tradeoff,
+            recommendation,
+          });
+
+    const storedAudit = (meta.audit as Record<string, unknown> | undefined) ?? {};
+    const storedHash = typeof storedAudit.hash === "string" ? storedAudit.hash : "";
+    const storedPrevHash = typeof storedAudit.previousHash === "string" ? storedAudit.previousHash : null;
+    const storedAuditId = typeof storedAudit.auditEventId === "string" ? storedAudit.auditEventId : null;
+    const storedChainPosition = typeof storedAudit.chainPosition === "number" ? storedAudit.chainPosition : mapped.length + 1;
+
+    const previousHash = mapped.at(-1)?.audit.hash ?? null;
+
+    const computedHash = computeDecisionHash({
+      tenantId: normalizedTenantId,
+      jobId: jobIdFromMeta,
+      candidateId: String(meta.candidateId ?? ""),
+      decisionType,
+      drivers,
+      risks,
+      tradeoff,
+      confidenceScore,
+      summary,
+      recommendation,
+      createdAt: entry.createdAt.toISOString(),
+      createdBy: {
+        id: String(createdBy.id ?? ""),
+        email: createdBy.email ?? null,
+        name: createdBy.name ?? null,
+      },
+      previousHash,
+    });
+
+    const governance = computeGovernanceSignals({
+      drivers,
+      risks,
+      confidenceScore,
+      summary,
+      recommendation,
+      overrideHistory: [...overrideHistory, recommendation?.alignment],
+    });
+
+    overrideHistory.push(recommendation?.alignment);
+
+    const resolvedHash = storedHash || computedHash;
+    const chainValid = (storedHash ? storedHash === computedHash : true) && storedPrevHash === previousHash;
+
+    mapped.push({
+      id: entry.id,
+      jobId: jobIdFromMeta,
+      candidateId: String(meta.candidateId ?? ""),
+      candidateName: String(meta.candidateName ?? "Unknown candidate"),
+      decisionType,
+      drivers,
+      tradeoff,
+      confidenceScore,
+      risks,
+      summary,
+      recommendation,
+      createdAt: entry.createdAt.toISOString(),
+      createdBy: {
+        id: String(createdBy.id ?? ""),
+        email: createdBy.email ?? null,
+        name: createdBy.name ?? null,
+      },
+      bullhornNote: `${summary} Synced as ${bullhornTarget === "custom_field" ? "custom field payload" : "note"} for auditability.`,
+      bullhornTarget,
+      governance,
+      audit: {
+        auditEventId: storedAuditId,
+        hash: resolvedHash,
+        computedHash,
+        previousHash,
+        chainPosition: storedChainPosition,
+        chainValid,
+      },
+    });
+  }
+
+  return mapped.reverse().filter((entry) => entry.jobId === jobId);
 }

@@ -14,6 +14,7 @@ import {
   type DecisionStreamItem,
 } from "@/lib/metrics/decisionStreamClient";
 import { formatTradeoffDeclaration, resolveTradeoffs, type TradeoffDeclaration } from "@/lib/matching/tradeoffs";
+import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -65,6 +66,11 @@ type DecisionReceipt = {
     alignment?: "accept" | "override" | "disagree";
     rationale?: string | null;
   };
+<<<<<<< ours
+=======
+  governance: DecisionGovernanceSignals;
+  audit: DecisionAuditContext;
+>>>>>>> theirs
 };
 
 function normalizeExplanation(
@@ -876,6 +882,43 @@ function DecisionReceiptList({ receipts }: { receipts: DecisionReceipt[] }) {
           <p className="text-[11px] font-semibold text-indigo-700">
             Synced to Bullhorn as {receipt.bullhornTarget === "custom_field" ? "custom field payload" : "note"}.
           </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+            <span
+              className={clsx(
+                "rounded-full px-2 py-1 font-semibold ring-1",
+                receipt.audit.chainValid
+                  ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                  : "bg-rose-50 text-rose-700 ring-rose-200",
+              )}
+            >
+              Audit chain #{receipt.audit.chainPosition} {receipt.audit.chainValid ? "verified" : "check integrity"}
+            </span>
+            <span className="rounded-full bg-indigo-50 px-2 py-1 font-semibold text-indigo-800 ring-1 ring-indigo-200">
+              Hash {receipt.audit.hash.slice(0, 10)}…
+            </span>
+            <span className="rounded-full bg-slate-100 px-2 py-1 font-semibold text-slate-700 ring-1 ring-slate-200">
+              Overrides {Math.round(receipt.governance.overrideRate * 100)}% ({receipt.governance.overrideCount})
+            </span>
+            {receipt.governance.overconfidence ? (
+              <span className="rounded-full bg-amber-50 px-2 py-1 font-semibold text-amber-700 ring-1 ring-amber-200">
+                Overconfidence flagged
+              </span>
+            ) : null}
+            {receipt.governance.repeatedOverrides ? (
+              <span className="rounded-full bg-rose-50 px-2 py-1 font-semibold text-rose-700 ring-1 ring-rose-200">
+                Repeated overrides
+              </span>
+            ) : null}
+            {receipt.governance.missingSignals.length ? (
+              <span className="rounded-full bg-rose-50 px-2 py-1 font-semibold text-rose-700 ring-1 ring-rose-200">
+                Missing: {receipt.governance.missingSignals.join(", ")}
+              </span>
+            ) : (
+              <span className="rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                All required signals captured
+              </span>
+            )}
+          </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
