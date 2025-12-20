@@ -1,9 +1,5 @@
 import { AgentRunStatus, Prisma, prisma } from "@/server/db/prisma";
-<<<<<<< ours
-import { verifyLLMProvider } from "@/server/ai/gateway";
-=======
 import { verifyLLMProvider } from "@/lib/llm";
->>>>>>> theirs
 import { getOpenAIApiKey } from "@/server/config/secrets";
 
 export type HealthCheckName =
