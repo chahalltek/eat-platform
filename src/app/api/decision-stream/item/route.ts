@@ -11,6 +11,9 @@ const payloadSchema = z.object({
   candidateId: z.string().trim().min(1),
   action: z.enum(["VIEWED", "SHORTLISTED", "REMOVED", "FAVORITED"]),
   label: z.string().trim().optional(),
+  confidence: z.number().min(0).max(10).default(5),
+  confidenceBand: z.enum(["HIGH", "MEDIUM", "LOW"]).optional(),
+  outcome: z.string().trim().optional(),
   details: z.record(z.string(), z.any()).optional(),
 });
 
@@ -29,6 +32,7 @@ export async function POST(req: NextRequest) {
   }
 
   const tenantId = (roleCheck.user.tenantId ?? DEFAULT_TENANT_ID).trim();
+  const confidenceScore = parsed.data.confidence ?? 5;
 
   try {
     await recordMetricEvent({
@@ -37,6 +41,10 @@ export async function POST(req: NextRequest) {
       entityId: parsed.data.streamId,
       meta: {
         ...parsed.data,
+        confidence: {
+          score: confidenceScore,
+          band: parsed.data.confidenceBand ?? null,
+        },
         actorId: roleCheck.user.id,
         actorEmail: roleCheck.user.email,
         actorRole: roleCheck.user.role,

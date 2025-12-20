@@ -45,6 +45,7 @@ const createPrismaMock = () => {
     candidate: createModelMock(),
     candidateSkill: createModelMock(),
     customer: createModelMock(),
+    metricEvent: createModelMock(),
     decisionItem: createModelMock(),
     decisionStream: createModelMock(),
     eatTestPlanStatus: createModelMock(),

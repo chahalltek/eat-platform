@@ -6,8 +6,19 @@ export type DecisionStreamItem = {
   candidateId: string;
   action: DecisionStreamAction;
   label?: string;
+  confidence?: number;
+  confidenceBand?: "HIGH" | "MEDIUM" | "LOW";
+  outcome?: string;
   details?: Record<string, unknown>;
 };
+
+function normalizeConfidenceScore(score?: number): number {
+  const numeric = typeof score === "number" ? Number(score) : Number.NaN;
+  if (Number.isFinite(numeric)) {
+    return Math.min(10, Math.max(0, Number(numeric.toFixed(2))));
+  }
+  return 5;
+}
 
 export async function createDecisionStream(jobId: string): Promise<string | null> {
   try {
@@ -33,10 +44,15 @@ export async function logDecisionStreamItem(item: DecisionStreamItem): Promise<v
   if (!item.streamId) return;
 
   try {
+    const confidenceScore = normalizeConfidenceScore(item.confidence);
+
     await fetch("/api/decision-stream/item", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(item),
+      body: JSON.stringify({
+        ...item,
+        confidence: confidenceScore,
+      }),
     });
   } catch (error) {
     console.warn("Failed to log decision stream item", error);

@@ -144,6 +144,7 @@ type DecisionSnapshot = { favorited: boolean; removed: boolean; shortlisted: boo
 
 const DEFAULT_DECISION_STATE: DecisionSnapshot = { favorited: false, removed: false, shortlisted: false };
 
+<<<<<<< ours
 function normalizeConfidenceToTenPoint(score?: number | null): number | null {
   if (typeof score !== "number" || Number.isNaN(score)) return null;
   const normalized = score > 10 ? score / 10 : score;
@@ -171,6 +172,13 @@ function formatDecisionLabel(decisionType: DecisionReceipt["decisionType"]) {
   };
 
   return labels[decisionType];
+=======
+function toDecisionConfidence(candidate?: JobConsoleCandidate): { score: number; band: JobConsoleCandidate["confidenceBand"] } {
+  const rawScore = candidate?.confidenceScore;
+  const score = typeof rawScore === "number" ? rawScore : null;
+  const normalized = score === null ? 5 : Math.min(10, Math.max(0, Number(((score > 10 ? score / 10 : score)).toFixed(2))));
+  return { score: normalized, band: candidate?.confidenceBand ?? null };
+>>>>>>> theirs
 }
 
 function DecisionActions({
@@ -704,13 +712,17 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 
   const logDecision = useCallback(
     (item: Omit<DecisionStreamItem, "streamId" | "jobId">) => {
+      const confidence = toDecisionConfidence(candidates.find((candidate) => candidate.candidateId === item.candidateId));
+
       void logDecisionStreamItem({
         ...item,
         jobId,
         streamId: decisionStreamId,
+        confidence: confidence.score,
+        confidenceBand: confidence.band ?? undefined,
       });
     },
-    [decisionStreamId, jobId],
+    [candidates, decisionStreamId, jobId],
   );
 
   const persistDecisionReceipt = useCallback(
