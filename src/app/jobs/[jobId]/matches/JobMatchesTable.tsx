@@ -22,6 +22,7 @@ import { buildJustification } from "@/lib/agents/justificationEngine";
 import type { JustificationInput } from "@/lib/agents/justificationEngine";
 import type { ConfidenceBand } from "@/lib/agents/confidenceEngine.v2";
 import { type HiringOutcomeStatus } from "@/lib/hiringOutcomes";
+import { SopContextualLink } from "@/components/SopContextualLink";
 
 export type MatchRow = {
   id: string;
@@ -87,7 +88,12 @@ const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
 
 type JustificationState = "idle" | "loading" | "success" | "error";
 
-export function JobMatchesTable({ matches, jobTitle, jobId }: { matches: MatchRow[]; jobTitle: string; jobId: string }) {
+export function JobMatchesTable({
+  matches,
+  jobTitle,
+  jobId,
+  showSopLink = false,
+}: { matches: MatchRow[]; jobTitle: string; jobId: string; showSopLink?: boolean }) {
   const [shortlistState, setShortlistState] = useState<Map<string, ShortlistState>>(
     () =>
       new Map(
@@ -608,6 +614,11 @@ export function JobMatchesTable({ matches, jobTitle, jobId }: { matches: MatchRo
               />
               Show shortlisted only
             </label>
+            {showSopLink ? (
+              <div className="ml-auto">
+                <SopContextualLink context="comparison" />
+              </div>
+            ) : null}
           </>
         )}
         emptyState={<p className="px-6 py-8 text-center text-sm text-gray-700">No matches found for this job yet.</p>}

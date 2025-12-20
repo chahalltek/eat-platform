@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import clsx from "clsx";
 
 import { StatusPill } from "@/components/StatusPill";
+import { SopContextualLink } from "@/components/SopContextualLink";
 import { categorizeConfidence } from "@/app/jobs/[jobId]/matches/confidence";
 import type { Explanation } from "@/lib/agents/explainEngine";
 import {
@@ -49,8 +50,12 @@ export type JobConsoleProps = {
 <<<<<<< ours
   defaultTradeoffs: TradeoffDeclaration;
   showDecisionMomentCues?: boolean;
+<<<<<<< ours
 =======
   archetype?: NonNullable<ReturnType<typeof describeAssignment>> | null;
+>>>>>>> theirs
+=======
+  showSopContextualLink?: boolean;
 >>>>>>> theirs
 };
 
@@ -1210,8 +1215,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 <<<<<<< ours
     defaultTradeoffs,
     showDecisionMomentCues = false,
+<<<<<<< ours
 =======
     archetype,
+>>>>>>> theirs
+=======
+    showSopContextualLink = false,
 >>>>>>> theirs
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
@@ -1825,7 +1834,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       </div>
 
       <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Results</p>
             <h3 className="text-lg font-semibold text-slate-900">Latest candidate runs</h3>
@@ -1833,26 +1842,29 @@ export function JobExecutionConsole(props: JobConsoleProps) {
               Run MATCH to populate scores, CONFIDENCE to classify reliability, EXPLAIN for recruiter-friendly summaries, and SHORTLIST to flag recommendations.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowShortlistedOnly((prev) => !prev)}
-            className={clsx(
-              "inline-flex items-center gap-2 self-start rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] ring-1",
-              showShortlistedOnly
-                ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
-                : "bg-slate-50 text-slate-700 ring-slate-200 hover:bg-slate-100",
-            )}
-            aria-pressed={showShortlistedOnly}
-          >
-            <span
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            {showSopContextualLink ? <SopContextualLink context="submission" /> : null}
+            <button
+              type="button"
+              onClick={() => setShowShortlistedOnly((prev) => !prev)}
               className={clsx(
-                "h-2 w-2 rounded-full",
-                showShortlistedOnly ? "bg-emerald-600" : "bg-slate-400",
+                "inline-flex items-center gap-2 self-start rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] ring-1",
+                showShortlistedOnly
+                  ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                  : "bg-slate-50 text-slate-700 ring-slate-200 hover:bg-slate-100",
               )}
-              aria-hidden
-            />
-            Show shortlisted only
-          </button>
+              aria-pressed={showShortlistedOnly}
+            >
+              <span
+                className={clsx(
+                  "h-2 w-2 rounded-full",
+                  showShortlistedOnly ? "bg-emerald-600" : "bg-slate-400",
+                )}
+                aria-hidden
+              />
+              Show shortlisted only
+            </button>
+          </div>
         </div>
 
         {showDecisionMomentCues && visibleCandidates.length > 0 ? (

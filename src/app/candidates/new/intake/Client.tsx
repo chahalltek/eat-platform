@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import type { CandidateProfile, CandidateSkill } from "@/types/candidateIntake";
+import { SopContextualLink } from "@/components/SopContextualLink";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 type ProfileResponse = {
@@ -23,7 +24,7 @@ function SkillBadge({ skill }: { skill: CandidateSkill }) {
   );
 }
 
-export default function CandidateIntakeClient({ tenantId }: { tenantId: string }) {
+export default function CandidateIntakeClient({ tenantId, showSopLink }: { tenantId: string; showSopLink?: boolean }) {
   const router = useRouter();
   const [resumeText, setResumeText] = useState("");
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
@@ -100,15 +101,18 @@ export default function CandidateIntakeClient({ tenantId }: { tenantId: string }
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8 space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-        <p className="text-sm text-gray-600">Candidate Intake</p>
-        <h1 className="text-3xl font-semibold text-gray-900">Paste resume text</h1>
-        <p className="mt-2 text-gray-600">
-          Paste a candidate resume to generate a structured profile. Support for file uploads will be added later.
-        </p>
+          <p className="text-sm text-gray-600">Candidate Intake</p>
+          <h1 className="text-3xl font-semibold text-gray-900">Paste resume text</h1>
+          <p className="mt-2 text-gray-600">
+            Paste a candidate resume to generate a structured profile. Support for file uploads will be added later.
+          </p>
+          {showSopLink ? <SopContextualLink context="intake" className="mt-3" /> : null}
         </div>
-        <BackToConsoleButton />
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <BackToConsoleButton />
+        </div>
       </div>
 
       <form onSubmit={handleRunProfile} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

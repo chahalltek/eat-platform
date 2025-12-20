@@ -3,6 +3,7 @@ import Link from "next/link";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser, getUserTenantId } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES, type UserRole } from "@/lib/auth/roles";
+import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 import CandidateIntakeClient from "./Client";
@@ -24,6 +25,7 @@ export default async function CandidateIntakePage() {
 
   const normalizedRole = normalizeRole(user?.role);
   const resolvedTenantId = (tenantId ?? user?.tenantId ?? DEFAULT_TENANT_ID).trim();
+  const showSopLink = await isEnabled(resolvedTenantId, FEATURE_FLAGS.SOP_CONTEXTUAL_LINKS);
 
   if (!user || !normalizedRole || !recruiterRoles.has(normalizedRole)) {
     return (
@@ -45,5 +47,5 @@ export default async function CandidateIntakePage() {
     );
   }
 
-  return <CandidateIntakeClient tenantId={resolvedTenantId} />;
+  return <CandidateIntakeClient tenantId={resolvedTenantId} showSopLink={showSopLink} />;
 }

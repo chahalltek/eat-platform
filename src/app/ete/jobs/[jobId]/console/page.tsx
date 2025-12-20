@@ -146,6 +146,7 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
   const defaultTradeoffs = extractTradeoffDefaultsFromScoring(guardrails.scoring);
   const availability = await getAgentAvailability(tenantId);
   const showDecisionMomentCues = await isFeatureEnabled(FEATURE_FLAGS.DECISION_MOMENT_CUES);
+  const showSopContextualLinks = await isFeatureEnabled(FEATURE_FLAGS.SOP_CONTEXTUAL_LINKS);
   const agents: JobConsoleProps["agentState"] = [
     { name: "MATCH", enabled: availability.isEnabled("MATCH") },
     { name: "CONFIDENCE", enabled: availability.isEnabled("CONFIDENCE") },
@@ -182,8 +183,12 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
 <<<<<<< ours
           defaultTradeoffs={defaultTradeoffs}
           showDecisionMomentCues={showDecisionMomentCues}
+<<<<<<< ours
 =======
           archetype={archetype}
+>>>>>>> theirs
+=======
+          showSopContextualLink={showSopContextualLinks}
 >>>>>>> theirs
         />
       </ETEClientLayout>

@@ -5,6 +5,7 @@ export const FEATURE_FLAGS = {
   FIRE_DRILL_MODE: 'fire-drill-mode',
   JUDGMENT_MEMORY: 'judgment-memory',
   DECISION_MOMENT_CUES: 'decision-moment-cues',
+  SOP_CONTEXTUAL_LINKS: 'sop-contextual-links',
   SCORING: 'scoring',
   UI_BLOCKS: 'ui-blocks',
 } as const;
@@ -18,6 +19,7 @@ export const DEFAULT_FLAG_DESCRIPTIONS: Record<FeatureFlagName, string> = {
   [FEATURE_FLAGS.FIRE_DRILL_MODE]: 'Forces Fire Drill mode during incidents to reduce agent blast radius.',
   [FEATURE_FLAGS.JUDGMENT_MEMORY]: 'Enables admin-only institutional judgment memory insights (read-only).',
   [FEATURE_FLAGS.DECISION_MOMENT_CUES]: 'Shows inline cues when entering a decision moment and when outcomes sync to ATS providers.',
+  [FEATURE_FLAGS.SOP_CONTEXTUAL_LINKS]: 'Shows contextual SOP links at key decision moments without blocking workflows.',
   [FEATURE_FLAGS.SCORING]: 'Gates scoring and match computation flows.',
   [FEATURE_FLAGS.UI_BLOCKS]: 'Turns UI-only surfaces on or off.',
 };

@@ -10,6 +10,7 @@ import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
 import { prisma } from "@/server/db/prisma";
 import { type HiringOutcomeStatus } from "@/lib/hiringOutcomes";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
 export default async function JobMatchesPage({
   params,
@@ -73,6 +74,7 @@ export default async function JobMatchesPage({
   );
 
   const predictiveSignals = await getJobPredictiveSignals(job.id, job.tenantId);
+  const showSopLink = await isFeatureEnabled(FEATURE_FLAGS.SOP_CONTEXTUAL_LINKS);
 
   const matchRows: MatchRow[] = job.matchResults.map((match) => {
     const candidateId = match.candidateId ?? match.candidate.id;
@@ -236,7 +238,7 @@ export default async function JobMatchesPage({
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <JobMatchesTable matches={matchRows} jobTitle={job.title} jobId={job.id} />
+        <JobMatchesTable matches={matchRows} jobTitle={job.title} jobId={job.id} showSopLink={showSopLink} />
       </div>
     </div>
   );
