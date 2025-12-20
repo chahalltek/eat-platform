@@ -56,6 +56,28 @@ export type MatchRow = {
 
 type ShortlistState = { shortlisted: boolean; reason: string };
 
+type CounterfactualReplay = {
+  original: {
+    candidateName: string;
+    candidateTitle?: string | null;
+    candidateLocation?: string | null;
+    score?: number | null;
+    confidenceScore?: number | null;
+    confidenceLabel: string;
+    outcome: string;
+    outcomeSource?: string | null;
+    reasons: string[];
+  };
+  alternates: {
+    candidateId: string;
+    candidateName: string;
+    score?: number | null;
+    confidenceLabel: string;
+    shortlistStatus?: string | null;
+    hiringOutcomeStatus?: string | null;
+  }[];
+};
+
 const globalFilterFn: FilterFn<MatchRow> = (row, _columnId, filterValue) => {
   const query = typeof filterValue === "string" ? filterValue.trim().toLowerCase() : "";
   if (!query) return true;
@@ -82,6 +104,7 @@ export function JobMatchesTable({ matches, jobTitle, jobId }: { matches: MatchRo
 
   const [explainTarget, setExplainTarget] = useState<MatchRow | null>(null);
   const [explainResult, setExplainResult] = useState<ReturnType<typeof normalizeMatchExplanation> | null>(null);
+  const [counterfactualReplay, setCounterfactualReplay] = useState<CounterfactualReplay | null>(null);
   const [isExplainOpen, setIsExplainOpen] = useState(false);
   const [isExplainLoading, setIsExplainLoading] = useState(false);
   const [explainError, setExplainError] = useState<string | null>(null);
@@ -211,11 +234,48 @@ export function JobMatchesTable({ matches, jobTitle, jobId }: { matches: MatchRo
     [matches, shortlistState],
   );
 
+  const buildCounterfactual = useCallback(
+    (target: MatchRow): CounterfactualReplay => {
+      const normalized = normalizeMatchExplanation(target.explanation);
+      const confidenceLabel = (target.confidenceCategory ?? categorizeConfidence(target.confidenceScore)) ?? "Unknown";
+
+      const alternates = matchesWithShortlist
+        .filter((match) => match.id !== target.id)
+        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+        .slice(0, 3)
+        .map((match) => ({
+          candidateId: match.candidateId,
+          candidateName: match.candidateName,
+          score: match.score,
+          confidenceLabel: (match.confidenceCategory ?? categorizeConfidence(match.confidenceScore)) ?? "Unknown",
+          shortlistStatus: match.shortlisted ? "Shortlisted" : match.jobCandidateStatus ?? null,
+          hiringOutcomeStatus: match.hiringOutcomeStatus ?? null,
+        }));
+
+      return {
+        original: {
+          candidateName: target.candidateName,
+          candidateTitle: target.currentTitle,
+          candidateLocation: target.candidateLocation,
+          score: target.score,
+          confidenceScore: target.confidenceScore,
+          confidenceLabel,
+          outcome: target.hiringOutcomeStatus ?? "Outcome pending",
+          outcomeSource: target.hiringOutcomeSource,
+          reasons: normalized.topReasons,
+        },
+        alternates,
+      };
+    },
+    [matchesWithShortlist],
+  );
+
   const handleExplain = useCallback(
     async (match: MatchRow) => {
       setExplainTarget(match);
       setExplainResult(null);
       setExplainError(null);
+      setCounterfactualReplay(buildCounterfactual(match));
       setIsExplainOpen(true);
       setIsExplainLoading(true);
 
@@ -565,6 +625,7 @@ export function JobMatchesTable({ matches, jobTitle, jobId }: { matches: MatchRo
           }}
           error={explainError}
           jobTitle={jobTitle}
+          counterfactualReplay={counterfactualReplay}
         />
       ) : null}
     </>
@@ -831,9 +892,18 @@ type ExplainAgentPanelProps = {
   onClose: () => void;
   error: string | null;
   jobTitle: string;
+  counterfactualReplay: CounterfactualReplay | null;
 };
 
-function ExplainAgentPanel({ isLoading, result, match, onClose, error, jobTitle }: ExplainAgentPanelProps) {
+function ExplainAgentPanel({
+  isLoading,
+  result,
+  match,
+  onClose,
+  error,
+  jobTitle,
+  counterfactualReplay,
+}: ExplainAgentPanelProps) {
   const explanation = result ?? normalizeMatchExplanation(match.explanation);
   const skillOverlap = explanation.skillOverlapMap ?? [];
   const [clientReadyMode, setClientReadyMode] = useState(false);
@@ -880,6 +950,23 @@ function ExplainAgentPanel({ isLoading, result, match, onClose, error, jobTitle 
         </div>
 
         <div className="space-y-6 px-6 py-5">
+          <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Historical context</p>
+              <span className="text-[11px] font-semibold text-amber-700">Read-only replay</span>
+            </div>
+            <p className="text-sm text-amber-900">
+              Post-outcome replay shows what was recommended at decision time and nearby alternatives. Scores are frozen and
+              cannot be edited.
+            </p>
+
+            {counterfactualReplay ? (
+              <CounterfactualReplayCard replay={counterfactualReplay} />
+            ) : (
+              <p className="text-sm text-amber-900">No counterfactual replay available.</p>
+            )}
+          </div>
+
           <div className="space-y-2 rounded-md border border-gray-200 bg-gray-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Match context</p>
             <dl className="grid grid-cols-1 gap-3 text-sm text-gray-800 sm:grid-cols-2">
@@ -1122,6 +1209,75 @@ function ClientReadyView({ clientReady }: { clientReady: ReturnType<typeof build
           value={clientReady.copyText}
         />
       </div>
+    </div>
+  );
+}
+
+function CounterfactualReplayCard({ replay }: { replay: CounterfactualReplay }) {
+  const formatScore = (value?: number | null) => (typeof value === "number" ? `${Math.round(value * 100)}%` : "—");
+
+  return (
+    <div className="space-y-4 rounded-md border border-amber-300 bg-white p-4 text-sm text-amber-900">
+      <div className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Original recommendation</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-amber-900">{replay.original.candidateName}</span>
+          {replay.original.candidateTitle ? <span className="text-amber-800">• {replay.original.candidateTitle}</span> : null}
+          {replay.original.candidateLocation ? <span className="text-amber-800">• {replay.original.candidateLocation}</span> : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 text-[12px] text-amber-800">
+          <span className="rounded bg-amber-100 px-2 py-1 font-semibold">Score: {formatScore(replay.original.score)}</span>
+          <span className="rounded bg-amber-100 px-2 py-1 font-semibold">
+            Confidence: {replay.original.confidenceLabel}
+            {typeof replay.original.confidenceScore === "number" ? ` (${Math.round(replay.original.confidenceScore * 100)}%)` : ""}
+          </span>
+          <span className="rounded bg-amber-100 px-2 py-1 font-semibold">
+            Outcome: {replay.original.outcome}
+            {replay.original.outcomeSource ? ` via ${replay.original.outcomeSource}` : ""}
+          </span>
+        </div>
+        <div className="space-y-1 text-[12px]">
+          <p className="font-semibold text-amber-800">Decision-time rationale</p>
+          {replay.original.reasons.length === 0 ? (
+            <p className="text-amber-800">No reasons captured for this decision.</p>
+          ) : (
+            <ul className="list-inside list-disc space-y-1 text-amber-800">
+              {replay.original.reasons.map((reason, index) => (
+                <li key={`cf-reason-${index}`}>{reason}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Alternate paths</p>
+        {replay.alternates.length === 0 ? (
+          <p className="text-amber-800">No alternate candidates recorded at that time.</p>
+        ) : (
+          <ul className="space-y-2">
+            {replay.alternates.map((alternate) => (
+              <li key={alternate.candidateId} className="rounded border border-amber-200 bg-amber-50 p-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-amber-900">{alternate.candidateName}</span>
+                  <span className="text-[12px] text-amber-800">Score: {formatScore(alternate.score)}</span>
+                  <span className="text-[12px] text-amber-800">Confidence: {alternate.confidenceLabel}</span>
+                  <span className="text-[12px] text-amber-800">
+                    Status: {alternate.shortlistStatus ?? "Not shortlisted"}
+                  </span>
+                  {alternate.hiringOutcomeStatus ? (
+                    <span className="text-[12px] text-amber-800">Outcome: {alternate.hiringOutcomeStatus}</span>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <p className="text-[12px] text-amber-800">
+        Historical context only — decisions remain immutable and safe for training or review.
+      </p>
     </div>
   );
 }
