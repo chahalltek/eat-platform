@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import OpenAI from 'openai';
 
 import { recordAuditEvent } from '@/lib/audit/trail';
@@ -10,6 +11,7 @@ import { recordCostEvent } from '@/lib/cost/events';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
 import { enforceLimits, type SafeLLMContext } from '@/server/ai/safety/limits';
 import { getCurrentTenantId } from '@/lib/tenant';
+import { redactAny } from '@/server/ai/safety/redact';
 import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from '@/server/ai/safety/safeContext';
 
 export type GatewayCapability = 'read' | 'write';
@@ -65,6 +67,81 @@ const EXECUTION_ENABLED = process.env.EXECUTION_ENABLED === 'true';
 function redactSnippet(value?: string | null) {
   if (!value) return null;
   return value.length > 120 ? `${value.slice(0, 117)}...` : value;
+}
+
+type SanitizeOutboundParams = {
+  contextInput?: SafeLLMContextInput | SafeLLMContext;
+  systemPrompt: string | ((context: SafeLLMContext) => string);
+  userPrompt: string | ((context: SafeLLMContext) => string);
+  verbosityCap?: number;
+};
+
+type SanitizedOutbound = {
+  context: SafeLLMContext;
+  systemPrompt: string;
+  userPrompt: string;
+};
+
+function ensureRequestIdentifiers(
+  contextInput: SafeLLMContextInput | SafeLLMContext | undefined,
+): SafeLLMContextInput {
+  const resolvedContext = contextInput ?? { purpose: 'OTHER' };
+  const metadata = (resolvedContext as { metadata?: SafeLLMContext['metadata'] }).metadata ?? {};
+  const requestId = metadata.requestId ?? randomUUID();
+  const correlationId = metadata.correlationId ?? requestId;
+
+  return {
+    ...resolvedContext,
+    metadata: {
+      ...metadata,
+      requestId,
+      correlationId,
+    },
+  } satisfies SafeLLMContextInput;
+}
+
+function enforceLimits<T>(value: T, { verbosityCap }: { verbosityCap?: number } = {}): T {
+  if (!verbosityCap) return value;
+
+  const clamp = (entry: unknown): unknown => {
+    if (typeof entry === 'string') {
+      return entry.length > verbosityCap ? entry.slice(0, verbosityCap) : entry;
+    }
+
+    if (Array.isArray(entry)) {
+      return entry.map(clamp);
+    }
+
+    if (entry && typeof entry === 'object') {
+      if (entry instanceof Date || entry instanceof RegExp) return entry;
+
+      return Object.fromEntries(
+        Object.entries(entry as Record<string, unknown>).map(([key, val]) => [key, clamp(val)]),
+      );
+    }
+
+    return entry;
+  };
+
+  return clamp(value) as T;
+}
+
+export function sanitizeOutbound({
+  contextInput,
+  systemPrompt,
+  userPrompt,
+  verbosityCap,
+}: SanitizeOutboundParams): SanitizedOutbound {
+  const contextWithIds = ensureRequestIdentifiers(contextInput);
+  const safeContext = buildSafeLLMContext(contextWithIds);
+  const redactedContext = redactAny(safeContext) as SafeLLMContext;
+  const limitedContext = enforceLimits(redactedContext, { verbosityCap });
+
+  return {
+    context: limitedContext,
+    systemPrompt: typeof systemPrompt === 'function' ? systemPrompt(limitedContext) : systemPrompt,
+    userPrompt: typeof userPrompt === 'function' ? userPrompt(limitedContext) : userPrompt,
+  };
 }
 
 async function resolveCaller() {
@@ -145,7 +222,7 @@ async function recordAIAuditEvent({
       },
     });
   } catch (error) {
-    console.error('[ai-gateway] Failed to record audit event', error);
+    console.error('[ai-gateway] Failed to record audit event', redactAny(error));
   }
 }
 
@@ -164,19 +241,21 @@ export async function callLLM({
   buildUserPrompt,
 >>>>>>> theirs
 }: CallLLMParams): Promise<string> {
-  const safeContext = buildSafeLLMContext(context ?? { purpose: 'OTHER' });
-  const resolvedSystemPrompt = typeof systemPrompt === 'function' ? systemPrompt(safeContext) : systemPrompt;
-  const resolvedUserPrompt = typeof userPrompt === 'function' ? userPrompt(safeContext) : userPrompt;
-
+  const contextWithIds = ensureRequestIdentifiers(context);
   const caller = await resolveCaller();
   let response: string | null = null;
   let status: 'success' | 'failure' = 'success';
   let resolvedModel = model ?? 'unknown';
 <<<<<<< ours
+<<<<<<< ours
   let trimmedUserPrompt = resolvedUserPrompt;
 =======
   let trimmedUserPrompt = userPrompt;
   const safeContext = context ? enforceLimits(context) : undefined;
+>>>>>>> theirs
+=======
+  let resolvedSystemPrompt = '';
+  let trimmedUserPrompt = '';
 >>>>>>> theirs
 
   try {
@@ -190,6 +269,7 @@ export async function callLLM({
     }
 
 <<<<<<< ours
+<<<<<<< ours
     trimmedUserPrompt = llmControls.verbosityCap
       ? resolvedUserPrompt.slice(0, llmControls.verbosityCap)
       : resolvedUserPrompt;
@@ -202,6 +282,19 @@ export async function callLLM({
     trimmedUserPrompt = llmControls.verbosityCap
       ? rawUserPrompt.slice(0, llmControls.verbosityCap)
       : rawUserPrompt;
+=======
+    const sanitized = sanitizeOutbound({
+      contextInput: contextWithIds,
+      systemPrompt,
+      userPrompt,
+      verbosityCap: llmControls.verbosityCap,
+    });
+
+    resolvedSystemPrompt = sanitized.systemPrompt;
+    trimmedUserPrompt = llmControls.verbosityCap
+      ? sanitized.userPrompt.slice(0, llmControls.verbosityCap)
+      : sanitized.userPrompt;
+>>>>>>> theirs
 
     await consumeRateLimit({
       tenantId: caller.tenantId,
@@ -241,7 +334,7 @@ export async function callLLM({
       throw err;
     }
 
-    console.error('Error calling LLM:', err);
+    console.error('Error calling LLM:', redactAny(err));
     throw new AIFailureError('LLM call failed');
   } finally {
     await recordAIAuditEvent({
