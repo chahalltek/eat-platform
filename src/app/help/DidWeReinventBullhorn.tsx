@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { CheckIcon, ClipboardIcon } from "@heroicons/react/24/outline";
 
-import { buildEteVsBullhornFullText, eteVsBullhornContent, type HelpEntry } from "@/content/help/eteVsBullhorn";
+import { buildHelpEntryFullText, eteVsBullhornContent, type HelpEntry } from "@/content/help/eteVsBullhorn";
 
 type DidWeReinventBullhornProps = {
   entry?: HelpEntry;
@@ -12,7 +12,7 @@ type DidWeReinventBullhornProps = {
 export function DidWeReinventBullhorn({ entry = eteVsBullhornContent }: DidWeReinventBullhornProps) {
   const [copyState, setCopyState] = useState<"idle" | "success" | "error">("idle");
 
-  const fullCopy = useMemo(() => buildEteVsBullhornFullText(entry), [entry]);
+  const fullCopy = useMemo(() => buildHelpEntryFullText(entry), [entry]);
 
   const handleCopy = useCallback(async () => {
     if (copyState === "success") return;
@@ -35,11 +35,13 @@ export function DidWeReinventBullhorn({ entry = eteVsBullhornContent }: DidWeRei
     <section className="space-y-6 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">FAQ</p>
-          <h2 className="text-3xl font-semibold text-zinc-900 sm:text-4xl dark:text-zinc-50">{entry.title}</h2>
-          <p className="max-w-3xl text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-            A quick positioning explainer you can share when teammates ask how ETE relates to Bullhorn. Copy the text or skim the bullets below.
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+            {entry.eyebrow ?? "FAQ"}
           </p>
+          <h2 className="text-3xl font-semibold text-zinc-900 sm:text-4xl dark:text-zinc-50">{entry.title}</h2>
+          {entry.description ? (
+            <p className="max-w-3xl text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{entry.description}</p>
+          ) : null}
         </div>
         <div className="flex items-start gap-2">
           <button
@@ -94,6 +96,20 @@ export function DidWeReinventBullhorn({ entry = eteVsBullhornContent }: DidWeRei
           </div>
         ))}
       </div>
+
+      {entry.links?.length ? (
+        <div className="flex flex-wrap gap-3 rounded-2xl bg-indigo-50/60 p-4 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-100 dark:ring-indigo-900/60">
+          {entry.links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-indigo-700 ring-1 ring-indigo-200 transition hover:-translate-y-0.5 hover:ring-indigo-300 dark:bg-indigo-900/60 dark:text-indigo-100 dark:ring-indigo-800/60"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }

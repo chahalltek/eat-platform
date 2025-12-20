@@ -7,9 +7,50 @@ export type HelpContentSection = {
 export type HelpEntry = {
   key: string;
   title: string;
+  eyebrow?: string;
+  description?: string;
   intro: string[];
   sections: HelpContentSection[];
   closing: string[];
+  links?: { label: string; href: string }[];
+};
+
+export const decisionSopContent: HelpEntry = {
+  key: "decision_sop",
+  title: "How decisions are made here",
+  eyebrow: "Help / FAQ",
+  description: "Where to find the decision SOP and the exact language we expect teams to use.",
+  intro: [
+    "Use this when teammates ask how we make and record decisions inside ETE.",
+    "The SOP keeps behavior, judgment, and execution cleanly separated and replaces undocumented reasoning with structured judgment.",
+  ],
+  sections: [
+    {
+      heading: "SOP (exact language)",
+      bullets: [
+        "SOPs define behavior.",
+        "ETE supports judgment.",
+        "Bullhorn executes outcomes.",
+        "No overlap.",
+        "No ambiguity.",
+        "No future re-litigation.",
+      ],
+    },
+    {
+      heading: "How to apply it in ETE",
+      bullets: [
+        "Structured judgment replaces undocumented reasoning.",
+        "Use ETE to capture the rationale, confidence, risk, and tradeoffs behind every decision.",
+        "Push approved outcomes back into Bullhorn so the system of record stays authoritative.",
+      ],
+    },
+  ],
+  closing: [
+    "Share this SOP verbatim. If someone needs the source document, send them the link below.",
+  ],
+  links: [
+    { label: "Read the SOP", href: "/sop/how-decisions-are-made.txt" },
+  ],
 };
 
 export const sopLanguage = {
@@ -23,6 +64,9 @@ export const sopLanguage = {
 export const eteVsBullhornContent: HelpEntry = {
   key: "ete_vs_bullhorn",
   title: "Did we reinvent Bullhorn?",
+  eyebrow: "FAQ",
+  description:
+    "A quick positioning explainer you can share when teammates ask how ETE relates to Bullhorn. Copy the text or skim the bullets below.",
   intro: [
     "No. And we’re very intentionally not trying to.",
     sopLanguage.systemOfRecord,
@@ -69,11 +113,16 @@ export const eteVsBullhornContent: HelpEntry = {
   closing: [],
 };
 
-export function buildEteVsBullhornFullText(entry: HelpEntry = eteVsBullhornContent) {
+export function buildHelpEntryFullText(entry: HelpEntry = eteVsBullhornContent) {
   const lines: string[] = [];
 
   lines.push(entry.title);
   lines.push("");
+
+  if (entry.description) {
+    lines.push(entry.description);
+    lines.push("");
+  }
 
   for (const paragraph of entry.intro) {
     lines.push(paragraph);
@@ -97,6 +146,14 @@ export function buildEteVsBullhornFullText(entry: HelpEntry = eteVsBullhornConte
 
   for (const paragraph of entry.closing) {
     lines.push(paragraph);
+    lines.push("");
+  }
+
+  if (entry.links?.length) {
+    lines.push("Links:");
+    for (const link of entry.links) {
+      lines.push(`${link.label}: ${link.href}`);
+    }
     lines.push("");
   }
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { DidWeReinventBullhorn } from "./DidWeReinventBullhorn";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
-import { eteVsBullhornContent } from "@/content/help/eteVsBullhorn";
+import { decisionSopContent, eteVsBullhornContent } from "@/content/help/eteVsBullhorn";
 
 export default function HelpPage() {
   return (
@@ -13,7 +13,7 @@ export default function HelpPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Help &amp; FAQ</p>
             <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">Quick answers about ETE</h1>
             <p className="max-w-3xl text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-              Short explainers your team can reference without leaving the app. Start with how ETE and Bullhorn fit together.
+              Short explainers your team can reference without leaving the app. Start with how we make decisions and how ETE and Bullhorn fit together.
             </p>
           </div>
           <Link
@@ -25,6 +25,7 @@ export default function HelpPage() {
         </div>
       </header>
 
+<<<<<<< ours
       <DidWeReinventBullhorn entry={eteVsBullhornContent} />
 
       <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
@@ -44,6 +45,12 @@ export default function HelpPage() {
           </Link>
         </div>
       </section>
+=======
+      <div className="space-y-6">
+        <DidWeReinventBullhorn entry={decisionSopContent} />
+        <DidWeReinventBullhorn entry={eteVsBullhornContent} />
+      </div>
+>>>>>>> theirs
     </ETEClientLayout>
   );
 }
