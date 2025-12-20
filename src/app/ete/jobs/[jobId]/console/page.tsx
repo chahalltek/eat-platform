@@ -147,6 +147,10 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
   const showDecisionMomentCues = await isFeatureEnabled(FEATURE_FLAGS.DECISION_MOMENT_CUES);
   const showSopContextualLinks = await isFeatureEnabled(FEATURE_FLAGS.SOP_CONTEXTUAL_LINKS);
   const showCultureCues = await isFeatureEnabled(FEATURE_FLAGS.DECISION_CULTURE_CUES);
+<<<<<<< ours
+=======
+  const showCultureCues = await isFeatureEnabled(FEATURE_FLAGS.DECISION_CULTURE_CUES);
+>>>>>>> theirs
   const agents: JobConsoleProps["agentState"] = [
     { name: "MATCH", enabled: availability.isEnabled("MATCH") },
     { name: "CONFIDENCE", enabled: availability.isEnabled("CONFIDENCE") },
@@ -165,6 +169,13 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
   const cultureCues = showCultureCues
     ? await getDecisionCultureCues({ clientId: job.customerId, roleType: job.title })
     : [];
+<<<<<<< ours
+=======
+  const cultureCues = showCultureCues
+    ? await getDecisionCultureCues({ clientId: job.customerId, roleType: job.title })
+    : [];
+  const archetype = extractArchetypeFromIntent(job.jobIntent?.intent);
+>>>>>>> theirs
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50">
@@ -188,6 +199,11 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
           showDecisionMomentCues={showDecisionMomentCues}
           archetype={archetype}
           showSopContextualLink={showSopContextualLinks}
+<<<<<<< ours
+=======
+          showSopContextualLink={showSopContextualLinks}
+          archetype={archetype}
+>>>>>>> theirs
         />
       </ETEClientLayout>
     </div>

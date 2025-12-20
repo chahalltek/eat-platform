@@ -17,7 +17,10 @@ import {
   tradeoffDeclarationSchema,
 } from "@/lib/matching/tradeoffs";
 import { extractArchetypeFromIntent } from "@/lib/jobIntent";
+<<<<<<< ours
 import { extractArchetypeFromIntent } from "@/lib/jobIntent";
+=======
+>>>>>>> theirs
 
 export type RunExplainInput = {
   jobId: string;

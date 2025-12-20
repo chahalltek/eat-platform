@@ -9,6 +9,10 @@ import { recordAuditEvent } from "@/lib/audit/trail";
 import {
   describeAssignment,
   type ReqArchetypeAssignment,
+<<<<<<< ours
+=======
+  type ReqArchetypeDefinition,
+>>>>>>> theirs
   reqArchetypeIdTuple,
 } from "@/lib/archetypes/reqArchetypes";
 import { extractArchetypeFromIntent } from "@/lib/jobIntent";
@@ -130,9 +134,15 @@ export type DecisionGovernanceSignals = {
   explainability: string[];
 };
 
+<<<<<<< ours
 type DecisionReceiptArchetype = NonNullable<ReturnType<typeof describeAssignment>>;
 
 export type DecisionReceiptRecord = {
+=======
+type DecisionReceiptArchetype = ReqArchetypeAssignment & ReqArchetypeDefinition;
+
+type BaseDecisionReceiptRecord = {
+>>>>>>> theirs
   id: string;
   jobId: string;
   candidateId: string;
@@ -157,9 +167,18 @@ export type DecisionReceiptRecord = {
   standardizedRisks: string[];
   standardizedRiskKeys: string[];
   confidenceFrame: keyof typeof CONFIDENCE_FRAMES | null;
+<<<<<<< ours
   governance: DecisionGovernanceSignals;
   audit: DecisionAuditContext;
   archetype: DecisionReceiptArchetype | null;
+=======
+  archetype: DecisionReceiptArchetype | null;
+};
+
+export type DecisionReceiptRecord = BaseDecisionReceiptRecord & {
+  governance: DecisionGovernanceSignals;
+  audit: DecisionAuditContext;
+>>>>>>> theirs
 };
 
 function toTenPointScale(score?: number | null): number | null {
@@ -253,6 +272,7 @@ function describeDecision(decisionType: DecisionReceiptInput["decisionType"]) {
   return labels[decisionType];
 }
 
+<<<<<<< ours
 function summarizeReceipt({
   decisionType,
   drivers,
@@ -263,12 +283,17 @@ function summarizeReceipt({
   archetype,
 }: {
   decisionType: DecisionReceiptInput["decisionType"];
+=======
+type ReceiptSummaryInput = DecisionReceiptInput & {
+  confidenceScore: number | null;
+>>>>>>> theirs
   drivers: string[];
   risks: string[];
   confidenceScore: number | null;
   tradeoff: string | null;
   recommendation?: RecommendationFeedback | null;
   archetype?: DecisionReceiptArchetype | null;
+<<<<<<< ours
 }) {
   const driverSummary = drivers.length ? `Drivers: ${drivers.join("; ")}.` : "Drivers: Not captured.";
   const riskSummary = risks.length ? `Risks: ${risks.join("; ")}.` : "Risks: Not captured.";
@@ -276,10 +301,26 @@ function summarizeReceipt({
   const tradeoffText = tradeoff ? `Tradeoff: ${tradeoff}` : "Tradeoff: Defaulted to recruiter judgment.";
   const recommendationSummary = recommendation
     ? `Recommendation response: ${recommendation.alignment ?? "accept"}${recommendation.rationale ? ` (${recommendation.rationale})` : ""}.`
+=======
+};
+
+function summarizeReceipt(payload: ReceiptSummaryInput) {
+  const driverSummary = payload.drivers.length ? `Drivers: ${payload.drivers.join("; ")}.` : "Drivers: Not captured.";
+  const riskSummary = payload.risks.length ? `Risks: ${payload.risks.join("; ")}.` : "Risks: Not captured.";
+  const confidence = typeof payload.confidenceScore === "number" ? `${payload.confidenceScore}/10 confidence.` : "Confidence not captured.";
+  const tradeoff = payload.tradeoff ? `Tradeoff: ${payload.tradeoff}` : "Tradeoff: Defaulted to recruiter judgment.";
+  const archetype = payload.archetype ? `Archetype: ${payload.archetype.label}.` : "";
+  const recommendationSummary = payload.recommendation
+    ? `Recommendation response: ${payload.recommendation.alignment ?? "accept"}${payload.recommendation.rationale ? ` (${payload.recommendation.rationale})` : ""}.`
+>>>>>>> theirs
     : "Recommendation response not captured.";
   const archetypeSummary = archetype ? `Archetype: ${archetype.label}.` : "";
 
+<<<<<<< ours
   return `${describeDecision(decisionType)} ${driverSummary} ${riskSummary} ${confidence} ${tradeoffText} ${recommendationSummary} ${archetypeSummary}`.trim();
+=======
+  return `${describeDecision(payload.decisionType)} ${driverSummary} ${riskSummary} ${confidence} ${tradeoff} ${archetype} ${recommendationSummary}`.trim();
+>>>>>>> theirs
 }
 
 type HashInput = {
@@ -370,12 +411,18 @@ function computeGovernanceSignals({
 }
 
 async function resolveJobArchetype(jobId: string, tenantId: string): Promise<DecisionReceiptArchetype | null> {
+  if (!prisma.jobIntent?.findFirst) return null;
+
   const jobIntent = await prisma.jobIntent.findFirst({
     where: { jobReqId: jobId, tenantId },
     select: { intent: true },
   });
 
+<<<<<<< ours
   return describeAssignment(extractArchetypeFromIntent(jobIntent?.intent) as ReqArchetypeAssignment | null);
+=======
+  return extractArchetypeFromIntent(jobIntent?.intent);
+>>>>>>> theirs
 }
 
 export async function createDecisionReceipt({
@@ -393,6 +440,15 @@ export async function createDecisionReceipt({
   const drivers = clampEntries(payload.drivers, 3);
   const risks = clampEntries(payload.risks, 4);
   const confidenceScore = toTenPointScale(payload.confidenceScore);
+<<<<<<< ours
+=======
+  const archetype =
+    describeAssignment(payload.archetype ?? null) ?? (await resolveJobArchetype(payload.jobId, normalizedTenantId));
+  const tradeoff =
+    payload.tradeoff?.trim() ||
+    archetype?.defaultTradeoff ||
+    defaultTradeoff(payload.decisionType, payload.shortlistStrategy);
+>>>>>>> theirs
   const recommendation = normalizeRecommendationFeedback(payload.recommendation);
   const archetype =
     describeAssignment((payload.archetype as ReqArchetypeAssignment | null | undefined) ?? null) ??
@@ -404,6 +460,7 @@ export async function createDecisionReceipt({
 
   const baseSummary =
     payload.summary?.trim() ||
+<<<<<<< ours
     summarizeReceipt({
       decisionType: payload.decisionType,
       drivers,
@@ -413,6 +470,9 @@ export async function createDecisionReceipt({
       recommendation,
       archetype,
     });
+=======
+    summarizeReceipt({ ...payload, drivers, risks, confidenceScore, tradeoff, recommendation, archetype });
+>>>>>>> theirs
 
   const previousReceipts = await prisma.metricEvent.findMany({
     where: {

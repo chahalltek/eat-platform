@@ -15,8 +15,13 @@ import {
   type DecisionStreamItem,
 } from "@/lib/metrics/decisionStreamClient";
 import { formatTradeoffDeclaration, resolveTradeoffs, type TradeoffDeclaration } from "@/lib/matching/tradeoffs";
+<<<<<<< ours
 import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
 import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
+=======
+import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
+import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
+>>>>>>> theirs
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -1192,12 +1197,17 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     modeDescription,
     defaultTradeoffs,
     showDecisionMomentCues = false,
+<<<<<<< ours
     archetype,
     showSopContextualLink = false,
     defaultTradeoffs,
     showDecisionMomentCues = false,
     archetype,
     showSopContextualLink = false,
+=======
+    showSopContextualLink = false,
+    archetype,
+>>>>>>> theirs
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
     ...candidate,
@@ -1440,6 +1450,17 @@ export function JobExecutionConsole(props: JobConsoleProps) {
               confidence: archetype.confidence,
             }
           : undefined,
+<<<<<<< ours
+=======
+        archetype: archetype
+          ? {
+              id: archetype.id,
+              source: archetype.source ?? "auto",
+              reason: archetype.reason,
+              confidence: archetype.confidence,
+            }
+          : undefined,
+>>>>>>> theirs
       };
 
       try {
