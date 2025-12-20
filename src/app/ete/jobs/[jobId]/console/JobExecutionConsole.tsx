@@ -80,21 +80,19 @@ type DecisionReceipt = {
     alignment?: "accept" | "override" | "disagree";
     rationale?: string | null;
   };
-<<<<<<< ours
-<<<<<<< ours
-=======
-  governance: DecisionGovernanceSignals;
-  audit: DecisionAuditContext;
->>>>>>> theirs
-=======
   standardizedTradeoff?: string | null;
   standardizedTradeoffKey?: string | null;
   standardizedRisks?: string[];
   standardizedRiskKeys?: string[];
   confidenceFrame?: "HIGH" | "MEDIUM" | "LOW" | null;
+<<<<<<< ours
 >>>>>>> theirs
 =======
   archetype?: NonNullable<ReturnType<typeof describeAssignment>> | null;
+>>>>>>> theirs
+=======
+  governance: DecisionGovernanceSignals;
+  audit: DecisionAuditContext;
 >>>>>>> theirs
 };
 
@@ -216,11 +214,7 @@ function toDecisionConfidence(candidate?: JobConsoleCandidate): { score: number;
   const score = typeof rawScore === "number" ? rawScore : null;
   const normalized = score === null ? 5 : Math.min(10, Math.max(0, Number(((score > 10 ? score / 10 : score)).toFixed(2))));
   return { score: normalized, band: candidate?.confidenceBand ?? null };
-<<<<<<< ours
 }
-=======
-
->>>>>>> theirs
 type ChangeSource = AgentName | "MANUAL";
 
 type RecommendationDelta = { label: string; from: string; to: string };
@@ -1556,21 +1550,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           candidateName: candidate.candidateName,
           recommendedOutcome: candidate.recommendedOutcome,
           recommendationAlignment: normalizedAnnotation.alignment,
-<<<<<<< ours
-        recommendationRationale: rationale || undefined,
-      },
-    });
-  },
-  [decisionAnnotations, logDecision, persistDecisionReceipt, updateCandidatesWithDiff],
-);
-=======
           recommendationRationale: rationale || undefined,
         },
       });
     },
     [decisionAnnotations, logDecision, persistDecisionReceipt, updateCandidatesWithDiff],
   );
->>>>>>> theirs
 
   const handleViewed = useCallback(
     (candidate: JobConsoleCandidate) => {

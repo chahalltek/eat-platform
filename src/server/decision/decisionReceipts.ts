@@ -165,6 +165,7 @@ export type DecisionReceiptRecord = {
   bullhornTarget: DecisionReceiptInput["bullhornTarget"];
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   auditContext?: Partial<Pick<DecisionAuditContext, "auditEventId" | "hash" | "previousHash" | "chainPosition">>;
 };
 
@@ -172,14 +173,24 @@ export type DecisionReceiptRecord = BaseDecisionReceiptRecord & {
   governance: DecisionGovernanceSignals;
   audit: DecisionAuditContext;
 =======
+=======
+>>>>>>> theirs
   standardizedTradeoff: string | null;
   standardizedTradeoffKey: string | null;
   standardizedRisks: string[];
   standardizedRiskKeys: string[];
   confidenceFrame: keyof typeof CONFIDENCE_FRAMES | null;
+<<<<<<< ours
 >>>>>>> theirs
 =======
   archetype: DecisionReceiptArchetype | null;
+>>>>>>> theirs
+=======
+};
+
+export type DecisionReceiptRecord = BaseDecisionReceiptRecord & {
+  governance: DecisionGovernanceSignals;
+  audit: DecisionAuditContext;
 >>>>>>> theirs
 };
 
@@ -602,6 +613,14 @@ export async function createDecisionReceipt({
     bullhornTarget: payload.bullhornTarget,
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+    standardizedTradeoff: standardizedTradeoff?.label ?? null,
+    standardizedTradeoffKey: standardizedTradeoff?.key ?? null,
+    standardizedRisks,
+    standardizedRiskKeys,
+    confidenceFrame,
+>>>>>>> theirs
     governance,
     audit: {
       auditEventId: auditEvent.id,
@@ -611,6 +630,7 @@ export async function createDecisionReceipt({
       chainPosition: previousChainPosition + 1,
       chainValid: true,
     },
+<<<<<<< ours
 =======
     standardizedTradeoff: standardizedTradeoff?.label ?? null,
     standardizedTradeoffKey: standardizedTradeoff?.key ?? null,
@@ -620,6 +640,8 @@ export async function createDecisionReceipt({
 >>>>>>> theirs
 =======
     archetype: archetype ?? null,
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   };
 }
@@ -659,11 +681,10 @@ export async function listDecisionReceipts({
           }
         : {}),
     },
-        orderBy: { createdAt: "desc" },
-        take,
-      });
+    orderBy: { createdAt: "desc" },
+    take,
+  });
 
-<<<<<<< ours
   const chronological = [...receipts].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const overrideHistory: Array<RecommendationFeedback["alignment"] | undefined> = [];
   const mapped: DecisionReceiptRecord[] = [];
@@ -692,6 +713,27 @@ export async function listDecisionReceipts({
             tradeoff,
             recommendation,
           });
+
+    const tradeoffVocabulary = standardizeTradeoff(tradeoff);
+    const standardizedTradeoff =
+      typeof meta.standardizedTradeoff === "string" && meta.standardizedTradeoff.trim().length > 0 ? meta.standardizedTradeoff : tradeoffVocabulary?.label ?? null;
+    const standardizedTradeoffKey =
+      typeof meta.standardizedTradeoffKey === "string" && meta.standardizedTradeoffKey.trim().length > 0 ? meta.standardizedTradeoffKey : tradeoffVocabulary?.key ?? null;
+
+    const standardizedRiskFallback = standardizeRisks(risks);
+    const standardizedRisks =
+      Array.isArray(meta.standardizedRisks) && meta.standardizedRisks.every((entry) => typeof entry === "string")
+        ? (meta.standardizedRisks as string[])
+        : standardizedRiskFallback.labels;
+    const standardizedRiskKeys =
+      Array.isArray(meta.standardizedRiskKeys) && meta.standardizedRiskKeys.every((entry) => typeof entry === "string")
+        ? (meta.standardizedRiskKeys as string[])
+        : standardizedRiskFallback.keys;
+
+    const confidenceFrame =
+      typeof meta.confidenceFrame === "string" && meta.confidenceFrame in CONFIDENCE_FRAMES
+        ? (meta.confidenceFrame as keyof typeof CONFIDENCE_FRAMES)
+        : frameConfidence(confidenceScore);
 
     const storedAudit = (meta.audit as Record<string, unknown> | undefined) ?? {};
     const storedHash = typeof storedAudit.hash === "string" ? storedAudit.hash : "";
@@ -755,6 +797,11 @@ export async function listDecisionReceipts({
       },
       bullhornNote: `${summary} Synced as ${bullhornTarget === "custom_field" ? "custom field payload" : "note"} for auditability.`,
       bullhornTarget,
+      standardizedTradeoff,
+      standardizedTradeoffKey,
+      standardizedRisks,
+      standardizedRiskKeys,
+      confidenceFrame,
       governance,
       audit: {
         auditEventId: storedAuditId,
@@ -768,6 +815,7 @@ export async function listDecisionReceipts({
   }
 
   return mapped.reverse().filter((entry) => entry.jobId === jobId);
+<<<<<<< ours
 =======
   return receipts
     .map((entry) => {
@@ -854,5 +902,7 @@ export async function listDecisionReceipts({
       } satisfies DecisionReceiptRecord;
     })
     .filter((entry) => entry.jobId === jobId);
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 }

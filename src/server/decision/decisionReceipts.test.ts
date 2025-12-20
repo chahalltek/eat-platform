@@ -1,8 +1,14 @@
-<<<<<<< ours
-import { describe, expect, beforeEach, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { IdentityUser } from "@/lib/auth/types";
-import { createDecisionReceipt, listDecisionReceipts } from "./decisionReceipts";
+import {
+  CONFIDENCE_FRAMES,
+  createDecisionReceipt,
+  frameConfidence,
+  listDecisionReceipts,
+  standardizeRisks,
+  standardizeTradeoff,
+} from "./decisionReceipts";
 
 type MetricEventInput = {
   id: string;
@@ -150,10 +156,8 @@ describe("decision receipts governance and audit trail", () => {
     expect(latest.governance.missingSignals).toContain("risks");
 
     expect(first.governance.missingSignals).toEqual(expect.arrayContaining(["drivers", "risks", "confidence"]));
-=======
-import { describe, expect, it } from "vitest";
-
-import { CONFIDENCE_FRAMES, frameConfidence, standardizeRisks, standardizeTradeoff } from "./decisionReceipts";
+  });
+});
 
 describe("decision vocabulary standardization", () => {
   it("maps tradeoff hints to standardized labels", () => {
@@ -182,11 +186,7 @@ describe("decision vocabulary standardization", () => {
     ]);
 
     expect(keys).toEqual(["skill_gap", "data_quality_risk", "location_mismatch"]);
-    expect(labels).toEqual([
-      "Skill or coverage gap",
-      "Data quality or confidence risk",
-      "Location or availability mismatch",
-    ]);
+    expect(labels).toEqual(["Skill or coverage gap", "Data quality or confidence risk", "Location or availability mismatch"]);
   });
 });
 
@@ -201,6 +201,5 @@ describe("confidence framing", () => {
   it("exposes human readable frames", () => {
     expect(CONFIDENCE_FRAMES.HIGH).toContain("High confidence framing");
     expect(CONFIDENCE_FRAMES.LOW).toContain("Low confidence");
->>>>>>> theirs
   });
 });
