@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+<<<<<<< ours
+=======
+import { Switch } from "@/components/ui/switch";
+
+>>>>>>> theirs
 import { TENANT_HEADER } from "@/lib/auth/config";
 import type { AgentKillSwitchRecord } from "@/lib/agents/killSwitch";
 import type { FeatureFlagRecord } from "@/lib/featureFlags";
@@ -318,8 +323,9 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                 </div>
                 <ToggleSwitch
                   checked={record.latched}
-                  onChange={() => toggleKillSwitch(record)}
+                  onCheckedChange={() => toggleKillSwitch(record)}
                   disabled={payload.readOnly || pendingKillSwitch === record.agentName}
+<<<<<<< ours
 <<<<<<< ours
                   activeTrackClassName="bg-rose-500"
                   inactiveTrackClassName="bg-emerald-500"
@@ -339,6 +345,14 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                     className={classNames(switchThumbClasses)}
                   />
                 </Switch>
+>>>>>>> theirs
+=======
+                  aria-label="Toggle kill switch"
+                  className={classNames(
+                    "data-[state=checked]:bg-rose-500 data-[state=unchecked]:bg-emerald-500",
+                    "data-[state=checked]:ring-rose-500 data-[state=unchecked]:ring-emerald-500",
+                  )}
+                />
 >>>>>>> theirs
               </div>
             );
@@ -372,8 +386,9 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
 
                 <ToggleSwitch
                   checked={flag.enabled}
-                  onChange={() => toggleFlag(flag)}
+                  onCheckedChange={() => toggleFlag(flag)}
                   disabled={payload.readOnly || pendingFlag === flag.name}
+<<<<<<< ours
 <<<<<<< ours
                   activeTrackClassName="bg-indigo-600"
                   inactiveTrackClassName="bg-zinc-300"
@@ -393,6 +408,10 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                     className={classNames(switchThumbClasses)}
                   />
                 </Switch>
+>>>>>>> theirs
+=======
+                  aria-label="Toggle feature flag"
+                />
 >>>>>>> theirs
               </div>
             ))}
