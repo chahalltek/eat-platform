@@ -64,8 +64,9 @@ function DiagnosticCard({
   return (
     <ETECard className="gap-3">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           <StatusIcon status={status} />
+<<<<<<< ours
           <div className="group/title relative flex-1">
             <AdminCardTitle
               as="h3"
@@ -74,6 +75,10 @@ function DiagnosticCard({
               aria-describedby={tooltipId}
               tabIndex={0}
             >
+=======
+          <div className="min-w-0 flex-1">
+            <AdminCardTitle as="h3" className="text-base dark:text-zinc-50" stabilizeHeight>
+>>>>>>> theirs
               {title}
             </AdminCardTitle>
             <div
@@ -86,7 +91,9 @@ function DiagnosticCard({
             <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
           </div>
         </div>
-        <StatusPill status={pillStatus} label={pillLabel} />
+        <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap">
+          <StatusPill status={pillStatus} label={pillLabel} />
+        </div>
       </div>
       <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-100">
         {children}
