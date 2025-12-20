@@ -60,20 +60,11 @@ type DecisionReceipt = {
   createdBy?: { id?: string; name?: string | null; email?: string | null };
   bullhornNote?: string;
   bullhornTarget?: "note" | "custom_field";
-<<<<<<< ours
-<<<<<<< ours
-=======
-  showDecisionMomentCues?: boolean;
->>>>>>> theirs
-=======
   recommendation?: {
     recommendedOutcome?: "shortlist" | "pass";
     alignment?: "accept" | "override" | "disagree";
     rationale?: string | null;
   };
->>>>>>> theirs
-=======
->>>>>>> theirs
 };
 
 function normalizeExplanation(
@@ -161,18 +152,6 @@ function ConfidenceBadge({ band }: { band: JobConsoleCandidate["confidenceBand"]
 type DecisionSnapshot = { favorited: boolean; removed: boolean; shortlisted: boolean };
 
 const DEFAULT_DECISION_STATE: DecisionSnapshot = { favorited: false, removed: false, shortlisted: false };
-<<<<<<< ours
-
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
 function normalizeConfidenceToTenPoint(score?: number | null): number | null {
   if (typeof score !== "number" || Number.isNaN(score)) return null;
   const normalized = score > 10 ? score / 10 : score;
@@ -201,28 +180,12 @@ function formatDecisionLabel(decisionType: DecisionReceipt["decisionType"]) {
 
   return labels[decisionType];
 }
-<<<<<<< ours
-<<<<<<< ours
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
 function toDecisionConfidence(candidate?: JobConsoleCandidate): { score: number; band: JobConsoleCandidate["confidenceBand"] } {
   const rawScore = candidate?.confidenceScore;
   const score = typeof rawScore === "number" ? rawScore : null;
   const normalized = score === null ? 5 : Math.min(10, Math.max(0, Number(((score > 10 ? score / 10 : score)).toFixed(2))));
   return { score: normalized, band: candidate?.confidenceBand ?? null };
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
-=======
 }
-
->>>>>>> theirs
 type ChangeSource = AgentName | "MANUAL";
 
 type RecommendationDelta = { label: string; from: string; to: string };
@@ -337,9 +300,6 @@ function buildNarrative(agent: ChangeSource, deltas: RecommendationDelta[], shor
     assumptionShift: hints?.assumptionShift ?? defaultAssumptionByAgent[agent],
     whyMoved,
   };
-<<<<<<< ours
->>>>>>> theirs
-=======
 }
 
 type RecommendationAlignment = "accept" | "override" | "disagree";
@@ -361,8 +321,6 @@ function actionAlignsWithRecommendation(outcome: JobConsoleCandidate["recommende
 function deriveDefaultAnnotation(outcome: JobConsoleCandidate["recommendedOutcome"], action: DecisionStreamAction): DecisionAnnotation {
   const aligned = actionAlignsWithRecommendation(outcome, action);
   return { alignment: aligned ? "accept" : "override", rationale: "" };
->>>>>>> theirs
-=======
 }
 
 function scrubSummaryForClient(summary?: string | null) {
@@ -421,9 +379,6 @@ function buildClientTrustArtifact(receipt: DecisionReceipt): ClientTrustArtifact
     monitoringPlan,
     clipboardText,
   };
->>>>>>> theirs
-=======
->>>>>>> theirs
 }
 
 function DecisionActions({
@@ -467,7 +422,6 @@ function DecisionActions({
   );
 }
 
-<<<<<<< ours
 type TradeoffKey = keyof TradeoffDeclaration;
 
 function TradeoffSelector({
@@ -563,7 +517,10 @@ function TradeoffSelector({
           </div>
         ))}
       </div>
-=======
+    </div>
+  );
+}
+
 function DecisionAlignmentSelector({
   candidateId,
   recommendedOutcome,
@@ -641,7 +598,6 @@ function DecisionAlignmentSelector({
         </div>
       ) : null}
       {error ? <p className="text-[11px] font-semibold text-rose-700">{error}</p> : null}
->>>>>>> theirs
     </div>
   );
 }
@@ -1205,21 +1161,10 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [decisionStreamId, setDecisionStreamId] = useState<string | null>(null);
   const [decisionStates, setDecisionStates] = useState<Record<string, DecisionSnapshot>>({});
   const [receiptsByCandidate, setReceiptsByCandidate] = useState<Record<string, DecisionReceipt[]>>({});
-<<<<<<< ours
-<<<<<<< ours
-=======
-=======
->>>>>>> theirs
   const [tradeoffs, setTradeoffs] = useState<TradeoffDeclaration>(defaultTradeoffs);
   const [changeLog, setChangeLog] = useState<RecommendationChange[]>([]);
-<<<<<<< ours
->>>>>>> theirs
-=======
   const [decisionAnnotations, setDecisionAnnotations] = useState<Record<string, DecisionAnnotation>>({});
   const [decisionAnnotationErrors, setDecisionAnnotationErrors] = useState<Record<string, string | null>>({});
->>>>>>> theirs
-=======
->>>>>>> theirs
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
   const tradeoffStorageKey = useMemo(() => `ete-job-console-tradeoffs-${jobId}`, [jobId]);
@@ -1516,24 +1461,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           candidateName: candidate.candidateName,
           recommendedOutcome: candidate.recommendedOutcome,
           recommendationAlignment: normalizedAnnotation.alignment,
-          recommendationRationale: rationale || undefined,
-        },
-      });
-    },
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-    [logDecision, persistDecisionReceipt],
-=======
-    [logDecision, updateCandidatesWithDiff],
->>>>>>> theirs
-=======
-    [decisionAnnotations, logDecision, persistDecisionReceipt],
->>>>>>> theirs
-=======
-    [logDecision, persistDecisionReceipt, updateCandidatesWithDiff],
->>>>>>> theirs
-  );
+        recommendationRationale: rationale || undefined,
+      },
+    });
+  },
+  [decisionAnnotations, logDecision, persistDecisionReceipt, updateCandidatesWithDiff],
+);
 
   const handleViewed = useCallback(
     (candidate: JobConsoleCandidate) => {
