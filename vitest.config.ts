@@ -46,7 +46,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@tests": path.resolve(__dirname, "./tests"),
       "server-only": path.resolve(__dirname, "./server-only.ts"),
-      "@headlessui/react": path.resolve(__dirname, "./node_modules/@headlessui/react/dist/index.cjs"),
     },
   },
 });

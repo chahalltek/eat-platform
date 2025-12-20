@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Switch } from "@headlessui/react";
-
 import { TENANT_HEADER } from "@/lib/auth/config";
 import type { AgentKillSwitchRecord } from "@/lib/agents/killSwitch";
 import type { FeatureFlagRecord } from "@/lib/featureFlags";
@@ -25,6 +23,41 @@ type RuntimeControlsDashboardProps = {
 
 function classNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
+}
+
+type ToggleSwitchProps = {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+  srLabel: string;
+  activeTrackClassName: string;
+  inactiveTrackClassName: string;
+};
+
+function ToggleSwitch({
+  checked,
+  disabled,
+  onChange,
+  srLabel,
+  activeTrackClassName,
+  inactiveTrackClassName,
+}: ToggleSwitchProps) {
+  const trackClassName = classNames(
+    checked ? activeTrackClassName : inactiveTrackClassName,
+    "relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none disabled:opacity-60",
+  );
+
+  const handleClassName = classNames(
+    checked ? "translate-x-6" : "translate-x-1",
+    "inline-block h-4 w-4 transform rounded-full bg-white transition",
+  );
+
+  return (
+    <button type="button" role="switch" aria-checked={checked} disabled={disabled} onClick={onChange} className={trackClassName}>
+      <span className="sr-only">{srLabel}</span>
+      <span className={handleClassName} />
+    </button>
+  );
 }
 
 export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardProps) {
@@ -275,23 +308,14 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                     {statusLabel} {record.reason ? `· ${record.reason}` : ""}
                   </p>
                 </div>
-                <Switch
+                <ToggleSwitch
                   checked={record.latched}
                   onChange={() => toggleKillSwitch(record)}
                   disabled={payload.readOnly || pendingKillSwitch === record.agentName}
-                  className={classNames(
-                    record.latched ? "bg-rose-500" : "bg-emerald-500",
-                    "relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none disabled:opacity-60",
-                  )}
-                >
-                  <span className="sr-only">Toggle kill switch</span>
-                  <span
-                    className={classNames(
-                      record.latched ? "translate-x-6" : "translate-x-1",
-                      "inline-block h-4 w-4 transform rounded-full bg-white transition",
-                    )}
-                  />
-                </Switch>
+                  activeTrackClassName="bg-rose-500"
+                  inactiveTrackClassName="bg-emerald-500"
+                  srLabel="Toggle kill switch"
+                />
               </div>
             );
           })}
@@ -322,23 +346,14 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                   <p className="text-xs text-zinc-600">{flag.description}</p>
                 </div>
 
-                <Switch
+                <ToggleSwitch
                   checked={flag.enabled}
                   onChange={() => toggleFlag(flag)}
                   disabled={payload.readOnly || pendingFlag === flag.name}
-                  className={classNames(
-                    flag.enabled ? "bg-indigo-600" : "bg-zinc-300",
-                    "relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none disabled:opacity-60",
-                  )}
-                >
-                  <span className="sr-only">Toggle feature flag</span>
-                  <span
-                    className={classNames(
-                      flag.enabled ? "translate-x-6" : "translate-x-1",
-                      "inline-block h-4 w-4 transform rounded-full bg-white transition",
-                    )}
-                  />
-                </Switch>
+                  activeTrackClassName="bg-indigo-600"
+                  inactiveTrackClassName="bg-zinc-300"
+                  srLabel="Toggle feature flag"
+                />
               </div>
             ))}
           </div>
@@ -347,4 +362,3 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
     </div>
   );
 }
-
