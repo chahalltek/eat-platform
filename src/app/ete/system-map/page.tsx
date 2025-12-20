@@ -180,11 +180,10 @@ const statusLegend = [
 const apiMapDocPath = path.join(process.cwd(), "docs/architecture/api-map.md");
 const apiMapDocUrl = "https://github.com/edgeandnode/ete-platform/blob/main/docs/architecture/api-map.md";
 
+const apiMapFallbackLastUpdatedIso = "2025-12-20T00:00:00.000Z";
 const apiMapDocMetadata = getDocLastUpdated(apiMapDocPath);
-const apiMapLastUpdatedIso = apiMapDocMetadata?.lastUpdatedIso ?? null;
-const apiMapLastUpdatedDisplay = apiMapLastUpdatedIso
-  ? formatDate(apiMapLastUpdatedIso)
-  : "Unknown";
+const apiMapLastUpdatedIso = apiMapDocMetadata?.lastUpdatedIso ?? apiMapFallbackLastUpdatedIso;
+const apiMapLastUpdatedDisplay = formatDate(apiMapLastUpdatedIso);
 
 const apiSurface = [
   {
