@@ -125,6 +125,7 @@ const fireDrillTriggers = [
 ];
 
 <<<<<<< ours
+<<<<<<< ours
 const sopChangeLog = [
   {
     date: "2024-06-12",
@@ -172,6 +173,13 @@ const quickGuideItems = [
     description: "Follow the Fire Drill triggers and steps to stabilize the system when upstream vendors wobble.",
     href: "#fire-drill",
   },
+=======
+const whereEteFitsPoints = [
+  "Sourcing ends when a qualified pool exists",
+  "Recruiting judgment begins when candidates are compared",
+  "ETE supports decision moments (intake, comparison, submission)",
+  "Bullhorn remains the system of record for outcomes and activity",
+>>>>>>> theirs
 ] as const;
 
 export default function OperationsRunbookPage() {
@@ -212,10 +220,40 @@ export default function OperationsRunbookPage() {
         </div>
       </section>
 
+<<<<<<< ours
       <section
         id="quick-guide"
         className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
       >
+=======
+      <section className="space-y-4 rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800/60 dark:bg-zinc-900/70">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Where ETE Fits</p>
+            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Handoff between sourcing, recruiting, and systems</h2>
+            <p className="max-w-3xl text-sm text-zinc-700 dark:text-zinc-300">
+              Use this SOP callout to keep sourcing, recruiting, Bullhorn, and ETE aligned on who owns each step.
+            </p>
+          </div>
+          <span className="self-start rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-100 dark:ring-indigo-900/60">
+            SOP Callout
+          </span>
+        </div>
+        <ul className="grid gap-3 md:grid-cols-2">
+          {whereEteFitsPoints.map((point) => (
+            <li
+              key={point}
+              className="flex items-start gap-3 rounded-2xl border border-indigo-100 bg-white/90 p-4 text-sm text-zinc-800 shadow-sm dark:border-indigo-900/50 dark:bg-zinc-950/40 dark:text-zinc-100"
+            >
+              <span className="mt-1 inline-flex h-2 w-2 flex-none rounded-full bg-indigo-500 dark:bg-indigo-300" aria-hidden />
+              <span className="leading-relaxed">{point}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+>>>>>>> theirs
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
 <<<<<<< ours
