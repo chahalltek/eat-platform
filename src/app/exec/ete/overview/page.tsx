@@ -94,6 +94,13 @@ export default async function ExecEteOverviewPage() {
               <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
             </Link>
             <Link
+              href="/exec/ete/decision-quality"
+              className="inline-flex items-center gap-2 rounded-full border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-200 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
+            >
+              <ChartBarIcon className="h-5 w-5" aria-hidden />
+              Decision quality
+            </Link>
+            <Link
               href="/ete/recruiter-copilot"
               className="inline-flex items-center gap-2 rounded-full border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-200 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40"
             >
