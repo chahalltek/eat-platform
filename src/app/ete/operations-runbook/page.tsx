@@ -105,6 +105,7 @@ const fireDrillTriggers = [
   "Critical demo where reliability matters more than feature depth",
 ];
 
+<<<<<<< ours
 const sopChangeLog = [
   {
     date: "2024-06-12",
@@ -130,8 +131,52 @@ export default async function OperationsRunbookPage() {
   const isAdminViewer = isAdminRole(currentUser?.role);
   const changeLogVisible = !SOP_CHANGE_LOG_ADMIN_ONLY || isAdminViewer;
 
+=======
+const quickGuideItems = [
+  {
+    title: "Start with posture",
+    description: "Jump to System Modes to pick Pilot, Production, Sandbox, or Fire Drill before changing any switches.",
+    href: "#system-modes",
+  },
+  {
+    title: "Set guardrails",
+    description: "Use the Guardrails section to align scoring, explainability, and safety expectations with the tenant posture.",
+    href: "#guardrails",
+  },
+  {
+    title: "Check agent switches",
+    description: "Review which agents stay on or can be paused in the Agent kill switch reference before rollout.",
+    href: "#agent-switches",
+  },
+  {
+    title: "Trigger Fire Drill",
+    description: "Follow the Fire Drill triggers and steps to stabilize the system when upstream vendors wobble.",
+    href: "#fire-drill",
+  },
+] as const;
+
+export default function OperationsRunbookPage() {
+>>>>>>> theirs
   return (
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-8">
+      <nav
+        className="flex flex-wrap items-center gap-3 rounded-full border border-indigo-100/70 bg-white/80 px-4 py-3 text-sm shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
+        aria-label="SOP section navigation"
+      >
+        <a
+          href="#quick-guide"
+          className="rounded-full bg-indigo-50 px-3 py-1 font-semibold text-indigo-800 ring-1 ring-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60"
+        >
+          Quick Guide
+        </a>
+        <a
+          href="#full-sop"
+          className="rounded-full px-3 py-1 font-semibold text-indigo-800 ring-1 ring-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-50 dark:text-indigo-100 dark:ring-indigo-800/60"
+        >
+          Full SOP
+        </a>
+      </nav>
+
       <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-3">
@@ -148,9 +193,13 @@ export default async function OperationsRunbookPage() {
         </div>
       </section>
 
-      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+      <section
+        id="quick-guide"
+        className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
+      >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
+<<<<<<< ours
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP Change Log</p>
             <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Operations runbook updates</h2>
             <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
@@ -216,135 +265,187 @@ export default async function OperationsRunbookPage() {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Modes</p>
             <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Mode behaviors and recommended use</h2>
+=======
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Quick Guide</p>
+            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Navigate the SOP fast</h2>
+            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">Use these jumps to land on the right reference section below.</p>
+>>>>>>> theirs
           </div>
           <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
-            Read-only
+            Quick read
           </span>
         </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {quickGuideItems.map((item) => (
+            <a
+              key={item.title}
+              href={item.href}
+              className="group space-y-1 rounded-2xl border border-indigo-100 bg-white/80 p-4 text-left text-sm shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:border-indigo-800/60 dark:bg-zinc-900/60"
+            >
+              <p className="flex items-center gap-2 text-sm font-semibold text-indigo-900 transition group-hover:text-indigo-700 dark:text-indigo-100 dark:group-hover:text-indigo-200">
+                {item.title}
+                <span aria-hidden="true">↘</span>
+              </p>
+              <p className="leading-relaxed text-zinc-700 dark:text-zinc-200">{item.description}</p>
+            </a>
+          ))}
+        </div>
+      </section>
 
-        <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
-          <table className="min-w-full divide-y divide-indigo-100 text-sm">
-            <thead className="bg-indigo-50/80 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Mode</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Behavior</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">When to use</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-indigo-100/80 dark:divide-indigo-800/60">
-              {modes.map((mode) => (
-                <tr key={mode.id} className="bg-white/70 text-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100">
-                  <td className="px-4 py-3 font-semibold text-indigo-900 dark:text-indigo-100">{mode.label}</td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{mode.summary}</td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">
-                    <ul className="list-disc space-y-1 pl-4">
-                      {mode.whenToUse.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </td>
-                </tr>
+      <section id="full-sop" className="space-y-6">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Detailed Reference</p>
+          <h2 className="text-3xl font-semibold text-zinc-900 dark:text-zinc-50">Full Sourcing &amp; Recruiting SOP (Detailed Reference)</h2>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">Read-only SOP details that pair with the quick guide above.</p>
+        </div>
+        <div className="space-y-8">
+          <section
+            id="system-modes"
+            className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Modes</p>
+                <h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Mode behaviors and recommended use</h3>
+              </div>
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
+                Read-only
+              </span>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
+              <table className="min-w-full divide-y divide-indigo-100 text-sm">
+                <thead className="bg-indigo-50/80 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Mode</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Behavior</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">When to use</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-indigo-100/80 dark:divide-indigo-800/60">
+                  {modes.map((mode) => (
+                    <tr key={mode.id} className="bg-white/70 text-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100">
+                      <td className="px-4 py-3 font-semibold text-indigo-900 dark:text-indigo-100">{mode.label}</td>
+                      <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{mode.summary}</td>
+                      <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">
+                        <ul className="list-disc space-y-1 pl-4">
+                          {mode.whenToUse.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-2xl bg-indigo-50/70 p-4 text-sm text-indigo-900 dark:bg-indigo-900/50 dark:text-indigo-100">
+                <p className="font-semibold">Pilot</p>
+                <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">Conservative guardrails and only essential agents.</p>
+              </div>
+              <div className="rounded-2xl bg-emerald-50/80 p-4 text-sm text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100">
+                <p className="font-semibold">Production</p>
+                <p className="mt-1 text-emerald-900/80 dark:text-emerald-100/80">Balanced guardrails with full feature set enabled.</p>
+              </div>
+              <div className="rounded-2xl bg-amber-50/70 p-4 text-sm text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                <p className="font-semibold">Sandbox</p>
+                <p className="mt-1 text-amber-900/80 dark:text-amber-100/80">Looser thresholds so you can see variability and experiment.</p>
+              </div>
+            </div>
+          </section>
+
+          <section
+            id="guardrails"
+            className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
+          >
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Guardrails</p>
+              <h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">What guardrails control</h3>
+              <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+                Guardrails set the posture for scoring and messaging. Modes choose a preset, but runbook readers should know what each
+                dimension covers.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {guardrailSignals.map((signal) => (
+                <div key={signal.title} className="rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/60">
+                  <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">{signal.title}</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-200">
+                    {signal.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl bg-indigo-50/70 p-4 text-sm text-indigo-900 dark:bg-indigo-900/50 dark:text-indigo-100">
-            <p className="font-semibold">Pilot</p>
-            <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">Conservative guardrails and only essential agents.</p>
-          </div>
-          <div className="rounded-2xl bg-emerald-50/80 p-4 text-sm text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100">
-            <p className="font-semibold">Production</p>
-            <p className="mt-1 text-emerald-900/80 dark:text-emerald-100/80">Balanced guardrails with full feature set enabled.</p>
-          </div>
-          <div className="rounded-2xl bg-amber-50/70 p-4 text-sm text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
-            <p className="font-semibold">Sandbox</p>
-            <p className="mt-1 text-amber-900/80 dark:text-amber-100/80">Looser thresholds so you can see variability and experiment.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Guardrails</p>
-          <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">What guardrails control</h2>
-          <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-            Guardrails set the posture for scoring and messaging. Modes choose a preset, but runbook readers should know what each
-            dimension covers.
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {guardrailSignals.map((signal) => (
-            <div key={signal.title} className="rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/60">
-              <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">{signal.title}</p>
-              <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-200">
-                {signal.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
             </div>
-          ))}
-        </div>
-        <div className="rounded-2xl bg-indigo-50/70 p-4 text-sm text-indigo-900 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
-          <p className="font-semibold">Preset mapping</p>
-          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
-            Pilot and Fire Drill force conservative guardrails. Production uses balanced defaults. Sandbox leans exploratory and may
-            expand shortlist size and allow softer safety checks.
-          </p>
-        </div>
-      </section>
-
-      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Agent Kill Switches</p>
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">What stays on when things wobble</h2>
-            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">Each agent can be paused individually to keep lights on.</p>
-          </div>
-          <StatusPill status="warning" label="Read-only" />
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {agentSwitches.map((agent) => (
-            <div key={agent.agent} className="flex items-start gap-3 rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/60">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/50 dark:text-indigo-100 dark:ring-indigo-800/60">
-                {agent.agent}
-              </div>
-              <div className="space-y-1 text-sm text-zinc-700 dark:text-zinc-200">
-                <p className="font-semibold text-zinc-900 dark:text-zinc-50">{agent.role}</p>
-                <p>{agent.note}</p>
-                <p className="text-xs text-indigo-700 dark:text-indigo-200">Mode dependent: Fire Drill automatically pauses EXPLAIN and CONFIDENCE.</p>
-              </div>
+            <div className="rounded-2xl bg-indigo-50/70 p-4 text-sm text-indigo-900 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
+              <p className="font-semibold">Preset mapping</p>
+              <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+                Pilot and Fire Drill force conservative guardrails. Production uses balanced defaults. Sandbox leans exploratory and may
+                expand shortlist size and allow softer safety checks.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <section className="grid gap-4 rounded-3xl border border-amber-200 bg-amber-50/90 p-6 shadow-sm dark:border-amber-700/70 dark:bg-amber-950/40 md:grid-cols-2">
-        <div className="space-y-3 text-amber-900 dark:text-amber-100">
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-800 ring-1 ring-amber-200 dark:bg-amber-900/60 dark:text-amber-100 dark:ring-amber-700/70">
-              Fire Drill
-            </span>
-            <h3 className="text-xl font-semibold">When to activate</h3>
+          <section
+            id="agent-switches"
+            className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Agent Kill Switches</p>
+                <h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">What stays on when things wobble</h3>
+                <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">Each agent can be paused individually to keep lights on.</p>
+              </div>
+              <StatusPill status="warning" label="Read-only" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {agentSwitches.map((agent) => (
+                <div key={agent.agent} className="flex items-start gap-3 rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/60">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/50 dark:text-indigo-100 dark:ring-indigo-800/60">
+                    {agent.agent}
+                  </div>
+                  <div className="space-y-1 text-sm text-zinc-700 dark:text-zinc-200">
+                    <p className="font-semibold text-zinc-900 dark:text-zinc-50">{agent.role}</p>
+                    <p>{agent.note}</p>
+                    <p className="text-xs text-indigo-700 dark:text-indigo-200">Mode dependent: Fire Drill automatically pauses EXPLAIN and CONFIDENCE.</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div id="fire-drill" className="space-y-6">
+            <section className="grid gap-4 rounded-3xl border border-amber-200 bg-amber-50/90 p-6 shadow-sm dark:border-amber-700/70 dark:bg-amber-950/40 md:grid-cols-2">
+              <div className="space-y-3 text-amber-900 dark:text-amber-100">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-800 ring-1 ring-amber-200 dark:bg-amber-900/60 dark:text-amber-100 dark:ring-amber-700/70">
+                    Fire Drill
+                  </span>
+                  <h3 className="text-xl font-semibold">When to activate</h3>
+                </div>
+                <p className="text-sm text-amber-900/90 dark:text-amber-100/80">Use Fire Drill when stability is at risk.</p>
+                <ul className="list-disc space-y-2 pl-5 text-sm">
+                  {fireDrillTriggers.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 text-emerald-900 shadow-sm dark:border-emerald-800/60 dark:bg-emerald-900/50 dark:text-emerald-100">
+                <h3 className="text-lg font-semibold">What happens in Fire Drill</h3>
+                <ul className="mt-2 list-disc space-y-2 pl-5 text-sm">
+                  {fireDrillSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ul>
+                <p className="text-sm text-emerald-900/80 dark:text-emerald-100/80">
+                  Exit by returning to Production or Pilot after diagnostics show agents, scoring, and guardrails are healthy.
+                </p>
+              </div>
+            </section>
           </div>
-          <p className="text-sm text-amber-900/90 dark:text-amber-100/80">Use Fire Drill when stability is at risk.</p>
-          <ul className="list-disc space-y-2 pl-5 text-sm">
-            {fireDrillTriggers.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 text-emerald-900 shadow-sm dark:border-emerald-800/60 dark:bg-emerald-900/50 dark:text-emerald-100">
-          <h3 className="text-lg font-semibold">What happens in Fire Drill</h3>
-          <ul className="mt-2 list-disc space-y-2 pl-5 text-sm">
-            {fireDrillSteps.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ul>
-          <p className="text-sm text-emerald-900/80 dark:text-emerald-100/80">
-            Exit by returning to Production or Pilot after diagnostics show agents, scoring, and guardrails are healthy.
-          </p>
         </div>
       </section>
     </ETEClientLayout>
