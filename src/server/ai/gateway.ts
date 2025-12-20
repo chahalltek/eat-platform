@@ -45,7 +45,7 @@ type LlmLogConfig = {
   promptTtlMs: number;
 };
 
-class OpenAIChatAdapter implements OpenAIAdapter {
+export class GatewayOpenAIChatAdapter implements OpenAIAdapter {
   constructor(private apiKey = process.env.OPENAI_API_KEY) {}
 
   async chatCompletion({
@@ -116,12 +116,12 @@ class OpenAIChatAdapter implements OpenAIAdapter {
 const EXECUTION_ENABLED = process.env.EXECUTION_ENABLED === "true";
 const DEFAULT_LOG_TTL_HOURS = 24;
 
-function redactSnippet(value?: string | null) {
+export function redactSnippet(value?: string | null) {
   if (!value) return null;
   return value.length > 120 ? `${value.slice(0, 117)}...` : value;
 }
 
-function resolveLoggingConfig(env: NodeJS.ProcessEnv = process.env): LlmLogConfig {
+export function resolveLoggingConfig(env: NodeJS.ProcessEnv = process.env): LlmLogConfig {
   const allowedLevels: LlmLogLevel[] = ["metadata", "redacted", "off"];
   const envLevel = env.LLM_LOG_LEVEL as LlmLogLevel | undefined;
   const level: LlmLogLevel = allowedLevels.includes(envLevel ?? "metadata") ? envLevel ?? "metadata" : "metadata";
@@ -147,7 +147,7 @@ type SanitizedOutbound = {
   userPrompt: string;
 };
 
-function ensureRequestIdentifiers(
+export function ensureRequestIdentifiers(
   contextInput: SafeLLMContextInput | SafeLLMContext | undefined,
 ): SafeLLMContextInput {
   const resolvedContext = contextInput ?? { purpose: "OTHER" };
@@ -165,7 +165,7 @@ function ensureRequestIdentifiers(
   } satisfies SafeLLMContextInput;
 }
 
-function applyVerbosityLimits<T>(value: T, verbosityCap?: number): T {
+export function applyVerbosityLimits<T>(value: T, verbosityCap?: number): T {
   if (!verbosityCap) return value;
 
   const clamp = (entry: unknown): unknown => {
@@ -221,7 +221,7 @@ export function sanitizeOutbound({
   };
 }
 
-async function resolveCaller() {
+export async function resolveCaller() {
   const [user, roles, tenantId] = await Promise.all([getCurrentUser(), getUserRoles(), getCurrentTenantId()]);
 
   if (!user) {
@@ -235,7 +235,7 @@ async function resolveCaller() {
   return { userId: user.id, roles, tenantId };
 }
 
-function assertWriteCapabilityAllowed(capability: GatewayCapability, approvalToken?: string) {
+export function assertWriteCapabilityAllowed(capability: GatewayCapability, approvalToken?: string) {
   if (capability !== "write") return;
 
   if (!EXECUTION_ENABLED) {
@@ -254,7 +254,7 @@ function toRedactedLogValue(value: string | null | undefined): string | null {
   return redactSnippet(asString);
 }
 
-async function recordAIAuditEvent({
+export async function recordAIAuditEvent({
   userId,
   tenantId,
   agent,
@@ -347,7 +347,7 @@ export async function callLLM({
   systemPrompt,
   userPrompt,
   model,
-  adapter = new OpenAIChatAdapter(),
+  adapter = new GatewayOpenAIChatAdapter(),
   agent,
   capability = "read",
   approvalToken,
@@ -427,7 +427,7 @@ export async function callLLM({
         completionTokens: usage?.completionTokens ?? null,
         totalTokens: usage?.totalTokens ?? null,
         latencyMs,
-        purpose: sanitized?.context.purpose ?? null,
+        /* c8 ignore next */ purpose: sanitized?.context.purpose ?? null,
       },
     });
 

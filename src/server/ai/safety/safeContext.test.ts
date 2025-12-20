@@ -140,4 +140,38 @@ describe("buildSafeLLMContext", () => {
       },
     });
   });
+
+  it("handles invalid shapes by falling back to safe defaults", () => {
+    const context = buildSafeLLMContext({
+      purpose: "NOT_A_VALID_PURPOSE" as any,
+      job: { title: 123 as any, skillsRequired: ["node", 5] },
+      candidates: [
+        { skills: ["ok"], titles: [], certifications: [], yearsExperience: "5" as any },
+        "bad-entry" as any,
+      ],
+      tenant: "acme" as any,
+      metadata: { requestId: 123 as any, correlationId: {} as any },
+    });
+
+    expect(context.purpose).toBe("OTHER");
+    expect(context.job).toEqual({ skillsRequired: ["node", "5"] });
+    expect(context.candidates?.length).toBe(1);
+    expect(context.candidates?.[0]?.skills).toEqual(["ok"]);
+    expect(context.candidates?.[0]?.titles).toBeUndefined();
+    expect(context.metadata).toBeUndefined();
+    expect(context.tenant).toBeUndefined();
+  });
+
+  it("drops empty job and candidate entries entirely", () => {
+    const context = buildSafeLLMContext({
+      purpose: "OTHER",
+      job: null as any,
+      candidates: ["foo" as any],
+      tenant: 123 as any,
+    });
+
+    expect(context.job).toBeUndefined();
+    expect(context.candidates).toBeUndefined();
+    expect(context.tenant).toBeUndefined();
+  });
 });

@@ -57,4 +57,25 @@ describe("LLM safety config", () => {
     const devStatus = getLlmSafetyStatus(devEnv);
     expect(devStatus.ok).toBe(true);
   });
+
+  it("applies legacy disable flags and explicit enable flags correctly", () => {
+    const env = {
+      ...baseEnv,
+      LLM_REDACTION_DISABLED: "true",
+      LLM_AGENT_ALLOWLIST_ENABLED: "true",
+      LLM_PROMPT_LOG_REDACTION_ENABLED: "true",
+    };
+
+    const status = getLlmSafetyStatus(env);
+
+    expect(status.redactionEnabled).toBe(false);
+    expect(status.allowlistEnabled).toBe(true);
+    expect(status.issues).toContain("LLM redaction is disabled; outbound prompts cannot be sent safely.");
+  });
+
+  it("defaults environment to development when NODE_ENV is missing", () => {
+    const status = getLlmSafetyStatus({ ...baseEnv, NODE_ENV: undefined });
+
+    expect(status.environment).toBe("development");
+  });
 });

@@ -49,6 +49,12 @@ describe('redactSecrets', () => {
     ).toBe('Authorization: Bearer [REDACTED_SECRET]')
   })
 
+  it('redacts standalone opaque tokens', () => {
+    expect(redactSecrets('this-is-a-very-long-secret-token-value-1234567890')).toBe(
+      '[REDACTED_TOKEN]'
+    )
+  })
+
   it('redacts URLs when enabled', () => {
     expect(
       redactSecrets(
@@ -91,5 +97,16 @@ describe('redactAny', () => {
       valid: true,
       when: null,
     })
+  })
+
+  it('keeps Dates and regex values intact while redacting siblings', () => {
+    const date = new Date()
+    const regex = /test/
+
+    const result = redactAny({ at: date, pattern: regex, token: 'a'.repeat(40) }) as Record<string, unknown>
+
+    expect(result.at).toBe(date)
+    expect(result.pattern).toBe(regex)
+    expect(result.token).toBe('[REDACTED_TOKEN]')
   })
 })

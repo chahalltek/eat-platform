@@ -103,4 +103,63 @@ describe("OpenAIChatAdapter", () => {
 
     consoleSpy.mockRestore();
   });
+
+  it("requires an API key before making requests", async () => {
+    delete process.env.OPENAI_API_KEY;
+    const adapter = new OpenAIChatAdapter();
+
+    await expect(() =>
+      adapter.chatCompletion({
+        model: "gpt-test",
+        messages: [{ role: "user", content: "hi" }],
+        temperature: 0.1,
+      })
+    ).rejects.toThrow("OPENAI_API_KEY is not configured");
+  });
+
+  it("throws when OpenAI returns an empty message", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    createMock.mockResolvedValue({ choices: [{ message: { content: null } }] });
+
+    const adapter = new OpenAIChatAdapter();
+
+    await expect(() =>
+      adapter.chatCompletion({
+        model: "gpt-test",
+        messages: [{ role: "user", content: "hi" }],
+        temperature: 0.1,
+      })
+    ).rejects.toThrow("Empty response from LLM");
+  });
+
+  it("falls back to null token counts when usage fields are missing", async () => {
+    createMock.mockResolvedValue({
+      choices: [{ message: { content: "ok" } }],
+      usage: { prompt_tokens: undefined, completion_tokens: undefined, total_tokens: undefined },
+    });
+
+    const adapter = new OpenAIChatAdapter();
+    const result = await adapter.chatCompletion({
+      model: "gpt-test",
+      messages: [{ role: "user", content: "hi" }],
+      temperature: 0.1,
+    });
+
+    expect(result.usage).toEqual({ promptTokens: null, completionTokens: null, totalTokens: null });
+  });
+
+  it("omits usage completely when OpenAI does not provide it", async () => {
+    createMock.mockResolvedValue({
+      choices: [{ message: { content: "ok" } }],
+    });
+
+    const adapter = new OpenAIChatAdapter();
+    const result = await adapter.chatCompletion({
+      model: "gpt-test",
+      messages: [{ role: "user", content: "hi" }],
+      temperature: 0.1,
+    });
+
+    expect(result.usage).toBeUndefined();
+  });
 });
