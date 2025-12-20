@@ -13,6 +13,7 @@ The ETE platform is a [Next.js](https://nextjs.org) application with CI guardrai
 - [Security baseline alignment](./docs/security/security-baseline-alignment.md) – snapshot of current controls and Azure migration deltas.
 - [Environment modes](./docs/security/environment-modes.md) – how controls differ across local, dev, staging, and production.
 - [Azure migration checklist](./docs/security/migration-checklist-azure.md) – required actions before cutover to Azure services.
+- [LLM data handling & privacy guardrails](./docs/security/llm-guardrails.md) – gateway-only LLM access with allowlisted context, redaction, and logging defaults.
 
 ## Definition of Done (DoD) enforcement
 

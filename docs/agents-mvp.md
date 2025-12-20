@@ -66,3 +66,8 @@ sequenceDiagram
     Explain-->>Shortlist: Supports recruiter review
     Shortlist-->>Match: Stores recruiter decision on matchResult
 ```
+
+## LLM safety expectations for agents
+- Do not send raw resumes, recruiter notes, or contact details to the LLM; rely on the gateway redaction pipeline instead of embedding full text.
+- Route any agent prompt construction through `callLLM` so `SafeLLMContext`, redaction, and size limits apply (no direct provider calls).
+- If a new field is needed for prompting, add it to the allowlisted context first. See [LLM data handling & privacy guardrails](./security/llm-guardrails.md) for the canonical rules.
