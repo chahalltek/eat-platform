@@ -24,6 +24,7 @@ const PUBLIC_PATHS = [
   '/api/auth/logout',
   '/api/ats/bullhorn/webhook',
   '/login',
+  '/visual/status-badges',
 ];
 const ADMIN_PATH_PREFIXES = ['/admin', '/api/admin'];
 const RECRUITER_PATH_PREFIXES = ['/candidates', '/jobs', '/agents', '/dashboard', '/api', '/ete/jobs'];
