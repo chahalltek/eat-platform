@@ -1,7 +1,13 @@
 import OpenAI from "openai";
 import { type ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
-import { ChatMessage, formatEmptyResponseError, type OpenAIAdapter } from "@/lib/llm/openaiAdapter";
+import {
+  ChatCompletionParams,
+  ChatMessage,
+  formatEmptyResponseError,
+  type ChatCompletionResult,
+  type OpenAIAdapter,
+} from "@/lib/llm/openaiAdapter";
 import { redactAny } from "./safety/redact";
 
 export class OpenAIChatAdapter implements OpenAIAdapter {
@@ -12,12 +18,7 @@ export class OpenAIChatAdapter implements OpenAIAdapter {
     messages,
     temperature,
     maxTokens,
-  }: {
-    model: string;
-    messages: ChatMessage[];
-    temperature: number;
-    maxTokens?: number;
-  }): Promise<string> {
+  }: ChatCompletionParams): Promise<ChatCompletionResult> {
     if (!this.apiKey) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
@@ -38,10 +39,18 @@ export class OpenAIChatAdapter implements OpenAIAdapter {
       throw error;
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = response.choices?.[0]?.message?.content;
 
     if (!content) throw formatEmptyResponseError();
 
-    return content;
+    const usage = response.usage
+      ? {
+          promptTokens: response.usage.prompt_tokens ?? null,
+          completionTokens: response.usage.completion_tokens ?? null,
+          totalTokens: response.usage.total_tokens ?? null,
+        }
+      : undefined;
+
+    return { content, usage };
   }
 }
