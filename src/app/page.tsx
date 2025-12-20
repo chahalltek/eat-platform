@@ -351,6 +351,10 @@ export default async function Home() {
                     <span className="block">{BRANDING.description}</span>
                     <span className="block text-sm text-zinc-500 dark:text-zinc-400">{BRANDING.tagline}</span>
                   </p>
+                  <p className="max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    “ETE is an agentic decision-support system where specialized agents reason at key moments, humans retain authority, and
+                    the system preserves judgment as durable memory.”
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300">
                   <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Agents</span>
