@@ -1,5 +1,7 @@
 export type DecisionStreamAction = "VIEWED" | "SHORTLISTED" | "REMOVED" | "FAVORITED";
 
+import type { TradeoffDeclaration } from "@/lib/matching/tradeoffs";
+
 export type DecisionStreamItem = {
   streamId?: string | null;
   jobId: string;
@@ -12,6 +14,7 @@ export type DecisionStreamItem = {
   details?: Record<string, unknown>;
 };
 
+<<<<<<< ours
 function normalizeConfidenceScore(score?: number): number {
   const numeric = typeof score === "number" ? Number(score) : Number.NaN;
   if (Number.isFinite(numeric)) {
@@ -21,11 +24,14 @@ function normalizeConfidenceScore(score?: number): number {
 }
 
 export async function createDecisionStream(jobId: string): Promise<string | null> {
+=======
+export async function createDecisionStream(jobId: string, tradeoffs?: TradeoffDeclaration): Promise<string | null> {
+>>>>>>> theirs
   try {
     const res = await fetch("/api/decision-stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId }),
+      body: JSON.stringify({ jobId, tradeoffs }),
     });
 
     if (!res.ok) {

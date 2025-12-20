@@ -13,6 +13,7 @@ import {
   type DecisionStreamAction,
   type DecisionStreamItem,
 } from "@/lib/metrics/decisionStreamClient";
+import { formatTradeoffDeclaration, resolveTradeoffs, type TradeoffDeclaration } from "@/lib/matching/tradeoffs";
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -39,6 +40,7 @@ export type JobConsoleProps = {
   }[];
   modeLabel: string;
   modeDescription?: string | null;
+  defaultTradeoffs: TradeoffDeclaration;
 };
 
 type DecisionReceipt = {
@@ -218,6 +220,105 @@ function DecisionActions({
           {button.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+type TradeoffKey = keyof TradeoffDeclaration;
+
+function TradeoffSelector({
+  value,
+  onChange,
+}: {
+  value: TradeoffDeclaration;
+  onChange: (key: TradeoffKey, option: string) => void;
+}) {
+  const options: Array<{
+    key: TradeoffKey;
+    label: string;
+    choices: Array<{ value: TradeoffDeclaration[TradeoffKey]; label: string; hint: string }>;
+  }> = [
+    {
+      key: "speedQuality",
+      label: "Speed vs quality",
+      choices: [
+        { value: "speed", label: "Speed", hint: "Return candidates faster" },
+        { value: "quality", label: "Quality", hint: "Favor deeper scoring" },
+      ],
+    },
+    {
+      key: "rateExperience",
+      label: "Rate vs experience",
+      choices: [
+        { value: "rate", label: "Rate", hint: "Lean toward budget-friendly" },
+        { value: "experience", label: "Experience", hint: "Prioritize seniority" },
+      ],
+    },
+    {
+      key: "availabilityFit",
+      label: "Availability vs domain fit",
+      choices: [
+        { value: "availability", label: "Availability", hint: "Ready-to-start candidates" },
+        { value: "domain_fit", label: "Domain fit", hint: "Closer domain alignment" },
+      ],
+    },
+    {
+      key: "riskUpside",
+      label: "Risk vs upside",
+      choices: [
+        { value: "risk", label: "Risk controls", hint: "Raise bar for match score" },
+        { value: "upside", label: "Upside", hint: "Allow stretch profiles" },
+      ],
+    },
+  ];
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-700">Tradeoff declaration</p>
+          <p className="text-sm text-slate-700">Selections will be logged and applied before the MATCH run.</p>
+        </div>
+        <div className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 ring-1 ring-slate-200">
+          {formatTradeoffDeclaration(value)}
+        </div>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {options.map((option) => (
+          <div key={option.key} className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">{option.label}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {option.choices.map((choice) => {
+                const active = value[option.key] === choice.value;
+                return (
+                  <label
+                    key={choice.value}
+                    className={clsx(
+                      "flex cursor-pointer items-start gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] ring-1 transition",
+                      active
+                        ? "bg-indigo-100 text-indigo-900 ring-indigo-200"
+                        : "bg-slate-50 text-slate-700 ring-slate-200 hover:bg-slate-100",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name={option.key}
+                      value={choice.value}
+                      checked={active}
+                      onChange={() => onChange(option.key, choice.value)}
+                      className="sr-only"
+                    />
+                    <div className="flex flex-col">
+                      <span>{choice.label}</span>
+                      <span className="text-[10px] font-normal capitalize tracking-normal text-slate-500">{choice.hint}</span>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -589,8 +690,18 @@ function ExecutionToolbar({
 }
 
 export function JobExecutionConsole(props: JobConsoleProps) {
-  const { jobId, jobTitle, jobLocation, summary, mustHaveSkills, initialCandidates, agentState, modeLabel, modeDescription } =
-    props;
+  const {
+    jobId,
+    jobTitle,
+    jobLocation,
+    summary,
+    mustHaveSkills,
+    initialCandidates,
+    agentState,
+    modeLabel,
+    modeDescription,
+    defaultTradeoffs,
+  } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
     ...candidate,
     explanation: normalizeExplanation(candidate.explanation),
@@ -607,9 +718,14 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
   const [decisionStreamId, setDecisionStreamId] = useState<string | null>(null);
   const [decisionStates, setDecisionStates] = useState<Record<string, DecisionSnapshot>>({});
+<<<<<<< ours
   const [receiptsByCandidate, setReceiptsByCandidate] = useState<Record<string, DecisionReceipt[]>>({});
+=======
+  const [tradeoffs, setTradeoffs] = useState<TradeoffDeclaration>(defaultTradeoffs);
+>>>>>>> theirs
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
+  const tradeoffStorageKey = useMemo(() => `ete-job-console-tradeoffs-${jobId}`, [jobId]);
 
   const groupReceiptsByCandidate = useCallback((receipts: DecisionReceipt[]) => {
     const grouped = receipts.reduce((acc, receipt) => {
@@ -636,8 +752,10 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   useEffect(() => {
     let cancelled = false;
 
+    if (decisionStreamId) return undefined;
+
     void (async () => {
-      const streamId = await createDecisionStream(jobId);
+      const streamId = await createDecisionStream(jobId, tradeoffs);
       if (!cancelled && streamId) {
         setDecisionStreamId(streamId);
       }
@@ -646,7 +764,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     return () => {
       cancelled = true;
     };
-  }, [jobId]);
+  }, [jobId, tradeoffs, decisionStreamId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -672,17 +790,25 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   useEffect(() => {
     try {
       const cached = sessionStorage.getItem(storageKey);
+      let restored = false;
       if (cached) {
         const parsed = JSON.parse(cached) as JobConsoleCandidate[];
         setCandidates(parsed.map(normalizeCandidate));
-        return;
+        restored = true;
       }
+      const cachedTradeoffs = sessionStorage.getItem(tradeoffStorageKey);
+      if (cachedTradeoffs) {
+        const parsed = JSON.parse(cachedTradeoffs) as Partial<TradeoffDeclaration>;
+        setTradeoffs(resolveTradeoffs(defaultTradeoffs, parsed));
+      }
+      if (restored) return;
     } catch (err) {
       console.warn("Failed to read cached console data", err);
     }
 
     setCandidates(initialCandidates.map(normalizeCandidate));
-  }, [storageKey, initialCandidates]);
+    setTradeoffs(defaultTradeoffs);
+  }, [storageKey, tradeoffStorageKey, initialCandidates, defaultTradeoffs]);
 
   useEffect(() => {
     try {
@@ -691,6 +817,14 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       console.warn("Failed to cache console data", err);
     }
   }, [candidates, storageKey]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(tradeoffStorageKey, JSON.stringify(tradeoffs));
+    } catch (err) {
+      console.warn("Failed to cache tradeoff selections", err);
+    }
+  }, [tradeoffs, tradeoffStorageKey]);
 
   const disabled: Record<AgentName, boolean> = useMemo(() => {
     const stateByAgent = new Map(agentState.map((entry) => [entry.name, entry.enabled]));
@@ -709,6 +843,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 
   const explainUnavailable = disabled.EXPLAIN;
   const isFireDrillMode = modeLabel.toLowerCase().includes("fire drill");
+  const handleTradeoffChange = useCallback(
+    (key: TradeoffKey, option: string) => {
+      setTradeoffs((prev) => resolveTradeoffs(prev, { ...prev, [key]: option } as Partial<TradeoffDeclaration>));
+    },
+    [],
+  );
 
   const logDecision = useCallback(
     (item: Omit<DecisionStreamItem, "streamId" | "jobId">) => {
@@ -825,14 +965,19 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     setRunningAgent(agent);
     try {
       if (agent === "MATCH") {
-        const res = await fetch(`/api/jobs/${jobId}/matcher`, { method: "POST" });
+        const res = await fetch(`/api/agents/match`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobReqId: jobId, tradeoffs }),
+        });
         if (!res.ok) throw new Error(`MATCH failed with ${res.status}`);
         const payload = (await res.json()) as {
           matches: Array<{
             candidateId: string;
-            matchScore: number;
+            score: number;
             confidence: number;
             confidenceCategory?: string;
+            explanation?: string;
           }>;
         };
 
@@ -844,11 +989,13 @@ export function JobExecutionConsole(props: JobConsoleProps) {
             const updated: JobConsoleCandidate = {
               candidateId: match.candidateId,
               candidateName: existing?.candidateName ?? `Candidate ${match.candidateId.slice(0, 6)}`,
-              score: Math.round(match.matchScore),
+              score: Math.round(match.score),
               confidenceScore: Math.round(match.confidence),
               confidenceBand: normalizeBand(match.confidenceCategory) ?? normalizeBand(categorizeConfidence(match.confidence)),
               shortlisted: existing?.shortlisted ?? false,
-              explanation: existing?.explanation ?? normalizeExplanation("Explanation not generated yet.", { summaryOnly: true }),
+              explanation:
+                existing?.explanation ??
+                normalizeExplanation(match.explanation ?? "Explanation not generated yet.", { summaryOnly: true }),
             };
 
             byId.set(match.candidateId, updated);
@@ -857,7 +1004,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           return Array.from(byId.values()).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
         });
 
-        setMessage("MATCH completed. Scores updated.");
+        setMessage(`MATCH completed. ${formatTradeoffDeclaration(tradeoffs)}.`);
         setLastUpdated(new Date());
       }
 
@@ -982,6 +1129,8 @@ export function JobExecutionConsole(props: JobConsoleProps) {
             {modeDescription ? <p className="text-xs text-amber-700">{modeDescription}</p> : null}
           </div>
         </div>
+
+        <TradeoffSelector value={tradeoffs} onChange={handleTradeoffChange} />
 
         <ExecutionToolbar
           onRun={runAgent}

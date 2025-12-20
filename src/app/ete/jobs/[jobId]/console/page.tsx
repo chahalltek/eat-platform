@@ -12,6 +12,8 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import type { Explanation } from "@/lib/agents/explainEngine";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { extractTradeoffDefaultsFromScoring } from "@/lib/matching/tradeoffs";
+import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: true };
@@ -132,6 +134,8 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
   }
 
   const tenantId = await getCurrentTenantId();
+  const guardrails = await loadTenantConfig(tenantId);
+  const defaultTradeoffs = extractTradeoffDefaultsFromScoring(guardrails.scoring);
   const availability = await getAgentAvailability(tenantId);
   const agents: JobConsoleProps["agentState"] = [
     { name: "MATCH", enabled: availability.isEnabled("MATCH") },
@@ -165,6 +169,7 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
           agentState={agents}
           modeLabel={modeLabel}
           modeDescription={modeDescription}
+          defaultTradeoffs={defaultTradeoffs}
         />
       </ETEClientLayout>
     </div>

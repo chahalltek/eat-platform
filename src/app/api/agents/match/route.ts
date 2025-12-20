@@ -12,6 +12,12 @@ import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
+import {
+  applyTradeoffsToWeights,
+  extractTradeoffDefaultsFromScoring,
+  resolveTradeoffs,
+  tradeoffDeclarationSchema,
+} from "@/lib/matching/tradeoffs";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 import { recordUsageEvent } from "@/lib/usage/events";
@@ -28,6 +34,7 @@ export const requestSchema = z.object({
     .optional()
     .refine((ids) => !ids || ids.length > 0, "candidateIds cannot be empty"),
   limit: z.number().int().positive().max(500).optional(),
+  tradeoffs: tradeoffDeclarationSchema.partial().optional(),
 });
 
 type MatchRequest = z.infer<typeof requestSchema>;
@@ -152,13 +159,25 @@ export async function handleMatchAgentPost(
     const locationWeight = matcherWeights.location ?? 0;
     const candidateSignalsWeight = Math.max(0, 1 - (skillsWeight + seniorityWeight + locationWeight));
 
-    const matcherConfig = {
-      mode: scoringConfig.strategy === "simple" ? "simple" : "mixed",
-      weights: {
+    const tradeoffDefaults = extractTradeoffDefaultsFromScoring(guardrailsConfig.scoring);
+    const tradeoffs = resolveTradeoffs(tradeoffDefaults, request.tradeoffs);
+    const { weights: tradeoffWeights, minScoreAdjustment, rationale: tradeoffRationale } = applyTradeoffsToWeights(
+      {
         skills: skillsWeight || 0.4,
         seniority: seniorityWeight || 0.25,
         location: locationWeight || 0.15,
         candidateSignals: candidateSignalsWeight || 0.2,
+      },
+      tradeoffs,
+    );
+
+    const matcherConfig = {
+      mode: scoringConfig.strategy === "simple" ? "simple" : "mixed",
+      weights: {
+        skills: tradeoffWeights.skills,
+        seniority: tradeoffWeights.seniority,
+        location: tradeoffWeights.location,
+        candidateSignals: tradeoffWeights.candidateSignals,
       },
     } as const;
 
@@ -167,6 +186,7 @@ export async function handleMatchAgentPost(
       (conservativePreset.scoring as { thresholds?: { minMatchScore?: number } } | undefined)?.thresholds?.minMatchScore;
     const minMatchScore = thresholdValue ?? conservativeThreshold ?? 0;
     const normalizedMinScore = minMatchScore <= 1 ? Math.round((minMatchScore || 0) * 100) : Math.round(minMatchScore);
+    const adjustedMinScore = Math.max(0, Math.min(100, normalizedMinScore + minScoreAdjustment));
 
     const candidates = await scopedPrisma.candidate.findMany({
       where: candidateWhere,
@@ -261,7 +281,7 @@ export async function handleMatchAgentPost(
           },
         );
 
-        if (matchScore.score < normalizedMinScore) {
+        if (matchScore.score < adjustedMinScore) {
           continue;
         }
 
@@ -276,9 +296,14 @@ export async function handleMatchAgentPost(
           matchScore,
           guardrails: guardrailsJson,
           candidateSignals: candidateSignals.breakdown ?? null,
+          tradeoffs: {
+            selection: tradeoffs,
+            rationale: tradeoffRationale,
+          },
         };
 
-        const explanation = matchScore.explanation.exportableText;
+        const tradeoffNote = tradeoffRationale.length > 0 ? `Tradeoffs: ${tradeoffRationale.join(" ")}` : null;
+        const explanation = [matchScore.explanation.exportableText, tradeoffNote].filter(Boolean).join(" ");
         const existingResult = existingResultByCandidate.get(candidate.id);
         const existingMatch = existingMatchByCandidate.get(candidate.id);
 

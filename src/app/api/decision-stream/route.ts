@@ -4,9 +4,11 @@ import { z } from "zod";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
+import { tradeoffDeclarationSchema } from "@/lib/matching/tradeoffs";
 
 const payloadSchema = z.object({
   jobId: z.string().trim().min(1),
+  tradeoffs: tradeoffDeclarationSchema.partial().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -48,6 +50,19 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingStream) {
+      if (parsed.data.tradeoffs) {
+        await prisma.metricEvent
+          .update({
+            where: { id: existingStream.id },
+            data: {
+              meta: {
+                ...(existingStream.meta as Record<string, unknown> | null | undefined),
+                tradeoffs: parsed.data.tradeoffs,
+              },
+            },
+          })
+          .catch(() => undefined);
+      }
       return NextResponse.json({ streamId: existingStream.id });
     }
 
@@ -61,6 +76,7 @@ export async function POST(req: NextRequest) {
           actorId: roleCheck.user.id,
           actorEmail: roleCheck.user.email,
           actorRole: roleCheck.user.role,
+          tradeoffs: parsed.data.tradeoffs ?? null,
         },
       },
     });

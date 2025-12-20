@@ -10,6 +10,13 @@ import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 import { prisma } from "@/server/db/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import {
+  DEFAULT_TRADEOFF_DECLARATION,
+  formatTradeoffDeclaration,
+  resolveTradeoffs,
+  tradeoffDeclarationSchema,
+} from "@/lib/matching/tradeoffs";
+import { formatTradeoffDeclaration, resolveTradeoffs, tradeoffDeclarationSchema } from "@/lib/matching/tradeoffs";
 
 export type RunExplainInput = {
   jobId: string;
@@ -108,6 +115,11 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
       const breakdown = (match.candidateSignalBreakdown as Record<string, unknown> | null) ?? {};
       const signals = normalizeSignals((breakdown as { signals?: Record<string, unknown> }).signals);
       const confidence = toConfidenceResult((breakdown as { confidence?: unknown }).confidence);
+      const tradeoffSelection = (() => {
+        const tradeoffs = (match.reasons as { tradeoffs?: { selection?: unknown } } | null | undefined)?.tradeoffs?.selection;
+        const parsed = tradeoffDeclarationSchema.safeParse(tradeoffs);
+        return parsed.success ? parsed.data : null;
+      })();
 
       const baseMatch: MatchResult = {
         candidateId: match.candidateId,
@@ -136,7 +148,16 @@ export async function runExplainForJob(input: RunExplainInput): Promise<RunExpla
         config: guardrailConfig,
       });
 
-      explanations.push({ candidateId: match.candidateId, explanation });
+      const explanationWithTradeoffs = tradeoffSelection
+        ? {
+            ...explanation,
+            summary: `${explanation.summary} (Tradeoffs: ${formatTradeoffDeclaration(
+              resolveTradeoffs(DEFAULT_TRADEOFF_DECLARATION, tradeoffSelection),
+            )})`,
+          }
+        : explanation;
+
+      explanations.push({ candidateId: match.candidateId, explanation: explanationWithTradeoffs });
     }
 
     const output: Prisma.InputJsonObject = { snapshot: explanations };
