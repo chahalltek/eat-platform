@@ -3,15 +3,17 @@ import { JobCandidateStatus } from "@/server/db";
 
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
-import { requireAdminOrDataAccess } from "@/lib/auth/requireRole";
+import { canExportShortlist } from "@/lib/auth/permissions";
+import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
+import { getCurrentUser } from "@/lib/auth/user";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
+import { logDataExport } from "@/server/audit/logger";
 
 export async function GET(req: NextRequest) {
-  const roleCheck = await requireAdminOrDataAccess(req);
-
-  if (!roleCheck.ok) {
-    return roleCheck.response;
+  const user = await getCurrentUser(req);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const featureGuard = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: "Agents" });
@@ -41,6 +43,11 @@ export async function GET(req: NextRequest) {
   }
 
   const { prisma, tenantId, runWithTenantContext } = scopedTenant;
+  const hasRoleAccess = isAdminOrDataAccessRole(user.role);
+  const hasPermissionAccess = canExportShortlist(user, tenantId);
+  if (!hasRoleAccess && !hasPermissionAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   return runWithTenantContext(async () => {
     const jobReq = await prisma.jobReq.findUnique({
@@ -91,6 +98,14 @@ export async function GET(req: NextRequest) {
     ];
 
     const csvContent = csvLines.join("\r\n");
+
+    logDataExport({
+      tenantId,
+      actorId: user.id,
+      exportType: "shortlist_csv",
+      objectIds: jobReq.jobCandidates.map((entry) => entry.candidate.id),
+      recordCount: rows.length,
+    });
 
     return new NextResponse(csvContent, {
       status: 200,

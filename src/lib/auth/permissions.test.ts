@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_TENANT_ID } from "./config";
 import {
   canAccessExecIntelligence,
+  canExportMatches,
+  canExportShortlist,
   canManageFeatureFlags,
   canManagePrompts,
   canManageTenants,
@@ -171,5 +173,18 @@ describe("RBAC permission matrix", () => {
 
     expect(canUseStrategicCopilot(buildUser(USER_ROLES.EXEC, tenant), "tenant-b")).toBe(false);
     expect(canUseStrategicCopilot(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
+  });
+
+  it("requires explicit permissions for exports", () => {
+    const tenant = "tenant-a";
+
+    expect(canExportShortlist(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
+    expect(canExportShortlist(buildUser(USER_ROLES.DATA_ACCESS, tenant), tenant)).toBe(true);
+    expect(canExportShortlist(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(false);
+    expect(canExportShortlist(buildUser(USER_ROLES.ADMIN, tenant), "tenant-b")).toBe(false);
+    expect(canExportShortlist(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
+
+    expect(canExportMatches(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), tenant)).toBe(true);
+    expect(canExportMatches(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
   });
 });

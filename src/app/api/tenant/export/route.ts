@@ -6,6 +6,7 @@ import { requireAdminOrDataAccess } from "@/lib/auth/requireRole";
 import { getCurrentTenantId, getTenantFromParamsOrSession } from "@/lib/tenant";
 import { buildTenantExportArchive } from "@/lib/export/tenantExport";
 import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
+import { logDataExport } from "@/server/audit/logger";
 
 export async function POST(req: NextRequest) {
   const roleCheck = await requireAdminOrDataAccess(req);
@@ -27,6 +28,13 @@ export async function POST(req: NextRequest) {
     assertFeatureEnabled(HARD_FEATURE_FLAGS.DATA_EXPORTS_ENABLED);
 
     const { archive } = await buildTenantExportArchive(tenantId);
+
+    logDataExport({
+      tenantId,
+      actorId: user.id,
+      exportType: "tenant_zip",
+      recordCount: null,
+    });
 
     return new NextResponse(new Uint8Array(archive), {
       headers: {

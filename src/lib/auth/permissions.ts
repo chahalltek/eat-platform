@@ -15,7 +15,9 @@ type Permission =
   | "VIEW_AGENT_LOGS"
   | "MANAGE_TENANTS"
   | "VIEW_EXEC_INTELLIGENCE"
-  | "USE_STRATEGIC_COPILOT";
+  | "USE_STRATEGIC_COPILOT"
+  | "EXPORT_SHORTLIST"
+  | "EXPORT_MATCHES";
 
 const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
   [USER_ROLES.ADMIN]: new Set([
@@ -29,6 +31,8 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
+    "EXPORT_SHORTLIST",
+    "EXPORT_MATCHES",
   ]),
   [USER_ROLES.TENANT_ADMIN]: new Set([
     "VIEW_CANDIDATES",
@@ -41,6 +45,8 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
+    "EXPORT_SHORTLIST",
+    "EXPORT_MATCHES",
   ]),
   [USER_ROLES.DATA_ACCESS]: new Set([
     "VIEW_CANDIDATES",
@@ -49,6 +55,8 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "VIEW_QUALITY_METRICS",
     "VIEW_AGENT_LOGS",
     "VIEW_EXEC_INTELLIGENCE",
+    "EXPORT_SHORTLIST",
+    "EXPORT_MATCHES",
   ]),
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS"]),
   [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES"]),
@@ -65,6 +73,8 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
+    "EXPORT_SHORTLIST",
+    "EXPORT_MATCHES",
   ]),
   [USER_ROLES.EXEC]: new Set<Permission>(["VIEW_EXEC_INTELLIGENCE", "USE_STRATEGIC_COPILOT"]),
 };
@@ -154,4 +164,12 @@ export function canAccessExecIntelligence(user: PermissionUser, tenantId?: strin
 
 export function canUseStrategicCopilot(user: PermissionUser, tenantId?: string | null) {
   return hasPermission(user, "USE_STRATEGIC_COPILOT") && hasTenantAccess(user, tenantId);
+}
+
+export function canExportShortlist(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "EXPORT_SHORTLIST") && hasTenantAccess(user, tenantId);
+}
+
+export function canExportMatches(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "EXPORT_MATCHES") && hasTenantAccess(user, tenantId);
 }

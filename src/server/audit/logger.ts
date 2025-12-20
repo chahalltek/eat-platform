@@ -10,6 +10,7 @@ export const AUDIT_EVENT_TYPES = {
   APPROVAL_GRANTED: "APPROVAL_GRANTED",
   EXECUTION_BLOCKED: "EXECUTION_BLOCKED",
   EXECUTION_PERFORMED: "EXECUTION_PERFORMED",
+  DATA_EXPORTED: "DATA_EXPORTED",
 } as const;
 
 export type AuditEventType = (typeof AUDIT_EVENT_TYPES)[keyof typeof AUDIT_EVENT_TYPES];
@@ -136,5 +137,24 @@ export function logExecutionBlocked(params: {
     reason: params.reason ?? null,
     subjectId: params.subjectId ?? null,
     status: "BLOCKED",
+  });
+}
+
+export function logDataExport(params: {
+  tenantId?: string | null;
+  actorId?: string | null;
+  exportType: string;
+  objectIds?: string[];
+  recordCount?: number | null;
+}) {
+  logAuditEvent({
+    eventType: AUDIT_EVENT_TYPES.DATA_EXPORTED,
+    tenantId: params.tenantId,
+    actorId: params.actorId,
+    context: {
+      exportType: params.exportType,
+      objectIds: params.objectIds ?? [],
+      recordCount: params.recordCount ?? null,
+    },
   });
 }
