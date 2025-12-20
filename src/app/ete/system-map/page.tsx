@@ -22,7 +22,24 @@ function formatDate(value: string | null) {
 
   if (Number.isNaN(parsedDate.getTime())) return "Unknown";
 
-  return parsedDate.toLocaleDateString(undefined, { dateStyle: "medium" });
+  const formattedDate = parsedDate.toLocaleDateString("en-US", {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return formattedDate.toUpperCase();
+}
+
+function getLatestIsoDate(...values: Array<string | null | undefined>) {
+  const timestamps = values
+    .map((value) => (value ? new Date(value).getTime() : Number.NaN))
+    .filter((timestamp) => !Number.isNaN(timestamp));
+
+  if (timestamps.length === 0) return null;
+
+  return new Date(Math.max(...timestamps)).toISOString();
 }
 
 const systemNodes = [
@@ -182,7 +199,7 @@ const apiMapDocUrl = "https://github.com/edgeandnode/ete-platform/blob/main/docs
 
 const apiMapFallbackLastUpdatedIso = "2025-12-20T00:00:00.000Z";
 const apiMapDocMetadata = getDocLastUpdated(apiMapDocPath);
-const apiMapLastUpdatedIso = apiMapDocMetadata?.lastUpdatedIso ?? apiMapFallbackLastUpdatedIso;
+const apiMapLastUpdatedIso = getLatestIsoDate(apiMapFallbackLastUpdatedIso, apiMapDocMetadata?.lastUpdatedIso) ?? apiMapFallbackLastUpdatedIso;
 const apiMapLastUpdatedDisplay = formatDate(apiMapLastUpdatedIso);
 
 const apiSurface = [
