@@ -8,6 +8,7 @@ import { ChatMessage, OpenAIAdapter, formatEmptyResponseError } from '@/lib/llm/
 import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
 import { recordCostEvent } from '@/lib/cost/events';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
+import { enforceLimits, type SafeLLMContext } from '@/server/ai/safety/limits';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from '@/server/ai/safety/safeContext';
 
@@ -22,7 +23,12 @@ export type CallLLMParams = {
   capability?: GatewayCapability;
   approvalToken?: string;
   redactResult?: boolean;
+<<<<<<< ours
   context?: SafeLLMContextInput | SafeLLMContext;
+=======
+  context?: SafeLLMContext;
+  buildUserPrompt?: (context: SafeLLMContext) => string;
+>>>>>>> theirs
 };
 
 class OpenAIChatAdapter implements OpenAIAdapter {
@@ -153,6 +159,10 @@ export async function callLLM({
   approvalToken,
   redactResult = true,
   context,
+<<<<<<< ours
+=======
+  buildUserPrompt,
+>>>>>>> theirs
 }: CallLLMParams): Promise<string> {
   const safeContext = buildSafeLLMContext(context ?? { purpose: 'OTHER' });
   const resolvedSystemPrompt = typeof systemPrompt === 'function' ? systemPrompt(safeContext) : systemPrompt;
@@ -162,7 +172,12 @@ export async function callLLM({
   let response: string | null = null;
   let status: 'success' | 'failure' = 'success';
   let resolvedModel = model ?? 'unknown';
+<<<<<<< ours
   let trimmedUserPrompt = resolvedUserPrompt;
+=======
+  let trimmedUserPrompt = userPrompt;
+  const safeContext = context ? enforceLimits(context) : undefined;
+>>>>>>> theirs
 
   try {
     assertWriteCapabilityAllowed(capability, approvalToken);
@@ -174,9 +189,19 @@ export async function callLLM({
       throw new LLMUsageRestrictedError('Requested model is not permitted for this tenant.');
     }
 
+<<<<<<< ours
     trimmedUserPrompt = llmControls.verbosityCap
       ? resolvedUserPrompt.slice(0, llmControls.verbosityCap)
       : resolvedUserPrompt;
+=======
+    const rawUserPrompt = safeContext && buildUserPrompt
+      ? buildUserPrompt(safeContext)
+      : userPrompt;
+>>>>>>> theirs
+
+    trimmedUserPrompt = llmControls.verbosityCap
+      ? rawUserPrompt.slice(0, llmControls.verbosityCap)
+      : rawUserPrompt;
 
     await consumeRateLimit({
       tenantId: caller.tenantId,
