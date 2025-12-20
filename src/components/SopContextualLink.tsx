@@ -96,7 +96,7 @@ export function SopContextualLink({ context, className }: SopContextualLinkProps
         onClick={() => setOpen(true)}
       >
         <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" aria-hidden />
-        View decision expectations (SOP)
+        Decision expectations (SOP)
       </button>
 
       {open ? (
@@ -160,4 +160,3 @@ export function SopContextualLink({ context, className }: SopContextualLinkProps
     </>
   );
 }
-
