@@ -26,6 +26,24 @@ export default function HelpPage() {
       </header>
 
       <DidWeReinventBullhorn entry={eteVsBullhornContent} />
+
+      <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP</p>
+            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Sourcing &amp; Recruiting SOPs</h2>
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              Access the verbatim Quick Guide and full SOP for sourcing and recruiting. Read-only reference with anchor navigation.
+            </p>
+          </div>
+          <Link
+            href="/ete/sourcing-recruiting-sop"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white/90 px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 dark:border-indigo-900/60 dark:bg-zinc-900/70 dark:text-indigo-100"
+          >
+            Open SOP
+          </Link>
+        </div>
+      </section>
     </ETEClientLayout>
   );
 }
