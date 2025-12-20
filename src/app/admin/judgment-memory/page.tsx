@@ -5,6 +5,7 @@ import { ETECard } from "@/components/ETECard";
 import { getCurrentUser } from "@/lib/auth/user";
 import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
+import { buildDriftPlan } from "@/lib/judgmentMemory/driftPlan";
 import { getLatestJudgmentInsights } from "@/lib/judgmentMemory/insights";
 
 export const dynamic = "force-dynamic";
@@ -149,6 +150,7 @@ export default async function JudgmentMemoryPage() {
   if (!isEnabled) return notFound();
 
   const insights = await getLatestJudgmentInsights();
+  const driftAdjustments = buildDriftPlan(insights);
   const windowStart = insights[0]?.windowStart;
   const windowEnd = insights[0]?.windowEnd;
 
@@ -202,6 +204,119 @@ export default async function JudgmentMemoryPage() {
           </p>
         </div>
       </div>
+
+      <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+        <ETECard className="gap-3 border-indigo-100 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+                Silent drift
+              </p>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Best-practice drift playbook</h2>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Defaults and tradeoffs quietly move toward the highest-performing patterns from institutional memory. No recruiter
+                alerts—just better starting positions.
+              </p>
+            </div>
+            <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
+              Adaptive
+            </div>
+          </div>
+          <div className="grid gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+              <span>Defaults adapt over time using recent hire and override lift signals.</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
+              <span>Every drift is explainable on inspection with the evidence we used.</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+              <span>No surprise behavior changes: shifts cap at 10% per window.</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-sky-500" aria-hidden />
+              <span>Admins see the drift logic; recruiters only feel better starting presets.</span>
+            </div>
+          </div>
+        </ETECard>
+
+        <ETECard className="gap-3 border-emerald-100 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-200">
+            Guardrails
+          </p>
+          <ul className="list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-300">
+            <li>Shifts only apply when sample sizes are stable; weak signals stay in watch mode.</li>
+            <li>Confidence bands and tradeoffs nudge presets, never auto-approve actions.</li>
+            <li>Each drift is logged with the evidence below for auditability.</li>
+          </ul>
+        </ETECard>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+              Drift visibility
+            </p>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">What silently changed</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Grounded in the latest judgment memory run. Use this to explain why defaults feel smarter.
+            </p>
+          </div>
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">
+            No recruiter alerts
+          </span>
+        </div>
+
+        <div className="grid gap-3">
+          {driftAdjustments.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-4 py-5 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+              Awaiting enough signals to drift defaults. We will surface the next window once samples stabilize.
+            </div>
+          ) : (
+            driftAdjustments.map((adjustment) => (
+              <article
+                key={adjustment.id}
+                className="rounded-xl border border-indigo-100 bg-white px-4 py-4 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+                      {adjustment.segment} · {adjustment.category}
+                    </p>
+                    <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{adjustment.change}</h3>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">{adjustment.rationale}</p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+                      adjustment.status === "applied"
+                        ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-100"
+                        : "bg-amber-50 text-amber-800 ring-1 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-100"
+                    }`}
+                  >
+                    {adjustment.status === "applied" ? "Applied quietly" : "Watching (holds in presets only)"}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {adjustment.signals.map((signal) => (
+                    <span
+                      key={signal}
+                      className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-100 dark:ring-indigo-900/60"
+                    >
+                      {signal}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Guardrail: {adjustment.guardrail}</p>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <ETECard className="gap-3 border-emerald-100 shadow-sm">
