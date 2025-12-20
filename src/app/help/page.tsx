@@ -3,12 +3,8 @@ import { DocumentTextIcon } from "@heroicons/react/24/outline";
 
 import { DidWeReinventBullhorn } from "./DidWeReinventBullhorn";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
-<<<<<<< ours
 import { decisionSopContent, eteVsBullhornContent } from "@/content/help/eteVsBullhorn";
-=======
-import { eteVsBullhornContent } from "@/content/help/eteVsBullhorn";
 import { sourcingRecruitingSop } from "@/content/help/sourcingRecruitingSop";
->>>>>>> theirs
 
 export default function HelpPage() {
   return (
@@ -31,9 +27,6 @@ export default function HelpPage() {
         </div>
       </header>
 
-<<<<<<< ours
-<<<<<<< ours
-=======
       <section className="space-y-3 rounded-3xl border border-indigo-100 bg-white/90 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
@@ -43,7 +36,7 @@ export default function HelpPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP</p>
               <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{sourcingRecruitingSop.title}</h2>
-              <p className="text-sm text-zinc-700 dark:text-zinc-200">Read the full sourcing & recruiting SOP without leaving the console.</p>
+              <p className="text-sm text-zinc-700 dark:text-zinc-200">Read the full sourcing &amp; recruiting SOP without leaving the console.</p>
             </div>
           </div>
           <Link
@@ -69,8 +62,10 @@ export default function HelpPage() {
         </div>
       </section>
 
->>>>>>> theirs
-      <DidWeReinventBullhorn entry={eteVsBullhornContent} />
+      <div className="space-y-6">
+        <DidWeReinventBullhorn entry={decisionSopContent} />
+        <DidWeReinventBullhorn entry={eteVsBullhornContent} />
+      </div>
 
       <section className="rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -89,12 +84,6 @@ export default function HelpPage() {
           </Link>
         </div>
       </section>
-=======
-      <div className="space-y-6">
-        <DidWeReinventBullhorn entry={decisionSopContent} />
-        <DidWeReinventBullhorn entry={eteVsBullhornContent} />
-      </div>
->>>>>>> theirs
     </ETEClientLayout>
   );
 }

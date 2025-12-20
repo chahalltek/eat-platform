@@ -14,12 +14,9 @@ import {
   type DecisionStreamAction,
   type DecisionStreamItem,
 } from "@/lib/metrics/decisionStreamClient";
-<<<<<<< ours
 import { formatTradeoffDeclaration, resolveTradeoffs, type TradeoffDeclaration } from "@/lib/matching/tradeoffs";
 import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
-=======
 import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
->>>>>>> theirs
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -47,16 +44,10 @@ export type JobConsoleProps = {
   }[];
   modeLabel: string;
   modeDescription?: string | null;
-<<<<<<< ours
   defaultTradeoffs: TradeoffDeclaration;
   showDecisionMomentCues?: boolean;
-<<<<<<< ours
-=======
   archetype?: NonNullable<ReturnType<typeof describeAssignment>> | null;
->>>>>>> theirs
-=======
   showSopContextualLink?: boolean;
->>>>>>> theirs
 };
 
 type DecisionReceipt = {
@@ -74,7 +65,6 @@ type DecisionReceipt = {
   createdBy?: { id?: string; name?: string | null; email?: string | null };
   bullhornNote?: string;
   bullhornTarget?: "note" | "custom_field";
-<<<<<<< ours
   recommendation?: {
     recommendedOutcome?: "shortlist" | "pass";
     alignment?: "accept" | "override" | "disagree";
@@ -85,15 +75,9 @@ type DecisionReceipt = {
   standardizedRisks?: string[];
   standardizedRiskKeys?: string[];
   confidenceFrame?: "HIGH" | "MEDIUM" | "LOW" | null;
-<<<<<<< ours
->>>>>>> theirs
-=======
   archetype?: NonNullable<ReturnType<typeof describeAssignment>> | null;
->>>>>>> theirs
-=======
   governance: DecisionGovernanceSignals;
   audit: DecisionAuditContext;
->>>>>>> theirs
 };
 
 function normalizeExplanation(
@@ -1206,16 +1190,14 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     agentState,
     modeLabel,
     modeDescription,
-<<<<<<< ours
     defaultTradeoffs,
     showDecisionMomentCues = false,
-<<<<<<< ours
-=======
     archetype,
->>>>>>> theirs
-=======
     showSopContextualLink = false,
->>>>>>> theirs
+    defaultTradeoffs,
+    showDecisionMomentCues = false,
+    archetype,
+    showSopContextualLink = false,
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
     ...candidate,
@@ -1430,15 +1412,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       const decisionType = mapDecisionActionToReceipt(action);
       if (!decisionType) return;
 
-<<<<<<< ours
       const recommendation = {
         recommendedOutcome: candidate.recommendedOutcome,
         alignment: annotation.alignment,
         rationale: annotation.rationale.trim() || undefined,
       } as DecisionReceipt["recommendation"];
-=======
       const tradeoff = archetype?.defaultTradeoff ?? describeTradeoffFromStrategy(shortlistStrategy);
->>>>>>> theirs
 
       const payload = {
         jobId,
@@ -1452,9 +1431,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
         tradeoff,
         bullhornTarget: "note" as const,
         shortlistStrategy,
-<<<<<<< ours
         recommendation,
-=======
         archetype: archetype
           ? {
               id: archetype.id,
@@ -1463,7 +1440,6 @@ export function JobExecutionConsole(props: JobConsoleProps) {
               confidence: archetype.confidence,
             }
           : undefined,
->>>>>>> theirs
       };
 
       try {

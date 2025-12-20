@@ -10,16 +10,14 @@ import { guardrailsPresets } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 import { prisma } from "@/server/db/prisma";
 import { getCurrentUser } from "@/lib/auth";
-<<<<<<< ours
 import {
   DEFAULT_TRADEOFF_DECLARATION,
   formatTradeoffDeclaration,
   resolveTradeoffs,
   tradeoffDeclarationSchema,
 } from "@/lib/matching/tradeoffs";
-=======
 import { extractArchetypeFromIntent } from "@/lib/jobIntent";
->>>>>>> theirs
+import { extractArchetypeFromIntent } from "@/lib/jobIntent";
 
 export type RunExplainInput = {
   jobId: string;

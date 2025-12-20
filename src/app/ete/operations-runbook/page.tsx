@@ -42,19 +42,11 @@ const guardrailSignals = [
   },
   {
     title: "Explainability",
-    items: [
-      "Verbosity level for rationales",
-      "Whether to show weight contributions",
-      "Evidence expectations for claims",
-    ],
+    items: ["Verbosity level for rationales", "Whether to show weight contributions", "Evidence expectations for claims"],
   },
   {
     title: "Safety",
-    items: [
-      "Require must-have skills before ranking",
-      "Excluding internal candidates when requested",
-      "Blocking incomplete or low-confidence runs",
-    ],
+    items: ["Require must-have skills before ranking", "Excluding internal candidates when requested", "Blocking incomplete or low-confidence runs"],
   },
 ];
 
@@ -124,8 +116,36 @@ const fireDrillTriggers = [
   "Critical demo where reliability matters more than feature depth",
 ];
 
-<<<<<<< ours
-<<<<<<< ours
+const quickGuideItems = [
+  {
+    title: "Start with posture",
+    description: "Jump to System Modes to pick Pilot, Production, Sandbox, or Fire Drill before changing any switches.",
+    href: "#system-modes",
+  },
+  {
+    title: "Set guardrails",
+    description: "Use the Guardrails section to align scoring, explainability, and safety expectations with the tenant posture.",
+    href: "#guardrails",
+  },
+  {
+    title: "Check agent switches",
+    description: "Review which agents stay on or can be paused in the Agent kill switch reference before rollout.",
+    href: "#agent-switches",
+  },
+  {
+    title: "Trigger Fire Drill",
+    description: "Follow the Fire Drill triggers and steps to stabilize the system when upstream vendors wobble.",
+    href: "#fire-drill",
+  },
+] as const;
+
+const whereEteFitsPoints = [
+  "Sourcing ends when a qualified pool exists",
+  "Recruiting judgment begins when candidates are compared",
+  "ETE supports decision moments (intake, comparison, submission)",
+  "Bullhorn remains the system of record for outcomes and activity",
+] as const;
+
 const sopChangeLog = [
   {
     date: "2024-06-12",
@@ -151,39 +171,6 @@ export default async function OperationsRunbookPage() {
   const isAdminViewer = isAdminRole(currentUser?.role);
   const changeLogVisible = !SOP_CHANGE_LOG_ADMIN_ONLY || isAdminViewer;
 
-=======
-const quickGuideItems = [
-  {
-    title: "Start with posture",
-    description: "Jump to System Modes to pick Pilot, Production, Sandbox, or Fire Drill before changing any switches.",
-    href: "#system-modes",
-  },
-  {
-    title: "Set guardrails",
-    description: "Use the Guardrails section to align scoring, explainability, and safety expectations with the tenant posture.",
-    href: "#guardrails",
-  },
-  {
-    title: "Check agent switches",
-    description: "Review which agents stay on or can be paused in the Agent kill switch reference before rollout.",
-    href: "#agent-switches",
-  },
-  {
-    title: "Trigger Fire Drill",
-    description: "Follow the Fire Drill triggers and steps to stabilize the system when upstream vendors wobble.",
-    href: "#fire-drill",
-  },
-=======
-const whereEteFitsPoints = [
-  "Sourcing ends when a qualified pool exists",
-  "Recruiting judgment begins when candidates are compared",
-  "ETE supports decision moments (intake, comparison, submission)",
-  "Bullhorn remains the system of record for outcomes and activity",
->>>>>>> theirs
-] as const;
-
-export default function OperationsRunbookPage() {
->>>>>>> theirs
   return (
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-8">
       <nav
@@ -202,30 +189,27 @@ export default function OperationsRunbookPage() {
         >
           Full SOP
         </a>
+        <a
+          href="#change-log"
+          className="rounded-full px-3 py-1 font-semibold text-indigo-800 ring-1 ring-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-50 dark:text-indigo-100 dark:ring-indigo-800/60"
+        >
+          Change Log
+        </a>
       </nav>
 
       <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Runbook</p>
-            <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">
-              Operations Runbook: Modes & Guardrails
-            </h1>
+            <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">Operations Runbook: Modes &amp; Guardrails</h1>
             <p className="max-w-3xl text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
-              Read-only reference for admins. Use this as the single source for how system modes, guardrails, and agent kill switches
-              work together, plus when to trigger Fire Drill.
+              Read-only reference for admins. Use this as the single source for how system modes, guardrails, and agent kill switches work together, plus when to trigger Fire Drill.
             </p>
           </div>
           <ClientActionLink href="/">Back to Console</ClientActionLink>
         </div>
       </section>
 
-<<<<<<< ours
-      <section
-        id="quick-guide"
-        className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
-      >
-=======
       <section className="space-y-4 rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800/60 dark:bg-zinc-900/70">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
@@ -252,12 +236,43 @@ export default function OperationsRunbookPage() {
         </ul>
       </section>
 
-      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
->>>>>>> theirs
+      <section
+        id="quick-guide"
+        className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
+      >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-<<<<<<< ours
-<<<<<<< ours
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Quick Guide</p>
+            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Navigate the SOP fast</h2>
+            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">Use these jumps to land on the right reference section below.</p>
+          </div>
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
+            Quick read
+          </span>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {quickGuideItems.map((item) => (
+            <a
+              key={item.title}
+              href={item.href}
+              className="group space-y-1 rounded-2xl border border-indigo-100 bg-white/80 p-4 text-left text-sm shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:border-indigo-800/60 dark:bg-zinc-900/60"
+            >
+              <p className="flex items-center gap-2 text-sm font-semibold text-indigo-900 transition group-hover:text-indigo-700 dark:text-indigo-100 dark:group-hover:text-indigo-200">
+                {item.title}
+                <span aria-hidden="true">↘</span>
+              </p>
+              <p className="leading-relaxed text-zinc-700 dark:text-zinc-200">{item.description}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="change-log"
+        className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP Change Log</p>
             <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Operations runbook updates</h2>
             <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
@@ -277,50 +292,6 @@ export default function OperationsRunbookPage() {
             >
               {SOP_CHANGE_LOG_ADMIN_ONLY ? "Optional: Admin visibility" : "Visible to all"}
             </span>
-=======
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP Touchpoints</p>
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">How SOP moments map to ETE agents</h2>
-            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
-              Explanatory mapping for the SOP only&mdash;process owners stay in control, and agents provide optional system support
-              when those steps are enabled.
-            </p>
-          </div>
-          <StatusPill status="info" label="Reference only" />
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
-          <table className="min-w-full divide-y divide-indigo-100 text-sm">
-            <thead className="bg-indigo-50/80 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">SOP Moment</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Supported By (System)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-indigo-100/80 dark:divide-indigo-800/60">
-              {sopTouchpoints.map((touchpoint) => (
-                <tr key={touchpoint.moment} className="bg-white/70 text-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100">
-                  <td className="px-4 py-3 font-semibold text-indigo-900 dark:text-indigo-100">{touchpoint.moment}</td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{touchpoint.supportedBy}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="rounded-2xl bg-indigo-50/70 p-4 text-sm text-indigo-900 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
-          <p className="font-semibold">Process vs. system clarity</p>
-          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
-            This table shows where the system can assist SOP moments; it is not a mandate to run every step through the platform.
-          </p>
-        </div>
-      </section>
-
-      <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Modes</p>
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Mode behaviors and recommended use</h2>
->>>>>>> theirs
           </div>
         </div>
 
@@ -365,32 +336,39 @@ export default function OperationsRunbookPage() {
       <section className="space-y-4 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Modes</p>
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Mode behaviors and recommended use</h2>
-=======
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Quick Guide</p>
-            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Navigate the SOP fast</h2>
-            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">Use these jumps to land on the right reference section below.</p>
->>>>>>> theirs
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP Touchpoints</p>
+            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">How SOP moments map to ETE agents</h2>
+            <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
+              Explanatory mapping for the SOP only—process owners stay in control, and agents provide optional system support when those steps are enabled.
+            </p>
           </div>
-          <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
-            Quick read
-          </span>
+          <StatusPill status="info" label="Reference only" />
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {quickGuideItems.map((item) => (
-            <a
-              key={item.title}
-              href={item.href}
-              className="group space-y-1 rounded-2xl border border-indigo-100 bg-white/80 p-4 text-left text-sm shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:border-indigo-800/60 dark:bg-zinc-900/60"
-            >
-              <p className="flex items-center gap-2 text-sm font-semibold text-indigo-900 transition group-hover:text-indigo-700 dark:text-indigo-100 dark:group-hover:text-indigo-200">
-                {item.title}
-                <span aria-hidden="true">↘</span>
-              </p>
-              <p className="leading-relaxed text-zinc-700 dark:text-zinc-200">{item.description}</p>
-            </a>
-          ))}
+
+        <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
+          <table className="min-w-full divide-y divide-indigo-100 text-sm">
+            <thead className="bg-indigo-50/80 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">SOP Moment</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em]">Supported By (System)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-indigo-100/80 dark:divide-indigo-800/60">
+              {sopTouchpoints.map((touchpoint) => (
+                <tr key={touchpoint.moment} className="bg-white/70 text-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100">
+                  <td className="px-4 py-3 font-semibold text-indigo-900 dark:text-indigo-100">{touchpoint.moment}</td>
+                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-200">{touchpoint.supportedBy}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="rounded-2xl bg-indigo-50/70 p-4 text-sm text-indigo-900 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
+          <p className="font-semibold">Process vs. system clarity</p>
+          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+            This table shows where the system can assist SOP moments; it is not a mandate to run every step through the platform.
+          </p>
         </div>
       </section>
 
@@ -466,13 +444,15 @@ export default function OperationsRunbookPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Guardrails</p>
               <h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">What guardrails control</h3>
               <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-                Guardrails set the posture for scoring and messaging. Modes choose a preset, but runbook readers should know what each
-                dimension covers.
+                Guardrails set the posture for scoring and messaging. Modes choose a preset, but runbook readers should know what each dimension covers.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               {guardrailSignals.map((signal) => (
-                <div key={signal.title} className="rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/60">
+                <div
+                  key={signal.title}
+                  className="rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/60"
+                >
                   <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">{signal.title}</p>
                   <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-zinc-700 dark:text-zinc-200">
                     {signal.items.map((item) => (
@@ -485,8 +465,7 @@ export default function OperationsRunbookPage() {
             <div className="rounded-2xl bg-indigo-50/70 p-4 text-sm text-indigo-900 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
               <p className="font-semibold">Preset mapping</p>
               <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
-                Pilot and Fire Drill force conservative guardrails. Production uses balanced defaults. Sandbox leans exploratory and may
-                expand shortlist size and allow softer safety checks.
+                Pilot and Fire Drill force conservative guardrails. Production uses balanced defaults. Sandbox leans exploratory and may expand shortlist size and allow softer safety checks.
               </p>
             </div>
           </section>
@@ -505,14 +484,19 @@ export default function OperationsRunbookPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {agentSwitches.map((agent) => (
-                <div key={agent.agent} className="flex items-start gap-3 rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/60">
+                <div
+                  key={agent.agent}
+                  className="flex items-start gap-3 rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/60"
+                >
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/50 dark:text-indigo-100 dark:ring-indigo-800/60">
                     {agent.agent}
                   </div>
                   <div className="space-y-1 text-sm text-zinc-700 dark:text-zinc-200">
                     <p className="font-semibold text-zinc-900 dark:text-zinc-50">{agent.role}</p>
                     <p>{agent.note}</p>
-                    <p className="text-xs text-indigo-700 dark:text-indigo-200">Mode dependent: Fire Drill automatically pauses EXPLAIN and CONFIDENCE.</p>
+                    <p className="text-xs text-indigo-700 dark:text-indigo-200">
+                      Mode dependent: Fire Drill automatically pauses EXPLAIN and CONFIDENCE.
+                    </p>
                   </div>
                 </div>
               ))}
