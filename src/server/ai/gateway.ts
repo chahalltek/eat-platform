@@ -1,54 +1,28 @@
-<<<<<<< ours
-import { randomUUID } from 'crypto';
-import OpenAI from 'openai';
-import { type ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-
-import { recordAuditEvent } from '@/lib/audit/trail';
-import { getCurrentUser, getUserRoles } from '@/lib/auth/user';
-import { type UserRole } from '@/lib/auth/roles';
-import { AIFailureError } from '@/lib/errors';
-import {
-  ChatMessage,
-  OpenAIAdapter,
-  formatEmptyResponseError,
-  type ChatCompletionResult,
-  type ChatCompletionUsage,
-} from '@/lib/llm/openaiAdapter';
-import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
-import { recordCostEvent } from '@/lib/cost/events';
-import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
-<<<<<<< ours
-=======
-import { enforceLimits as enforceContextLimits } from '@/server/ai/safety/limits';
-import type { SafeLLMContext as LimitedSafeLLMContext } from '@/server/ai/safety/limits';
->>>>>>> theirs
-import { getCurrentTenantId } from '@/lib/tenant';
-import { redactAny } from '@/server/ai/safety/redact';
-import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from '@/server/ai/safety/safeContext';
-
-export type GatewayCapability = 'read' | 'write';
-=======
 import { randomUUID } from "crypto";
-
 import OpenAI from "openai";
+import { type ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 import { recordAuditEvent } from "@/lib/audit/trail";
 import { type UserRole } from "@/lib/auth/roles";
 import { getCurrentUser, getUserRoles } from "@/lib/auth/user";
 import { recordCostEvent } from "@/lib/cost/events";
 import { AIFailureError } from "@/lib/errors";
-import type { OpenAIAdapter } from "@/lib/llm/openaiAdapter";
+import {
+  ChatMessage,
+  OpenAIAdapter,
+  formatEmptyResponseError,
+  type ChatCompletionResult,
+  type ChatCompletionUsage,
+} from "@/lib/llm/openaiAdapter";
 import { assertLlmUsageAllowed, LLMUsageRestrictedError } from "@/lib/llm/tenantControls";
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from "@/lib/rateLimiting/rateLimiter";
 import { getCurrentTenantId } from "@/lib/tenant";
-import { OpenAIChatAdapter } from "@/server/ai/openaiClient";
 import { assertLlmSafetyConfig, LLMSafetyConfigError } from "@/server/ai/safety/config";
 import { enforceLimits as enforceContextLimits, type SafeLLMContext as LimitedSafeLLMContext } from "@/server/ai/safety/limits";
 import { redactAny } from "@/server/ai/safety/redact";
 import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from "@/server/ai/safety/safeContext";
 
 export type GatewayCapability = "read" | "write";
->>>>>>> theirs
 
 export type CallLLMParams = {
   systemPrompt: string | ((context: SafeLLMContext) => string);
@@ -60,37 +34,64 @@ export type CallLLMParams = {
   approvalToken?: string;
   redactResult?: boolean;
   context?: SafeLLMContextInput | SafeLLMContext;
-<<<<<<< ours
-<<<<<<< ours
+  buildUserPrompt?: (context: SafeLLMContext) => string;
 };
 
-type LlmLogLevel = 'metadata' | 'redacted' | 'off';
+type LlmLogLevel = "metadata" | "redacted" | "off";
 
 type LlmLogConfig = {
   level: LlmLogLevel;
   promptLoggingEnabled: boolean;
   promptTtlMs: number;
-=======
-  buildUserPrompt?: (context: SafeLLMContext) => string;
->>>>>>> theirs
 };
 
 class OpenAIChatAdapter implements OpenAIAdapter {
   constructor(private apiKey = process.env.OPENAI_API_KEY) {}
 
-  async chatCompletion({ model, messages, temperature, maxTokens }: {
+  async chatCompletion({
+    model,
+    messages,
+    temperature,
+    maxTokens,
+  }: {
     model: string;
     messages: ChatMessage[];
     temperature: number;
     maxTokens?: number;
   }): Promise<ChatCompletionResult> {
     if (!this.apiKey) {
-      throw new Error('OPENAI_API_KEY is not configured');
+      throw new Error("OPENAI_API_KEY is not configured");
     }
+
+    const openAIMessages: ChatCompletionMessageParam[] = messages.map((message) => {
+      const { role, content, tool_calls, tool_call_id } = message;
+
+      if (role === "assistant") {
+        return {
+          role,
+          content,
+          tool_calls,
+        } satisfies ChatCompletionMessageParam;
+      }
+
+      if (role === "tool") {
+        if (!tool_call_id) {
+          throw new Error("Tool messages must include a tool_call_id");
+        }
+
+        return {
+          role,
+          content,
+          tool_call_id,
+        } satisfies ChatCompletionMessageParam;
+      }
+
+      return { role, content } satisfies ChatCompletionMessageParam;
+    });
 
     const response = await new OpenAI({ apiKey: this.apiKey }).chat.completions.create({
       model,
-      messages: messages as ChatCompletionMessageParam[],
+      messages: openAIMessages,
       temperature,
       max_tokens: maxTokens,
     });
@@ -112,13 +113,8 @@ class OpenAIChatAdapter implements OpenAIAdapter {
   }
 }
 
-const EXECUTION_ENABLED = process.env.EXECUTION_ENABLED === 'true';
-const DEFAULT_LOG_TTL_HOURS = 24;
-=======
-};
-
 const EXECUTION_ENABLED = process.env.EXECUTION_ENABLED === "true";
->>>>>>> theirs
+const DEFAULT_LOG_TTL_HOURS = 24;
 
 function redactSnippet(value?: string | null) {
   if (!value) return null;
@@ -126,10 +122,10 @@ function redactSnippet(value?: string | null) {
 }
 
 function resolveLoggingConfig(env: NodeJS.ProcessEnv = process.env): LlmLogConfig {
-  const allowedLevels: LlmLogLevel[] = ['metadata', 'redacted', 'off'];
+  const allowedLevels: LlmLogLevel[] = ["metadata", "redacted", "off"];
   const envLevel = env.LLM_LOG_LEVEL as LlmLogLevel | undefined;
-  const level: LlmLogLevel = allowedLevels.includes(envLevel ?? 'metadata') ? envLevel ?? 'metadata' : 'metadata';
-  const promptLoggingEnabled = env.LLM_LOG_PROMPTS === 'true';
+  const level: LlmLogLevel = allowedLevels.includes(envLevel ?? "metadata") ? envLevel ?? "metadata" : "metadata";
+  const promptLoggingEnabled = env.LLM_LOG_PROMPTS === "true";
   const ttlHours = Number(env.LLM_LOG_TTL_HOURS ?? DEFAULT_LOG_TTL_HOURS);
   const promptTtlMs = Number.isFinite(ttlHours) && ttlHours > 0
     ? ttlHours * 60 * 60 * 1000
@@ -169,11 +165,7 @@ function ensureRequestIdentifiers(
   } satisfies SafeLLMContextInput;
 }
 
-<<<<<<< ours
-function enforceVerbosityCap<T>(value: T, verbosityCap?: number): T {
-=======
 function applyVerbosityLimits<T>(value: T, verbosityCap?: number): T {
->>>>>>> theirs
   if (!verbosityCap) return value;
 
   const clamp = (entry: unknown): unknown => {
@@ -213,16 +205,6 @@ export function sanitizeOutbound({
   const contextWithIds = ensureRequestIdentifiers(contextInput);
   const safeContext = buildSafeLLMContext(contextWithIds);
   const redactedContext = redactAny(safeContext) as SafeLLMContext;
-<<<<<<< ours
-<<<<<<< ours
-  const limitedContext = enforceVerbosityCap(redactedContext, verbosityCap);
-=======
-  const limitedContext = enforceVerbosityCap(
-    enforceContextLimits(redactedContext as LimitedSafeLLMContext),
-    verbosityCap,
-  ) as SafeLLMContext;
->>>>>>> theirs
-=======
 
   const limitedContext = applyVerbosityLimits(
     enforceContextLimits(redactedContext as unknown as LimitedSafeLLMContext) as unknown as SafeLLMContext,
@@ -231,7 +213,6 @@ export function sanitizeOutbound({
 
   const resolvedSystemPrompt = typeof systemPrompt === "function" ? systemPrompt(limitedContext) : systemPrompt;
   const resolvedUserPrompt = typeof userPrompt === "function" ? userPrompt(limitedContext) : userPrompt;
->>>>>>> theirs
 
   return {
     context: limitedContext,
@@ -269,7 +250,7 @@ function assertWriteCapabilityAllowed(capability: GatewayCapability, approvalTok
 function toRedactedLogValue(value: string | null | undefined): string | null {
   if (!value) return null;
   const scrubbed = redactAny(value);
-  const asString = typeof scrubbed === 'string' ? scrubbed : JSON.stringify(scrubbed);
+  const asString = typeof scrubbed === "string" ? scrubbed : JSON.stringify(scrubbed);
   return redactSnippet(asString);
 }
 
@@ -308,11 +289,11 @@ async function recordAIAuditEvent({
   logConfig: LlmLogConfig;
   usage?: ChatCompletionUsage | null;
   latencyMs?: number;
-  purpose?: SafeLLMContext['purpose'];
+  purpose?: SafeLLMContext["purpose"];
   rawSystemPrompt?: string;
   rawUserPrompt?: string;
 }) {
-  const shouldLogPrompts = logConfig.promptLoggingEnabled && logConfig.level === 'redacted';
+  const shouldLogPrompts = logConfig.promptLoggingEnabled && logConfig.level === "redacted";
   const redactedResult = redactResult ? toRedactedLogValue(result) : null;
   const systemForLog = rawSystemPrompt ?? systemPrompt;
   const userForLog = rawUserPrompt ?? userPrompt;
@@ -372,29 +353,18 @@ export async function callLLM({
   approvalToken,
   redactResult = true,
   context,
+  buildUserPrompt,
 }: CallLLMParams): Promise<string> {
   const caller = await resolveCaller();
   const logConfig = resolveLoggingConfig();
   const startedAt = Date.now();
   let response: string | null = null;
-<<<<<<< ours
-  let status: 'success' | 'failure' = 'success';
-  let resolvedModel = model ?? 'unknown';
-<<<<<<< ours
-  let resolvedSystemPrompt = '';
-  let resolvedUserPrompt = '';
-  let sanitized: SanitizedOutbound | null = null;
-  let usage: ChatCompletionUsage | null = null;
-=======
-  let resolvedSystemPrompt = typeof systemPrompt === 'string' ? systemPrompt : '';
-  let trimmedUserPrompt = typeof userPrompt === 'string' ? userPrompt : '';
->>>>>>> theirs
-=======
   let status: "success" | "failure" = "success";
   let resolvedModel = model ?? "unknown";
-  let resolvedSystemPrompt = "";
-  let trimmedUserPrompt = "";
->>>>>>> theirs
+  let resolvedSystemPrompt = typeof systemPrompt === "string" ? systemPrompt : "";
+  let resolvedUserPrompt = typeof userPrompt === "string" ? userPrompt : "";
+  let sanitized: SanitizedOutbound | null = null;
+  let usage: ChatCompletionUsage | null = null;
 
   try {
     assertWriteCapabilityAllowed(capability, approvalToken);
@@ -407,14 +377,7 @@ export async function callLLM({
       throw new LLMUsageRestrictedError("Requested model is not permitted for this tenant.");
     }
 
-<<<<<<< ours
-<<<<<<< ours
     sanitized = sanitizeOutbound({
-=======
-=======
->>>>>>> theirs
-    const sanitized = sanitizeOutbound({
->>>>>>> theirs
       contextInput: context,
       systemPrompt,
       userPrompt,
@@ -422,23 +385,12 @@ export async function callLLM({
     });
 
     resolvedSystemPrompt = sanitized.systemPrompt;
-<<<<<<< ours
+
+    const userPromptForModel = buildUserPrompt ? buildUserPrompt(sanitized.context) : sanitized.userPrompt;
+
     resolvedUserPrompt = llmControls.verbosityCap
-      ? sanitized.userPrompt.slice(0, llmControls.verbosityCap)
-      : sanitized.userPrompt;
-<<<<<<< ours
-=======
-
-    const resolvedUserPrompt = buildUserPrompt
-      ? buildUserPrompt(sanitized.context)
-      : sanitized.userPrompt;
-
-    trimmedUserPrompt = llmControls.verbosityCap
-      ? resolvedUserPrompt.slice(0, llmControls.verbosityCap)
-      : resolvedUserPrompt;
->>>>>>> theirs
-=======
->>>>>>> theirs
+      ? userPromptForModel.slice(0, llmControls.verbosityCap)
+      : userPromptForModel;
 
     await consumeRateLimit({
       tenantId: caller.tenantId,
@@ -449,13 +401,8 @@ export async function callLLM({
     const llmResult = await adapter.chatCompletion({
       model: resolvedModel,
       messages: [
-<<<<<<< ours
-        { role: 'system', content: resolvedSystemPrompt },
-        { role: 'user', content: resolvedUserPrompt },
-=======
         { role: "system", content: resolvedSystemPrompt },
-        { role: "user", content: trimmedUserPrompt },
->>>>>>> theirs
+        { role: "user", content: resolvedUserPrompt },
       ],
       temperature: 0.2,
       maxTokens: llmControls.maxTokens,
