@@ -16,7 +16,6 @@ import {
   resolveTradeoffs,
   tradeoffDeclarationSchema,
 } from "@/lib/matching/tradeoffs";
-import { formatTradeoffDeclaration, resolveTradeoffs, tradeoffDeclarationSchema } from "@/lib/matching/tradeoffs";
 
 export type RunExplainInput = {
   jobId: string;

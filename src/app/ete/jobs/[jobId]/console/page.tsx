@@ -12,13 +12,10 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import type { Explanation } from "@/lib/agents/explainEngine";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
-<<<<<<< ours
 import { extractTradeoffDefaultsFromScoring } from "@/lib/matching/tradeoffs";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
-=======
 import { isFeatureEnabled } from "@/lib/featureFlags";
 import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
->>>>>>> theirs
 
 type MatchResultWithCandidate = Prisma.MatchResultGetPayload<{
   include: { candidate: true };
@@ -176,11 +173,8 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
           agentState={agents}
           modeLabel={modeLabel}
           modeDescription={modeDescription}
-<<<<<<< ours
           defaultTradeoffs={defaultTradeoffs}
-=======
           showDecisionMomentCues={showDecisionMomentCues}
->>>>>>> theirs
         />
       </ETEClientLayout>
     </div>

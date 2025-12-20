@@ -41,8 +41,8 @@ export type JobConsoleProps = {
   }[];
   modeLabel: string;
   modeDescription?: string | null;
-<<<<<<< ours
   defaultTradeoffs: TradeoffDeclaration;
+  showDecisionMomentCues?: boolean;
 };
 
 type DecisionReceipt = {
@@ -61,6 +61,7 @@ type DecisionReceipt = {
   bullhornNote?: string;
   bullhornTarget?: "note" | "custom_field";
 <<<<<<< ours
+<<<<<<< ours
 =======
   showDecisionMomentCues?: boolean;
 >>>>>>> theirs
@@ -70,6 +71,8 @@ type DecisionReceipt = {
     alignment?: "accept" | "override" | "disagree";
     rationale?: string | null;
   };
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 };
 
@@ -163,6 +166,9 @@ const DEFAULT_DECISION_STATE: DecisionSnapshot = { favorited: false, removed: fa
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -196,6 +202,10 @@ function formatDecisionLabel(decisionType: DecisionReceipt["decisionType"]) {
   return labels[decisionType];
 }
 <<<<<<< ours
+<<<<<<< ours
+=======
+
+>>>>>>> theirs
 =======
 
 >>>>>>> theirs
@@ -206,8 +216,13 @@ function toDecisionConfidence(candidate?: JobConsoleCandidate): { score: number;
   return { score: normalized, band: candidate?.confidenceBand ?? null };
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 >>>>>>> theirs
 =======
+=======
+}
+
+>>>>>>> theirs
 type ChangeSource = AgentName | "MANUAL";
 
 type RecommendationDelta = { label: string; from: string; to: string };
@@ -322,6 +337,7 @@ function buildNarrative(agent: ChangeSource, deltas: RecommendationDelta[], shor
     assumptionShift: hints?.assumptionShift ?? defaultAssumptionByAgent[agent],
     whyMoved,
   };
+<<<<<<< ours
 >>>>>>> theirs
 =======
 }
@@ -405,6 +421,8 @@ function buildClientTrustArtifact(receipt: DecisionReceipt): ClientTrustArtifact
     monitoringPlan,
     clipboardText,
   };
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 }
 
@@ -1166,11 +1184,8 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     agentState,
     modeLabel,
     modeDescription,
-<<<<<<< ours
     defaultTradeoffs,
-=======
     showDecisionMomentCues = false,
->>>>>>> theirs
   } = props;
   const normalizeCandidate = (candidate: JobConsoleCandidate): JobConsoleCandidate => ({
     ...candidate,
@@ -1189,19 +1204,21 @@ export function JobExecutionConsole(props: JobConsoleProps) {
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
   const [decisionStreamId, setDecisionStreamId] = useState<string | null>(null);
   const [decisionStates, setDecisionStates] = useState<Record<string, DecisionSnapshot>>({});
-<<<<<<< ours
-<<<<<<< ours
   const [receiptsByCandidate, setReceiptsByCandidate] = useState<Record<string, DecisionReceipt[]>>({});
 <<<<<<< ours
+<<<<<<< ours
 =======
-  const [tradeoffs, setTradeoffs] = useState<TradeoffDeclaration>(defaultTradeoffs);
+=======
 >>>>>>> theirs
-=======
+  const [tradeoffs, setTradeoffs] = useState<TradeoffDeclaration>(defaultTradeoffs);
   const [changeLog, setChangeLog] = useState<RecommendationChange[]>([]);
+<<<<<<< ours
 >>>>>>> theirs
 =======
   const [decisionAnnotations, setDecisionAnnotations] = useState<Record<string, DecisionAnnotation>>({});
   const [decisionAnnotationErrors, setDecisionAnnotationErrors] = useState<Record<string, string | null>>({});
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
   const storageKey = useMemo(() => `ete-job-console-${jobId}`, [jobId]);
@@ -1505,12 +1522,16 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     },
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     [logDecision, persistDecisionReceipt],
 =======
     [logDecision, updateCandidatesWithDiff],
 >>>>>>> theirs
 =======
     [decisionAnnotations, logDecision, persistDecisionReceipt],
+>>>>>>> theirs
+=======
+    [logDecision, persistDecisionReceipt, updateCandidatesWithDiff],
 >>>>>>> theirs
   );
 
@@ -1550,30 +1571,6 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           }>;
         };
 
-<<<<<<< ours
-        setCandidates((prev) => {
-          const byId = new Map(prev.map((row) => [row.candidateId, row]));
-
-          for (const match of payload.matches) {
-            const existing = byId.get(match.candidateId);
-            const updated: JobConsoleCandidate = {
-              candidateId: match.candidateId,
-              candidateName: existing?.candidateName ?? `Candidate ${match.candidateId.slice(0, 6)}`,
-              score: Math.round(match.score),
-              confidenceScore: Math.round(match.confidence),
-              confidenceBand: normalizeBand(match.confidenceCategory) ?? normalizeBand(categorizeConfidence(match.confidence)),
-              shortlisted: existing?.shortlisted ?? false,
-              explanation:
-                existing?.explanation ??
-                normalizeExplanation(match.explanation ?? "Explanation not generated yet.", { summaryOnly: true }),
-            };
-
-            byId.set(match.candidateId, updated);
-          }
-
-          return Array.from(byId.values()).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-        });
-=======
         updateCandidatesWithDiff(
           "MATCH",
           (prev) => {
@@ -1584,11 +1581,12 @@ export function JobExecutionConsole(props: JobConsoleProps) {
               const updated: JobConsoleCandidate = {
                 candidateId: match.candidateId,
                 candidateName: existing?.candidateName ?? `Candidate ${match.candidateId.slice(0, 6)}`,
-                score: Math.round(match.matchScore),
+                score: Math.round(match.score),
                 confidenceScore: Math.round(match.confidence),
                 confidenceBand: normalizeBand(match.confidenceCategory) ?? normalizeBand(categorizeConfidence(match.confidence)),
                 shortlisted: existing?.shortlisted ?? false,
-                explanation: existing?.explanation ?? normalizeExplanation("Explanation not generated yet.", { summaryOnly: true }),
+                explanation:
+                  existing?.explanation ?? normalizeExplanation(match.explanation ?? "Explanation not generated yet.", { summaryOnly: true }),
               };
 
               byId.set(match.candidateId, updated);
@@ -1601,7 +1599,6 @@ export function JobExecutionConsole(props: JobConsoleProps) {
             assumptionShift: "Candidate similarity recalculated against refreshed role intent.",
           },
         );
->>>>>>> theirs
 
         setMessage(`MATCH completed. ${formatTradeoffDeclaration(tradeoffs)}.`);
         setLastUpdated(new Date());
@@ -1812,9 +1809,6 @@ export function JobExecutionConsole(props: JobConsoleProps) {
           </button>
         </div>
 
-<<<<<<< ours
-        <RecommendationDiffPanel changes={changeLog} onClear={() => setChangeLog([])} />
-=======
         {showDecisionMomentCues && visibleCandidates.length > 0 ? (
           <div className="flex flex-col gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
             <div className="flex items-center gap-2 font-semibold">
@@ -1827,7 +1821,8 @@ export function JobExecutionConsole(props: JobConsoleProps) {
             </ul>
           </div>
         ) : null}
->>>>>>> theirs
+
+        <RecommendationDiffPanel changes={changeLog} onClear={() => setChangeLog([])} />
 
         <ResultsTable
           candidates={visibleCandidates}
