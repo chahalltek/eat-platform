@@ -1,18 +1,9 @@
 "use client";
 
-import {
-  BoltIcon,
-  ChatBubbleLeftEllipsisIcon,
-  ClipboardDocumentCheckIcon,
-  ClipboardDocumentListIcon,
-  CommandLineIcon,
-  FunnelIcon,
-  MagnifyingGlassIcon,
-  ShieldCheckIcon,
-  TagIcon,
-} from "@heroicons/react/24/outline";
+import { BoltIcon, ChatBubbleLeftEllipsisIcon, CommandLineIcon, FunnelIcon, MagnifyingGlassIcon, ShieldCheckIcon, TagIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
 
+import { CopyButton } from "@/components/CopyButton";
 import type { TestCatalogItem } from "@/lib/testing/testCatalog";
 import { cn } from "@/lib/utils";
 
@@ -49,40 +40,6 @@ const QUICK_COMMANDS: QuickCommand[] = [
     command: "npm run ete:catalog",
   },
 ];
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch (error) {
-      console.error("Failed to copy", error);
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="relative inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-indigo-100 bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white dark:border-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-100"
-    >
-      {copied ? (
-        <>
-          <ClipboardDocumentCheckIcon className="h-4 w-4" />
-          <span className="whitespace-nowrap">Copied</span>
-        </>
-      ) : (
-        <>
-          <ClipboardDocumentListIcon className="h-4 w-4" />
-          <span className="whitespace-nowrap">{label}</span>
-        </>
-      )}
-    </button>
-  );
-}
 
 export function EteTestRunnerClient({
   catalog,
@@ -293,9 +250,9 @@ export function EteTestRunnerClient({
                       <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
                         <div className="flex items-center gap-2">
                           <ChatBubbleLeftEllipsisIcon className="h-4 w-4" />
-                          Slack-ready snippet
+                          IM-ready snippet
                         </div>
-                        <CopyButton text={item.slackSnippet} label="Copy Slack snippet" />
+                        <CopyButton text={item.slackSnippet} label="Copy IM snippet" />
                       </div>
                       <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.slackSnippet}</pre>
                     </div>

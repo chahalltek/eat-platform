@@ -1,16 +1,9 @@
 "use client";
 
-import {
-  ArrowPathIcon,
-  BeakerIcon,
-  ClipboardDocumentCheckIcon,
-  ClipboardDocumentListIcon,
-  FireIcon,
-  FunnelIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BeakerIcon, FireIcon, FunnelIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
+import { CopyButton } from "@/components/CopyButton";
 import { cn } from "@/lib/utils";
 
 interface QuickCommand {
@@ -38,51 +31,6 @@ interface AdminEteTestsClientProps {
   tests: TestCatalogItem[];
   isVercelLimited?: boolean;
   clipboard?: Pick<Clipboard, "writeText">;
-}
-
-function CopyButton({
-  text,
-  label,
-  clipboard,
-}: {
-  text: string;
-  label: string;
-  clipboard?: Pick<Clipboard, "writeText">;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    const activeClipboard = clipboard ?? navigator?.clipboard;
-    if (!activeClipboard?.writeText) return;
-
-    try {
-      await activeClipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch (error) {
-      console.error("Failed to copy command", error);
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="relative inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-indigo-100 bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white dark:border-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-100"
-    >
-      {copied ? (
-        <>
-          <ClipboardDocumentCheckIcon className="h-4 w-4" />
-          <span className="whitespace-nowrap">Copied</span>
-        </>
-      ) : (
-        <>
-          <ClipboardDocumentListIcon className="h-4 w-4" />
-          <span className="whitespace-nowrap">{label}</span>
-        </>
-      )}
-    </button>
-  );
 }
 
 function FilterPill({
