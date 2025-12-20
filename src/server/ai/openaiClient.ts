@@ -4,9 +4,10 @@ import { type ChatCompletionMessageParam } from "openai/resources/chat/completio
 import {
 <<<<<<< ours
 <<<<<<< ours
-  ChatCompletionParams,
+<<<<<<< ours
 =======
 >>>>>>> theirs
+  ChatCompletionParams,
   ChatMessage,
   formatEmptyResponseError,
   type ChatCompletionResult,
@@ -28,8 +29,8 @@ export class OpenAIChatAdapter implements OpenAIAdapter {
     messages,
     temperature,
     maxTokens,
-<<<<<<< ours
   }: ChatCompletionParams): Promise<ChatCompletionResult> {
+<<<<<<< ours
 =======
   }: {
     model: string;
@@ -38,6 +39,8 @@ export class OpenAIChatAdapter implements OpenAIAdapter {
     maxTokens?: number;
   }): Promise<ChatCompletionResult> {
 <<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
