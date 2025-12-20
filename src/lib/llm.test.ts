@@ -50,7 +50,7 @@ describe('callLLM legacy wrapper', () => {
       expect(userMessage).toContain('"tenant":{"name":"Acme Corp","domainTags":["finance","cloud"]}');
       expect(userMessage).not.toContain('secretToken');
 
-      return 'ok';
+      return { content: 'ok' };
     });
 
     const adapter: OpenAIAdapter = {

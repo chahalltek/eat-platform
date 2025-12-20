@@ -5,11 +5,16 @@ import { recordAuditEvent } from '@/lib/audit/trail';
 import { getCurrentUser, getUserRoles } from '@/lib/auth/user';
 import { type UserRole } from '@/lib/auth/roles';
 import { AIFailureError } from '@/lib/errors';
-import { ChatMessage, OpenAIAdapter, formatEmptyResponseError } from '@/lib/llm/openaiAdapter';
+import {
+  ChatMessage,
+  OpenAIAdapter,
+  formatEmptyResponseError,
+  type ChatCompletionResult,
+  type ChatCompletionUsage,
+} from '@/lib/llm/openaiAdapter';
 import { assertLlmUsageAllowed, LLMUsageRestrictedError } from '@/lib/llm/tenantControls';
 import { recordCostEvent } from '@/lib/cost/events';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from '@/lib/rateLimiting/rateLimiter';
-import { enforceLimits, type SafeLLMContext } from '@/server/ai/safety/limits';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { redactAny } from '@/server/ai/safety/redact';
 import { buildSafeLLMContext, type SafeLLMContext, type SafeLLMContextInput } from '@/server/ai/safety/safeContext';
@@ -25,12 +30,15 @@ export type CallLLMParams = {
   capability?: GatewayCapability;
   approvalToken?: string;
   redactResult?: boolean;
-<<<<<<< ours
   context?: SafeLLMContextInput | SafeLLMContext;
-=======
-  context?: SafeLLMContext;
-  buildUserPrompt?: (context: SafeLLMContext) => string;
->>>>>>> theirs
+};
+
+type LlmLogLevel = 'metadata' | 'redacted' | 'off';
+
+type LlmLogConfig = {
+  level: LlmLogLevel;
+  promptLoggingEnabled: boolean;
+  promptTtlMs: number;
 };
 
 class OpenAIChatAdapter implements OpenAIAdapter {
@@ -41,7 +49,7 @@ class OpenAIChatAdapter implements OpenAIAdapter {
     messages: ChatMessage[];
     temperature: number;
     maxTokens?: number;
-  }): Promise<string> {
+  }): Promise<ChatCompletionResult> {
     if (!this.apiKey) {
       throw new Error('OPENAI_API_KEY is not configured');
     }
@@ -58,15 +66,37 @@ class OpenAIChatAdapter implements OpenAIAdapter {
       throw formatEmptyResponseError();
     }
 
-    return content;
+    const usage = response.usage
+      ? {
+          promptTokens: response.usage.prompt_tokens ?? null,
+          completionTokens: response.usage.completion_tokens ?? null,
+          totalTokens: response.usage.total_tokens ?? null,
+        }
+      : undefined;
+
+    return { content, usage };
   }
 }
 
 const EXECUTION_ENABLED = process.env.EXECUTION_ENABLED === 'true';
+const DEFAULT_LOG_TTL_HOURS = 24;
 
 function redactSnippet(value?: string | null) {
   if (!value) return null;
   return value.length > 120 ? `${value.slice(0, 117)}...` : value;
+}
+
+function resolveLoggingConfig(env: NodeJS.ProcessEnv = process.env): LlmLogConfig {
+  const allowedLevels: LlmLogLevel[] = ['metadata', 'redacted', 'off'];
+  const envLevel = env.LLM_LOG_LEVEL as LlmLogLevel | undefined;
+  const level: LlmLogLevel = allowedLevels.includes(envLevel ?? 'metadata') ? envLevel ?? 'metadata' : 'metadata';
+  const promptLoggingEnabled = env.LLM_LOG_PROMPTS === 'true';
+  const ttlHours = Number(env.LLM_LOG_TTL_HOURS ?? DEFAULT_LOG_TTL_HOURS);
+  const promptTtlMs = Number.isFinite(ttlHours) && ttlHours > 0
+    ? ttlHours * 60 * 60 * 1000
+    : DEFAULT_LOG_TTL_HOURS * 60 * 60 * 1000;
+
+  return { level, promptLoggingEnabled, promptTtlMs };
 }
 
 type SanitizeOutboundParams = {
@@ -100,7 +130,7 @@ function ensureRequestIdentifiers(
   } satisfies SafeLLMContextInput;
 }
 
-function enforceLimits<T>(value: T, { verbosityCap }: { verbosityCap?: number } = {}): T {
+function enforceVerbosityCap<T>(value: T, verbosityCap?: number): T {
   if (!verbosityCap) return value;
 
   const clamp = (entry: unknown): unknown => {
@@ -135,7 +165,7 @@ export function sanitizeOutbound({
   const contextWithIds = ensureRequestIdentifiers(contextInput);
   const safeContext = buildSafeLLMContext(contextWithIds);
   const redactedContext = redactAny(safeContext) as SafeLLMContext;
-  const limitedContext = enforceLimits(redactedContext, { verbosityCap });
+  const limitedContext = enforceVerbosityCap(redactedContext, verbosityCap);
 
   return {
     context: limitedContext,
@@ -174,6 +204,13 @@ function assertWriteCapabilityAllowed(capability: GatewayCapability, approvalTok
   }
 }
 
+function toRedactedLogValue(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const scrubbed = redactAny(value);
+  const asString = typeof scrubbed === 'string' ? scrubbed : JSON.stringify(scrubbed);
+  return redactSnippet(asString);
+}
+
 async function recordAIAuditEvent({
   userId,
   tenantId,
@@ -187,6 +224,12 @@ async function recordAIAuditEvent({
   roles,
   result,
   redactResult,
+  logConfig,
+  usage,
+  latencyMs,
+  purpose,
+  rawSystemPrompt,
+  rawUserPrompt,
 }: {
   userId: string;
   tenantId: string;
@@ -200,7 +243,18 @@ async function recordAIAuditEvent({
   roles: UserRole[];
   result: string | null;
   redactResult: boolean;
+  logConfig: LlmLogConfig;
+  usage?: ChatCompletionUsage | null;
+  latencyMs?: number;
+  purpose?: SafeLLMContext['purpose'];
+  rawSystemPrompt?: string;
+  rawUserPrompt?: string;
 }) {
+  const shouldLogPrompts = logConfig.promptLoggingEnabled && logConfig.level === 'redacted';
+  const redactedResult = redactResult ? toRedactedLogValue(result) : null;
+  const systemForLog = rawSystemPrompt ?? systemPrompt;
+  const userForLog = rawUserPrompt ?? userPrompt;
+
   try {
     await recordAuditEvent({
       userId,
@@ -214,11 +268,31 @@ async function recordAIAuditEvent({
         approvalTokenProvided: Boolean(approvalToken),
         status,
         role: roles[0] ?? null,
-        prompts: {
-          system: redactSnippet(systemPrompt),
-          user: redactSnippet(userPrompt),
+        promptLogLevel: logConfig.level,
+        promptLoggingEnabled: shouldLogPrompts,
+        promptLengths: {
+          system: systemPrompt.length,
+          user: userPrompt.length,
+          result: result?.length ?? null,
         },
-        resultPreview: result ? (redactResult ? redactSnippet(result) : result) : null,
+        prompts: shouldLogPrompts
+          ? {
+              system: toRedactedLogValue(systemForLog),
+              user: toRedactedLogValue(userForLog),
+              result: redactedResult,
+              promptExpiresAt: new Date(Date.now() + logConfig.promptTtlMs).toISOString(),
+              promptTtlMs: logConfig.promptTtlMs,
+            }
+          : undefined,
+        usage: usage
+          ? {
+              promptTokens: usage.promptTokens ?? null,
+              completionTokens: usage.completionTokens ?? null,
+              totalTokens: usage.totalTokens ?? null,
+            }
+          : undefined,
+        latencyMs: latencyMs ?? null,
+        purpose: purpose ?? null,
       },
     });
   } catch (error) {
@@ -236,27 +310,17 @@ export async function callLLM({
   approvalToken,
   redactResult = true,
   context,
-<<<<<<< ours
-=======
-  buildUserPrompt,
->>>>>>> theirs
 }: CallLLMParams): Promise<string> {
-  const contextWithIds = ensureRequestIdentifiers(context);
   const caller = await resolveCaller();
+  const logConfig = resolveLoggingConfig();
+  const startedAt = Date.now();
   let response: string | null = null;
   let status: 'success' | 'failure' = 'success';
   let resolvedModel = model ?? 'unknown';
-<<<<<<< ours
-<<<<<<< ours
-  let trimmedUserPrompt = resolvedUserPrompt;
-=======
-  let trimmedUserPrompt = userPrompt;
-  const safeContext = context ? enforceLimits(context) : undefined;
->>>>>>> theirs
-=======
   let resolvedSystemPrompt = '';
-  let trimmedUserPrompt = '';
->>>>>>> theirs
+  let resolvedUserPrompt = '';
+  let sanitized: SanitizedOutbound | null = null;
+  let usage: ChatCompletionUsage | null = null;
 
   try {
     assertWriteCapabilityAllowed(capability, approvalToken);
@@ -268,33 +332,17 @@ export async function callLLM({
       throw new LLMUsageRestrictedError('Requested model is not permitted for this tenant.');
     }
 
-<<<<<<< ours
-<<<<<<< ours
-    trimmedUserPrompt = llmControls.verbosityCap
-      ? resolvedUserPrompt.slice(0, llmControls.verbosityCap)
-      : resolvedUserPrompt;
-=======
-    const rawUserPrompt = safeContext && buildUserPrompt
-      ? buildUserPrompt(safeContext)
-      : userPrompt;
->>>>>>> theirs
-
-    trimmedUserPrompt = llmControls.verbosityCap
-      ? rawUserPrompt.slice(0, llmControls.verbosityCap)
-      : rawUserPrompt;
-=======
-    const sanitized = sanitizeOutbound({
-      contextInput: contextWithIds,
+    sanitized = sanitizeOutbound({
+      contextInput: context,
       systemPrompt,
       userPrompt,
       verbosityCap: llmControls.verbosityCap,
     });
 
     resolvedSystemPrompt = sanitized.systemPrompt;
-    trimmedUserPrompt = llmControls.verbosityCap
+    resolvedUserPrompt = llmControls.verbosityCap
       ? sanitized.userPrompt.slice(0, llmControls.verbosityCap)
       : sanitized.userPrompt;
->>>>>>> theirs
 
     await consumeRateLimit({
       tenantId: caller.tenantId,
@@ -302,15 +350,20 @@ export async function callLLM({
       action: RATE_LIMIT_ACTIONS.AGENT_RUN,
     });
 
-    response = await adapter.chatCompletion({
+    const llmResult = await adapter.chatCompletion({
       model: resolvedModel,
       messages: [
         { role: 'system', content: resolvedSystemPrompt },
-        { role: 'user', content: trimmedUserPrompt },
+        { role: 'user', content: resolvedUserPrompt },
       ],
       temperature: 0.2,
       maxTokens: llmControls.maxTokens,
     });
+
+    response = llmResult.content;
+    usage = llmResult.usage ?? null;
+
+    const latencyMs = Date.now() - startedAt;
 
     void recordCostEvent({
       tenantId: caller.tenantId,
@@ -319,7 +372,15 @@ export async function callLLM({
       unit: 'call',
       sku: resolvedModel,
       feature: agent,
-      metadata: { userId: caller.userId },
+      metadata: {
+        userId: caller.userId,
+        model: resolvedModel,
+        promptTokens: usage?.promptTokens ?? null,
+        completionTokens: usage?.completionTokens ?? null,
+        totalTokens: usage?.totalTokens ?? null,
+        latencyMs,
+        purpose: sanitized?.context.purpose ?? null,
+      },
     });
 
     return response;
@@ -347,9 +408,15 @@ export async function callLLM({
       status,
       roles: caller.roles,
       systemPrompt: resolvedSystemPrompt,
-      userPrompt: trimmedUserPrompt,
+      userPrompt: resolvedUserPrompt,
       result: response,
       redactResult,
+      logConfig,
+      usage,
+      latencyMs: Date.now() - startedAt,
+      purpose: sanitized?.context.purpose,
+      rawSystemPrompt: sanitized?.systemPrompt,
+      rawUserPrompt: sanitized?.userPrompt,
     });
   }
 }

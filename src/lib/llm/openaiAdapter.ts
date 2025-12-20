@@ -20,8 +20,19 @@ export type ChatCompletionParams = {
   maxTokens?: number;
 };
 
+export type ChatCompletionUsage = {
+  promptTokens?: number | null;
+  completionTokens?: number | null;
+  totalTokens?: number | null;
+};
+
+export type ChatCompletionResult = {
+  content: string;
+  usage?: ChatCompletionUsage;
+};
+
 export interface OpenAIAdapter {
-  chatCompletion(params: ChatCompletionParams): Promise<string>;
+  chatCompletion(params: ChatCompletionParams): Promise<ChatCompletionResult>;
 }
 
 export function formatEmptyResponseError(): Error {

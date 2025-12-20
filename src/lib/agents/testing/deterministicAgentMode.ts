@@ -36,7 +36,7 @@ export function enableDeterministicAgentMode(
 
   const llmMock = vi.fn(async ({ agent, adapter, systemPrompt, userPrompt }: CallLLMParams) => {
     if (adapter) {
-      return adapter.chatCompletion({
+      const result = await adapter.chatCompletion({
         model: 'deterministic-mock-model',
         temperature: 0,
         messages: [
@@ -44,6 +44,8 @@ export function enableDeterministicAgentMode(
           { role: 'user', content: userPrompt },
         ],
       });
+
+      return result.content;
     }
 
     const fixture = options.llmFixtures?.[agent];

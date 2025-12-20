@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/auth/user", () => ({
   getCurrentUser: vi.fn().mockResolvedValue({ id: "user-1" }),
@@ -47,18 +47,36 @@ vi.mock("crypto", async () => {
 });
 
 describe("callLLM sanitize pipeline", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-  });
+    delete process.env.LLM_LOG_PROMPTS;
+    delete process.env.LLM_LOG_LEVEL;
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+    const { getCurrentUser, getUserRoles } = await import("@/lib/auth/user");
+    const { assertLlmUsageAllowed } = await import("@/lib/llm/tenantControls");
+    const { consumeRateLimit } = await import("@/lib/rateLimiting/rateLimiter");
+    const { recordAuditEvent } = await import("@/lib/audit/trail");
+    const { recordCostEvent } = await import("@/lib/cost/events");
+
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: "user-1" });
+    vi.mocked(getUserRoles).mockResolvedValue(["ADMIN"]);
+    vi.mocked(assertLlmUsageAllowed).mockResolvedValue({
+      provider: "openai",
+      allowedAgents: ["TEST"],
+      model: "gpt-safe",
+      verbosityCap: 10,
+      maxTokens: 50,
+      providerReady: true,
+    });
+    vi.mocked(consumeRateLimit).mockResolvedValue(undefined);
+    vi.mocked(recordAuditEvent).mockResolvedValue(undefined as never);
+    vi.mocked(recordCostEvent).mockResolvedValue?.(undefined as never);
   });
 
   it("routes outbound calls through sanitizeOutbound before hitting the adapter", async () => {
     const { callLLM } = await import("./gateway");
     const adapter = {
-      chatCompletion: vi.fn().mockResolvedValue("ok"),
+      chatCompletion: vi.fn().mockResolvedValue({ content: "ok" }),
     };
 
     await callLLM({
@@ -79,5 +97,61 @@ describe("callLLM sanitize pipeline", () => {
       { role: "user", content: "User uuid-" },
     ]);
     expect(callArgs?.messages?.[0]?.content).not.toContain("secret@example.com");
+  });
+
+  it("omits prompt content from audit metadata when logging is disabled", async () => {
+    const { callLLM } = await import("./gateway");
+    const adapter = {
+      chatCompletion: vi.fn().mockResolvedValue({ content: "ok" }),
+    };
+    const { recordAuditEvent } = await import("@/lib/audit/trail");
+    const { recordCostEvent } = await import("@/lib/cost/events");
+
+    await callLLM({
+      systemPrompt: "system prompt",
+      userPrompt: "user prompt",
+      adapter,
+      agent: "TEST",
+      context: { purpose: "EXPLAIN" },
+    });
+
+    const auditArgs = vi.mocked(recordAuditEvent).mock.calls[0]?.[0];
+    expect(auditArgs?.metadata?.promptLoggingEnabled).toBe(false);
+    expect(auditArgs?.metadata?.prompts).toBeUndefined();
+    expect(JSON.stringify(auditArgs?.metadata ?? {})).not.toContain("user prompt");
+
+    const costArgs = vi.mocked(recordCostEvent).mock.calls[0]?.[0];
+    expect(costArgs?.metadata).toEqual(
+      expect.objectContaining({
+        model: "gpt-safe",
+        latencyMs: expect.any(Number),
+        purpose: "EXPLAIN",
+        promptTokens: null,
+      }),
+    );
+  });
+
+  it("records redacted prompts when explicitly enabled", async () => {
+    process.env.LLM_LOG_PROMPTS = "true";
+    process.env.LLM_LOG_LEVEL = "redacted";
+
+    const { callLLM } = await import("./gateway");
+    const adapter = {
+      chatCompletion: vi.fn().mockResolvedValue({ content: "ok" }),
+    };
+    const { recordAuditEvent } = await import("@/lib/audit/trail");
+
+    await callLLM({
+      systemPrompt: "system prompt",
+      userPrompt: "user secret@example.com prompt",
+      adapter,
+      agent: "TEST",
+      context: { purpose: "EXPLAIN" },
+    });
+
+    const auditArgs = vi.mocked(recordAuditEvent).mock.calls[0]?.[0];
+    expect(auditArgs?.metadata?.promptLoggingEnabled).toBe(true);
+    expect(auditArgs?.metadata?.prompts?.user).toContain("[REDACTED_EMAIL]");
+    expect(auditArgs?.metadata?.prompts?.promptExpiresAt).toBeDefined();
   });
 });

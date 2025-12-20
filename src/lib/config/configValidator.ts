@@ -39,6 +39,19 @@ const EnvSchema = z.object({
     .optional(),
   NEXT_PUBLIC_ETE_BRAND_HEADER_TEXT: z.string().optional(),
   DEFAULT_FEATURE_FLAGS: z.string().optional(),
+  LLM_LOG_PROMPTS: z
+    .union([z.enum(["true", "false"]), z.boolean()])
+    .optional()
+    .default("false")
+    .transform((value) => value === true || value === "true"),
+  LLM_LOG_LEVEL: z.preprocess(
+    (value) => (value === undefined || value === "" ? undefined : value),
+    z.enum(["metadata", "redacted", "off"]).default("metadata"),
+  ),
+  LLM_LOG_TTL_HOURS: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().positive().optional(),
+  ),
 });
 
 const ConfigSchema = EnvSchema.superRefine((value, ctx) => {

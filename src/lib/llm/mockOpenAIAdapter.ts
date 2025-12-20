@@ -1,4 +1,4 @@
-import { ChatCompletionParams, OpenAIAdapter } from '@/lib/llm/openaiAdapter';
+import { ChatCompletionParams, OpenAIAdapter, type ChatCompletionResult } from '@/lib/llm/openaiAdapter';
 
 type MockResponse = string | (() => string | Promise<string>);
 
@@ -15,7 +15,7 @@ export class MockOpenAIAdapter implements OpenAIAdapter {
     this.calls.length = 0;
   }
 
-  async chatCompletion(params: ChatCompletionParams): Promise<string> {
+  async chatCompletion(params: ChatCompletionParams): Promise<ChatCompletionResult> {
     this.calls.push(params);
 
     const next = this.responses.shift();
@@ -24,6 +24,6 @@ export class MockOpenAIAdapter implements OpenAIAdapter {
     }
 
     const value = typeof next === 'function' ? await next() : next;
-    return value;
+    return { content: value };
   }
 }
