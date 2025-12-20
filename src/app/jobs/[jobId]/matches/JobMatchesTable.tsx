@@ -836,6 +836,29 @@ type ExplainAgentPanelProps = {
 function ExplainAgentPanel({ isLoading, result, match, onClose, error, jobTitle }: ExplainAgentPanelProps) {
   const explanation = result ?? normalizeMatchExplanation(match.explanation);
   const skillOverlap = explanation.skillOverlapMap ?? [];
+  const [clientReadyMode, setClientReadyMode] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+
+  const clientReady = useMemo(
+    () => buildClientReadyNarrative({ explanation, match, jobTitle }),
+    [explanation, jobTitle, match],
+  );
+
+  const handleCopyClientReady = useCallback(async () => {
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        throw new Error("Clipboard API not available");
+      }
+
+      await navigator.clipboard.writeText(clientReady.copyText);
+      setCopyState("copied");
+      setTimeout(() => setCopyState("idle"), 1500);
+    } catch (err) {
+      console.error("Failed to copy client-ready explanation", err);
+      setCopyState("error");
+      setTimeout(() => setCopyState("idle"), 2000);
+    }
+  }, [clientReady.copyText]);
 
   return (
     <div className="fixed inset-0 z-20 flex justify-end bg-black/30">
@@ -874,7 +897,9 @@ function ExplainAgentPanel({ isLoading, result, match, onClose, error, jobTitle 
               </div>
               <div>
                 <dt className="text-gray-600">Match score</dt>
-                <dd className="font-semibold text-gray-900">{match.score ?? "—"}</dd>
+                <dd className="font-semibold text-gray-900">
+                  {clientReadyMode ? "Not shared in client-ready mode" : match.score ?? "—"}
+                </dd>
               </div>
             </dl>
             <div className="space-y-1">
@@ -910,76 +935,192 @@ function ExplainAgentPanel({ isLoading, result, match, onClose, error, jobTitle 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Agent-generated insight</p>
-              {isLoading ? <span className="text-xs text-blue-700">Calling /api/agents/explain…</span> : null}
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 text-[11px] font-semibold text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={clientReadyMode}
+                    onChange={(event) => setClientReadyMode(event.target.checked)}
+                  />
+                  Client-ready mode
+                </label>
+                <button
+                  type="button"
+                  onClick={handleCopyClientReady}
+                  className="rounded border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100"
+                >
+                  {copyState === "copied" ? "Copied" : copyState === "error" ? "Copy failed" : "Copy client brief"}
+                </button>
+                {isLoading ? <span className="text-xs text-blue-700">Calling /api/agents/explain…</span> : null}
+              </div>
             </div>
 
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-            <div className="space-y-2 rounded-md border border-gray-200 p-4">
-              <p className="text-sm font-semibold text-gray-900">Top reasons</p>
-              {explanation.topReasons.length === 0 ? (
-                <p className="text-sm text-gray-800">{isLoading ? "Generating reasons..." : "No reasons available."}</p>
-              ) : (
-                <ul className="list-inside list-disc space-y-1 text-sm text-gray-800">
-                  {explanation.topReasons.map((reason, idx) => (
-                    <li key={`${match.id}-top-reason-${idx}`}>{reason}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            {clientReadyMode ? (
+              <ClientReadyView clientReady={clientReady} />
+            ) : (
+              <>
+                <div className="space-y-2 rounded-md border border-gray-200 p-4">
+                  <p className="text-sm font-semibold text-gray-900">Top reasons</p>
+                  {explanation.topReasons.length === 0 ? (
+                    <p className="text-sm text-gray-800">{isLoading ? "Generating reasons..." : "No reasons available."}</p>
+                  ) : (
+                    <ul className="list-inside list-disc space-y-1 text-sm text-gray-800">
+                      {explanation.topReasons.map((reason, idx) => (
+                        <li key={`${match.id}-top-reason-${idx}`}>{reason}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2 rounded-md border border-green-200 bg-green-50 p-4">
-                <p className="text-sm font-semibold text-green-800">Skill overlap</p>
-                {skillOverlap.length === 0 ? (
-                  <p className="text-sm text-green-800">{isLoading ? "Collecting overlap..." : "No overlap recorded."}</p>
-                ) : (
-                  <ul className="space-y-1 text-sm text-green-800">
-                    {skillOverlap.map((entry) => (
-                      <li key={`${match.id}-${entry.skill}-${entry.importance}-${entry.status}`}>{`${entry.skill} (${entry.importance}) - ${entry.status}`}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2 rounded-md border border-green-200 bg-green-50 p-4">
+                    <p className="text-sm font-semibold text-green-800">Skill overlap</p>
+                    {skillOverlap.length === 0 ? (
+                      <p className="text-sm text-green-800">{isLoading ? "Collecting overlap..." : "No overlap recorded."}</p>
+                    ) : (
+                      <ul className="space-y-1 text-sm text-green-800">
+                        {skillOverlap.map((entry) => (
+                          <li key={`${match.id}-${entry.skill}-${entry.importance}-${entry.status}`}>{`${entry.skill} (${entry.importance}) - ${entry.status}`}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
 
-              <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-4">
-                <p className="text-sm font-semibold text-amber-800">Risk areas</p>
-                {explanation.riskAreas.length === 0 ? (
-                  <p className="text-sm text-amber-800">{isLoading ? "Identifying risks..." : "No risks flagged."}</p>
-                ) : (
-                  <ul className="list-inside list-disc space-y-1 text-sm text-amber-800">
-                    {explanation.riskAreas.map((item, idx) => (
-                      <li key={`${match.id}-risk-${idx}`}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
+                  <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-semibold text-amber-800">Risk areas</p>
+                    {explanation.riskAreas.length === 0 ? (
+                      <p className="text-sm text-amber-800">{isLoading ? "Identifying risks..." : "No risks flagged."}</p>
+                    ) : (
+                      <ul className="list-inside list-disc space-y-1 text-sm text-amber-800">
+                        {explanation.riskAreas.map((item, idx) => (
+                          <li key={`${match.id}-risk-${idx}`}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
 
-            <div className="space-y-2 rounded-md border border-gray-200 p-4">
-              <p className="text-sm font-semibold text-gray-900">Missing skills</p>
-              {explanation.missingSkills.length === 0 ? (
-                <p className="text-sm text-gray-800">{isLoading ? "Analyzing skills..." : "No missing skills noted."}</p>
-              ) : (
-                <ul className="list-inside list-disc space-y-1 text-sm text-gray-800">
-                  {explanation.missingSkills.map((skill, idx) => (
-                    <li key={`${match.id}-missing-${idx}`}>{skill}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                <div className="space-y-2 rounded-md border border-gray-200 p-4">
+                  <p className="text-sm font-semibold text-gray-900">Missing skills</p>
+                  {explanation.missingSkills.length === 0 ? (
+                    <p className="text-sm text-gray-800">{isLoading ? "Analyzing skills..." : "No missing skills noted."}</p>
+                  ) : (
+                    <ul className="list-inside list-disc space-y-1 text-sm text-gray-800">
+                      {explanation.missingSkills.map((skill, idx) => (
+                        <li key={`${match.id}-missing-${idx}`}>{skill}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
-            <div className="space-y-1">
-              <div className="font-semibold text-gray-900">Human-ready summary</div>
-              <textarea
-                readOnly
-                className="w-full rounded border border-gray-200 bg-white p-2 text-xs text-gray-800"
-                rows={3}
-                value={explanation.exportableText}
-              />
-            </div>
+                <div className="space-y-1">
+                  <div className="font-semibold text-gray-900">Human-ready summary</div>
+                  <textarea
+                    readOnly
+                    className="w-full rounded border border-gray-200 bg-white p-2 text-xs text-gray-800"
+                    rows={3}
+                    value={explanation.exportableText}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function buildClientReadyNarrative({
+  explanation,
+  match,
+  jobTitle,
+}: {
+  explanation: ReturnType<typeof normalizeMatchExplanation>;
+  match: MatchRow;
+  jobTitle: string;
+}) {
+  const confidence = match.confidenceCategory ?? categorizeConfidence(match.confidenceScore);
+  const cleanedReasons = explanation.topReasons.map(cleanExternalPhrase).filter(Boolean);
+  const cleanedRisks = explanation.riskAreas.map(cleanExternalPhrase).filter(Boolean);
+  const missingSkills = explanation.missingSkills.map((skill) => `Will need to confirm experience with ${skill}.`);
+
+  const rationale = cleanedReasons.length > 0 ? cleanedReasons : ["Relevant background aligns with the role requirements."];
+  const tradeoffs = [...cleanedRisks, ...missingSkills];
+  const tradeoffList =
+    tradeoffs.length > 0 ? tradeoffs : ["No major gaps detected; validate details during the conversation."];
+
+  const confidenceLine = confidence
+    ? `${confidence} confidence based on current profile signals.`
+    : "Confidence based on current profile signals.";
+
+  const copyText = [
+    `${match.candidateName} for ${jobTitle}`,
+    `Summary: ${rationale[0]}`,
+    `Rationale:\n- ${rationale.join("\n- ")}`,
+    `Tradeoffs:\n- ${tradeoffList.join("\n- ")}`,
+    `Confidence: ${confidenceLine}`,
+  ].join("\n\n");
+
+  return {
+    headline: rationale[0],
+    rationale,
+    tradeoffs: tradeoffList,
+    confidence: confidenceLine,
+    copyText,
+  };
+}
+
+function cleanExternalPhrase(value: string) {
+  return value
+    .replace(/\b\d+(\.\d+)?%/g, "")
+    .replace(/\bscore[s]?\b/gi, "fit")
+    .replace(/\bsignal[s]?\b/gi, "evidence")
+    .replace(/\b(weight|weighted|weights)\b/gi, "importance")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:])/g, "$1")
+    .trim();
+}
+
+function ClientReadyView({ clientReady }: { clientReady: ReturnType<typeof buildClientReadyNarrative> }) {
+  return (
+    <div className="space-y-3 rounded-md border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900">
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Client-ready brief</p>
+        <p className="font-semibold text-indigo-900">{clientReady.headline}</p>
+        <p className="text-xs text-indigo-700">Cleansed language with rationale, tradeoffs, and confidence for external audiences.</p>
+      </div>
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-indigo-900">Rationale</p>
+        <ul className="list-inside list-disc space-y-1">
+          {clientReady.rationale.map((item, index) => (
+            <li key={`client-ready-rationale-${index}`}>{item}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-indigo-900">Tradeoffs</p>
+        <ul className="list-inside list-disc space-y-1">
+          {clientReady.tradeoffs.map((item, index) => (
+            <li key={`client-ready-tradeoff-${index}`}>{item}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="space-y-1 rounded border border-indigo-100 bg-white p-3 text-indigo-900">
+        <p className="text-sm font-semibold">Confidence</p>
+        <p className="text-sm">{clientReady.confidence}</p>
+      </div>
+      <div className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Copy-ready text</p>
+        <textarea
+          readOnly
+          className="w-full rounded border border-indigo-100 bg-white p-2 text-xs text-indigo-900"
+          rows={5}
+          value={clientReady.copyText}
+        />
       </div>
     </div>
   );
