@@ -3,7 +3,7 @@
 import { runRina } from '@/lib/agents/rina';
 import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
 import { MockOpenAIAdapter } from '@/lib/llm/mockOpenAIAdapter';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { resetIdentityProvider, setIdentityProvider } from '@/lib/auth/identityProvider';
 import { USER_ROLES } from '@/lib/auth/roles';
 
@@ -27,7 +27,7 @@ vi.mock('@/lib/llm/tenantControls', () => {
   };
 });
 
-vi.mock('@/server/db', () => ({
+vi.mock('@/server/db/prisma', () => ({
   prisma: {
     agentPrompt: {
       findUnique: vi.fn(async () => null),

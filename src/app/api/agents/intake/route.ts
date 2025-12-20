@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import type { UsageEventType } from '@/server/db';
+import type { UsageEventType } from '@/server/db/prisma';
 
 import { callLLM } from '@/lib/llm';
 import { requireRole } from '@/lib/auth/requireRole';

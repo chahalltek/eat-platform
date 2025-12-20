@@ -1,6 +1,6 @@
-import type { Prisma } from "@/server/db";
+import type { Prisma } from "@/server/db/prisma";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export type MetricEventType =
   | "JOB_CREATED"

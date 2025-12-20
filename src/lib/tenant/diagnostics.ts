@@ -1,4 +1,4 @@
-import { AgentRunStatus, Prisma, TenantDeletionMode, type SubscriptionPlan, type Tenant } from "@/server/db";
+import { AgentRunStatus, Prisma, TenantDeletionMode, type SubscriptionPlan, type Tenant } from "@/server/db/prisma";
 
 import { getAppConfig } from "@/lib/config/configValidator";
 import { FEATURE_FLAGS, type FeatureFlagName } from "@/lib/featureFlags/constants";
@@ -6,7 +6,7 @@ import { isFeatureEnabledForTenant } from "@/lib/featureFlags";
 import { getRateLimitDefaults, getRateLimitPlanOverrides, type RateLimitConfig, type RateLimitPlanOverrides } from "@/lib/rateLimiting/rateLimiter";
 import type { SystemModeName } from "@/lib/modes/systemModes";
 import { getTenantPlan } from "@/lib/subscriptionPlans";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { resolveRetentionPolicy } from "@/lib/retention";
 import { DEFAULT_GUARDRAILS, loadTenantGuardrailConfig } from "@/lib/guardrails/config";
 import {

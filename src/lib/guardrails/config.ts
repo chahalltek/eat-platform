@@ -1,5 +1,5 @@
 import { TS_CONFIG } from "@/config/ts";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export type GuardrailConfig = {
   matcherMinScore: number;

@@ -1,6 +1,6 @@
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
 import type { SystemModeName } from "@/lib/modes/systemModes";
-import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db";
+import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db/prisma";
 
 const fallbackRuntimeModes = new Map<string, SystemModeName>();
 

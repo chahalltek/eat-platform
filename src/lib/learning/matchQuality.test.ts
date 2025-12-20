@@ -14,7 +14,7 @@ const prisma = vi.hoisted(() => ({
   tenant: { findMany: vi.fn() },
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   JobCandidateStatus,
   prisma,
 }));
@@ -40,7 +40,7 @@ describe("calculateMatchQualityIndex", () => {
   });
 
   it("computes weighted MQI with component breakdowns", async () => {
-    const prisma = await import("@/server/db");
+    const prisma = await import("@/server/db/prisma");
 
     vi.mocked(prisma.prisma.jobCandidate.findMany)
       .mockResolvedValueOnce([
@@ -107,7 +107,7 @@ describe("captureWeeklyMatchQualitySnapshots", () => {
   });
 
   it("captures weekly tenant snapshots for MQI windows", async () => {
-    const prisma = await import("@/server/db");
+    const prisma = await import("@/server/db/prisma");
 
     vi.mocked(prisma.prisma.jobCandidate.findMany)
       .mockResolvedValueOnce([
@@ -156,7 +156,7 @@ describe("captureWeeklyMatchQualitySnapshots", () => {
   });
 
   it("skips snapshot capture when Fire Drill mode is active", async () => {
-    const prisma = await import("@/server/db");
+    const prisma = await import("@/server/db/prisma");
 
     mockLoadTenantMode.mockResolvedValueOnce({ mode: "fire_drill" });
 

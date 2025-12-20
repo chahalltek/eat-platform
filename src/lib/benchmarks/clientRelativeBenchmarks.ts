@@ -1,6 +1,6 @@
-import type { LearningAggregate, TenantConfig, TenantLearningSignal } from "@/server/db";
+import type { LearningAggregate, TenantConfig, TenantLearningSignal } from "@/server/db/prisma";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { startTiming } from "@/lib/observability/timing";
 import { withTenantConfigSchemaFallback } from "@/lib/tenant/tenantConfigSchemaFallback";
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db", () => ({ prisma: { copilotAudit: { create: vi.fn() } } }));
+vi.mock("@/server/db/prisma", () => ({ prisma: { copilotAudit: { create: vi.fn() } } }));
 
 vi.mock("@/lib/llm", () => ({
   callLLM: vi.fn().mockResolvedValue(

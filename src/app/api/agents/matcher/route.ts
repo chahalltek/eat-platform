@@ -6,7 +6,7 @@ import { FEATURE_FLAGS } from '@/lib/featureFlags';
 import { assertFeatureEnabled } from '@/lib/featureFlags/middleware';
 import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from '@/lib/agents/killSwitch';
 import { getCurrentTenantId } from '@/lib/tenant';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 
 export async function POST(req: NextRequest) {
   try {

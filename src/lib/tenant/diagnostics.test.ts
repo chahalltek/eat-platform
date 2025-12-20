@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { AgentRunStatus, TenantDeletionMode } from "@/server/db";
+import { AgentRunStatus, TenantDeletionMode } from "@/server/db/prisma";
 
 import { buildTenantDiagnostics, TenantNotFoundError } from "./diagnostics";
 import { FEATURE_FLAGS } from "@/lib/featureFlags/constants";
@@ -42,11 +42,11 @@ vi.mock("@/lib/modes/loadTenantMode", () => ({
   loadTenantMode: mockLoadTenantMode,
 }));
 
-vi.mock("@/server/db", async (importOriginal) => {
+vi.mock("@/server/db/prisma", async (importOriginal) => {
   const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = "true";
 
-  const actual = await importOriginal<typeof import("@/server/db")>();
+  const actual = await importOriginal<typeof import("@/server/db/prisma")>();
 
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 

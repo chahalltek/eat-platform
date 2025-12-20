@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/server/db")>();
+vi.mock("@/server/db/prisma", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/db/prisma")>();
 
   return {
     ...actual,
@@ -22,7 +22,7 @@ vi.mock("@/server/db", async (importOriginal) => {
 });
 
 import { executeApprovedAction } from "@/server/ops/executeApprovedAction";
-import { ActionType, ExecutionStatus } from "@/server/db";
+import { ActionType, ExecutionStatus } from "@/server/db/prisma";
 
 describe("executeApprovedAction", () => {
   it("returns a failed result for unsupported action types", async () => {

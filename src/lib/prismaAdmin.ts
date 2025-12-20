@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/server/db';
+import { createPrismaClient, PrismaClient } from '@/server/db/prisma';
 
 const globalForPrisma = globalThis as unknown as {
   prismaAdmin?: PrismaClient;
@@ -6,9 +6,7 @@ const globalForPrisma = globalThis as unknown as {
 
 const prismaAdminClient =
   globalForPrisma.prismaAdmin ??
-  new PrismaClient({
-    log: ['error', 'warn'],
-  });
+  createPrismaClient();
 
 export const prismaAdmin = prismaAdminClient;
 

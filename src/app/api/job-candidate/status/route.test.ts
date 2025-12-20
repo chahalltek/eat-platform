@@ -3,7 +3,7 @@
 import { JobCandidateStatus } from '@prisma/client';
 
 import { POST } from './route';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { getCurrentUser } from '@/lib/auth/user';
 import { recordAuditEvent } from '@/lib/audit/trail';
 
@@ -14,11 +14,11 @@ const prismaMock = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@/server/db', async (importOriginal) => {
+vi.mock('@/server/db/prisma', async (importOriginal) => {
   const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = 'true';
 
-  const actual = await importOriginal<typeof import('@/server/db')>();
+  const actual = await importOriginal<typeof import('@/server/db/prisma')>();
 
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 

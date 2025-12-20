@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { withAgentRun } from "@/lib/agents/agentRun";
 import { AGENT_KILL_SWITCHES } from "@/lib/agents/killSwitch";
 import { runConfidenceAgent } from "@/lib/agents/confidenceEngine";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 

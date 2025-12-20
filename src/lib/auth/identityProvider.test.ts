@@ -25,7 +25,7 @@ vi.mock("next/headers", () => ({
   headers: headersMock,
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: prismaMock,
 }));
 

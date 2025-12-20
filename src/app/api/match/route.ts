@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { KILL_SWITCHES } from "@/lib/killSwitch";
 import { enforceKillSwitch } from "@/lib/killSwitch/middleware";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { assertFeatureEnabled as assertSoftFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";

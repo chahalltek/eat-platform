@@ -1,4 +1,4 @@
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { BackToConsoleButton } from '@/components/BackToConsoleButton';
 
 function formatDateTime(value?: Date | null) {

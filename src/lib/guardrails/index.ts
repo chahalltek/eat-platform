@@ -1,4 +1,4 @@
-import type { Tenant } from '@/server/db';
+import type { Tenant } from '@/server/db/prisma';
 
 import { AGENT_KILL_SWITCHES } from '@/lib/agents/killSwitch';
 import type { AgentName } from '@/lib/agents/agentAvailability';

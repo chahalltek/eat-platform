@@ -47,7 +47,7 @@ const { mockAgentRunLogCreate, mockAgentRunLogUpdate, mockMatchResultCreate, moc
   return { mockAgentRunLogCreate, mockAgentRunLogUpdate, mockMatchResultCreate, mockPrisma };
 });
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   Prisma,
   prisma: mockPrisma,
 }));

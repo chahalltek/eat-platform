@@ -43,7 +43,7 @@ vi.mock("@/lib/auth/permissions", () => ({
   canManageFeatureFlags: mockCanManageFeatureFlags,
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: prismaMock,
 }));
 

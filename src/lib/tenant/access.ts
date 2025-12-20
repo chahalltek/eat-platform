@@ -2,7 +2,7 @@ import "server-only";
 
 import type { IdentityUser } from "@/lib/auth/types";
 import { isAdminOrDataAccessRole } from "@/lib/auth/roles";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { normalizeTenantRole, TENANT_ROLES, type TenantRole } from "./roles";
 
 export async function resolveTenantAdminAccess(

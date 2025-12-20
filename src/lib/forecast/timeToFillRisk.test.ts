@@ -6,7 +6,7 @@ const prisma = vi.hoisted(() => ({
   jobReq: { findMany: vi.fn() },
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma,
 }));
 
@@ -68,7 +68,7 @@ describe("evaluateTimeToFillRisks", () => {
 
 describe("getTimeToFillRisksForTenant", () => {
   it("loads jobs for the tenant and evaluates risks", async () => {
-    const { prisma } = await import("@/server/db");
+    const { prisma } = await import("@/server/db/prisma");
     (prisma.jobReq.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([
       {
         id: "job-3",

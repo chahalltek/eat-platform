@@ -5,8 +5,8 @@ import type {
   MatchResult,
   PrismaClient,
   Tenant,
-} from '@/server/db';
-import { Prisma, TenantDeletionMode } from '@/server/db';
+} from '@/server/db/prisma';
+import { Prisma, TenantDeletionMode } from '@/server/db/prisma';
 
 export type RetentionPrisma = Pick<
   PrismaClient,

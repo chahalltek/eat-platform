@@ -1,11 +1,11 @@
 import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { withTenantConfigSchemaFallback } from "@/lib/tenant/tenantConfigSchemaFallback";
 import { __testing, getClientRelativeBenchmarks } from "./clientRelativeBenchmarks";
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: {
     tenantConfig: { findUnique: vi.fn() },
     tenantLearningSignal: { findMany: vi.fn() },

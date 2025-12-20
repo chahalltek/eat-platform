@@ -1,4 +1,4 @@
-import { AgentRunStatus } from '@/server/db';
+import { AgentRunStatus } from '@/server/db/prisma';
 import { prisma } from '../prisma';
 
 type TimeSeriesBucket = {

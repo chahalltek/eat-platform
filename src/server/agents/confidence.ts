@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { computeMatchConfidence } from "@/lib/matching/confidence";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import type { IdentityUser } from "@/lib/auth/types";
 import { Prisma } from "@prisma/client";
 

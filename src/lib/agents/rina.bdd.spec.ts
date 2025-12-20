@@ -8,7 +8,7 @@ import {
   runAgentBehavior,
 } from '@/lib/agents/testing/agentTestRunner';
 import { enableDeterministicAgentMode } from './testing/deterministicAgentMode';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import fixture from '../../../tests/fixtures/agents/rina-bdd.json';
 
 const { mockCallLLM } = vi.hoisted(() => ({
@@ -17,7 +17,7 @@ const { mockCallLLM } = vi.hoisted(() => ({
 
 vi.mock('@/lib/llm', () => ({ callLLM: mockCallLLM }));
 
-vi.mock('@/server/db', () => {
+vi.mock('@/server/db/prisma', () => {
   return {
     isTableAvailable: vi.fn(async () => true),
     prisma: {

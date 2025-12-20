@@ -1,6 +1,6 @@
-import type { Prisma, PrismaClient, UsageEventType } from '@/server/db';
+import type { Prisma, PrismaClient, UsageEventType } from '@/server/db/prisma';
 
-import * as PrismaService from '@/server/db';
+import * as PrismaService from '@/server/db/prisma';
 
 export type UsageEventPayload = {
   tenantId: string;

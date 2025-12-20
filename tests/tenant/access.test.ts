@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { TENANT_ROLES } from "@/lib/tenant/roles";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: {
     tenantUser: {
       findUnique: vi.fn(),

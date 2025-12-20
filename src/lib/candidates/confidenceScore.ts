@@ -1,6 +1,6 @@
-import { Candidate, CandidateSkill } from "@/server/db";
+import { Candidate, CandidateSkill } from "@/server/db/prisma";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 import {
   CANDIDATE_CONFIDENCE_WEIGHTS,

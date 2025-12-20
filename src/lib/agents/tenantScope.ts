@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentTenantId, withTenantContext } from "@/lib/tenant";
 

@@ -11,7 +11,7 @@ import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { recordMetricEvent } from "@/lib/metrics/events";
 import { callLLM } from "@/lib/llm";
 import { OpenAIAdapter } from "@/lib/llm/openaiAdapter";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export type IntakeInput = {
   jobId: string;

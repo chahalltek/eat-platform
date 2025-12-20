@@ -1,7 +1,7 @@
 // src/lib/agents/outreach.ts
 import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
 
 export type OutreachInput = {

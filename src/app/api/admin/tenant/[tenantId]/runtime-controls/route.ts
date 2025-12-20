@@ -10,7 +10,7 @@ import { withTenantContext } from "@/lib/tenant";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { defaultTenantGuardrails, loadTenantGuardrailsWithSchemaStatus } from "@/lib/tenant/guardrails";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-import { isPrismaUnavailableError } from "@/server/db";
+import { isPrismaUnavailableError } from "@/server/db/prisma";
 
 export const dynamic = "force-dynamic";
 

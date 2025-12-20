@@ -11,7 +11,7 @@ const { prismaMock } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/server/db", () => ({ prisma: prismaMock }));
+vi.mock("@/server/db/prisma", () => ({ prisma: prismaMock }));
 
 describe("resolveTenantAdminAccess", () => {
   beforeEach(() => {

@@ -1,4 +1,4 @@
-import { JobIntent, JobReq, JobSkill } from "@/server/db";
+import { JobIntent, JobReq, JobSkill } from "@/server/db/prisma";
 
 export type JobIntentPayload = {
   title?: string | null;

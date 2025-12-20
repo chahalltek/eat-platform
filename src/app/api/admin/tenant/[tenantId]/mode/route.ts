@@ -6,7 +6,7 @@ import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { logModeChange } from "@/lib/audit/adminAudit";
 import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { getTenantMode, updateTenantMode } from "@/lib/tenantMode";
 
 export const dynamic = "force-dynamic";

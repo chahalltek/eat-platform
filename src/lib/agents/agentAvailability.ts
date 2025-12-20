@@ -1,8 +1,8 @@
-import { Prisma, type AgentFlag as AgentFlagModel } from '@/server/db';
+import { Prisma, type AgentFlag as AgentFlagModel } from '@/server/db/prisma';
 
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
 import { loadTenantMode } from '@/lib/modes/loadTenantMode';
-import { isPrismaUnavailableError, isTableAvailable, prisma } from '@/server/db';
+import { isPrismaUnavailableError, isTableAvailable, prisma } from '@/server/db/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { getCurrentUserId } from '@/lib/auth/user';
 import { logExecutionBlocked } from '@/server/audit/logger';

@@ -1,5 +1,5 @@
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export function isBootstrapTenant(tenantId: string) {
   return tenantId.trim() === DEFAULT_TENANT_ID;

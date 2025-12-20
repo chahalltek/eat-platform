@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { runConfidence } from "@/lib/agents/confidence";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: {
     matchResult: {
       findMany: vi.fn(),
@@ -31,7 +31,7 @@ vi.mock("@/lib/agents/agentRun", () => ({
 
 describe("runConfidence", () => {
   it("loads match results and routes them through the confidence engine", async () => {
-    const prisma = await import("@/server/db");
+    const prisma = await import("@/server/db/prisma");
     const { runConfidenceAgent } = await import("@/lib/agents/confidenceEngine");
     vi.mocked(prisma.prisma.matchResult.findMany).mockResolvedValue([
       {

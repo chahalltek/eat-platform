@@ -32,7 +32,7 @@ const { mockPrisma, mockMatchCreate, mockMatchUpdate, mockJobCandidateUpsert, mo
     };
   });
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: mockPrisma,
   Prisma,
   JobCandidateStatus: {

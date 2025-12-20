@@ -1,8 +1,8 @@
-import { Candidate, CandidateSkill, JobReq, JobSkill } from "@/server/db";
+import { Candidate, CandidateSkill, JobReq, JobSkill } from "@/server/db/prisma";
 
 import { computeMatchScore } from "@/lib/matching/msa";
 import { computeCandidateSignalScore } from "@/lib/matching/candidateSignals";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { normalizeWeights } from "@/lib/matching/scoringConfig";
 import { computeMatchConfidence } from "@/lib/matching/confidence";
 import { loadTenantConfig } from "@/lib/config/tenantConfig";

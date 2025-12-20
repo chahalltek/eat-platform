@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { SubscriptionPlan, TenantSubscription } from '@/server/db';
+import type { SubscriptionPlan, TenantSubscription } from '@/server/db/prisma';
 
 import {
   FEATURE_FLAGS,

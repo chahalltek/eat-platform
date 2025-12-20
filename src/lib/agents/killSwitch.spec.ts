@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { Prisma } from '@/server/db';
+import { Prisma } from '@/server/db/prisma';
 import { logKillSwitchBlock, logKillSwitchChange } from '@/lib/audit/securityEvents';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 
 import {
   AGENT_KILL_SWITCHES,
@@ -19,11 +19,11 @@ const isTableAvailableMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
 const stateMap = vi.hoisted(() => new Map<string, { enabled: boolean; updatedAt: Date }>());
 const missingTableFlag = vi.hoisted(() => ({ throwMissingTable: false }));
 
-vi.mock('@/server/db', async (importOriginal) => {
+vi.mock('@/server/db/prisma', async (importOriginal) => {
   const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = 'true';
 
-  const actual = await importOriginal<typeof import('@/server/db')>();
+  const actual = await importOriginal<typeof import('@/server/db/prisma')>();
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 
   return {

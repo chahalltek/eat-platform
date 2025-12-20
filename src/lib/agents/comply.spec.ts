@@ -1,4 +1,4 @@
-import { TenantDeletionMode, type Tenant } from '@/server/db';
+import { TenantDeletionMode, type Tenant } from '@/server/db/prisma';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { logComplianceAlert, logComplianceScan } from '@/lib/audit/securityEvents';

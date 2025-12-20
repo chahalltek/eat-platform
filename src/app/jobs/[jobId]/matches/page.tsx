@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-import { JobCandidateStatus } from "@/server/db";
+import { JobCandidateStatus } from "@/server/db/prisma";
 
 import { JobMatchesTable, type MatchRow } from "./JobMatchesTable";
 import { RunMatcherButton } from "./RunMatcherButton";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { categorizeConfidence } from "./confidence";
 import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { type HiringOutcomeStatus } from "@/lib/hiringOutcomes";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 

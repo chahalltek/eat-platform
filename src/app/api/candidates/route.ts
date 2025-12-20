@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getUserTenantId } from "@/lib/auth/user";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";

@@ -1,8 +1,8 @@
-import type { SubscriptionPlan, Tenant, TenantSubscription } from "@/server/db";
+import type { SubscriptionPlan, Tenant, TenantSubscription } from "@/server/db/prisma";
 
 import type { SystemModeName } from "@/lib/modes/systemModes";
 
-import { isTableAvailable, prisma } from "@/server/db";
+import { isTableAvailable, prisma } from "@/server/db/prisma";
 
 export class NotFoundError extends Error {
   constructor(message: string) {

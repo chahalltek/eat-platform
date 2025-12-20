@@ -1,4 +1,4 @@
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { guardrailsPresets, type GuardrailsConfig, type GuardrailsPresetName } from "./presets";
 import { withTenantConfigSchemaFallback } from "@/lib/tenant/tenantConfigSchemaFallback";

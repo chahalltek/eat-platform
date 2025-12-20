@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
-import { Prisma } from '@/server/db';
+import { Prisma } from '@/server/db/prisma';
 
-import { prisma, isTableAvailable } from '@/server/db';
+import { prisma, isTableAvailable } from '@/server/db/prisma';
 import { getCurrentUser } from '@/lib/auth/user';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 import { isAdminRole } from '@/lib/auth/roles';

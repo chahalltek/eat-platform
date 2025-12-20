@@ -26,7 +26,7 @@ vi.mock("@/lib/matching/matcher", () => ({ ingestJob: mocks.ingestJobMock }));
 vi.mock("@/lib/tenant", () => ({ getCurrentTenantId: mocks.getCurrentTenantIdMock }));
 vi.mock("@/lib/auth/user", () => ({ getCurrentUser: mocks.getCurrentUserMock }));
 vi.mock("@/lib/orchestration/triggers", () => ({ onJobChanged: vi.fn() }));
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: mocks.prisma,
   isPrismaUnavailableError: mocks.isPrismaUnavailableErrorMock,
   isTableAvailable: mocks.isTableAvailableMock,

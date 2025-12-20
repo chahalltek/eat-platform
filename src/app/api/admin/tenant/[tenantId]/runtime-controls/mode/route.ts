@@ -9,7 +9,7 @@ import {
   loadRuntimeControlMode,
   persistRuntimeControlMode,
 } from "@/lib/runtimeControls/mode";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 

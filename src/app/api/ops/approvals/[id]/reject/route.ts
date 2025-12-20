@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { ApprovalStatus } from "@/server/db";
+import { ApprovalStatus } from "@/server/db/prisma";
 
 import { handleApprovalDecision } from "../decisionHandler";
 

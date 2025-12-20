@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { createSessionCookie } from '@/lib/auth/session';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 

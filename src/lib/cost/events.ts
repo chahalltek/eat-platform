@@ -1,6 +1,6 @@
-import type { CostDriverType, Prisma, PrismaClient } from '@/server/db';
+import type { CostDriverType, Prisma, PrismaClient } from '@/server/db/prisma';
 
-import * as PrismaService from '@/server/db';
+import * as PrismaService from '@/server/db/prisma';
 
 export type CostEventPayload = {
   tenantId?: string | null;

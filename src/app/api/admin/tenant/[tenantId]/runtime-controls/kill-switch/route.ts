@@ -13,7 +13,7 @@ import {
 import { logKillSwitchToggle } from "@/lib/audit/adminAudit";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export const dynamic = "force-dynamic";
 

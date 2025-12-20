@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getRedactedExecutionState, getRedactedSystemStatus, isPublicDemoMode } from "@/lib/demoMode";
 import { getCurrentTenantId } from "@/lib/tenant";
-import { AgentRunStatus } from "@/server/db";
+import { AgentRunStatus } from "@/server/db/prisma";
 import { prisma } from "@/lib/prisma";
 import { getSystemExecutionState, getSystemStatus } from "@/lib/systemStatus";
 import { requireRuntimeControlsAccess } from "@/lib/auth/runtimeControlsAccess";

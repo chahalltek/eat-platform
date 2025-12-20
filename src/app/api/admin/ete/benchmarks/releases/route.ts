@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { buildBenchmarkRelease, listBenchmarkReleases, type BenchmarkReleaseWithMetrics } from "@/lib/benchmarks/buildBenchmarkRelease";
-import type { BenchmarkMetric } from "@/server/db";
+import type { BenchmarkMetric } from "@/server/db/prisma";
 import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCurrentUser } from '@/lib/auth/user';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { runOutreach } from '@/lib/agents/outreach';
 import { runRina } from '@/lib/agents/rina';
 import { runRua } from '@/lib/agents/rua';

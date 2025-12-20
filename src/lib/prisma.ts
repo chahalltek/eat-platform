@@ -1,1 +1,1 @@
-export * from "@/server/db";
+export * from "@/server/db/prisma";

@@ -3,7 +3,7 @@
 import { runRua } from '@/lib/agents/rua';
 import { RUA_PROMPT_VERSION, RUA_SYSTEM_PROMPT } from '@/lib/agents/contracts/ruaContract';
 import { enableDeterministicAgentMode } from './testing/deterministicAgentMode';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import fixture from '../../../tests/fixtures/agents/rua-invalid-llm.json';
 
 const { mockCallLLM } = vi.hoisted(() => ({
@@ -12,7 +12,7 @@ const { mockCallLLM } = vi.hoisted(() => ({
 
 vi.mock('@/lib/llm', () => ({ callLLM: mockCallLLM }));
 
-vi.mock('@/server/db', () => ({
+vi.mock('@/server/db/prisma', () => ({
   prisma: {
     agentPrompt: {
       findUnique: vi.fn(async () => null),

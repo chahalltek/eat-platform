@@ -10,7 +10,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const isTableAvailableMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
 
-vi.mock('@/server/db', () => ({
+vi.mock('@/server/db/prisma', () => ({
   prisma: prismaMock,
   isPrismaUnavailableError: () => false,
   isTableAvailable: isTableAvailableMock,

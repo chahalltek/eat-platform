@@ -1,4 +1,4 @@
-import { Prisma, type AgentActionApproval, ActionType, ExecutionStatus } from "@/server/db";
+import { Prisma, type AgentActionApproval, ActionType, ExecutionStatus } from "@/server/db/prisma";
 
 import { assertUnreachable } from "@/lib/assertUnreachable";
 

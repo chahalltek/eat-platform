@@ -1,6 +1,6 @@
-import type { UsageEventType } from '@/server/db';
+import type { UsageEventType } from '@/server/db/prisma';
 
-import { isTableAvailable, prisma } from '@/server/db';
+import { isTableAvailable, prisma } from '@/server/db/prisma';
 
 export type TenantUsageSnapshot = {
   tenantId: string;

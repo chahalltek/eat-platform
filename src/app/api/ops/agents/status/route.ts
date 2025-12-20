@@ -1,8 +1,8 @@
-import type { AgentRunStatus } from '@/server/db';
+import type { AgentRunStatus } from '@/server/db/prisma';
 import { NextResponse } from 'next/server';
 
 import { listAgentKillSwitches } from '@/lib/agents/killSwitch';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { requireRuntimeControlsAccess } from '@/lib/auth/runtimeControlsAccess';
 
 export const dynamic = 'force-dynamic';

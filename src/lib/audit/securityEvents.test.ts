@@ -7,7 +7,7 @@ const prisma = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/server/db", () => ({ prisma }));
+vi.mock("@/server/db/prisma", () => ({ prisma }));
 import { getCurrentTenantId } from "@/lib/tenant";
 import { getCurrentUserId } from "@/lib/auth/user";
 

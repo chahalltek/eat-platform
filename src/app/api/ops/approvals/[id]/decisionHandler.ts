@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-import { prisma, ApprovalStatus } from "@/server/db";
+import { prisma, ApprovalStatus } from "@/server/db/prisma";
 import { runApprovedActionWorkflow } from "@/server/workflows/runApprovedActionWorkflow";
 
 const decisionSchema = z.object({

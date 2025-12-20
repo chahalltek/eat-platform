@@ -33,8 +33,8 @@ describe("/api/admin/tenants/[tenantId]/mode", () => {
       logModeChange: mocks.logModeChange,
     }));
 
-    vi.mock("@/server/db", async (importOriginal) => {
-      const actual = await importOriginal<typeof import("@/server/db")>();
+    vi.mock("@/server/db/prisma", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("@/server/db/prisma")>();
 
       return {
         ...actual,

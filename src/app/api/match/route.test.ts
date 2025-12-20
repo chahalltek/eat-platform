@@ -17,7 +17,7 @@ vi.mock('@/lib/featureFlags', () => ({ FEATURE_FLAGS: { SCORING: 'scoring' } }))
 vi.mock('@/lib/featureFlags/middleware', () => ({ enforceFeatureFlag: mocks.enforceFeatureFlagMock }));
 vi.mock('@/lib/auth/requireRole', () => ({ requireRecruiterOrAdmin: mocks.requireRecruiterOrAdminMock }));
 vi.mock('@/lib/auth/user', () => ({ getCurrentUser: mocks.getCurrentUserMock }));
-vi.mock('@/server/db', () => ({ prisma: mocks.prisma }));
+vi.mock('@/server/db/prisma', () => ({ prisma: mocks.prisma }));
 vi.mock('@/app/api/agents/match/route', () => ({
   handleMatchAgentPost: mocks.handleMatchAgentPostMock,
 }));

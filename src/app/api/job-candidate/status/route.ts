@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { JobCandidateStatus } from "@/server/db";
+import { JobCandidateStatus } from "@/server/db/prisma";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { isAdminRole, normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { recordAuditEvent } from "@/lib/audit/trail";
 import { getClientIp } from "@/lib/request/ip";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { assertFeatureEnabled, FeatureDisabledError, HARD_FEATURE_FLAGS } from "@/config/featureFlags";
 
 function parseRequestBody(body: unknown) {

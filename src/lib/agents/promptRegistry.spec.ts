@@ -3,7 +3,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { AGENT_PROMPTS, resolveAgentPrompt } from '@/lib/agents/promptRegistry';
 import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
 import { RUA_PROMPT_VERSION, RUA_SYSTEM_PROMPT } from '@/lib/agents/contracts/ruaContract';
-import type { AgentPrompt } from '@/server/db';
+import type { AgentPrompt } from '@/server/db/prisma';
 
 const agentPromptMock = vi.hoisted(() => ({
   findUnique: vi.fn(),
@@ -12,11 +12,11 @@ const agentPromptMock = vi.hoisted(() => ({
   updateMany: vi.fn(),
 }));
 
-vi.mock('@/server/db', async (importOriginal) => {
+vi.mock('@/server/db/prisma', async (importOriginal) => {
   const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = 'true';
 
-  const actual = await importOriginal<typeof import('@/server/db')>();
+  const actual = await importOriginal<typeof import('@/server/db/prisma')>();
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 
   return {

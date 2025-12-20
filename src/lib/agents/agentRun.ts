@@ -1,12 +1,12 @@
 // src/lib/agents/agentRun.ts
-import { Prisma } from '@/server/db';
+import { Prisma } from '@/server/db/prisma';
 
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 import { createAgentRunLog } from '@/lib/agents/agentRunLog';
 import { assertAgentKillSwitchDisarmed } from '@/lib/agents/killSwitch';
 import type { AgentName } from '@/lib/agents/agentAvailability';
 import { assertKillSwitchDisarmed, KILL_SWITCHES } from '@/lib/killSwitch';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 import { normalizeError } from '@/lib/errors';
 

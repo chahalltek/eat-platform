@@ -1,7 +1,7 @@
-import { Prisma } from '@/server/db';
+import { Prisma } from '@/server/db/prisma';
 
 import { getCurrentUserId } from '@/lib/auth/user';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
 
 export const ADMIN_AUDIT_ACTIONS = {

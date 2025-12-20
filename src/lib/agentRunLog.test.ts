@@ -16,7 +16,7 @@ const { mockAgentRunLogCreate, mockAgentRunLogUpdate, AgentRunStatus } = vi.hois
   } as const,
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   AgentRunStatus,
   prisma: {
     agentRunLog: {

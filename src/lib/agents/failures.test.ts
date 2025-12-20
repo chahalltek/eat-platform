@@ -7,7 +7,7 @@ const { AgentRunStatus, mockCount } = vi.hoisted(() => ({
   mockCount: vi.fn(),
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   AgentRunStatus,
   prisma: {
     agentRunLog: {

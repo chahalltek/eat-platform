@@ -1,6 +1,6 @@
-import { Prisma, type User } from '@/server/db';
+import { Prisma, type User } from '@/server/db/prisma';
 
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 import { AuthFailureError } from '@/lib/errors';

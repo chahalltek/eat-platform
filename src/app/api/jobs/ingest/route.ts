@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { ingestJob } from "@/lib/matching/matcher";
 import { getCurrentTenantId } from "@/lib/tenant";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { recordMetricEvent } from "@/lib/metrics/events";
 import { onJobChanged } from "@/lib/orchestration/triggers";
 import { getCurrentUser } from "@/lib/auth/user";

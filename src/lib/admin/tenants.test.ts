@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { SubscriptionPlan, Tenant, TenantSubscription } from "@/server/db";
+import type { SubscriptionPlan, Tenant, TenantSubscription } from "@/server/db/prisma";
 
 import {
   getTenantPlanDetail,
@@ -27,7 +27,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const isTableAvailableMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: prismaMock,
   isTableAvailable: isTableAvailableMock,
 }));

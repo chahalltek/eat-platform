@@ -1,4 +1,4 @@
-import { Prisma } from '@/server/db';
+import { Prisma } from '@/server/db/prisma';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getAgentAvailability } from './agentAvailability';
@@ -10,7 +10,7 @@ const prismaMock = vi.hoisted(() => ({
 const loadTenantModeMock = vi.hoisted(() => vi.fn());
 const isTableAvailableMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
 
-vi.mock('@/server/db', () => ({
+vi.mock('@/server/db/prisma', () => ({
   prisma: prismaMock,
   isPrismaUnavailableError: () => false,
   isTableAvailable: isTableAvailableMock,

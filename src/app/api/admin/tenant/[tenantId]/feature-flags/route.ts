@@ -6,7 +6,7 @@ import { parseFeatureFlagName, setFeatureFlag } from "@/lib/featureFlags";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
 import { canManageFeatureFlags } from "@/lib/auth/permissions";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export const dynamic = "force-dynamic";
 

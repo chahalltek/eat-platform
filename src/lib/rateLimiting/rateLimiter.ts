@@ -1,4 +1,4 @@
-import type { SubscriptionPlan } from '@/server/db';
+import type { SubscriptionPlan } from '@/server/db/prisma';
 
 import { DEFAULT_TENANT_ID, DEFAULT_USER_ID } from '@/lib/auth/config';
 const loadSecurityLogger = async () =>

@@ -4,8 +4,8 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/user";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
 import { loadTenantMode } from "@/lib/modes/loadTenantMode";
-import { prisma } from "@/server/db";
-import { Prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
+import { Prisma } from "@/server/db/prisma";
 import { createHash } from "node:crypto";
 import { getConfidenceBand } from "@/lib/agents/confidenceEngine";
 

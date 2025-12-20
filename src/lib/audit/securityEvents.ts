@@ -1,6 +1,6 @@
-import { ApprovalStatus, Prisma } from '@/server/db';
+import { ApprovalStatus, Prisma } from '@/server/db/prisma';
 
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { getCurrentUserId } from '@/lib/auth/user';
 import { getCurrentTenantId } from '@/lib/tenant';
 

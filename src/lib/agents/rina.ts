@@ -9,7 +9,7 @@ import { AgentRetryMetadata, withAgentRun } from '@/lib/agents/agentRun';
 import { callLLM } from '@/lib/llm';
 import { OpenAIAdapter } from '@/lib/llm/openaiAdapter';
 import { getCurrentUser } from '@/lib/auth';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import type { IdentityUser } from '@/lib/auth/types';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 

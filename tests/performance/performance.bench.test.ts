@@ -4,7 +4,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { sanitizeExtractedText } from '@/lib/uploads';
 import { computeMatchScore } from '@/lib/matching/msa';
 import { mockDb } from '@/test-helpers/db';
-import type { Candidate, CandidateSkill, JobReq, JobSkill } from '@/server/db';
+import type { Candidate, CandidateSkill, JobReq, JobSkill } from '@/server/db/prisma';
 
 const { prisma, resetDbMocks } = mockDb();
 

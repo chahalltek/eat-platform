@@ -5,7 +5,7 @@ import { GET, POST } from "./route";
 
 const findFirst = vi.hoisted(() => vi.fn());
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: {
     user: {
       findFirst,

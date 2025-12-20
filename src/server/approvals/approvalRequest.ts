@@ -4,7 +4,7 @@ import {
   ApprovalStatus,
   type ApprovalRequest,
   type ActionType,
-} from "@/server/db";
+} from "@/server/db/prisma";
 import { logApprovalCheck } from "@/lib/audit/securityEvents";
 
 type ApprovalValidationResult =

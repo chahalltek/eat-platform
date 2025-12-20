@@ -1,6 +1,6 @@
-import { AgentRunStatus } from "@/server/db";
+import { AgentRunStatus } from "@/server/db/prisma";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 

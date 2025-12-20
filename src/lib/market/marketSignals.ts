@@ -5,7 +5,7 @@ import {
   intelligenceCacheKeys,
   INTELLIGENCE_CACHE_TTLS,
 } from "@/lib/cache/intelligenceCache";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import type { SystemModeName } from "@/lib/modes/systemModes";
 
 export type MarketSignals = {

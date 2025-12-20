@@ -102,11 +102,11 @@ function resetPrismaMock() {
 }
 
 export function mockDb() {
-  vi.mock("@/server/db", async (importOriginal) => {
+  vi.mock("@/server/db/prisma", async (importOriginal) => {
     const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
     process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = "true";
 
-    const actual = await importOriginal<typeof import("@/server/db")>();
+    const actual = await importOriginal<typeof import("@/server/db/prisma")>();
     const prismaClient = await import("@prisma/client");
 
     process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;

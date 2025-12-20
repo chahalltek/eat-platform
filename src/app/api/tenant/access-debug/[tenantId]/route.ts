@@ -5,7 +5,7 @@ import { isAdminRole } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { normalizeTenantRole, TENANT_ROLES, getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 function describeDenialReason(options: {
   userId: string | null;

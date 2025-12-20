@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { resolveTenantAdminAccess } from "@/lib/tenant/access";
 import { getTenantRoleFromHeaders } from "@/lib/tenant/roles";
-import { ApprovalStatus, ExecutionStatus, prisma } from "@/server/db";
+import { ApprovalStatus, ExecutionStatus, prisma } from "@/server/db/prisma";
 import { validateApprovalRequest } from "@/server/approvals/approvalRequest";
 import { executeApprovedAction } from "@/server/ops/executeApprovedAction";
 

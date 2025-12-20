@@ -1,4 +1,4 @@
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { defaultTenantGuardrails } from "./defaultTenantConfig";
 import { withTenantConfigSchemaFallback } from "@/lib/tenant/tenantConfigSchemaFallback";
 

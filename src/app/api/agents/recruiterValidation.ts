@@ -1,4 +1,4 @@
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { getCurrentTenantId } from '@/lib/tenant';
 
 export type RecruiterValidationResult =

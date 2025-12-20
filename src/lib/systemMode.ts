@@ -1,4 +1,4 @@
-import { Prisma } from '@/server/db';
+import { Prisma } from '@/server/db/prisma';
 
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 import { getCurrentTenantId } from './tenant';

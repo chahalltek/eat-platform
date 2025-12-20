@@ -5,7 +5,7 @@ import {
   invalidateForecastCachesForTenant,
 } from "@/lib/cache/intelligenceCache";
 import { recordCostEvent } from "@/lib/cost/events";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { startTiming } from "@/lib/observability/timing";
 
 type TimeToFillRiskJob = {

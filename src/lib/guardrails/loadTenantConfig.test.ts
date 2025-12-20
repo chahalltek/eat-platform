@@ -9,7 +9,7 @@ const { mockFindUnique } = vi.hoisted(() => ({
   mockFindUnique: vi.fn(),
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: {
     tenantConfig: {
       findUnique: mockFindUnique,

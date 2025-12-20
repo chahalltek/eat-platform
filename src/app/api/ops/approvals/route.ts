@@ -4,7 +4,7 @@ import { z } from "zod";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { isAdminRole, normalizeRole, USER_ROLES } from "@/lib/auth/roles";
 import { getCurrentUser } from "@/lib/auth/user";
-import { ActionType, ApprovalStatus, prisma } from "@/server/db";
+import { ActionType, ApprovalStatus, prisma } from "@/server/db/prisma";
 import { hashApprovalPayload } from "@/server/approvals/approvalRequest";
 
 export const dynamic = "force-dynamic";

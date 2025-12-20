@@ -23,7 +23,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const assertTenantWithinLimits = vi.hoisted(() => vi.fn());
 
-vi.mock('@/server/db', () => ({
+vi.mock('@/server/db/prisma', () => ({
   prisma: prismaMock,
   Prisma,
 }));

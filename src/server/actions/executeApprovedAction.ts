@@ -5,7 +5,7 @@ import {
   AgentActionApproval,
   JobCandidateStatus,
   prisma,
-} from "@/server/db";
+} from "@/server/db/prisma";
 
 export type ExecutionOutcome = "success" | "failure" | "not_implemented";
 

@@ -1,6 +1,6 @@
-import { Prisma } from "@/server/db";
+import { Prisma } from "@/server/db/prisma";
 
-import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db";
+import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db/prisma";
 import { SYSTEM_MODES, type SystemModeName } from "./systemModes";
 
 export type ModeSource = "database" | "fallback";

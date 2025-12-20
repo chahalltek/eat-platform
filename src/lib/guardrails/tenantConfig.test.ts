@@ -9,7 +9,7 @@ const { mockFindFirst } = vi.hoisted(() => ({
   mockFindFirst: vi.fn(),
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: {
     tenantConfig: {
       findFirst: mockFindFirst,

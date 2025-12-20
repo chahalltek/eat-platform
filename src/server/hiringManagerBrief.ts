@@ -11,7 +11,7 @@ import { AGENT_PROMPTS, resolveAgentPrompt } from "@/lib/agents/promptRegistry";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { callLLM } from "@/lib/llm";
 import { OpenAIAdapter } from "@/lib/llm/openaiAdapter";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export type HiringManagerBriefInput = {
   jobId: string;

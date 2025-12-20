@@ -1,4 +1,4 @@
-import { Candidate, JobCandidate, JobCandidateStatus } from "@/server/db";
+import { Candidate, JobCandidate, JobCandidateStatus } from "@/server/db/prisma";
 
 import {
   CANDIDATE_SIGNAL_WEIGHTS,

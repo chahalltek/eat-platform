@@ -1,6 +1,6 @@
-import { AgentRunStatus, Prisma, type UsageEventType } from "@/server/db";
+import { AgentRunStatus, Prisma, type UsageEventType } from "@/server/db/prisma";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { recordUsageEvent } from "@/lib/usage/events";
 
 function normalizeJsonValue(value: unknown): Prisma.InputJsonValue {

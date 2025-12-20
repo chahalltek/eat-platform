@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { buildEteIndex, __testing } from "./buildEteIndex";
 
 type AggregateRow = {
@@ -11,11 +11,11 @@ type AggregateRow = {
   capturedAt: Date;
 };
 
-vi.mock("@/server/db", async (importOriginal) => {
+vi.mock("@/server/db/prisma", async (importOriginal) => {
   const previousAllowConstruction = process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION;
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = "true";
 
-  const actual = await importOriginal<typeof import("@/server/db")>();
+  const actual = await importOriginal<typeof import("@/server/db/prisma")>();
   process.env.VITEST_PRISMA_ALLOW_CONSTRUCTION = previousAllowConstruction;
 
   return {

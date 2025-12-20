@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Prisma } from '@/server/db';
+import { Prisma } from '@/server/db/prisma';
 
 import { isPrismaUnavailableError } from './prisma';
 

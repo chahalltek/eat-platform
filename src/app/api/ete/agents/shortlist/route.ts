@@ -7,7 +7,7 @@ import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSw
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { guardrailsPresets, type ShortlistStrategy } from "@/lib/guardrails/presets";
 import { loadTenantConfig } from "@/lib/guardrails/tenantConfig";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 

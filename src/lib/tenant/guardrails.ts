@@ -2,7 +2,7 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
-import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db";
+import { isPrismaUnavailableError, isTableAvailable, prisma } from "@/server/db/prisma";
 import { withTenantConfigSchemaFallback } from "./tenantConfigSchemaFallback";
 
 import {

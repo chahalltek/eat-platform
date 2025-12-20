@@ -1,4 +1,4 @@
-import { JobCandidateStatus } from "@/server/db";
+import { JobCandidateStatus } from "@/server/db/prisma";
 
 import {
   runNextBestAction,
@@ -7,7 +7,7 @@ import {
 } from "@/server/agents/nextBestAction";
 import { getMarketSignals } from "@/lib/market/marketSignals";
 import { recordMetricEvent } from "@/lib/metrics/events";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export type NextBestActionTriggerReason = "job_aging" | "low_confidence_pipeline" | "market_risk";
 

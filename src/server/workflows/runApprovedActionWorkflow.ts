@@ -9,7 +9,7 @@ import {
   prisma,
   type AgentActionApproval,
   type ApprovalRequest,
-} from "@/server/db";
+} from "@/server/db/prisma";
 import { generateHiringManagerBrief } from "@/server/hiringManagerBrief";
 
 export type ApprovedActionWorkflowResult = {

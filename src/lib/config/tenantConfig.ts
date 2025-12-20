@@ -1,5 +1,5 @@
 import { TS_CONFIG, type TsConfig } from "@/config/ts";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 
 export type TenantConfig = TsConfig;
 

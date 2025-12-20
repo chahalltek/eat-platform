@@ -1,4 +1,4 @@
-import { Prisma, type AgentPrompt } from '@/server/db';
+import { Prisma, type AgentPrompt } from '@/server/db/prisma';
 
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 import { RINA_PROMPT_VERSION, RINA_SYSTEM_PROMPT } from '@/lib/agents/contracts/rinaContract';
@@ -11,7 +11,7 @@ import {
   HIRING_MANAGER_BRIEF_PROMPT_VERSION,
   HIRING_MANAGER_BRIEF_SYSTEM_PROMPT,
 } from '@/lib/agents/contracts/hiringManagerBriefContract';
-import { prisma } from '@/server/db';
+import { prisma } from '@/server/db/prisma';
 import { assertTenantWithinLimits } from '@/lib/subscription/usageLimits';
 
 export const AGENT_PROMPTS = {

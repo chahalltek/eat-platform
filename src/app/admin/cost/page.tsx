@@ -1,5 +1,5 @@
 import { BanknotesIcon, ShieldCheckIcon, SparklesIcon } from "@heroicons/react/24/outline";
-import type { CostDriverType } from "@/server/db";
+import type { CostDriverType } from "@/server/db/prisma";
 
 import { getCurrentUser } from "@/lib/auth/user";
 import { isAdminOrDataAccessRole } from "@/lib/auth/roles";

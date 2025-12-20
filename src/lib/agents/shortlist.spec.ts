@@ -53,7 +53,7 @@ vi.mock("@/lib/metrics/events", () => ({
   recordMetricEvent: vi.fn(),
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: {
     job: { findUnique: (...args: unknown[]) => mockJobFindUnique(...args) },
     $transaction: async (fn: (client: unknown) => Promise<unknown>) => fn({}),

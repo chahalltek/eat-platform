@@ -9,7 +9,7 @@ const { mockAsyncJobStateFindMany, mockMatchResultFindFirst, mockBenchmarkReleas
   mockBenchmarkReleaseFindFirst: vi.fn<[], Promise<(BenchmarkRelease & { metrics: BenchmarkMetric[] }) | null>>(),
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: {
     asyncJobState: { findMany: mockAsyncJobStateFindMany },
     matchResult: { findFirst: mockMatchResultFindFirst },

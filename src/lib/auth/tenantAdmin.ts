@@ -1,6 +1,6 @@
 import "server-only";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { isTenantAdminRole } from "../tenant/roles";
 
 export const TENANT_ROLES = {

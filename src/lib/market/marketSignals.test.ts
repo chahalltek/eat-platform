@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import { intelligenceCache } from "@/lib/cache/intelligenceCache";
 import { __testing, getMarketSignals } from "./marketSignals";
 
@@ -15,7 +15,7 @@ type AggregateRow = {
   capturedAt: Date;
 };
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: { $queryRaw: vi.fn() },
 }));
 

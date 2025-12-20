@@ -1,9 +1,9 @@
-import type { PrismaClient } from "@/server/db";
+import type { PrismaClient } from "@/server/db/prisma";
 
 import { intelligenceCache, intelligenceCacheKeys, INTELLIGENCE_CACHE_TTLS } from "@/lib/cache/intelligenceCache";
 import { getTimeToFillRisksForTenant } from "@/lib/forecast/timeToFillRisk";
 import { getMarketSignals } from "@/lib/market/marketSignals";
-import { prisma } from "@/server/db";
+import { prisma } from "@/server/db/prisma";
 import type { CopilotRequest, EvidencePack } from "./strategicCopilot";
 import { startTiming } from "@/lib/observability/timing";
 

@@ -52,7 +52,7 @@ vi.mock("@/lib/audit/adminAudit", async () => {
   };
 });
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: prismaMock,
 }));
 

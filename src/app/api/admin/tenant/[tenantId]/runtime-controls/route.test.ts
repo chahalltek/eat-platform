@@ -45,7 +45,7 @@ vi.mock("@/lib/tenant", () => ({
   withTenantContext: mockWithTenantContext,
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   isPrismaUnavailableError: () => false,
 }));
 

@@ -4,7 +4,7 @@ import { canManageTenants } from "@/lib/auth/permissions";
 import { getCurrentUser } from "@/lib/auth/user";
 import { logModeChange } from "@/lib/audit/adminAudit";
 import { SYSTEM_MODES, type SystemModeName } from "@/lib/modes/systemModes";
-import { Prisma, prisma } from "@/server/db";
+import { Prisma, prisma } from "@/server/db/prisma";
 import { getTenantMode, updateTenantMode } from "@/lib/tenantMode";
 
 export const dynamic = "force-dynamic";

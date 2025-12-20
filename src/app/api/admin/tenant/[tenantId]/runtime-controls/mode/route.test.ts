@@ -42,7 +42,7 @@ vi.mock("@/lib/audit/securityEvents", () => ({
   logRuntimeModeChanged: mockLogRuntimeModeChanged,
 }));
 
-vi.mock("@/server/db", () => ({
+vi.mock("@/server/db/prisma", () => ({
   prisma: prismaMock,
 }));
 
