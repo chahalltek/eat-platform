@@ -22,12 +22,15 @@ type StatusTone = "healthy" | "idle" | "waiting" | "fault" | "disabled";
 
 const toneStyles: Record<StatusTone, string> = {
   healthy:
-    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200",
-  idle: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200",
+    "border-emerald-200 bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200 dark:border-emerald-500/50 dark:bg-emerald-900/60 dark:text-emerald-50 dark:ring-emerald-500/60",
+  idle:
+    "border-blue-200 bg-blue-100 text-blue-900 ring-1 ring-blue-200 dark:border-blue-500/50 dark:bg-blue-900/60 dark:text-blue-50 dark:ring-blue-500/60",
   waiting:
-    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200",
-  fault: "border-red-200 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
-  disabled: "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200",
+    "border-amber-200 bg-amber-100 text-amber-900 ring-1 ring-amber-200 dark:border-amber-500/50 dark:bg-amber-900/60 dark:text-amber-50 dark:ring-amber-500/60",
+  fault:
+    "border-rose-200 bg-rose-100 text-rose-900 ring-1 ring-rose-200 dark:border-rose-500/50 dark:bg-rose-900/60 dark:text-rose-50 dark:ring-rose-500/60",
+  disabled:
+    "border-slate-200 bg-slate-100 text-slate-800 ring-1 ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:ring-slate-600",
 };
 
 const statusConfig: Record<StatusPillStatus, { tone: StatusTone; label: string }> = {

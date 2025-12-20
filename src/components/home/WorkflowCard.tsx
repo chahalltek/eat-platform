@@ -130,10 +130,14 @@ function WorkflowDependencies({
   variant?: "default" | "strong";
 }) {
   const pillStyles: Record<SubsystemState, string> = {
-    healthy: "border-emerald-200 text-emerald-800 dark:border-emerald-900 dark:text-emerald-100",
-    warning: "border-amber-200 text-amber-800 dark:border-amber-900 dark:text-amber-100",
-    error: "border-rose-200 text-rose-800 dark:border-rose-900 dark:text-rose-100",
-    unknown: "border-slate-200 text-slate-800 dark:border-slate-700 dark:text-slate-100",
+    healthy:
+      "border-emerald-200 bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200 dark:border-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-50 dark:ring-emerald-600",
+    warning:
+      "border-amber-200 bg-amber-50 text-amber-900 ring-1 ring-amber-200 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-50 dark:ring-amber-600",
+    error:
+      "border-rose-200 bg-rose-50 text-rose-900 ring-1 ring-rose-200 dark:border-rose-700 dark:bg-rose-900/50 dark:text-rose-50 dark:ring-rose-600",
+    unknown:
+      "border-slate-200 bg-slate-50 text-slate-900 ring-1 ring-slate-200 dark:border-slate-700 dark:bg-zinc-900/60 dark:text-slate-50 dark:ring-slate-600",
   };
 
   const dotStyles: Record<SubsystemState, string> = {
@@ -145,8 +149,8 @@ function WorkflowDependencies({
 
   const containerStyles =
     variant === "strong"
-      ? "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-zinc-900"
-      : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-zinc-900/70";
+      ? "border-border bg-card text-card-foreground dark:border-border dark:bg-card"
+      : "border-border/80 bg-card text-card-foreground/90 dark:border-border/80 dark:bg-card/90";
 
   return (
     <div
@@ -156,11 +160,11 @@ function WorkflowDependencies({
         containerStyles,
       )}
     >
-      <div className="flex flex-wrap items-center gap-3 font-semibold text-slate-900 dark:text-slate-50">
+      <div className="flex flex-wrap items-center gap-3 font-semibold text-foreground dark:text-foreground">
         <span className="text-sm">{label}</span>
         <span
           className={clsx(
-            "flex items-center gap-2 rounded-full border bg-white px-3 py-1 text-[11px] uppercase tracking-wide shadow-sm dark:bg-zinc-900",
+            "flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-[11px] uppercase tracking-wide shadow-sm dark:bg-card",
             pillStyles[status],
           )}
         >
@@ -168,7 +172,7 @@ function WorkflowDependencies({
           <span className="text-slate-700 dark:text-slate-200">{formatDependencyStatus(status)} dependency</span>
         </span>
       </div>
-      <p className="text-xs text-slate-700 dark:text-slate-200/80">{message}</p>
+      <p className="text-xs text-foreground/80 dark:text-foreground/80">{message}</p>
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
         <span className="h-2 w-2 rounded-full bg-slate-400 shadow-sm" aria-hidden />
         <span>{systemLink}</span>

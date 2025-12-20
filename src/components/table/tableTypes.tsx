@@ -11,11 +11,16 @@ export type ETETableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
 export type TableAccessorKey<TData> = Extract<keyof TData, string>;
 
 const STATUS_VARIANT_CLASSES = {
-  success: "bg-green-100 text-green-800",
-  warning: "bg-yellow-100 text-yellow-800",
-  error: "bg-red-100 text-red-800",
-  info: "bg-blue-100 text-blue-800",
-  neutral: "bg-gray-100 text-gray-800",
+  success:
+    "bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200 dark:bg-emerald-900/60 dark:text-emerald-50 dark:ring-emerald-500/60",
+  warning:
+    "bg-amber-100 text-amber-900 ring-1 ring-amber-200 dark:bg-amber-900/60 dark:text-amber-50 dark:ring-amber-500/60",
+  error:
+    "bg-rose-100 text-rose-900 ring-1 ring-rose-200 dark:bg-rose-900/60 dark:text-rose-50 dark:ring-rose-500/60",
+  info:
+    "bg-blue-100 text-blue-900 ring-1 ring-blue-200 dark:bg-blue-900/60 dark:text-blue-50 dark:ring-blue-500/60",
+  neutral:
+    "bg-slate-100 text-slate-900 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-50 dark:ring-slate-600",
 } as const;
 
 export type StatusVariant = keyof typeof STATUS_VARIANT_CLASSES;
