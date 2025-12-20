@@ -48,6 +48,8 @@ function DiagnosticCard({
   description: string;
   children: ReactNode;
 }) {
+  const tooltipSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const tooltipId = `diagnostics-title-${tooltipSlug || "title"}`;
   const pillStatus =
     status === "warn" ? "warning" : status === "off" ? "off" : status === "fault" ? "fault" : "ok";
   const pillLabel =
@@ -64,10 +66,23 @@ function DiagnosticCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <StatusIcon status={status} />
-          <div className="flex-1">
-            <AdminCardTitle as="h3" className="text-base dark:text-zinc-50" stabilizeHeight>
+          <div className="group/title relative flex-1">
+            <AdminCardTitle
+              as="h3"
+              className="text-base dark:text-zinc-50"
+              stabilizeHeight
+              aria-describedby={tooltipId}
+              tabIndex={0}
+            >
               {title}
             </AdminCardTitle>
+            <div
+              id={tooltipId}
+              role="tooltip"
+              className="pointer-events-none absolute left-0 top-full z-10 mt-2 hidden max-w-xs rounded-md bg-zinc-900 px-3 py-2 text-xs font-medium text-white shadow-lg ring-1 ring-black/10 group-hover/title:block group-focus-within/title:block"
+            >
+              {title}
+            </div>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
           </div>
         </div>
@@ -487,4 +502,3 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
     throw error;
   }
 }
-
