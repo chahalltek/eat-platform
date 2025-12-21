@@ -31,15 +31,17 @@ export async function collectCoverage({ browser, testInfo }: { browser: Browser;
     const coverageEntries = await Promise.all(pages.map(readCoverageFromPage));
     const merged = coverageEntries.reduce<CoverageMap>((acc, entry) => (entry ? { ...acc, ...entry } : acc), {});
 
+    const titlePath = testInfo.titlePath.join(" > ");
+
     if (Object.keys(merged).length === 0) {
-      console.warn(`[coverage] No coverage found for ${testInfo.titlePath().join(" > ")}.`);
+      console.warn(`[coverage] No coverage found for ${titlePath}.`);
       return;
     }
 
     const outputDir = path.join(process.cwd(), "coverage", "e2e", "raw");
     fs.mkdirSync(outputDir, { recursive: true });
 
-    const filename = `${sanitizeFilenamePart(testInfo.project.name)}-${sanitizeFilenamePart(testInfo.titlePath().join(" "))}-${Date.now()}.json`;
+    const filename = `${sanitizeFilenamePart(testInfo.project.name)}-${sanitizeFilenamePart(titlePath)}-${Date.now()}.json`;
     fs.writeFileSync(path.join(outputDir, filename), JSON.stringify(merged));
   } catch (error) {
     console.warn(`[coverage] Failed to write coverage for ${testInfo.title}:`, error);

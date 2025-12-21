@@ -36,7 +36,7 @@ export async function writeCoverageFile(testInfo: TestInfo, coverage: IstanbulCo
   fs.mkdirSync(rawOutputDir, { recursive: true });
 
   const projectName = sanitizeForFilename(testInfo.project.name);
-  const titlePath = sanitizeForFilename(testInfo.titlePath().join("-"));
+  const titlePath = sanitizeForFilename(testInfo.titlePath.join("-"));
   const retrySuffix = String(testInfo.retry ?? 0);
 
   const fileName = `${projectName}-${titlePath}-${retrySuffix}.json`;
