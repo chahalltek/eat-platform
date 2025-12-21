@@ -1,7 +1,22 @@
-import type { UserConfig } from "vitest/config";
+type ThresholdValues = {
+  100?: boolean;
+  autoUpdate?: boolean | ((newThreshold: number) => number);
+  branches?: number;
+  functions?: number;
+  lines?: number;
+  perFile?: boolean;
+  statements?: number;
+};
 
-type CoverageThresholds = NonNullable<NonNullable<UserConfig["test"]>["coverage"]>["thresholds"];
-
+type CoverageThresholds =
+  | ThresholdValues
+  | (ThresholdValues & {
+      [glob: string]: Pick<
+        ThresholdValues,
+        100 | "branches" | "functions" | "lines" | "statements"
+      >;
+    });
+    
 const shouldRelaxThresholds = process.env.COVERAGE_RELAXED === "true";
 
 export const coverageThresholds: CoverageThresholds = shouldRelaxThresholds
