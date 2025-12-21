@@ -60,9 +60,11 @@ export function useSystemMapHealth(enabled: boolean, endpoint = "/api/system-map
 
       const payload = (await response.json()) as SystemMapHealthResponse | unknown;
       const normalized = normalizeNodeHealthResponse(payload);
+      const payloadTimestamp = (payload as SystemMapHealthResponse).timestamp;
+      const resolvedTimestamp = typeof payloadTimestamp === "string" ? payloadTimestamp : new Date().toISOString();
 
       setHealth(normalized);
-      setLastUpdated(typeof (payload as SystemMapHealthResponse).timestamp === "string" ? (payload as SystemMapHealthResponse).timestamp : new Date().toISOString());
+      setLastUpdated(resolvedTimestamp);
       errorStreakRef.current = 0;
       setIsUnavailable(false);
     } catch (error) {
