@@ -20,11 +20,13 @@ export type RuaInput = {
   sourceTag?: string;
 };
 
+export type RuaRunResult = { jobReqId: string; agentRunId: string; rua: RuaLLMResponse };
+
 export async function runRua(
   input: RuaInput,
   retryMetadata?: AgentRetryMetadata,
   llmAdapter?: OpenAIAdapter,
-): Promise<{ jobReqId: string; agentRunId: string }> {
+): Promise<RuaRunResult> {
   const { recruiterId, rawJobText, sourceType, sourceTag } = input;
   const tenantId = await getCurrentTenantId();
 
@@ -32,7 +34,7 @@ export async function runRua(
     version: RUA_PROMPT_VERSION,
   });
 
-  const [result, agentRunId] = await withAgentRun<{ jobReqId: string }>(
+  const [result, agentRunId] = await withAgentRun<{ jobReqId: string; rua: RuaLLMResponse }>(
     {
       agentName: 'ETE-TS.RUA',
       recruiterId,
@@ -114,7 +116,7 @@ ${rawJobText}
       });
 
       return {
-        result: { jobReqId: jobReq.id },
+        result: { jobReqId: jobReq.id, rua: parsed },
         outputSnapshot: parsed,
       };
     },
