@@ -1,4 +1,6 @@
-import type { CoverageThresholds } from "vitest";
+import type { UserConfig } from "vitest/config";
+
+type CoverageThresholds = NonNullable<NonNullable<UserConfig["test"]>["coverage"]>["thresholds"];
 
 const shouldRelaxThresholds = process.env.COVERAGE_RELAXED === "true";
 
