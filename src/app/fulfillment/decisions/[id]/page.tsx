@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ETECard } from "@/components/ETECard";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getDecisionArtifact } from "@/server/decision/decisionArtifacts";
 
@@ -14,7 +15,8 @@ export default async function DecisionDetailPage({ params }: { params: { id: str
 
   if (!user) return notFound();
 
-  const decision = await getDecisionArtifact({ artifactId: params.id, tenantId: user.tenantId });
+  const decisionTenantId = (user.tenantId ?? DEFAULT_TENANT_ID).trim();
+  const decision = await getDecisionArtifact({ artifactId: params.id, tenantId: decisionTenantId });
   if (!decision) return notFound();
 
   const createdAt = format(new Date(decision.createdAt), "PPP p");
