@@ -21,7 +21,19 @@ export function LoginContent({ branding }: LoginContentProps) {
   const [logoIndex, setLogoIndex] = useState(0);
 
   const logoAlt = useMemo(() => branding.brandLogoAlt || DEFAULT_BRAND_LOGO_ALT, [branding.brandLogoAlt]);
+<<<<<<< ours
   const logoSources = useMemo(() => resolveLoginLogoSources(branding), [branding]);
+=======
+  const logoSources = useMemo(() => {
+    const sources = [
+      branding.brandLogoUrl ?? null,
+      BRANDING.logoHorizontal,
+      DEFAULT_BRAND_LOGO,
+    ];
+
+    return sources.filter(Boolean).map((src) => normalizeLogoPath(src as string));
+  }, [branding.brandLogoUrl]);
+>>>>>>> theirs
   const logoSrc = logoSources[Math.min(logoIndex, logoSources.length - 1)];
 
   useEffect(() => {
