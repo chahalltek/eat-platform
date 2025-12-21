@@ -20,6 +20,7 @@ The ETE platform is a [Next.js](https://nextjs.org) application with CI guardrai
 The CI workflow enforces our enterprise DoD. A build will fail when any of the following protections do not pass:
 
 - **Coverage must stay at 100%.** `vitest` thresholds are pinned to 100% across statements/branches/functions/lines. Run `npm test` (or `npm run coverage`) locally to verify before opening a PR.
+- **Route entrypoints are E2E-owned.** `src/app/**/page.tsx` files are excluded from Vitest coverage and validated through Playwright suites instead; see [Playwright coverage strategy](./docs/testing/e2e-coverage.md) for how to keep routes green.
 - **Coverage debt scanner prevents new 0% files.** Run `npm run ci:coverage-debt` after collecting coverage to block newly added `.ts`/`.tsx` sources without coverage.
 - **No TODO/FIXME markers in protected domains.** Auth, billing, and tenant code (`src/lib/auth/**`, `src/lib/billing/**`, `src/lib/tenant/**`) are scanned via `npm run ci:todo-scan`.
 - **Configuration validation for the target environment.** `npm run ci:config-validate` exercises `src/lib/config/configValidator` with production-like variables to ensure required secrets and flags are present.

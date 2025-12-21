@@ -34,7 +34,12 @@ export default defineConfig({
         "src/app/**/*.{ts,tsx}",
         "src/components/**/*.{ts,tsx}",
       ],
-      exclude: ["src/**/__mocks__/**", "**/__generated__/**", "src/**/types/**"],
+      exclude: [
+        "src/**/__mocks__/**",
+        "**/__generated__/**",
+        "src/**/types/**",
+        "src/app/**/page.tsx", // Route entrypoints validated through Playwright E2E coverage
+      ],
       thresholds: {
         lines: 100,
         functions: 100,
