@@ -51,6 +51,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@tests": path.resolve(__dirname, "./tests"),
+      "@radix-ui/react-switch": path.resolve(__dirname, "./tests/mocks/radixSwitchMock.tsx"),
       "server-only": path.resolve(__dirname, "./server-only.ts"),
     },
   },
