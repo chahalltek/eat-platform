@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import { DecisionArtifactStatus, DecisionArtifactType, Prisma, prisma } from "@/server/db/prisma";
+import { DecisionArtifactStatus, DecisionArtifactType, Prisma, prisma, type DecisionArtifact } from "@/server/db/prisma";
 import { withTenantContext } from "@/lib/tenant";
 
 type DecisionArtifactPayload = Prisma.InputJsonValue;
 
-export type DecisionArtifactRecord = Prisma.DecisionArtifact;
+export type DecisionArtifactRecord = DecisionArtifact;
 
 type CreateDecisionArtifactInput = {
   tenantId: string;
