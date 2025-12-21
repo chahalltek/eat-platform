@@ -181,7 +181,7 @@ export async function createDecisionDraft(input: { jobId: string; userId: string
       status: DecisionStatus.DRAFT,
       createdBy: input.userId,
     },
-  }) as Promise<DecisionRecord>;
+  }) as unknown as Promise<DecisionRecord>;
 }
 
 export async function listDecisionsForJob(jobId: string): Promise<DecisionRecord[]> {
