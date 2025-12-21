@@ -1,7 +1,11 @@
 import Link from "next/link";
 
+import { getCurrentUser } from "@/lib/auth/user";
+import { canCreateDecisionDraft, canPublishDecision } from "@/lib/auth/permissions";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
+import { DecisionMemoryPanel } from "./DecisionMemoryPanel";
+import { listDecisionsForJob, toDecisionDto } from "@/server/decision/decisionDrafts";
 import { prisma } from "@/server/db/prisma";
 import { MatchRunner } from "./MatchRunner";
 import { FreshnessIndicator } from "../FreshnessIndicator";
@@ -50,9 +54,10 @@ export default async function JobDetail({
   params: { jobId: string };
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
-  const [uiBlocksEnabled, scoringEnabled] = await Promise.all([
+  const [uiBlocksEnabled, scoringEnabled, currentUser] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
     isFeatureEnabled(FEATURE_FLAGS.SCORING),
+    getCurrentUser(),
   ]);
   const from = normalizeSearchParamValue(searchParams?.from);
   const returnUrl = normalizeSearchParamValue(searchParams?.returnUrl);
@@ -100,7 +105,13 @@ export default async function JobDetail({
 
   const requiredSkills = job.skills.filter((skill) => skill.required);
   const niceToHaveSkills = job.skills.filter((skill) => !skill.required);
-  const marketInsights = await getJobPredictiveSignals(job.id, job.tenantId);
+  const [marketInsights, decisions] = await Promise.all([
+    getJobPredictiveSignals(job.id, job.tenantId),
+    listDecisionsForJob(job.id),
+  ]);
+  const decisionDtos = decisions.map(toDecisionDto);
+  const allowDraftCreation = currentUser ? canCreateDecisionDraft(currentUser, job.tenantId) : false;
+  const allowPublishDecision = currentUser ? canPublishDecision(currentUser, job.tenantId) : false;
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 space-y-8">
@@ -128,6 +139,13 @@ export default async function JobDetail({
           <BackToConsoleButton />
         </div>
       </div>
+
+      <DecisionMemoryPanel
+        jobId={job.id}
+        decisions={decisionDtos}
+        canCreate={allowDraftCreation}
+        canPublish={allowPublishDecision}
+      />
 
       <div className="grid grid-cols-1 gap-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:grid-cols-2">
         <div>

@@ -23,9 +23,14 @@ type Permission =
   | "EXPORT_MATCHES"
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   | "FULFILLMENT_VIEW"
   | "DECISION_CREATE"
   | "DECISION_PUBLISH";
+=======
+  | "CREATE_DECISION"
+  | "PUBLISH_DECISION";
+>>>>>>> theirs
 =======
   | "CREATE_DECISION"
   | "PUBLISH_DECISION";
@@ -49,9 +54,14 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
 <<<<<<< ours
+<<<<<<< ours
     "FULFILLMENT_VIEW",
     "DECISION_CREATE",
     "DECISION_PUBLISH",
+=======
+    "CREATE_DECISION",
+    "PUBLISH_DECISION",
+>>>>>>> theirs
 =======
     "CREATE_DECISION",
     "PUBLISH_DECISION",
@@ -74,9 +84,14 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
 <<<<<<< ours
+<<<<<<< ours
     "FULFILLMENT_VIEW",
     "DECISION_CREATE",
     "DECISION_PUBLISH",
+=======
+    "CREATE_DECISION",
+    "PUBLISH_DECISION",
+>>>>>>> theirs
 =======
     "CREATE_DECISION",
     "PUBLISH_DECISION",
@@ -153,6 +168,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "DECISION_EXPORT"]),
   [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "DECISION_EXPORT"]),
   [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES"]),
@@ -170,6 +186,11 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "VIEW_FULFILLMENT"]),
   [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT", "CREATE_DECISION", "PUBLISH_DECISION"]),
   [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
+>>>>>>> theirs
+=======
+  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS"]),
+  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "CREATE_DECISION", "PUBLISH_DECISION"]),
+  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "CREATE_DECISION"]),
 >>>>>>> theirs
   [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES"]),
 =======
@@ -195,9 +216,14 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
 <<<<<<< ours
+<<<<<<< ours
     "FULFILLMENT_VIEW",
     "DECISION_CREATE",
     "DECISION_PUBLISH",
+=======
+    "CREATE_DECISION",
+    "PUBLISH_DECISION",
+>>>>>>> theirs
 =======
     "CREATE_DECISION",
     "PUBLISH_DECISION",
@@ -346,6 +372,7 @@ export function canExportMatches(user: PermissionUser, tenantId?: string | null)
 }
 
 <<<<<<< ours
+<<<<<<< ours
 export function canViewFulfillment(user: PermissionUser, tenantId?: string | null) {
 <<<<<<< ours
 <<<<<<< ours
@@ -443,3 +470,12 @@ export function can(user: PermissionCheckSubject, permission: NamedPermission | 
   return ROLE_NAMED_PERMISSION_MAP[role]?.has(normalizedPermission as NamedPermission) ?? false;
 >>>>>>> theirs
 }
+=======
+export function canCreateDecisionDraft(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "CREATE_DECISION") && hasTenantAccess(user, tenantId);
+}
+
+export function canPublishDecision(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "PUBLISH_DECISION") && hasTenantAccess(user, tenantId);
+}
+>>>>>>> theirs

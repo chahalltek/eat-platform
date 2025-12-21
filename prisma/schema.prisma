@@ -42,6 +42,11 @@ enum ExecutionStatus {
   FAILED
 }
 
+enum DecisionStatus {
+  DRAFT
+  PUBLISHED
+}
+
 enum TenantDeletionMode {
   SOFT_DELETE
   HARD_DELETE
@@ -470,6 +475,7 @@ model JobReq {
   matchResults         MatchResult[]
   jobCandidates        JobCandidate[]
   decisionStreams      DecisionStream[]
+  decisions            Decision[]
   actionApprovals      AgentActionApproval[]
   outreachInteractions OutreachInteraction[]
   outreachActions      OutreachAction[]
@@ -777,6 +783,25 @@ model DecisionStream {
 
   @@index([tenantId])
   @@index([tenantId, jobId, createdBy, status])
+}
+
+model Decision {
+  id           String          @id @default(cuid())
+  tenantId     String          @default("default-tenant")
+  job          JobReq          @relation(fields: [jobReqId], references: [id])
+  jobReqId     String
+  candidateIds String[]        @default([])
+  payload      Json
+  status       DecisionStatus  @default(DRAFT)
+  createdBy    String
+  publishedBy  String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  publishedAt  DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, jobReqId])
+  @@index([tenantId, jobReqId, status])
 }
 
 model DecisionReceipt {

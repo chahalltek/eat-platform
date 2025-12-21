@@ -44,7 +44,11 @@ const createPrismaMock = () => {
     auditLog: createModelMock(),
     candidate: createModelMock(),
     candidateSkill: createModelMock(),
+<<<<<<< ours
     decisionArtifact: createModelMock(),
+=======
+    decision: createModelMock(),
+>>>>>>> theirs
     customer: createModelMock(),
     metricEvent: createModelMock(),
     decisionItem: createModelMock(),
@@ -167,6 +171,15 @@ export function mockDb() {
         {
           SUBMITTED: "SUBMITTED",
           PROCESSED: "PROCESSED",
+        },
+      ),
+      DecisionStatus: pickEnum(
+        (actual as any).DecisionStatus,
+        (actual as any).Prisma?.DecisionStatus,
+        prismaEnums.DecisionStatus,
+        {
+          DRAFT: "DRAFT",
+          PUBLISHED: "PUBLISHED",
         },
       ),
     };
