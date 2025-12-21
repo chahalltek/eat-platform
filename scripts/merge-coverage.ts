@@ -1,10 +1,17 @@
 <<<<<<< ours
+<<<<<<< ours
 import fs from "node:fs";
 import path from "node:path";
+=======
+import { promises as fs } from "fs";
+import path from "path";
+import { glob } from "glob";
+>>>>>>> theirs
 import { createCoverageMap, type CoverageMapData } from "istanbul-lib-coverage";
 import { createContext } from "istanbul-lib-report";
 import reports from "istanbul-reports";
 
+<<<<<<< ours
 type CoverageSource = {
   label: string;
   path: string;
@@ -148,11 +155,53 @@ async function collectJsonFiles(directory: string): Promise<string[]> {
     } else if (entry.isFile() && entry.name.endsWith(".json")) {
       files.push(resolvedPath);
     }
+=======
+const UNIT_COVERAGE_PATH = path.join("coverage", "unit", "coverage-final.json");
+const E2E_COVERAGE_GLOB = path.join("coverage", "e2e", "raw", "*.json");
+const MERGED_DIR = path.join("coverage", "merged");
+const MERGED_COVERAGE_PATH = path.join(MERGED_DIR, "coverage-final.json");
+
+function normalizeCoveragePaths(data: CoverageMapData): CoverageMapData {
+  const normalized: CoverageMapData = {};
+
+  for (const [filePath, coverage] of Object.entries(data)) {
+    const unixPath = filePath.replace(/\\\\/g, "/");
+    normalized[unixPath] = coverage;
+  }
+
+  return normalized;
+}
+
+async function readCoverageJson(filePath: string): Promise<CoverageMapData> {
+  const content = await fs.readFile(filePath, "utf-8");
+  const parsed = JSON.parse(content) as CoverageMapData;
+  return normalizeCoveragePaths(parsed);
+}
+
+async function ensureUnitCoverageExists(): Promise<void> {
+  try {
+    await fs.access(UNIT_COVERAGE_PATH);
+  } catch {
+    throw new Error(
+      `Unit coverage not found at ${UNIT_COVERAGE_PATH}. Run \"npm run coverage:unit\" first.`,
+    );
+  }
+}
+
+async function getE2eCoverageFiles(): Promise<string[]> {
+  const files = await glob(E2E_COVERAGE_GLOB);
+
+  if (files.length === 0) {
+    throw new Error(
+      `No E2E coverage files found at ${E2E_COVERAGE_GLOB}. Run \"COVERAGE_E2E=1 BABEL_ENV=coverage_e2e npm run test:e2e\" first.`,
+    );
+>>>>>>> theirs
   }
 
   return files;
 }
 
+<<<<<<< ours
 async function collectE2ECoverageMaps(): Promise<CoverageMapData[]> {
   const existingDirs = [];
 
@@ -214,5 +263,54 @@ async function main(): Promise<void> {
 void main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;
+});
+>>>>>>> theirs
+=======
+async function main(): Promise<void> {
+  await ensureUnitCoverageExists();
+
+  const e2eFiles = await getE2eCoverageFiles();
+  const coverageMap = createCoverageMap({});
+
+  const unitCoverage = await readCoverageJson(UNIT_COVERAGE_PATH);
+  coverageMap.merge(unitCoverage);
+
+  for (const file of e2eFiles) {
+    const e2eCoverage = await readCoverageJson(file);
+    coverageMap.merge(e2eCoverage);
+  }
+
+  await fs.mkdir(MERGED_DIR, { recursive: true });
+  await fs.writeFile(
+    MERGED_COVERAGE_PATH,
+    JSON.stringify(coverageMap.toJSON(), null, 2),
+    "utf-8",
+  );
+
+  const context = createContext({
+    dir: MERGED_DIR,
+    coverageMap,
+    defaultSummarizer: "nested",
+  });
+
+  const reportNames: Array<"html" | "lcovonly" | "text-summary"> = [
+    "html",
+    "lcovonly",
+    "text-summary",
+  ];
+
+  for (const name of reportNames) {
+    const report = reports.create(name);
+    report.execute(context);
+  }
+
+  console.log(`Merged coverage written to ${MERGED_COVERAGE_PATH}`);
+  console.log(`E2E coverage files merged: ${e2eFiles.length}`);
+  console.log(`Total covered files: ${coverageMap.files().length}`);
+}
+
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
 });
 >>>>>>> theirs

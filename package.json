@@ -15,6 +15,7 @@
     "coverage:unit": "vitest run --coverage --config vitest.unit.config.ts",
     "coverage": "npm run test:coverage",
     "coverage:all": "vitest run --coverage --config vitest.config.ts",
+    "coverage:merge": "tsx scripts/merge-coverage.ts",
     "ci:test:coverage": "vitest run --coverage --watch=false --config vitest.coverage.config.ts",
     "ci:config-validate": "tsx scripts/config-validate.ts",
     "ci:coverage-debt": "npm run coverage && tsx scripts/coverage-debt-scan.ts",
@@ -40,6 +41,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test",
@@ -57,10 +59,13 @@
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 >>>>>>> theirs
@@ -69,6 +74,8 @@
     "test:e2e": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e:ui": "playwright test --config=playwright.e2e.config.ts --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test --config=playwright.e2e.config.ts"
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -110,11 +117,18 @@
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
+<<<<<<< ours
     "istanbul-lib-coverage": "^3.2.2",
 <<<<<<< ours
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",
 =======
+>>>>>>> theirs
+=======
+    "glob": "^11.1.0",
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.2.0",
 >>>>>>> theirs
     "jsdom": "^27.3.0",
     "pg-mem": "^3.0.5",
