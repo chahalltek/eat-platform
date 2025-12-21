@@ -1,10 +1,18 @@
+<<<<<<< ours
 import fs from "node:fs";
 import path from "node:path";
 import fg from "fast-glob";
+=======
+import fs from "node:fs/promises";
+import path from "node:path";
+
+import glob from "glob";
+>>>>>>> theirs
 import { createCoverageMap, type CoverageMapData } from "istanbul-lib-coverage";
 import { createContext } from "istanbul-lib-report";
 import reports from "istanbul-reports";
 
+<<<<<<< ours
 const UNIT_COVERAGE_CANDIDATES = [
   "coverage/unit/coverage-final.json",
   "coverage/coverage-final.json", // fallback if unit reportsDirectory not split
@@ -23,10 +31,36 @@ function normalizeCoveragePaths(data: CoverageMapData): CoverageMapData {
   for (const [k, v] of Object.entries(data)) {
     const nk = k.replace(/\\\\/g, "/");
     normalized[nk] = v as any;
+=======
+const repoRoot = path.resolve(__dirname, "..");
+const mergedDir = path.join(repoRoot, "coverage", "merged");
+const unitCoverageCandidates = [
+  path.join(repoRoot, "coverage", "unit", "coverage-final.json"),
+  path.join(repoRoot, "coverage", "coverage-final.json"),
+];
+const e2eCoverageGlob = path.join(repoRoot, "coverage", "e2e", "raw", "**", "*.json");
+
+async function fileExists(targetPath: string) {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeCoveragePaths(data: CoverageMapData): CoverageMapData {
+  const normalized: CoverageMapData = {};
+
+  for (const [filePath, coverage] of Object.entries(data)) {
+    const unixPath = filePath.replace(/\\/g, "/");
+    normalized[unixPath] = coverage;
+>>>>>>> theirs
   }
   return normalized;
 }
 
+<<<<<<< ours
 function findFirstExisting(pathsToTry: string[]): string | null {
   for (const p of pathsToTry) {
     if (fs.existsSync(p)) return p;
@@ -37,11 +71,33 @@ function findFirstExisting(pathsToTry: string[]): string | null {
 function ensureDir(dir: string) {
   fs.mkdirSync(dir, { recursive: true });
 }
+=======
+async function readCoverageJson(filePath: string): Promise<CoverageMapData> {
+  const content = await fs.readFile(filePath, "utf-8");
+  const parsed = JSON.parse(content) as CoverageMapData;
+  return normalizeCoveragePaths(parsed);
+}
+
+async function loadUnitCoverage() {
+  for (const candidate of unitCoverageCandidates) {
+    if (await fileExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  const readablePaths = unitCoverageCandidates.map((candidate) => path.relative(repoRoot, candidate)).join(", ");
+  throw new Error(`Unit coverage not found. Looked for: ${readablePaths}. Run "npm run coverage:unit" first.`);
+}
+
+async function loadE2eCoverageFiles(): Promise<string[]> {
+  const files = await glob(e2eCoverageGlob);
+>>>>>>> theirs
 
 function main() {
   const unitPath = findFirstExisting(UNIT_COVERAGE_CANDIDATES);
   if (!unitPath) {
     throw new Error(
+<<<<<<< ours
       `Unit coverage not found. Expected one of:\n- ${UNIT_COVERAGE_CANDIDATES.join(
         "\n- "
       )}\n\nRun unit coverage first (Vitest + istanbul), e.g.:\n  npm run test:coverage:unit`
@@ -106,3 +162,44 @@ function main() {
 }
 
 main();
+=======
+      `No E2E coverage files found at ${path.relative(repoRoot, e2eCoverageGlob)}. Run "npm run test:coverage:e2e" first.`,
+    );
+  }
+
+  return files;
+}
+
+async function mergeCoverages(): Promise<void> {
+  const mergedMap = createCoverageMap({});
+
+  const unitCoveragePath = await loadUnitCoverage();
+  const unitCoverage = await readCoverageJson(unitCoveragePath);
+  mergedMap.merge(unitCoverage);
+  console.log(`✅ Added unit coverage from ${path.relative(repoRoot, unitCoveragePath)}`);
+
+  const e2eFiles = await loadE2eCoverageFiles();
+  for (const filePath of e2eFiles) {
+    const e2eCoverage = await readCoverageJson(filePath);
+    mergedMap.merge(e2eCoverage);
+    console.log(`✅ Added E2E coverage from ${path.relative(repoRoot, filePath)}`);
+  }
+
+  await fs.mkdir(mergedDir, { recursive: true });
+  const mergedCoveragePath = path.join(mergedDir, "coverage-final.json");
+  await fs.writeFile(mergedCoveragePath, JSON.stringify(mergedMap.toJSON(), null, 2));
+
+  const context = createContext({ dir: mergedDir, coverageMap: mergedMap });
+  const reporters = ["json-summary", "lcov", "html", "text-summary"] as const;
+  for (const reporter of reporters) {
+    reports.create(reporter).execute(context);
+  }
+
+  console.log(`📦 Merged coverage written to ${path.relative(repoRoot, mergedDir)}`);
+}
+
+mergeCoverages().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+});
+>>>>>>> theirs

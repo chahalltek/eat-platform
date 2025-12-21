@@ -1,16 +1,4 @@
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 import { expect, test } from "./testBase";
-=======
-import { expect, test } from "../tests/e2e/fixtures";
->>>>>>> theirs
-=======
-import { expect, test } from "../tests/playwright-coverage";
->>>>>>> theirs
-=======
-import { expect, test } from "@bgotink/playwright-coverage";
->>>>>>> theirs
 
 test.describe("Status badges showcase", () => {
   test("renders the visual gallery without authentication", async ({ page }) => {

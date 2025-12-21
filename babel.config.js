@@ -2,7 +2,6 @@ module.exports = {
   presets: ["next/babel"],
   env: {
     coverage_e2e: {
-<<<<<<< ours
       plugins: [
         [
           "istanbul",
@@ -19,9 +18,6 @@ module.exports = {
           },
         ],
       ],
-=======
-      plugins: ["istanbul"],
->>>>>>> theirs
     },
   },
 };

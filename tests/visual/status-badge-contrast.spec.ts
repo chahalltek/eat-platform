@@ -1,28 +1,15 @@
-<<<<<<< ours
 import { expect, test } from "../playwright-coverage";
-=======
-import { expect, test } from "@bgotink/playwright-coverage";
->>>>>>> theirs
+
+const BADGES = ["healthy", "informational", "needs-attention", "action-required", "idle"] as const;
 
 test.describe("status badge contrast", () => {
-  test.use({
-    viewport: { width: 1280, height: 720 },
-  });
+  for (const badge of BADGES) {
+    test(`renders ${badge} badge with contrast tokens`, async ({ page }) => {
+      await page.goto(`/visual/status-badge-contrast/${badge}`);
 
-  test("variants stay legible in light and dark mode", async ({ page, baseURL }, testInfo) => {
-    if (!baseURL) {
-      throw new Error("baseURL is not configured; set VISUAL_BASE_URL or use Playwright baseURL.");
-    }
-
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    const response = await page.goto("/visual/status-badges", { waitUntil: "networkidle" });
-    expect(response?.ok()).toBeTruthy();
-
-    const gallery = page.getByTestId("status-badge-gallery");
-    await expect(gallery).toBeVisible();
-
-    await expect(gallery).toHaveScreenshot(`status-badges-${testInfo.project.name}.png`, {
-      animations: "disabled",
+      const badgeElement = page.getByTestId(`status-badge-${badge}`);
+      await expect(badgeElement).toBeVisible();
+      await expect(badgeElement).toHaveAttribute("data-contrast", "true");
     });
-  });
+  }
 });

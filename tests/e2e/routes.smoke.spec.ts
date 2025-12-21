@@ -1,22 +1,6 @@
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-import { expect, type Locator, type Page, test } from "./fixtures";
-=======
-import { expect, type Locator, type Page, test } from "../../e2e/testBase";
->>>>>>> theirs
-=======
-import type { Locator, Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 
 import { expect, test } from "./fixtures";
->>>>>>> theirs
-=======
-import { expect, type Locator, type Page, test } from "../playwright-coverage";
->>>>>>> theirs
-=======
-import { expect, type Locator, type Page, test } from "@bgotink/playwright-coverage";
->>>>>>> theirs
 
 type RouteExpectation = {
   path: string;

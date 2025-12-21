@@ -4,9 +4,8 @@ import { config as loadEnvConfig } from "dotenv";
 import { defineConfig } from "vitest/config";
 import { coverageThresholds } from "./vitest.coverage.thresholds";
 
-const coverageDir = process.env.COVERAGE_DIR ?? "./coverage";
-const envFilePath = path.resolve(__dirname, process.env.VITEST_ENV_FILE ?? ".env.test");
 const coverageDirectory = path.resolve(__dirname, process.env.COVERAGE_DIR ?? "coverage");
+const envFilePath = path.resolve(__dirname, process.env.VITEST_ENV_FILE ?? ".env.test");
 
 if (fs.existsSync(envFilePath)) {
   loadEnvConfig({ path: envFilePath });
@@ -29,19 +28,9 @@ export default defineConfig({
       "tests/e2e/**",
     ],
     coverage: {
-<<<<<<< ours
-      provider: "istanbul",
-      reporter: ["text", "json", "html", "lcov"],
-      reportsDirectory: "coverage/unit",
-=======
       provider: "v8",
       reporter: ["text", "json", "json-summary", "lcov", "html"],
-<<<<<<< ours
-      reportsDirectory: coverageDir,
->>>>>>> theirs
-=======
       reportsDirectory: coverageDirectory,
->>>>>>> theirs
       reportOnFailure: true,
       include: [
         "src/lib/**/*.{ts,tsx}",
