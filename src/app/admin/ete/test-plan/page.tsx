@@ -50,7 +50,7 @@ export default async function EatTestPlanPage() {
             <div className="flex flex-col gap-2">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Admin</p>
               <h1 className="text-3xl font-semibold text-zinc-900 sm:text-4xl dark:text-zinc-50">
-                EDGE Talent Engine™ – Talent System (MVP) Test Plan
+                EDGE Talent Engine™ – MVP Test Plan
               </h1>
               <p className="text-sm text-zinc-700 dark:text-zinc-300">
                 Interactive checklist for validating the EDGE Talent Engine™ MVP before release.

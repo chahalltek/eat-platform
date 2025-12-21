@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+
+import { AgentRunsPageContent } from "@/app/agents/runs/page";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Execution history (Agent runs)",
+  title: "Execution history",
 };
 
-export default function ExecutionsPage() {
-  redirect("/agents/runs");
+export default async function ExecutionsPage({ searchParams }: { searchParams?: { status?: string; range?: string } }) {
+  return AgentRunsPageContent({ searchParams, currentPathOverride: "/executions" });
 }

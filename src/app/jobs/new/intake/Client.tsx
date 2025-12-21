@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { SopContextualLink } from "@/components/SopContextualLink";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { WorkflowShortcuts } from "@/components/workflows/WorkflowShortcuts";
 import type { IntakeSkill, JobIntakeProfile, JobIntakeResponse, MarketSignal } from "@/types/intake";
 
 type JobIntakeClientProps = {
@@ -161,6 +162,7 @@ export default function JobIntakeClient({ showSopLink }: JobIntakeClientProps) {
             Paste a job description, review the parsed profile, and save it to the job list.
           </p>
           {showSopLink ? <SopContextualLink context="intake" className="mt-3" /> : null}
+          <WorkflowShortcuts currentPath="/intake" className="mt-3" />
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <BackToConsoleButton />
@@ -393,4 +395,3 @@ export default function JobIntakeClient({ showSopLink }: JobIntakeClientProps) {
     </div>
   );
 }
-

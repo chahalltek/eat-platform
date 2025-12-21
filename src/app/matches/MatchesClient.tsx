@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { EmptyState, ErrorStatePanel } from "@/components/states/StatePanels";
+import { WorkflowShortcuts } from "@/components/workflows/WorkflowShortcuts";
 
 export type JobOption = {
   id: string;
@@ -91,56 +92,78 @@ export function MatchesClient({
     }
   }, [router, selectedJobId]);
 
+  const shortcuts = <WorkflowShortcuts currentPath="/matches" />;
+
   if (rbacWarning) {
     return (
-      <ErrorStatePanel
-        title="Access restricted"
-        message={rbacWarning}
-        diagnosticsHref="/"
-      />
+      <div className="space-y-4">
+        {shortcuts}
+        <ErrorStatePanel
+          title="Access restricted"
+          message={rbacWarning}
+          diagnosticsHref="/"
+        />
+      </div>
     );
   }
 
   if (!jobs.length) {
     return (
-      <EmptyState
-        title="No jobs available"
-        description="Create a job intake to see matches here."
-        action={
-          <Link href="/jobs/new/intake" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800">
-            Launch intake
-          </Link>
-        }
-      />
+      <div className="space-y-4">
+        {shortcuts}
+        <EmptyState
+          title="No jobs available"
+          description="Create a job intake to see matches here."
+          action={
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/intake"
+                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                Launch intake
+              </Link>
+              <Link
+                href="/resumes/upload"
+                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              >
+                Upload resumes
+              </Link>
+            </div>
+          }
+        />
+      </div>
     );
   }
 
   if (!selectedJobId) {
     return (
-      <EmptyState
-        title="Select a job to view ranked candidates"
-        description="Choose a role from the list to load match results."
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="text-sm font-semibold text-slate-700" htmlFor="job-picker">Job</label>
-            <select
-              id="job-picker"
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900"
-              onChange={(event) => handleJobChange(event.target.value)}
-              defaultValue=""
-            >
-              <option value="" disabled>
-                Choose a job
-              </option>
-              {jobs.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {job.title}
+      <div className="space-y-4">
+        {shortcuts}
+        <EmptyState
+          title="Select a job to view ranked candidates"
+          description="Choose a role from the list to load match results."
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-sm font-semibold text-slate-700" htmlFor="job-picker">Job</label>
+              <select
+                id="job-picker"
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900"
+                onChange={(event) => handleJobChange(event.target.value)}
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  Choose a job
                 </option>
-              ))}
-            </select>
-          </div>
-        }
-      />
+                {jobs.map((job) => (
+                  <option key={job.id} value={job.id}>
+                    {job.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          }
+        />
+      </div>
     );
   }
 
@@ -148,6 +171,7 @@ export function MatchesClient({
 
   return (
     <div className="space-y-5">
+      {shortcuts}
       <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
@@ -259,7 +283,7 @@ export function MatchesClient({
                           Confidence
                         </Link>
                         <Link
-                          href={`/shortlist?jobId=${encodeURIComponent(selectedJobId)}&candidateId=${encodeURIComponent(match.candidateId)}`}
+                          href={`/shortlist?jobId=${encodeURIComponent(selectedJobId)}`}
                           className="rounded-md border border-emerald-200 bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
                         >
                           Shortlist
@@ -277,14 +301,28 @@ export function MatchesClient({
           title="No matches yet"
           description="Kick off the matcher to populate ranked candidates."
           action={
-            <button
-              type="button"
-              onClick={handleRunMatcher}
-              disabled={isRunning}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
-            >
-              {isRunning ? "Running…" : "Run matcher"}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/intake"
+                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                Launch intake
+              </Link>
+              <Link
+                href="/resumes/upload"
+                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              >
+                Upload resumes
+              </Link>
+              <button
+                type="button"
+                onClick={handleRunMatcher}
+                disabled={isRunning}
+                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 disabled:opacity-60"
+              >
+                {isRunning ? "Running…" : "Run matcher"}
+              </button>
+            </div>
           }
         />
       )}

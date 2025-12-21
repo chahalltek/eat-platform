@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { EmptyState, ErrorStatePanel } from "@/components/states/StatePanels";
+import { WorkflowShortcuts } from "@/components/workflows/WorkflowShortcuts";
 
 export type ExplainJobOption = {
   id: string;
@@ -83,29 +84,40 @@ export function ExplainClient({
     }
   }, [candidateId, jobId]);
 
+  const shortcuts = <WorkflowShortcuts currentPath="/explain" />;
+
   if (rbacWarning) {
-    return <ErrorStatePanel title="Access restricted" message={rbacWarning} diagnosticsHref="/" />;
+    return (
+      <div className="space-y-4">
+        {shortcuts}
+        <ErrorStatePanel title="Access restricted" message={rbacWarning} diagnosticsHref="/" />
+      </div>
+    );
   }
 
   if (!jobs.length) {
     return (
-      <EmptyState
-        title="No jobs available"
-        description="Create a job intake to request explanations."
-        action={
-          <Link
-            href="/jobs/new/intake"
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-          >
-            Launch intake
-          </Link>
-        }
-      />
+      <div className="space-y-4">
+        {shortcuts}
+        <EmptyState
+          title="No jobs available"
+          description="Create a job intake to request explanations."
+          action={
+            <Link
+              href="/intake"
+              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+            >
+              Launch intake
+            </Link>
+          }
+        />
+      </div>
     );
   }
 
   return (
     <div className="space-y-5">
+      {shortcuts}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">

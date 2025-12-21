@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { CandidateProfile, CandidateSkill } from "@/types/candidateIntake";
 import { SopContextualLink } from "@/components/SopContextualLink";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { WorkflowShortcuts } from "@/components/workflows/WorkflowShortcuts";
 
 type ProfileResponse = {
   profile: CandidateProfile;
@@ -109,6 +110,7 @@ export default function CandidateIntakeClient({ tenantId, showSopLink }: { tenan
             Paste a candidate resume to generate a structured profile. Support for file uploads will be added later.
           </p>
           {showSopLink ? <SopContextualLink context="intake" className="mt-3" /> : null}
+          <WorkflowShortcuts currentPath="/resumes/upload" className="mt-3" />
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <BackToConsoleButton />

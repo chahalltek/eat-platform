@@ -204,6 +204,13 @@ function buildAdminLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[]
       dependency: { subsystem: "agents" },
     },
     {
+      label: "MVP test plan",
+      cta: "Open checklist",
+      href: "/admin/ete/test-plan",
+      description: "Release gates for the ETE MVP (interactive checklist)",
+      dependency: { subsystem: "tenantConfig" },
+    },
+    {
       label: "Execution history",
       cta: "Trace executions",
       href: "/executions",

@@ -10,6 +10,7 @@ import { prisma } from "@/server/db/prisma";
 import { FailureActions } from "./FailureActions";
 import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { getImpactHint } from "./impactHints";
+import { WorkflowShortcuts } from "@/components/workflows/WorkflowShortcuts";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,13 @@ type AgentRunRecord = AgentRunTableRow & {
   sourceType: string | null;
   sourceTag: string | null;
   startedAt: Date;
+};
+
+type AgentRunsPageSearchParams = { status?: string; range?: string };
+
+type AgentRunsPageProps = {
+  searchParams?: AgentRunsPageSearchParams;
+  currentPathOverride?: string;
 };
 
 function formatDate(date: Date) {
@@ -171,11 +179,7 @@ function AgentRunHistory({ runs }: { runs: AgentRunTableRow[] }) {
   );
 }
 
-export default async function AgentRunsPage({
-  searchParams,
-}: {
-  searchParams?: { status?: string; range?: string };
-}) {
+export async function AgentRunsPageContent({ searchParams, currentPathOverride }: AgentRunsPageProps) {
   const statusFilter = searchParams?.status?.toLowerCase();
   const rangeFilter = searchParams?.range?.toLowerCase();
   const filterStatus =
@@ -188,10 +192,12 @@ export default async function AgentRunsPage({
 
   const agentUiEnabled = await isEnabled(tenantId, FEATURE_FLAGS.AGENTS_MATCHED_UI_V1);
   const diagnosticsHref = `/admin/tenant/${tenantId}/diagnostics`;
+  const workflowPath = currentPathOverride ?? "/executions";
 
   if (!agentUiEnabled) {
     return (
       <ETEClientLayout maxWidthClassName="max-w-4xl">
+        <WorkflowShortcuts currentPath={workflowPath} className="mb-4" />
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-900">
           <h1 className="text-xl font-semibold">Agents UI unavailable</h1>
           <p className="mt-2 text-sm text-slate-700">
@@ -244,10 +250,11 @@ export default async function AgentRunsPage({
 
   return (
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-6">
+      <WorkflowShortcuts currentPath={workflowPath} />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Agent Runs</h1>
-          <p className="text-sm text-slate-500">Most recent runs for this tenant.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Execution history</h1>
+          <p className="text-sm text-slate-500">Most recent agent runs for this tenant.</p>
           {filterStatus || startedAfter ? (
             <div className="mt-2 flex flex-wrap gap-2 text-xs">
               {filterStatus ? (
@@ -330,4 +337,8 @@ export default async function AgentRunsPage({
       </div>
     </ETEClientLayout>
   );
+}
+
+export default async function AgentRunsPage({ searchParams }: { searchParams?: AgentRunsPageSearchParams }) {
+  return AgentRunsPageContent({ searchParams, currentPathOverride: "/executions" });
 }
