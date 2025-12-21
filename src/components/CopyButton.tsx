@@ -1,7 +1,7 @@
 "use client";
 
 import { ClipboardDocumentCheckIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,9 +10,10 @@ type CopyButtonProps = {
   label: string;
   clipboard?: Pick<Clipboard, "writeText">;
   className?: string;
+  stopPropagation?: boolean;
 };
 
-export function CopyButton({ text, label, clipboard, className }: CopyButtonProps) {
+export function CopyButton({ text, label, clipboard, className, stopPropagation = false }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const hideTimer = useRef<NodeJS.Timeout | null>(null);
@@ -61,13 +62,21 @@ export function CopyButton({ text, label, clipboard, className }: CopyButtonProp
     }
   }
 
+  function handleClick(event: MouseEvent<HTMLButtonElement>) {
+    if (stopPropagation) {
+      event.stopPropagation();
+    }
+
+    void handleCopy();
+  }
+
   const tooltipLabel = copied ? "Copied" : label;
 
   return (
     <div className="relative inline-flex">
       <button
         type="button"
-        onClick={handleCopy}
+        onClick={handleClick}
         onMouseEnter={showTooltip}
         onMouseLeave={scheduleHideTooltip}
         onFocus={showTooltip}
