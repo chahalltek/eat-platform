@@ -6,7 +6,10 @@ import type { CellContext, ColumnDef } from "@tanstack/react-table";
 
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
-export type ETETableColumn<TData, TValue = unknown> = ColumnDef<TData, TValue>;
+// ColumnDef is invariant in TValue, so the default "any" keeps mixed-value column
+// definitions assignable (e.g., combining string, number, and boolean columns
+// in a single array) without widening callers to unsafe casts.
+export type ETETableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
 
 export type TableAccessorKey<TData> = Extract<keyof TData, string>;
 
