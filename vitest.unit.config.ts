@@ -20,6 +20,9 @@ export default mergeConfig(
         "src/lib/subscriptionPlans.test.ts",
         "src/app/api/**/route.test.ts",
       ],
+      coverage: {
+        reportsDirectory: "./coverage/unit",
+      },
     },
   })
 );

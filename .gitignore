@@ -12,12 +12,9 @@
 
 # testing
 /coverage
-<<<<<<< ours
 playwright/.auth
-=======
 playwright-report
 test-results
->>>>>>> theirs
 
 # next.js
 /.next/

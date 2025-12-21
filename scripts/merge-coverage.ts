@@ -1,3 +1,4 @@
+<<<<<<< ours
 import fs from "node:fs";
 import path from "node:path";
 import { createCoverageMap, type CoverageMapData } from "istanbul-lib-coverage";
@@ -87,3 +88,131 @@ try {
   console.error(message);
   process.exit(1);
 }
+=======
+import fs from "node:fs/promises";
+import path from "node:path";
+import { createCoverageMap, type CoverageMapData } from "istanbul-lib-coverage";
+import { createContext, summarizers } from "istanbul-lib-report";
+import reports from "istanbul-reports";
+
+const repoRoot = path.resolve(__dirname, "..");
+const unitCoverageCandidates = [
+  path.join(repoRoot, "coverage", "unit", "coverage-final.json"),
+  path.join(repoRoot, "coverage", "coverage-final.json"),
+];
+const e2eCoverageCandidates = [
+  path.join(repoRoot, "coverage", "e2e", "raw"),
+  path.join(repoRoot, "coverage", "e2e"),
+];
+const mergedDir = path.join(repoRoot, "coverage", "merged");
+
+async function fileExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function loadCoverageFile(filePath: string, label: string): Promise<CoverageMapData> {
+  const content = await fs.readFile(filePath, "utf-8");
+
+  try {
+    return JSON.parse(content) as CoverageMapData;
+  } catch (error) {
+    throw new Error(`Failed to parse ${label} coverage at ${path.relative(repoRoot, filePath)}: ${error}`);
+  }
+}
+
+async function findUnitCoverage(): Promise<string> {
+  for (const candidate of unitCoverageCandidates) {
+    if (await fileExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  const readablePaths = unitCoverageCandidates.map((candidate) => path.relative(repoRoot, candidate)).join(", ");
+  throw new Error(`Unit coverage not found. Looked for: ${readablePaths}. Run \"npm run coverage:unit\" before merging.`);
+}
+
+async function collectJsonFiles(directory: string): Promise<string[]> {
+  const files: string[] = [];
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const resolvedPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...(await collectJsonFiles(resolvedPath)));
+    } else if (entry.isFile() && entry.name.endsWith(".json")) {
+      files.push(resolvedPath);
+    }
+  }
+
+  return files;
+}
+
+async function collectE2ECoverageMaps(): Promise<CoverageMapData[]> {
+  const existingDirs = [];
+
+  for (const candidate of e2eCoverageCandidates) {
+    if (await fileExists(candidate)) {
+      existingDirs.push(candidate);
+    }
+  }
+
+  if (existingDirs.length === 0) {
+    const readablePaths = e2eCoverageCandidates.map((candidate) => path.relative(repoRoot, candidate)).join(", ");
+    throw new Error(`E2E coverage directory missing. Looked for: ${readablePaths}. Run the Playwright suite with coverage enabled.`);
+  }
+
+  const e2eJsonFiles = (
+    await Promise.all(existingDirs.map(async (dir) => collectJsonFiles(dir)))
+  ).flatMap((files) => files);
+
+  if (e2eJsonFiles.length === 0) {
+    const readablePaths = existingDirs.map((dir) => path.relative(repoRoot, dir)).join(", ");
+    throw new Error(`No E2E coverage JSON files found under: ${readablePaths}.`);
+  }
+
+  return Promise.all(
+    e2eJsonFiles.map(async (coveragePath) => loadCoverageFile(coveragePath, `E2E coverage file ${path.basename(coveragePath)}`))
+  );
+}
+
+async function main(): Promise<void> {
+  const unitCoveragePath = await findUnitCoverage();
+  const coverageMap = createCoverageMap(await loadCoverageFile(unitCoveragePath, "unit coverage"));
+  const e2eCoverageMaps = await collectE2ECoverageMaps();
+
+  for (const map of e2eCoverageMaps) {
+    coverageMap.merge(map);
+  }
+
+  await fs.mkdir(mergedDir, { recursive: true });
+
+  const mergedOutputPath = path.join(mergedDir, "coverage-final.json");
+  await fs.writeFile(mergedOutputPath, JSON.stringify(coverageMap.toJSON(), null, 2));
+
+  const context = createContext({ dir: mergedDir, coverageMap });
+  const tree = summarizers.pkg(coverageMap);
+  const reporters = [
+    reports.create("lcovonly", { file: "lcov.info" }),
+    reports.create("html"),
+    reports.create("text"),
+  ];
+
+  for (const reporter of reporters) {
+    tree.visit(reporter, context);
+  }
+
+  console.log(`Merged coverage written to ${path.relative(repoRoot, mergedOutputPath)}`);
+  console.log(`Reports available in ${path.relative(repoRoot, mergedDir)}`);
+}
+
+void main().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});
+>>>>>>> theirs
