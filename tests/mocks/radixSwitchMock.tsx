@@ -29,12 +29,16 @@ const SwitchRoot = forwardRef<HTMLButtonElement, SwitchRootProps>(function Switc
   );
 });
 
-const SwitchThumb = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(function SwitchThumb(
-  { children, ...props },
+type SwitchThumbProps = HTMLAttributes<HTMLSpanElement> & {
+  "data-state"?: "checked" | "unchecked";
+};
+
+const SwitchThumb = forwardRef<HTMLSpanElement, SwitchThumbProps>(function SwitchThumb(
+  { children, "data-state": dataState, ...props },
   ref,
 ) {
   return (
-    <span data-state={props["data-state"]} ref={ref} {...props}>
+    <span data-state={dataState} ref={ref} {...props}>
       {children}
     </span>
   );
