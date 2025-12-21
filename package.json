@@ -16,9 +16,13 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage --watch=false --config vitest.coverage.config.ts",
+    "test:coverage:unit": "COVERAGE_DIR=coverage/unit vitest run --coverage --watch=false --config vitest.unit.config.ts",
+    "test:coverage:e2e": "PLAYWRIGHT_COVERAGE=1 COVERAGE_DIR=coverage/e2e playwright test --config=playwright.e2e.config.ts",
+    "test:coverage:all": "npm run test:coverage:unit && npm run test:coverage:e2e && npm run coverage:merge",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "coverage:unit": "vitest run --coverage --config vitest.unit.config.ts",
     "coverage": "npm run test:coverage",
+    "coverage:merge": "node scripts/merge-coverage.js",
     "coverage:all": "vitest run --coverage --config vitest.config.ts",
 <<<<<<< ours
 <<<<<<< ours
@@ -50,6 +54,7 @@
     "e2e": "playwright test --config=playwright.e2e.config.ts",
     "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts",
     "e2e:visual": "playwright test --config=playwright.visual.config.ts",
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -145,6 +150,11 @@
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "PWDEBUG=1 playwright test"
+>>>>>>> theirs
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -164,6 +174,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@bgotink/playwright-coverage": "^0.3.2",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
@@ -174,9 +185,15 @@
     "@types/react-dom": "^19",
 <<<<<<< ours
     "@vitest/coverage-v8": "^4.0.15",
+<<<<<<< ours
     "babel-plugin-istanbul": "^7.0.1",
 =======
     "@vitest/coverage-istanbul": "^4.0.15",
+>>>>>>> theirs
+=======
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.1.7",
 >>>>>>> theirs
     "dotenv": "^17.2.3",
     "eslint": "^9",

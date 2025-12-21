@@ -1,8 +1,11 @@
-import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
+import { defineCoverageReporterConfig } from "@bgotink/playwright-coverage";
+import { defineConfig, devices, type ReporterDescription } from "@playwright/test";
 
 import { AUTH_SETUP_PROJECT, AUTH_STORAGE_STATE, E2E_AUTH_SETUP_TEST_MATCH } from "./tests/playwrightAuth";
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -26,11 +29,14 @@ const coverageEnabled = process.env.COVERAGE_E2E === "1";
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 const defaultHeaders = {
   "x-eat-user-id": process.env.E2E_USER_ID ?? "routes-smoke-user",
   "x-eat-user-role": process.env.E2E_USER_ROLE ?? "ADMIN",
   "x-eat-tenant-id": process.env.E2E_TENANT_ID ?? "routes-smoke-tenant",
 };
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -47,6 +53,33 @@ const coverageEnv = coverageEnabled ? { COVERAGE_E2E: "1" } : undefined;
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
+const enableCoverage = process.env.PLAYWRIGHT_COVERAGE === "1";
+const coverageDir = path.resolve(__dirname, process.env.COVERAGE_DIR ?? "coverage/e2e");
+
+const reporter: ReporterDescription[] = [
+  ["list"],
+  ["html", { outputFolder: "test-results/e2e/html-report", open: "never" }],
+];
+
+if (enableCoverage) {
+  reporter.push([
+    "@bgotink/playwright-coverage",
+    defineCoverageReporterConfig({
+      sourceRoot: __dirname,
+      resultDir: coverageDir,
+      reports: [
+        ["json", { file: "coverage-final.json" }],
+        ["json-summary", { file: "coverage-summary.json" }],
+        ["lcovonly", { file: "lcov.info" }],
+        ["html"],
+        ["text-summary", { file: null }],
+      ],
+    }),
+  ]);
+}
 >>>>>>> theirs
 
 export default defineConfig({
@@ -68,6 +101,7 @@ export default defineConfig({
     headless: true,
     launchOptions: coverageEnv ? { env: { ...process.env, ...coverageEnv } } : undefined,
   },
+<<<<<<< ours
   reporter: [["list"], ["html", { outputFolder: "test-results/e2e/html-report", open: "never" }]],
   webServer: shouldStartLocalServer
     ? {
@@ -84,6 +118,9 @@ export default defineConfig({
           : undefined,
       }
     : undefined,
+=======
+  reporter,
+>>>>>>> theirs
   projects: [
     {
       name: AUTH_SETUP_PROJECT,

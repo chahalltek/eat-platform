@@ -1,6 +1,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { expect, type Locator, type Page, test } from "./fixtures";
 =======
 import { expect, type Locator, type Page, test } from "../../e2e/testBase";
@@ -12,6 +13,9 @@ import { expect, test } from "./fixtures";
 >>>>>>> theirs
 =======
 import { expect, type Locator, type Page, test } from "../playwright-coverage";
+>>>>>>> theirs
+=======
+import { expect, type Locator, type Page, test } from "@bgotink/playwright-coverage";
 >>>>>>> theirs
 
 type RouteExpectation = {

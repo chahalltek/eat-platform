@@ -1,4 +1,8 @@
+<<<<<<< ours
 import { expect, test } from "../playwright-coverage";
+=======
+import { expect, test } from "@bgotink/playwright-coverage";
+>>>>>>> theirs
 
 test.describe("status badge contrast", () => {
   test.use({

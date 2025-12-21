@@ -1,7 +1,10 @@
+import path from "node:path";
 import type { UserConfig } from "vite";
 import { mergeConfig } from "vitest/config";
 import baseConfig from "./vitest.config";
 import { coverageThresholds } from "./vitest.coverage.thresholds";
+
+const reportsDirectory = path.resolve(__dirname, process.env.COVERAGE_DIR ?? "coverage");
 
 const coverageOverrides: UserConfig = {
   test: {
@@ -10,9 +13,13 @@ const coverageOverrides: UserConfig = {
       provider: "istanbul",
       reporter: ["text", "json", "html", "lcov"],
 <<<<<<< ours
+<<<<<<< ours
       reportsDirectory: "coverage/unit",
 =======
       reportsDirectory: process.env.COVERAGE_DIR ?? "./coverage",
+>>>>>>> theirs
+=======
+      reportsDirectory,
 >>>>>>> theirs
       reportOnFailure: true,
       include: ["src/**/*.{ts,tsx}"],
