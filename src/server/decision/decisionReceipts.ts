@@ -505,6 +505,7 @@ export async function createDecisionReceipt({
       createdAt,
       meta: {
         ...payload,
+        status: "published",
         drivers,
         risks,
         tradeoff,

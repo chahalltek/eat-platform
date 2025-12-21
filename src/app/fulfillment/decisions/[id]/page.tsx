@@ -1,3 +1,4 @@
+<<<<<<< ours
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -147,6 +148,173 @@ export default async function DecisionReceiptPage({ params }: { params: { id: st
             </MonoText>
           </div>
         </div>
+=======
+import { ArrowLeftIcon, ClockIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { format } from "date-fns";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { ETECard } from "@/components/ETECard";
+import { getCurrentUser } from "@/lib/auth/user";
+import { getDecisionArtifact, type DecisionArtifactStatus } from "@/server/decision/decisionArtifacts";
+
+function StatusBadge({ status }: { status: DecisionArtifactStatus }) {
+  const styles =
+    status === "draft"
+      ? "bg-amber-100 text-amber-800 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:ring-amber-700/60"
+      : "bg-emerald-100 text-emerald-800 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:ring-emerald-700/60";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${styles}`}
+    >
+      <span className="h-2 w-2 rounded-full bg-current" aria-hidden />
+      {status === "draft" ? "Draft" : "Published"}
+    </span>
+  );
+}
+
+export const dynamic = "force-dynamic";
+
+export default async function DecisionDetailPage({ params }: { params: { id: string } }) {
+  const user = await getCurrentUser();
+
+  if (!user) return notFound();
+
+  const decision = await getDecisionArtifact(params.id, { tenantId: user.tenantId, userId: user.id });
+  if (!decision) return notFound();
+
+  const author =
+    decision.createdBy.name ??
+    decision.createdBy.email ??
+    (decision.createdBy.id ? `User ${decision.createdBy.id}` : "Unknown author");
+
+  const createdAt = format(new Date(decision.createdAt), "PPP p");
+
+  return (
+    <div className="mx-auto flex max-w-4xl flex-col gap-5 px-6 py-10">
+      <Link
+        href="/fulfillment/decisions"
+        className="inline-flex w-fit items-center gap-2 rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 transition hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800 dark:hover:bg-zinc-800"
+      >
+        <ArrowLeftIcon className="h-4 w-4" aria-hidden />
+        Back to decisions
+      </Link>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <StatusBadge status={decision.status} />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+            Decision memory
+          </p>
+          <h1 className="text-3xl font-semibold leading-tight text-zinc-900 dark:text-zinc-50">{decision.summary}</h1>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <ETECard className="gap-3 lg:col-span-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+            <span className="rounded-full bg-indigo-50 px-3 py-1 font-semibold text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-100 dark:ring-indigo-800/60">
+              {decision.decisionType}
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1 font-semibold text-zinc-800 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700">
+              <ClockIcon className="h-4 w-4" aria-hidden />
+              {createdAt}
+            </span>
+          </div>
+          <dl className="grid gap-3 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                Job
+              </dt>
+              <dd className="font-semibold text-zinc-900 dark:text-zinc-100">
+                {decision.jobTitle ? `${decision.jobTitle} (${decision.jobId})` : decision.jobId}
+              </dd>
+            </div>
+            <div className="flex flex-col gap-1">
+              <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                Candidate
+              </dt>
+              <dd className="font-semibold text-zinc-900 dark:text-zinc-100">
+                {decision.candidateName} ({decision.candidateId})
+              </dd>
+            </div>
+            <div className="flex flex-col gap-1">
+              <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                Author
+              </dt>
+              <dd className="inline-flex items-center gap-2 font-semibold text-zinc-900 dark:text-zinc-100">
+                <UserCircleIcon className="h-5 w-5 text-zinc-400 dark:text-zinc-500" aria-hidden />
+                {author}
+              </dd>
+            </div>
+            <div className="flex flex-col gap-1">
+              <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                Visibility
+              </dt>
+              <dd className="font-semibold capitalize text-zinc-900 dark:text-zinc-100">
+                {decision.visibility === "creator" ? "Creator only draft" : "Tenant-wide"}
+              </dd>
+            </div>
+          </dl>
+        </ETECard>
+
+        <ETECard className="gap-3">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Decision signals</h2>
+          <div className="flex flex-col gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            {decision.tradeoff ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                  Tradeoff
+                </p>
+                <p className="font-medium text-zinc-900 dark:text-zinc-100">{decision.tradeoff}</p>
+                {decision.standardizedTradeoff ? (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">Standardized: {decision.standardizedTradeoff}</p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                Drivers
+              </p>
+              {decision.drivers.length ? (
+                <ul className="mt-1 list-disc space-y-1 pl-4">
+                  {decision.drivers.map((driver) => (
+                    <li key={driver} className="font-medium text-zinc-900 dark:text-zinc-100">
+                      {driver}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-zinc-600 dark:text-zinc-400">No drivers captured.</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                Risks
+              </p>
+              {decision.risks.length ? (
+                <ul className="mt-1 list-disc space-y-1 pl-4">
+                  {decision.risks.map((risk) => (
+                    <li key={risk} className="font-medium text-zinc-900 dark:text-zinc-100">
+                      {risk}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-zinc-600 dark:text-zinc-400">No risks captured.</p>
+              )}
+              {decision.standardizedRisks.length ? (
+                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  Standardized: {decision.standardizedRisks.join(", ")}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </ETECard>
+>>>>>>> theirs
       </div>
     </div>
   );
