@@ -98,6 +98,7 @@ const systemNodes: readonly SystemMapNode[] = [
     summary: "Checks data quality, then produces rationales that cite evidence.",
     tags: ["Quality gates", "Narratives"],
     impact: "blocks",
+    hint: "If a score or match surprises you, inspect the rationale and confidence signals here.",
   },
   {
     id: "agent_sync_expand",
@@ -114,6 +115,7 @@ const systemNodes: readonly SystemMapNode[] = [
     summary: "Traces agent calls, inputs, and outcomes for troubleshooting.",
     tags: ["Audit trail", "Metrics"],
     impact: "isolated",
+    hint: "If something looks off, start here: traces show inputs, outputs, and outcomes.",
   },
   {
     id: "tenant_config",
@@ -122,6 +124,7 @@ const systemNodes: readonly SystemMapNode[] = [
     summary: "Control Plane thresholds, presets, and tuning per tenant.",
     tags: ["Weights", "LLM config", "Presets"],
     impact: "blocks",
+    hint: "These nodes constrain behavior and safety. They do not execute workflows.",
   },
   {
     id: "feature_flags",
@@ -130,6 +133,7 @@ const systemNodes: readonly SystemMapNode[] = [
     summary: "Control Plane gates that combine agents and engines while keeping the UI safe.",
     tags: ["Access gates", "UI safety"],
     impact: "fails_closed",
+    hint: "These nodes constrain behavior and safety. They do not execute workflows.",
   },
   {
     id: "runtime_controls",
@@ -138,6 +142,7 @@ const systemNodes: readonly SystemMapNode[] = [
     summary: "Control Plane modes and safety latches that fail closed and log why.",
     tags: ["Pilot mode", "Kill switch", "Fire drill"],
     impact: "fails_closed",
+    hint: "These nodes constrain behavior and safety. They do not execute workflows.",
   },
 ] as const;
 

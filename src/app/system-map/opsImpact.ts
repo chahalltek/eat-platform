@@ -52,6 +52,7 @@ export type SystemMapNode = {
   summary: string;
   tags: string[];
   impact: ImpactClass;
+  hint?: string;
 };
 
 export const IMPACT_CLASS_ORDER: ImpactClass[] = ["halts", "fails_closed", "blocks", "degrades", "isolated"];

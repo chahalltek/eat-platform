@@ -155,6 +155,9 @@ export function SystemMapContent({
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
             These routes exist to support agent execution and control-plane operations, not as a public API contract.
           </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            Stability and semantics may change outside documented workflows.
+          </p>
         </div>
         <ul className="grid gap-2 rounded-2xl border border-indigo-100 bg-white/80 p-4 text-sm leading-relaxed text-zinc-700 shadow-sm dark:border-indigo-800 dark:bg-zinc-950/60 dark:text-zinc-200 sm:grid-cols-2">
           {[
@@ -186,6 +189,9 @@ export function SystemMapContent({
 
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           These flows are executed at intentional decision moments. Not every flow runs for every action.
+        </p>
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+          Use these flows to trace where judgment happens, where automation stops, and where to debug first.
         </p>
 
         <div className="grid gap-4">
@@ -231,6 +237,9 @@ export function SystemMapContent({
                   <p className="text-sm text-indigo-900/80 dark:text-indigo-100/80">
                     Toggle on to see impact classes and live health. Polls every 15s when enabled; backs off if the health service fails.
                   </p>
+                  <p className="text-xs text-indigo-700/80 dark:text-indigo-200/80">
+                    Highlights which failures affect scoring, matching, or submissions.
+                  </p>
                   {isUnavailable ? (
                     <p className="text-xs font-semibold text-amber-700 dark:text-amber-200">
                       Health status unavailable. Using last known state.
@@ -255,6 +264,7 @@ export function SystemMapContent({
                   const nodeStatus: HealthStatus = healthState[node.id]?.status ?? "healthy";
                   const isFault = overlayEnabled && nodeStatus === "fault";
                   const isDisabled = overlayEnabled && nodeStatus === "disabled";
+                  const isControlPlane = node.type.toLowerCase() === "control plane";
 
                   return (
                     <div
@@ -262,7 +272,7 @@ export function SystemMapContent({
                       data-testid={`system-map-node-${node.id}`}
                       className={`flex h-full flex-col gap-3 rounded-2xl border border-indigo-100 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-indigo-800 dark:bg-zinc-900/80 ${
                         isFault ? "border-rose-200 ring-2 ring-rose-100 dark:border-rose-700/60 dark:ring-rose-900/50" : ""
-                      }`}
+                      } ${isControlPlane ? "border-l-4 border-l-amber-300 bg-amber-50/70 dark:border-l-amber-500 dark:bg-amber-950/20" : ""}`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div>
@@ -284,6 +294,7 @@ export function SystemMapContent({
                           </p>
                         </div>
                       ) : null}
+                      {node.hint ? <p className="text-xs text-zinc-600 dark:text-zinc-400">{node.hint}</p> : null}
                       {overlayEnabled ? (
                         <div className="flex flex-wrap items-center gap-2">
                           <span
@@ -345,6 +356,10 @@ export function SystemMapContent({
                 ) : null}
               </div>
             </div>
+
+            <p className="text-xs text-indigo-700/90 dark:text-indigo-200/80">
+              These nodes constrain behavior and safety. They do not execute workflows.
+            </p>
           </div>
         </div>
       </section>
