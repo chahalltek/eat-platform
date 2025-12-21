@@ -22,6 +22,8 @@ const mocks = vi.hoisted(() => ({
   canRunAgentExplain: vi.fn(),
   canRunAgentConfidence: vi.fn(),
   canRunAgentShortlist: vi.fn(),
+  isTableAvailable: vi.fn(async () => true),
+  isPrismaUnavailableError: vi.fn(() => false),
   redirect: vi.fn(),
 }));
 
@@ -30,6 +32,21 @@ vi.mock("@/server/db/prisma", () => ({
     jobReq: {
       findMany: (...args: unknown[]) => mocks.jobReqFindMany(...args),
     },
+    featureFlag: {
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
+  },
+  isTableAvailable: (...args: unknown[]) => mocks.isTableAvailable(...args),
+  isPrismaUnavailableError: (...args: unknown[]) => mocks.isPrismaUnavailableError(...args),
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code?: string;
+      constructor(message?: string, code?: string) {
+        super(message);
+        this.code = code;
+      }
+    },
+    sql: (...args: unknown[]) => args,
   },
 }));
 
@@ -63,6 +80,7 @@ vi.mock("next/link", () => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => "/",
   redirect: (...args: unknown[]) => mocks.redirect(...args),
 }));
 
