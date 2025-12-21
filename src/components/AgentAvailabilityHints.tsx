@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import Link from "next/link";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
@@ -27,6 +28,7 @@ function formatModeName(mode: string) {
 export async function AgentAvailabilityHints({ className }: { className?: string }) {
   const tenantId = await getCurrentTenantId();
   const availability = await getAgentAvailability(tenantId);
+  const runtimeControlsHref = `/admin/tenant/${tenantId}/ops/runtime-controls#execution-mode`;
 
   const agents = AGENT_ORDER.map((agentName) => {
     const enabled = availability.isEnabled(agentName);
@@ -68,16 +70,17 @@ export async function AgentAvailabilityHints({ className }: { className?: string
             Availability reflects mode defaults and any kill switches. Fire Drill forces Explain and Confidence off.
           </p>
         </div>
-        <span
+        <Link
+          href={runtimeControlsHref}
           className={clsx(
-            "inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold",
+            "inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold transition hover:shadow-sm",
             headerTone === "amber"
-              ? "bg-amber-50 text-amber-800 ring-1 ring-amber-200"
-              : "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-200",
+              ? "bg-amber-50 text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+              : "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-200 hover:bg-indigo-100",
           )}
         >
           {headerTone === "amber" ? "Fire Drill safeguards" : "Mode-based allowances"}
-        </span>
+        </Link>
       </div>
 
       <div className="mt-4 space-y-4">

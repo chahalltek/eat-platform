@@ -4,10 +4,12 @@ import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { AgentAvailabilityHints } from "@/components/AgentAvailabilityHints";
-import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
 import { FEATURE_FLAGS, isEnabled } from "@/lib/featureFlags";
-import { prisma } from "@/server/db/prisma";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { prisma } from "@/server/db/prisma";
+import { FailureActions } from "./FailureActions";
+import { AgentRunsTable, type AgentRunTableRow } from "./AgentRunsTable";
+import { getImpactHint } from "./impactHints";
 
 export const dynamic = "force-dynamic";
 
@@ -34,23 +36,56 @@ function getNestedValue(obj: unknown, path: string[]): unknown {
   }, obj);
 }
 
-function extractCandidateId(log: { input: unknown; output: unknown }) {
-  const candidatePaths = [
+type CandidateContext = { candidateId?: string; candidateName?: string };
+
+function asString(value: unknown) {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return undefined;
+}
+
+function extractCandidateContext(log: { input: unknown; output: unknown }): CandidateContext {
+  const candidateIdPaths = [
     ["candidateId"],
     ["candidate", "id"],
+    ["candidate", "candidateId"],
     ["snapshot", "candidateId"],
   ];
+  const candidateNamePaths = [
+    ["candidate", "name"],
+    ["candidate", "fullName"],
+    ["candidate", "displayName"],
+    ["candidate", "profile", "name"],
+  ];
+
+  let candidateId: string | undefined;
+  let candidateName: string | undefined;
 
   for (const source of [log.input, log.output]) {
-    for (const path of candidatePaths) {
-      const value = getNestedValue(source, path);
-      if (typeof value === "string") {
-        return value;
+    if (!candidateId) {
+      for (const path of candidateIdPaths) {
+        const value = getNestedValue(source, path);
+        const stringValue = asString(value);
+        if (stringValue) {
+          candidateId = stringValue;
+          break;
+        }
+      }
+    }
+
+    if (!candidateName) {
+      for (const path of candidateNamePaths) {
+        const value = getNestedValue(source, path);
+        const stringValue = asString(value);
+        if (stringValue) {
+          candidateName = stringValue;
+          break;
+        }
       }
     }
   }
 
-  return undefined;
+  return { candidateId, candidateName };
 }
 
 function formatStatus(status: string | null) {
@@ -152,6 +187,7 @@ export default async function AgentRunsPage({
   const tenantId = await getCurrentTenantId();
 
   const agentUiEnabled = await isEnabled(tenantId, FEATURE_FLAGS.AGENTS_MATCHED_UI_V1);
+  const diagnosticsHref = `/admin/tenant/${tenantId}/diagnostics`;
 
   if (!agentUiEnabled) {
     return (
@@ -199,7 +235,7 @@ export default async function AgentRunsPage({
     agentName: run.agentName,
     status: formatStatus(run.status),
     startedAt: formatDate(run.startedAt),
-    candidateId: extractCandidateId({ input: run.input, output: run.output }),
+    ...extractCandidateContext({ input: run.input, output: run.output }),
     source: formatSource({ sourceType: run.sourceType, sourceTag: run.sourceTag }),
   }));
 
@@ -251,24 +287,37 @@ export default async function AgentRunsPage({
               </span>
             </div>
             {failedRuns.length === 0 ? (
-              <p className="mt-3 text-sm text-red-800">No failures in the latest history.</p>
+              <p className="mt-3 text-sm text-red-800">No failures detected.</p>
             ) : (
-              <ul className="mt-4 space-y-2 text-sm text-red-900">
-                {failedRuns.slice(0, 3).map((run) => (
-                  <li key={run.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/70 px-3 py-2">
-                    <div>
-                      <p className="font-semibold">{run.agentName}</p>
-                      <p className="text-xs text-red-700">Started {new Date(run.startedAt).toLocaleString()}</p>
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-red-700">Failed</span>
-                  </li>
-                ))}
+              <>
+                <ul className="mt-4 space-y-2 text-sm text-red-900">
+                  {failedRuns.slice(0, 3).map((run) => (
+                    <li key={run.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/70 px-3 py-2">
+                      <div>
+                        <p className="font-semibold">{run.agentName}</p>
+                        <p className="text-xs text-red-700">Started {new Date(run.startedAt).toLocaleString()}</p>
+                        <p className="text-[11px] text-red-700">
+                          <span className="font-semibold">Impact:</span> {getImpactHint(run.agentName)}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-red-700">Failed</span>
+                    </li>
+                  ))}
+                  {latestFailure ? (
+                    <li className="text-xs text-red-700">
+                      Most recent failure at {new Date(latestFailure.startedAt).toLocaleString()}.
+                    </li>
+                  ) : null}
+                </ul>
                 {latestFailure ? (
-                  <li className="text-xs text-red-700">
-                    Most recent failure at {new Date(latestFailure.startedAt).toLocaleString()}.
-                  </li>
+                  <FailureActions
+                    runId={latestFailure.id}
+                    agentName={latestFailure.agentName}
+                    runHref={`/agents/runs/${latestFailure.id}`}
+                    diagnosticsHref={diagnosticsHref}
+                  />
                 ) : null}
-              </ul>
+              </>
             )}
           </div>
 

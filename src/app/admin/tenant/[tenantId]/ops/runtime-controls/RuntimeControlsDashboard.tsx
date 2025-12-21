@@ -281,7 +281,10 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
         </div>
       ) : null}
 
-      <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <section
+        id="execution-mode"
+        className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+      >
         <header className="flex flex-col gap-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Section 1</p>
           <h2 className="text-xl font-semibold text-zinc-900">Execution mode</h2>

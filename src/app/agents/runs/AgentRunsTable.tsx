@@ -8,7 +8,8 @@ import { StandardTable } from "@/components/table/StandardTable";
 import { TableFilterDropdown, type TableFilterOption } from "@/components/table/TableFilterDropdown";
 import { TableSearchInput } from "@/components/table/TableSearchInput";
 import type { ETETableColumn } from "@/components/table/tableTypes";
-import { createStatusBadgeColumn, createTextColumn } from "@/components/table/tableTypes";
+import { StatusBadge, createTextColumn } from "@/components/table/tableTypes";
+import { getImpactHint } from "./impactHints";
 
 export type AgentRunTableRow = {
   id: string;
@@ -16,6 +17,7 @@ export type AgentRunTableRow = {
   status: string | null;
   startedAt: string;
   candidateId?: string;
+  candidateName?: string;
   source: string;
 };
 
@@ -31,7 +33,13 @@ const STATUS_VARIANTS: Record<string, "success" | "error" | "info" | "warning" |
 const globalFilterFn: FilterFn<AgentRunTableRow> = (row, _columnId, filterValue) => {
   const query = typeof filterValue === "string" ? filterValue.trim().toLowerCase() : "";
   if (!query) return true;
-  const values = [row.original.agentName, row.original.status ?? "", row.original.candidateId ?? "", row.original.source];
+  const values = [
+    row.original.agentName,
+    row.original.status ?? "",
+    row.original.candidateId ?? "",
+    row.original.candidateName ?? "",
+    row.original.source,
+  ];
   return values.some((value) => value?.toString().toLowerCase().includes(query));
 };
 
@@ -54,8 +62,13 @@ export function AgentRunsTable({ runs }: { runs: AgentRunTableRow[] }) {
     return statuses.map((status) => ({ value: status, label: status }));
   }, [runs]);
 
-  const columns = useMemo<ETETableColumn<AgentRunTableRow>[]>(
-    () => [
+  const columns = useMemo<ETETableColumn<AgentRunTableRow>[]>(() => {
+    const isFailure = (status?: string | null) => {
+      const normalized = status?.toString().toLowerCase();
+      return normalized === "failed" || normalized === "failure" || normalized === "error";
+    };
+
+    return [
       {
         ...createTextColumn<AgentRunTableRow, "startedAt">({
           accessorKey: "startedAt",
@@ -73,22 +86,46 @@ export function AgentRunsTable({ runs }: { runs: AgentRunTableRow[] }) {
         filterFn: multiSelectFilter,
       },
       {
-        ...createStatusBadgeColumn<AgentRunTableRow, "status">({
-          accessorKey: "status",
-          header: "Status",
-          sortable: true,
-          formatLabel: (value) => (value ? value.toString() : "Status not reported"),
-          getVariant: (value) => STATUS_VARIANTS[value?.toLowerCase?.() ?? ""] ?? "neutral",
-        }),
+        accessorKey: "status",
+        header: "Status",
         enableSorting: true,
         filterFn: multiSelectFilter,
+        cell: ({ row, getValue }) => {
+          const value = getValue<string | null>();
+          const variant = STATUS_VARIANTS[value?.toLowerCase?.() ?? ""] ?? "neutral";
+          const label = value ? value.toString() : "Status not reported";
+          const impactHint = isFailure(value) ? getImpactHint(row.original.agentName) : null;
+
+          return (
+            <div className="flex flex-col gap-1">
+              <StatusBadge label={label} variant={variant} />
+              {impactHint ? <span className="text-[11px] text-slate-500">{impactHint}</span> : null}
+            </div>
+          );
+        },
       },
-      createTextColumn<AgentRunTableRow, "candidateId">({
+      {
         accessorKey: "candidateId",
-        header: "Candidate ID",
-        sortable: false,
-        cell: ({ getValue }) => getValue<string | undefined>() ?? "—",
-      }),
+        header: "Candidate",
+        enableSorting: false,
+        cell: ({ row }) => {
+          const candidateId = row.original.candidateId;
+          const candidateName = row.original.candidateName;
+          if (!candidateId) return "—";
+
+          const label = candidateName ? `${candidateName} (${candidateId})` : candidateId;
+
+          return (
+            <Link
+              href={`/candidates/${candidateId}`}
+              className="text-blue-600 hover:text-blue-800"
+              title={`View candidate ${candidateId}`}
+            >
+              {label}
+            </Link>
+          );
+        },
+      },
       createTextColumn<AgentRunTableRow, "source">({
         accessorKey: "source",
         header: "Source",
@@ -105,9 +142,8 @@ export function AgentRunsTable({ runs }: { runs: AgentRunTableRow[] }) {
           </Link>
         ),
       },
-    ],
-    [],
-  );
+    ];
+  }, []);
 
   return (
     <StandardTable
