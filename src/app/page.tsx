@@ -19,6 +19,7 @@ import { getCurrentTenantId } from "@/lib/tenant";
 import { BRANDING } from "@/config/branding";
 import { getCurrentUser } from "@/lib/auth/user";
 import { isAdminRole, normalizeRole } from "@/lib/auth/roles";
+import { canViewFulfillmentNav } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -95,8 +96,22 @@ function getTelemetrySummary(telemetry: HomeTelemetryMetrics) {
   return "Status: Healthy and idle — no agent executions today.";
 }
 
-function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
+function buildFulfillmentLinks(metrics: HomeCardMetrics): HomeLink[] {
   return [
+    {
+      label: "Create intake",
+      cta: "Launch intake",
+      href: "/intake",
+      description: "RUA — Job intake agent",
+      dependency: { subsystem: "agents" },
+    },
+    {
+      label: "Upload resumes",
+      cta: "Ingest resumes",
+      href: "/resumes/upload",
+      description: "RINA — Resume ingestion agent",
+      dependency: { subsystem: "agents" },
+    },
     {
       label: "Match results",
       cta: "Review matches",
@@ -124,35 +139,6 @@ function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
       href: "/shortlist",
       description: "Top candidates ready to submit",
       dependency: { subsystem: "agents", flow: { source: "Shortlist", target: "Shortlist agent" } },
-    },
-    {
-      label: "Upload resumes",
-      cta: "Ingest resumes",
-      href: "/resumes/upload",
-      description: "RINA — Resume ingestion agent",
-      dependency: { subsystem: "agents" },
-    },
-    {
-      label: "Create intake",
-      cta: "Launch intake",
-      href: "/intake",
-      description: "RUA — Job intake agent",
-      dependency: { subsystem: "agents" },
-    },
-    {
-      label: "Execution history",
-      cta: "Trace executions",
-      href: "/executions",
-      description: "Latest agent runs",
-      executionSummary: {
-        runsLast7d: metrics.agentRunsLast7d,
-        lastRunAt: metrics.lastAgentRunAt,
-        failedRunsLast7d: metrics.failedAgentRunsLast7d,
-      },
-      dependency: {
-        subsystem: "agents",
-        flow: { source: "Execution History", target: "Agents" },
-      },
     },
     {
       label: "Job library",
@@ -184,12 +170,60 @@ function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
         flow: { source: "Candidate Pool", target: "Scoring Engine" },
       },
     },
+  ];
+}
+
+function buildAdminLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
+  return [
     {
-      label: "Admin",
+      label: "Telemetry / System status",
+      cta: "View diagnostics",
+      href: `/admin/tenant/${tenantId}/diagnostics`,
+      description: "Live telemetry, incidents, and audit signals",
+      dependency: { subsystem: "tenantConfig" },
+    },
+    {
+      label: "Runtime controls",
+      cta: "Adjust settings",
+      href: `/admin/tenant/${tenantId}/ops/runtime-controls`,
+      description: "Manage runtime guardrails and feature flags",
+      dependency: { subsystem: "tenantConfig" },
+    },
+    {
+      label: "Guardrails & feature flags",
       cta: "Configure",
       href: `/admin/tenant/${tenantId}/guardrails`,
-      description: "Guardrails, Feature Flags, and MVP Test Plan",
+      description: "Configure guardrails and feature controls",
       dependency: { subsystem: "tenantConfig" },
+    },
+    {
+      label: "Test runner",
+      cta: "Run tests",
+      href: `/admin/tenant/${tenantId}/ops/test-runner/ete`,
+      description: "End-to-end verification",
+      dependency: { subsystem: "agents" },
+    },
+    {
+      label: "Execution history",
+      cta: "Trace executions",
+      href: "/executions",
+      description: "Latest agent runs",
+      executionSummary: {
+        runsLast7d: metrics.agentRunsLast7d,
+        lastRunAt: metrics.lastAgentRunAt,
+        failedRunsLast7d: metrics.failedAgentRunsLast7d,
+      },
+      dependency: {
+        subsystem: "agents",
+        flow: { source: "Execution History", target: "Agents" },
+      },
+    },
+    {
+      label: "System map",
+      cta: "View topology",
+      href: "/system-map",
+      description: "Agents, data flows, and dependencies",
+      dependency: { subsystem: "agents" },
     },
   ];
 }
@@ -306,10 +340,13 @@ export default async function Home() {
   const hasRunsInLastWeek = (metrics.agentRunsLast7d ?? 0) > 0;
   const isIdleContext = isIdleExecution && !hasRunsInLastWeek;
 
-  const links = buildLinks(metrics, tenantId);
-  const coreLinks = links.slice(0, 3);
-  const dataLinks = links.slice(3);
-  const canResetDegraded = isAdminRole(normalizeRole(currentUser?.role));
+  const fulfillmentLinks = buildFulfillmentLinks(metrics);
+  const adminLinks = buildAdminLinks(metrics, tenantId);
+  const normalizedRole = normalizeRole(currentUser?.role);
+  const canResetDegraded = isAdminRole(normalizedRole);
+  const isAdmin = isAdminRole(normalizedRole);
+  const showFulfillmentWorkspace = canViewFulfillmentNav(currentUser, tenantId) || isAdmin;
+  const showAdminWorkspace = isAdmin;
 
   const renderLinkCard = (link: HomeLink) => {
     const dependencyState: WorkflowCardState = getDependencyState(link, systemStatus);
@@ -544,21 +581,37 @@ export default async function Home() {
           <AgentAvailabilityHints />
 
           <div className="space-y-6">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-zinc-900">
-              <div className="flex flex-col gap-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">Core workflows</p>
-                <p className="text-sm text-slate-600 dark:text-zinc-400">Launch and monitor the everyday agent actions.</p>
-              </div>
-              <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{coreLinks.map(renderLinkCard)}</div>
-            </section>
+            {showFulfillmentWorkspace ? (
+              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-zinc-900">
+                <div className="flex flex-col gap-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">Fulfillment workspace</p>
+                  <p className="text-sm text-slate-600 dark:text-zinc-400">The workflows recruiters and sourcers use to intake, match, explain, and submit.</p>
+                  <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[12px] font-semibold text-slate-700 dark:border-slate-800 dark:bg-zinc-800 dark:text-slate-200">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" aria-hidden />
+                    <span>Work area: use these workflows for real recruiting decisions.</span>
+                  </div>
+                </div>
+                <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {fulfillmentLinks.map(renderLinkCard)}
+                </div>
+              </section>
+            ) : null}
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-zinc-900">
-              <div className="flex flex-col gap-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">Data &amp; controls</p>
-                <p className="text-sm text-slate-600 dark:text-zinc-400">Review the information that feeds the system.</p>
-              </div>
-              <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">{dataLinks.map(renderLinkCard)}</div>
-            </section>
+            {showAdminWorkspace ? (
+              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-zinc-900">
+                <div className="flex flex-col gap-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">Admin &amp; ops</p>
+                  <p className="text-sm text-slate-600 dark:text-zinc-400">Controls, diagnostics, and verification tools. Use intentionally.</p>
+                  <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[12px] font-semibold text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-amber-400" aria-hidden />
+                    <span>Admin area: changes are logged and may affect tenant behavior.</span>
+                  </div>
+                </div>
+                <div className="mt-4 grid content-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {adminLinks.map(renderLinkCard)}
+                </div>
+              </section>
+            ) : null}
           </div>
         </div>
       </div>
