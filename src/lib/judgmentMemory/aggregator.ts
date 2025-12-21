@@ -1,9 +1,5 @@
-import type {
-  DecisionReceipt,
-  JudgmentAggregate,
-  JudgmentAggregateDimension,
-  JudgmentDecisionType,
-} from "@/server/db/prisma";
+import { Prisma } from "@prisma/client";
+import type { DecisionReceipt, JudgmentAggregate, JudgmentAggregateDimension, JudgmentDecisionType } from "@/server/db/prisma";
 
 import { prismaAdmin } from "@/lib/prismaAdmin";
 
@@ -329,7 +325,12 @@ export async function runJudgmentMemoryAggregation(
       });
 
       if (aggregates.length) {
-        await tx.judgmentAggregate.createMany({ data: aggregates, skipDuplicates: true });
+        const createPayload: Prisma.JudgmentAggregateCreateManyInput[] = aggregates.map((aggregate) => ({
+          ...aggregate,
+          value: aggregate.value ?? Prisma.JsonNull,
+        }));
+
+        await tx.judgmentAggregate.createMany({ data: createPayload, skipDuplicates: true });
       }
     });
 

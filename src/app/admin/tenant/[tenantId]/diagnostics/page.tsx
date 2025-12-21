@@ -66,8 +66,7 @@ function DiagnosticCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <StatusIcon status={status} />
-<<<<<<< ours
-          <div className="group/title relative flex-1">
+          <div className="group/title relative min-w-0 flex-1">
             <AdminCardTitle
               as="h3"
               className="text-base dark:text-zinc-50"
@@ -75,10 +74,6 @@ function DiagnosticCard({
               aria-describedby={tooltipId}
               tabIndex={0}
             >
-=======
-          <div className="min-w-0 flex-1">
-            <AdminCardTitle as="h3" className="text-base dark:text-zinc-50" stabilizeHeight>
->>>>>>> theirs
               {title}
             </AdminCardTitle>
             <div

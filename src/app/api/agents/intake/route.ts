@@ -166,6 +166,15 @@ export async function POST(req: NextRequest) {
         throw new Error('Failed to parse LLM output');
       }
 
+      const normalizedIntent = {
+        ...parsedProfile,
+        skills: parsedProfile.skills.map((skill) => ({
+          name: skill.name,
+          normalizedName: skill.normalizedName ?? skill.name,
+          isMustHave: skill.required ?? false,
+        })),
+      };
+
       const runTransaction = scopedPrisma.$transaction
         ? scopedPrisma.$transaction.bind(scopedPrisma)
         : async (fn: (tx: typeof scopedPrisma) => Promise<void>) =>
@@ -173,14 +182,14 @@ export async function POST(req: NextRequest) {
 
       let jobReqId: string | null = null;
       const intentPayload = buildJobIntentPayload({
-        title: parsedProfile.title,
-        location: parsedProfile.location ?? null,
-        employmentType: parsedProfile.employmentType ?? null,
-        seniorityLevel: parsedProfile.seniorityLevel ?? null,
-        skills: parsedProfile.skills,
+        title: normalizedIntent.title,
+        location: normalizedIntent.location ?? null,
+        employmentType: normalizedIntent.employmentType ?? null,
+        seniorityLevel: normalizedIntent.seniorityLevel ?? null,
+        skills: normalizedIntent.skills,
         sourceDescription: trimmedDescription,
         confidenceLevels: { requirements: 0.85 },
-        archetype: suggestReqArchetype({ intent: parsedProfile, rawDescription: trimmedDescription }),
+        archetype: suggestReqArchetype({ intent: normalizedIntent, rawDescription: trimmedDescription }),
       });
 
       await runTransaction(async (tx) => {

@@ -5,15 +5,10 @@ import baseConfig from "./vitest.config";
 const coverageOverrides: UserConfig = {
   test: {
     environment: "node",
-    environmentMatchGlobs: [
-      ["src/app/api/**", "node"],
-      ["src/server/**", "node"],
-    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
       reportsDirectory: "./coverage",
-      all: true,
       reportOnFailure: true,
       include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/**/__mocks__/**", "**/__generated__/**", "src/**/types/**"],

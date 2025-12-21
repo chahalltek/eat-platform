@@ -13,10 +13,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    environmentMatchGlobs: [
-      ["src/app/api/**", "node"],
-      ["src/server/**", "node"],
-    ],
     setupFiles: ["./tests/setup.ts", "./vitest.setup.ts", "./tests/vitest.setup.ts"],
     restoreMocks: true,
     clearMocks: true,
@@ -30,7 +26,6 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "json-summary", "lcov", "html"],
       reportsDirectory: "./coverage",
-      all: true,
       reportOnFailure: true,
       include: [
         "src/lib/**/*.{ts,tsx}",

@@ -78,18 +78,18 @@ function blockNetworkRequests() {
 
   const blockFetch = ((...args: unknown[]) => {
     if (allowLocalhost(args[0])) {
-      // @ts-expect-error - allow passthrough to the built-in fetch for local test servers.
+      // @ts-ignore - allow passthrough to the built-in fetch for local test servers.
       return realFetch(args[0] as RequestInfo, args[1] as RequestInit | undefined);
     }
     throwNetworkError("fetch", args[0]);
   }) as typeof fetch;
 
-  // @ts-expect-error - overriding global fetch to enforce test safety.
+  // @ts-ignore - overriding global fetch to enforce test safety.
   globalThis.fetch = blockFetch;
 
   const blockHttpRequest = ((...args: unknown[]) => {
     if (allowLocalhost(args[0])) {
-      // @ts-expect-error - allow passthrough to built-in request for localhost test servers.
+      // @ts-ignore - allow passthrough to built-in request for localhost test servers.
       return realHttpRequest(args[0] as never, args[1] as never, args[2] as never);
     }
     throwNetworkError("http.request", args[0]);
@@ -97,7 +97,7 @@ function blockNetworkRequests() {
 
   const blockHttpGet = ((...args: unknown[]) => {
     if (allowLocalhost(args[0])) {
-      // @ts-expect-error - allow passthrough to built-in get for localhost test servers.
+      // @ts-ignore - allow passthrough to built-in get for localhost test servers.
       return realHttpGet(args[0] as never, args[1] as never, args[2] as never);
     }
     throwNetworkError("http.get", args[0]);
@@ -105,7 +105,7 @@ function blockNetworkRequests() {
 
   const blockHttpsRequest = ((...args: unknown[]) => {
     if (allowLocalhost(args[0])) {
-      // @ts-expect-error - allow passthrough to built-in request for localhost test servers.
+      // @ts-ignore - allow passthrough to built-in request for localhost test servers.
       return realHttpsRequest(args[0] as never, args[1] as never, args[2] as never);
     }
     throwNetworkError("https.request", args[0]);
@@ -113,7 +113,7 @@ function blockNetworkRequests() {
 
   const blockHttpsGet = ((...args: unknown[]) => {
     if (allowLocalhost(args[0])) {
-      // @ts-expect-error - allow passthrough to built-in get for localhost test servers.
+      // @ts-ignore - allow passthrough to built-in get for localhost test servers.
       return realHttpsGet(args[0] as never, args[1] as never, args[2] as never);
     }
     throwNetworkError("https.get", args[0]);

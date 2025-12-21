@@ -1,3 +1,4 @@
+import type { UserConfig } from "vite";
 import { defineConfig } from "vitest/config";
 import baseConfig from "../../vitest.config";
 
@@ -11,8 +12,10 @@ const mvpAuditTests = [
   "tests/smoke/mvp-smoke.test.ts",
 ];
 
+const base = baseConfig as UserConfig;
+
 const testConfig = {
-  ...(baseConfig as { test?: Record<string, unknown> }).test,
+  ...(base.test ?? {}),
   include: mvpAuditTests,
   pool: "threads",
   minThreads: 1,
@@ -25,6 +28,6 @@ const testConfig = {
 };
 
 export default defineConfig({
-  ...(baseConfig as Record<string, unknown>),
+  ...base,
   test: testConfig,
-} as Record<string, unknown>);
+});
