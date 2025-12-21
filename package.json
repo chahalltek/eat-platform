@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:coverage": "COVERAGE_E2E=1 BABEL_ENV=coverage_e2e next dev",
     "build": "node scripts/db-safety.js --ci && prisma migrate deploy && prisma generate && next build",
     "vercel-build": "node scripts/db-safety.js --ci && node scripts/prisma-migrate-if-configured.js && prisma generate && next build",
     "postinstall": "prisma generate",
@@ -43,6 +44,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test",
@@ -64,10 +66,13 @@
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -78,6 +83,8 @@
     "test:e2e": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e:ui": "playwright test --config=playwright.e2e.config.ts --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test --config=playwright.e2e.config.ts"
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
