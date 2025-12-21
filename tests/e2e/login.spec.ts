@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.describe("login page branding", () => {
   test("renders sign-in state without console links", async ({ page, baseURL }) => {

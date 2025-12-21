@@ -37,6 +37,7 @@
     "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts",
     "e2e:visual": "playwright test --config=playwright.visual.config.ts",
 <<<<<<< ours
+<<<<<<< ours
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test",
@@ -54,6 +55,12 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
+>>>>>>> theirs
+=======
+    "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
+    "test:e2e": "playwright test --config=playwright.e2e.config.ts",
+    "test:e2e:ui": "playwright test --config=playwright.e2e.config.ts --ui",
+    "test:e2e:debug": "PWDEBUG=1 playwright test --config=playwright.e2e.config.ts"
 >>>>>>> theirs
   },
   "dependencies": {
@@ -87,8 +94,11 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
     "istanbul-lib-coverage": "^3.2.2",
+<<<<<<< ours
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",
+=======
+>>>>>>> theirs
     "jsdom": "^27.3.0",
     "pg-mem": "^3.0.5",
     "png-to-ico": "^3.0.1",
