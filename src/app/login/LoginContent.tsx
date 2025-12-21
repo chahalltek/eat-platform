@@ -1,9 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { EteLogo } from "@/components/branding/EteLogo";
+import { BRANDING } from "@/config/branding";
 import {
   DEFAULT_BRAND_LOGO,
   DEFAULT_BRAND_LOGO_ALT,
@@ -15,6 +16,14 @@ type LoginContentProps = {
   branding: TenantBranding;
 };
 
+function normalizeLogoPath(path: string) {
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+    return path;
+  }
+
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
 export function LoginContent({ branding }: LoginContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,11 +31,28 @@ export function LoginContent({ branding }: LoginContentProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [logoError, setLogoError] = useState(false);
+  const [logoIndex, setLogoIndex] = useState(0);
 
   const logoAlt = useMemo(() => branding.brandLogoAlt || DEFAULT_BRAND_LOGO_ALT, [branding.brandLogoAlt]);
-  const remoteLogoUrl = branding.brandLogoUrl ?? undefined;
-  const showRemoteLogo = Boolean(remoteLogoUrl && !logoError);
+  const logoSources = useMemo(() => {
+    const sources = [
+      branding.brandLogoUrl ?? null,
+      BRANDING.logoHorizontal,
+      DEFAULT_BRAND_LOGO,
+      "/ete-logo.svg",
+    ];
+
+    return sources.filter(Boolean).map((src) => normalizeLogoPath(src as string));
+  }, [branding.brandLogoUrl]);
+  const logoSrc = logoSources[Math.min(logoIndex, logoSources.length - 1)];
+
+  useEffect(() => {
+    setLogoIndex(0);
+  }, [branding.brandLogoUrl]);
+
+  const handleLogoError = () => {
+    setLogoIndex((current) => (current + 1 < logoSources.length ? current + 1 : current));
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -65,16 +91,12 @@ export function LoginContent({ branding }: LoginContentProps) {
           className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
         >
           <div className="flex flex-col items-center text-center">
-            {showRemoteLogo ? (
-              <img
-                src={remoteLogoUrl}
-                alt={logoAlt}
-                onError={() => setLogoError(true)}
-                className="mb-4 max-h-12 w-auto max-w-[220px]"
-              />
-            ) : (
-              <EteLogo variant="horizontal" className="mb-4 items-center" tagline="" image={DEFAULT_BRAND_LOGO} />
-            )}
+            <img
+              src={logoSrc}
+              alt={logoAlt}
+              onError={handleLogoError}
+              className="mb-4 max-h-12 w-auto max-w-[220px]"
+            />
             <h1 className="text-xl font-semibold">Sign in to {branding.brandName || DEFAULT_BRAND_NAME}</h1>
             <p className="text-sm text-zinc-600">Use your workspace credentials to access the platform.</p>
           </div>
