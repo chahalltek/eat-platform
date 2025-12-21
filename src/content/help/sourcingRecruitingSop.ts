@@ -33,7 +33,7 @@ export const sourcingRecruitingSop: SourcingRecruitingSop = {
   owner: "Talent Operations",
   version: "v1.0",
   contact: "talent-ops@ete.example",
-  lastUpdated: "2026-02-17",
+  lastUpdated: "2025-12-21",
   sections: [
     {
       id: "purpose-scope",
