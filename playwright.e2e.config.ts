@@ -4,9 +4,12 @@ import { AUTH_SETUP_PROJECT, AUTH_STORAGE_STATE, E2E_AUTH_SETUP_TEST_MATCH } fro
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
 <<<<<<< ours
+<<<<<<< ours
 =======
 const shouldStartLocalServer = !process.env.E2E_BASE_URL;
 const coverageEnabled = process.env.COVERAGE_E2E === "1";
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 const defaultHeaders = {
   "x-eat-user-id": process.env.E2E_USER_ID ?? "routes-smoke-user",

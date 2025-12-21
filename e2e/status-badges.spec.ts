@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./testBase";
 
 test.describe("Status badges showcase", () => {
   test("renders the visual gallery without authentication", async ({ page }) => {

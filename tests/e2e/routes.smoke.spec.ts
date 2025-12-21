@@ -1,4 +1,8 @@
+<<<<<<< ours
 import { expect, type Locator, type Page, test } from "./fixtures";
+=======
+import { expect, type Locator, type Page, test } from "../../e2e/testBase";
+>>>>>>> theirs
 
 type RouteExpectation = {
   path: string;

@@ -1,4 +1,8 @@
+<<<<<<< ours
 import { expect, test } from "./fixtures";
+=======
+import { expect, test } from "../../e2e/testBase";
+>>>>>>> theirs
 
 test.describe("login page branding", () => {
   test("renders sign-in state without console links", async ({ page, baseURL }) => {
