@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+<<<<<<< ours
 const shouldCheckCoverage = process.env.COVERAGE_E2E === "1";
 
 test.describe("Coverage instrumentation", () => {
@@ -24,5 +25,29 @@ test.describe("Coverage instrumentation", () => {
 
     expect(coverageStatus.hasCoverage).toBe(true);
     expect(coverageStatus.hasSrcEntry).toBe(true);
+=======
+const shouldSkip = process.env.COVERAGE_E2E !== "1";
+
+test.skip(shouldSkip, 'Set COVERAGE_E2E="1" to run coverage sanity checks');
+
+test.describe("Coverage instrumentation sanity", () => {
+  test("asserts coverage object is present", async ({ page }) => {
+    await page.goto("/login");
+
+    const coverageHandle = await page.waitForFunction(() => {
+      const coverageData = (window as typeof window & { __coverage__?: Record<string, unknown> }).__coverage__;
+      if (!coverageData) return null;
+
+      const keys = Object.keys(coverageData);
+      if (keys.length === 0) return null;
+
+      return { keys };
+    });
+
+    const coverageData = (await coverageHandle.jsonValue()) as { keys: string[] };
+
+    expect(coverageData.keys.length).toBeGreaterThan(0);
+    expect(coverageData.keys.some((key) => key.includes("src/app/"))).toBe(true);
+>>>>>>> theirs
   });
 });
