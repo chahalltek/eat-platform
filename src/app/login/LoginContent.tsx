@@ -53,6 +53,13 @@ export function LoginContent({ branding }: LoginContentProps) {
   const logoSrc = logoSources[Math.min(logoIndex, logoSources.length - 1)];
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+
+    console.log("[login] logoSources:", logoSources);
+    console.log("[login] logoSrc:", logoSrc, "logoIndex:", logoIndex);
+  }, [logoSources, logoSrc, logoIndex]);
+
+  useEffect(() => {
     setLogoIndex(0);
   }, [branding.brandLogoUrl]);
 
