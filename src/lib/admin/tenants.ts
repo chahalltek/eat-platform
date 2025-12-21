@@ -81,11 +81,17 @@ export async function listTenantsWithPlans(): Promise<TenantPlanSummary[]> {
 }
 
 export async function getTenantPlanDetail(tenantId: string): Promise<TenantPlanDetail> {
+  const normalizedTenantId = tenantId?.trim();
+
+  if (!normalizedTenantId) {
+    throw new ValidationError("Tenant id is required");
+  }
+
   const now = new Date();
   const includeTenantMode = await isTableAvailable("TenantMode");
 
   const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
+    where: { id: normalizedTenantId },
     include: {
       ...(includeTenantMode ? { tenantMode: true } : {}),
       subscriptions: {
@@ -114,12 +120,18 @@ export async function updateTenantPlan(
   planId: string,
   options: { isTrial?: boolean; trialEndsAt?: Date | null },
 ): Promise<TenantPlanSummary> {
+  const normalizedTenantId = tenantId?.trim();
+
+  if (!normalizedTenantId) {
+    throw new ValidationError("Tenant id is required");
+  }
+
   const now = new Date();
   const includeTenantMode = await isTableAvailable("TenantMode");
 
   const [tenant, plan] = await Promise.all([
     prisma.tenant.findUnique({
-      where: { id: tenantId },
+      where: { id: normalizedTenantId },
       include: {
         ...(includeTenantMode ? { tenantMode: true } : {}),
         subscriptions: {

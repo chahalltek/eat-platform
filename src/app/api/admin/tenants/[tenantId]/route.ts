@@ -18,27 +18,36 @@ export async function GET(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
+  const normalizedTenantId = tenantId?.trim();
   const user = await getCurrentUser(request);
 
   if (!canManageTenants(user)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  try {
-    const detail = await getTenantPlanDetail(tenantId);
+  if (!normalizedTenantId) {
+    return NextResponse.json({ error: "tenantId is required" }, { status: 400 });
+  }
 
-      return NextResponse.json({
-        tenant: {
-          ...detail.tenant,
-          createdAt: detail.tenant.createdAt.toISOString(),
-          trialEndsAt: detail.tenant.trialEndsAt ? detail.tenant.trialEndsAt.toISOString() : null,
-          mode: detail.tenant.mode,
-        },
-        plans: detail.plans,
-      });
+  try {
+    const detail = await getTenantPlanDetail(normalizedTenantId);
+
+    return NextResponse.json({
+      tenant: {
+        ...detail.tenant,
+        createdAt: detail.tenant.createdAt.toISOString(),
+        trialEndsAt: detail.tenant.trialEndsAt ? detail.tenant.trialEndsAt.toISOString() : null,
+        mode: detail.tenant.mode,
+      },
+      plans: detail.plans,
+    });
   } catch (error) {
     if (error instanceof NotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+
+    if (error instanceof ValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     throw error;
@@ -50,6 +59,7 @@ export async function PATCH(
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
   const { tenantId } = await params;
+  const normalizedTenantId = tenantId?.trim();
   const user = await getCurrentUser(request);
 
   if (!canManageTenants(user)) {
@@ -60,23 +70,27 @@ export async function PATCH(
     const body = await request.json();
     const planId = body?.planId;
 
+    if (!normalizedTenantId) {
+      return NextResponse.json({ error: "tenantId is required" }, { status: 400 });
+    }
+
     if (!planId || typeof planId !== "string") {
       return NextResponse.json({ error: "planId is required" }, { status: 400 });
     }
 
-    const summary = await updateTenantPlan(tenantId, planId, {
+    const summary = await updateTenantPlan(normalizedTenantId, planId, {
       isTrial: Boolean(body?.isTrial),
       trialEndsAt: parseTrialEndDate(body?.trialEndsAt),
     });
 
-      return NextResponse.json({
-        tenant: {
-          ...summary,
-          createdAt: summary.createdAt.toISOString(),
-          trialEndsAt: summary.trialEndsAt ? summary.trialEndsAt.toISOString() : null,
-          mode: summary.mode,
-        },
-      });
+    return NextResponse.json({
+      tenant: {
+        ...summary,
+        createdAt: summary.createdAt.toISOString(),
+        trialEndsAt: summary.trialEndsAt ? summary.trialEndsAt.toISOString() : null,
+        mode: summary.mode,
+      },
+    });
   } catch (error) {
     if (error instanceof NotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 });

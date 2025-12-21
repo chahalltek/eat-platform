@@ -140,6 +140,11 @@ describe("admin tenants library", () => {
     await expect(getTenantPlanDetail("missing-tenant")).rejects.toBeInstanceOf(NotFoundError);
   });
 
+  it("validates tenant id before fetching details", async () => {
+    await expect(getTenantPlanDetail("")).rejects.toBeInstanceOf(ValidationError);
+    expect(prismaMock.tenant.findUnique).not.toHaveBeenCalled();
+  });
+
   it("updates the tenant plan and closes the previous subscription", async () => {
     prismaMock.tenant.findUnique.mockResolvedValue({ ...baseTenant, subscriptions: [subscription] });
     prismaMock.subscriptionPlan.findUnique.mockResolvedValue(premiumPlan);
@@ -192,6 +197,11 @@ describe("admin tenants library", () => {
     await expect(
       updateTenantPlan(baseTenant.id, premiumPlan.id, { isTrial: true, trialEndsAt: new Date("invalid") }),
     ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it("validates tenant id before updating plans", async () => {
+    await expect(updateTenantPlan(" ", premiumPlan.id, {})).rejects.toBeInstanceOf(ValidationError);
+    expect(prismaMock.tenant.findUnique).not.toHaveBeenCalled();
   });
 
   it("throws when the plan is missing", async () => {

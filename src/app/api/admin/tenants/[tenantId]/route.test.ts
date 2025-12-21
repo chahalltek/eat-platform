@@ -68,6 +68,17 @@ describe("/api/admin/tenants/[tenantId]", () => {
     expect(response.status).toBe(404);
   });
 
+  it("returns 400 when tenantId is missing on detail lookup", async () => {
+    getCurrentUser.mockResolvedValue({ role: "ADMIN" });
+    const request = makeRequest({ method: "GET", url: "http://localhost/api/admin/tenants/tenant-1" });
+
+    const response = await GET(request, { params: { tenantId: "  " } });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "tenantId is required" });
+    expect(getTenantPlanDetail).not.toHaveBeenCalled();
+  });
+
   it("requires planId when updating", async () => {
     getCurrentUser.mockResolvedValue({ role: "ADMIN" });
     const request = makeRequest({ method: "PATCH", url: "http://localhost/api/admin/tenants/tenant-1", body: "{}" });
@@ -103,6 +114,22 @@ describe("/api/admin/tenants/[tenantId]", () => {
       trialEndsAt: null,
     });
     expect(payload.tenant.plan?.id).toBe("plan-b");
+  });
+
+  it("returns 400 when tenantId is missing on update", async () => {
+    getCurrentUser.mockResolvedValue({ role: "SYSTEM_ADMIN" });
+
+    const request = makeRequest({
+      method: "PATCH",
+      url: "http://localhost/api/admin/tenants/tenant-1",
+      json: { planId: "plan-b", isTrial: false },
+    });
+
+    const response = await PATCH(request, { params: { tenantId: "" } });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "tenantId is required" });
+    expect(updateTenantPlan).not.toHaveBeenCalled();
   });
 
   it("surfaces validation errors", async () => {
