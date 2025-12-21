@@ -21,8 +21,8 @@ export const decisionSopContent: HelpEntry = {
   eyebrow: "Help / FAQ",
   description: "Where to find the decision SOP and the exact language we expect teams to use.",
   intro: [
-    "Use this when teammates ask how we make and record decisions inside ETE.",
-    "The SOP keeps behavior, judgment, and execution cleanly separated and replaces undocumented reasoning with structured judgment.",
+    "Use this when teammates ask how decisions are made and recorded inside ETE.",
+    "ETE is used intentionally at decision moments, not for every action or workflow step. The SOP keeps behavior, judgment, and execution clearly separated and replaces undocumented reasoning with structured judgment.",
   ],
   sections: [
     {
@@ -39,9 +39,10 @@ export const decisionSopContent: HelpEntry = {
     {
       heading: "How to apply it in ETE",
       bullets: [
-        "Structured judgment replaces undocumented reasoning.",
-        "Use ETE to capture the rationale, confidence, risk, and tradeoffs behind every decision.",
-        "Push approved outcomes back into Bullhorn so the system of record stays authoritative.",
+        "Specialized agents reason over structured inputs to replace undocumented, implicit judgment.",
+        "Use ETE to capture rationale, confidence, risk, and tradeoffs behind every decision.",
+        "ETE preserves decision rationale as durable system memory, not transient explanation.",
+        "Push approved outcomes back into Bullhorn so the system of record remains authoritative.",
       ],
     },
   ],
@@ -57,7 +58,7 @@ export const sopLanguage = {
   systemOfRecord:
     "Bullhorn remains the recruiting system of record—jobs, candidates, submissions, and activity stay authoritative there.",
   decisionSupport:
-    "ETE is the intelligence and decision-support layer that captures confidence, risks, and tradeoffs so decisions stay explainable.",
+    "ETE is an agentic decision-support system that owns interpretation, comparison, confidence, explanation, and memory at key decision moments.",
   bullhornSync: "Outcomes and rationale flow back into Bullhorn so governance and history stay centralized.",
 } as const;
 
@@ -87,7 +88,7 @@ export const eteVsBullhornContent: HelpEntry = {
       bullets: [
         "Clarifies intake when requirements are vague or conflicting",
         "Compares candidates explicitly, not just by score",
-        "Explains why one candidate is recommended over another",
+        "Explains why one option is recommended over another, with explicit confidence, tradeoffs, and rationale",
         sopLanguage.decisionSupport,
         "Creates a memory of why decisions were made, not just what happened",
       ],

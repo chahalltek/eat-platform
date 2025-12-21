@@ -15,7 +15,10 @@ export default function HelpPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Help &amp; FAQ</p>
             <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">Quick answers about ETE</h1>
             <p className="max-w-3xl text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-              Short explainers your team can reference without leaving the app. Start with how we make decisions and how ETE and Bullhorn fit together.
+              Short, authoritative explainers your team can reference without leaving the app.
+              <br />
+              <br />
+              ETE is an agentic decision-support system where specialized agents reason at key moments, humans retain authority, and judgment is preserved as durable memory.
             </p>
           </div>
           <Link
@@ -36,7 +39,9 @@ export default function HelpPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">SOP</p>
               <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">{sourcingRecruitingSop.title}</h2>
-              <p className="text-sm text-zinc-700 dark:text-zinc-200">Read the full sourcing &amp; recruiting SOP without leaving the console.</p>
+              <p className="text-sm text-zinc-700 dark:text-zinc-200">
+                This SOP defines how sourcing and recruiting decisions are made, recorded, and explained inside ETE.
+              </p>
             </div>
           </div>
           <Link
