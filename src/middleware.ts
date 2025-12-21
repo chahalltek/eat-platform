@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 import {
   DEFAULT_TENANT_ID,
   DEFAULT_USER_ID,
+  PERMISSIONS_HEADER,
   DEFAULT_USER_ROLE,
   ROLE_HEADER,
   TENANT_HEADER,
@@ -151,6 +152,12 @@ export async function middleware(request: NextRequest) {
   const queryTenantId = searchParams.get(TENANT_QUERY_PARAM)?.trim();
   const pathTenantId = extractTenantIdFromPath(requestPath);
   const sessionTenantId = session?.tenantId?.trim();
+  const resolvedPermissions = Array.isArray(session?.permissions)
+    ? session.permissions
+        .filter(Boolean)
+        .map((permission) => (permission ? permission.toLowerCase().trim() : ""))
+        .filter(Boolean)
+    : [];
 
   const normalizedRole = normalizeRole(session?.role ?? headerRole ?? DEFAULT_USER_ROLE);
 
@@ -208,6 +215,7 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set(USER_HEADER, resolvedUserId);
   requestHeaders.set(TENANT_HEADER, resolvedTenantId);
   requestHeaders.set(ROLE_HEADER, normalizedRole);
+  requestHeaders.set(PERMISSIONS_HEADER, resolvedPermissions.join(","));
 
   if (requestPath.startsWith('/api')) {
     try {
@@ -234,6 +242,7 @@ export async function middleware(request: NextRequest) {
   response.headers.set(USER_HEADER, resolvedUserId);
   response.headers.set(TENANT_HEADER, resolvedTenantId);
   response.headers.set(ROLE_HEADER, normalizedRole);
+  response.headers.set(PERMISSIONS_HEADER, resolvedPermissions.join(","));
 
   return response;
 }

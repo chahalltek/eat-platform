@@ -68,12 +68,14 @@ describe("identity provider abstraction", () => {
       email: "session@example.com",
       displayName: "Session User",
       role: USER_ROLES.ADMIN,
+      permissions: [],
       tenantId: "tenant-session",
     });
     expect(claims).toEqual({
       userId: "session-user",
       tenantId: "tenant-session",
       roles: [USER_ROLES.ADMIN],
+      permissions: [],
       email: "session@example.com",
       displayName: "Session User",
     });
@@ -91,6 +93,7 @@ describe("identity provider abstraction", () => {
       userId: null,
       tenantId: "default-tenant",
       roles: [],
+      permissions: [],
       email: null,
       displayName: null,
     });
@@ -139,6 +142,7 @@ describe("identity provider abstraction", () => {
       email: "session@example.com",
       displayName: "session@example.com",
       role: USER_ROLES.ADMIN,
+      permissions: [],
       tenantId: "tenant-from-db",
     });
     expect(roles).toEqual([USER_ROLES.ADMIN]);
@@ -146,6 +150,7 @@ describe("identity provider abstraction", () => {
       userId: "db-role-user",
       tenantId: "tenant-from-db",
       roles: [USER_ROLES.ADMIN],
+      permissions: [],
       email: "session@example.com",
       displayName: "session@example.com",
     });
@@ -158,12 +163,14 @@ describe("identity provider abstraction", () => {
         email: "custom@example.com",
         displayName: "Custom User",
         role: USER_ROLES.SOURCER,
+        permissions: [],
         tenantId: "custom-tenant",
       }),
       getUserClaims: vi.fn().mockResolvedValue({
         userId: "custom-user",
         tenantId: "custom-tenant",
         roles: [USER_ROLES.SOURCER],
+        permissions: [],
         email: "custom@example.com",
         displayName: "Custom User",
       }),
@@ -178,12 +185,14 @@ describe("identity provider abstraction", () => {
       email: "custom@example.com",
       displayName: "Custom User",
       role: USER_ROLES.SOURCER,
+      permissions: [],
       tenantId: "custom-tenant",
     });
     expect(await getUserClaims()).toEqual({
       userId: "custom-user",
       tenantId: "custom-tenant",
       roles: [USER_ROLES.SOURCER],
+      permissions: [],
       email: "custom@example.com",
       displayName: "Custom User",
     });

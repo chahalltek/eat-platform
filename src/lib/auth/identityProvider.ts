@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { prisma } from "@/server/db/prisma";
 
-import { DEFAULT_TENANT_ID } from "./config";
+import { DEFAULT_TENANT_ID, PERMISSIONS_HEADER } from "./config";
 import type { IdentityProvider, IdentityUser, IdentityClaims } from "./types";
 import { normalizeRole, type UserRole } from "./roles";
 import { getSessionClaims } from "./session";
@@ -14,6 +14,25 @@ async function resolveSession(req?: NextRequest) {
 function resolveRoles(role: string | null | undefined) {
   const normalized = normalizeRole(role);
   return normalized ? [normalized] : [];
+}
+
+function resolvePermissions(value: unknown) {
+  if (!value) return [];
+
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => (typeof entry === "string" ? entry.trim().toLowerCase() : null))
+      .filter((entry): entry is string => Boolean(entry));
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  return [];
 }
 
 async function readHeader(name: string) {
@@ -49,6 +68,7 @@ async function resolveUserFromHeaders(req?: NextRequest) {
   const role = req?.headers.get("x-eat-user-role") ?? (await readHeader("x-eat-user-role"));
   const email = req?.headers.get("x-eat-user-email") ?? (await readHeader("x-eat-user-email"));
   const displayName = req?.headers.get("x-eat-user-name") ?? (await readHeader("x-eat-user-name"));
+  const permissionsHeader = req?.headers.get(PERMISSIONS_HEADER) ?? (await readHeader(PERMISSIONS_HEADER));
   const tenantId = await resolveTenantId(req, null);
 
   if (!userId || !userId.trim()) {
@@ -60,6 +80,7 @@ async function resolveUserFromHeaders(req?: NextRequest) {
     role: role?.trim() ?? null,
     email: email?.trim() ?? null,
     displayName: displayName?.trim() ?? email?.trim() ?? null,
+    permissions: resolvePermissions(permissionsHeader),
     tenantId,
   };
 }
@@ -96,6 +117,7 @@ async function resolveUserFromSession(req: NextRequest | undefined) {
   const tenantId = databaseUser?.tenantId ?? resolvedTenantId;
   const email = session.email ?? databaseUser?.email ?? null;
   const displayName = session.displayName ?? session.email ?? databaseUser?.displayName ?? databaseUser?.email ?? null;
+  const permissions = resolvePermissions(session.permissions);
 
   return {
     user: {
@@ -103,6 +125,7 @@ async function resolveUserFromSession(req: NextRequest | undefined) {
       email,
       displayName,
       role: roles[0] ?? roleSource,
+      permissions,
       tenantId,
     },
     roles,
@@ -140,6 +163,7 @@ function createLocalIdentityProvider(): IdentityProvider {
           userId: user.id,
           tenantId,
           roles,
+          permissions: resolvePermissions(user.permissions),
           email: user.email ?? null,
           displayName: user.displayName ?? user.email ?? null,
         };
@@ -148,7 +172,7 @@ function createLocalIdentityProvider(): IdentityProvider {
       const fromHeaders = await resolveUserFromHeaders(req);
 
       if (!fromHeaders) {
-        return { userId: null, tenantId: DEFAULT_TENANT_ID, roles: [], email: null, displayName: null };
+        return { userId: null, tenantId: DEFAULT_TENANT_ID, roles: [], permissions: [], email: null, displayName: null };
       }
 
       const [fallbackRoles, fallbackTenantId] = await Promise.all([
@@ -160,6 +184,7 @@ function createLocalIdentityProvider(): IdentityProvider {
         userId: fromHeaders.id,
         tenantId: fallbackTenantId,
         roles: fallbackRoles,
+        permissions: resolvePermissions(fromHeaders.permissions),
         email: fromHeaders.email,
         displayName: fromHeaders.displayName ?? fromHeaders.email,
       };

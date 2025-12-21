@@ -1,7 +1,7 @@
 import { DEFAULT_TENANT_ID } from "./config";
 import { isBootstrapTenant } from "../tenant/bootstrap";
 import { normalizeRole, USER_ROLES, type UserRole } from "./roles";
-import type { IdentityUser } from "./types";
+import type { IdentityClaims, IdentityUser } from "./types";
 
 type PermissionUser = Pick<IdentityUser, "role" | "tenantId" | "id"> | null;
 
@@ -216,6 +216,20 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
   [USER_ROLES.EXEC]: new Set<Permission>(["VIEW_EXEC_INTELLIGENCE", "USE_STRATEGIC_COPILOT"]),
 };
 
+export type NamedPermission = "fulfillment.view" | "admin.rbac.manage" | "agent.run.match";
+
+const ROLE_NAMED_PERMISSION_MAP: Record<UserRole, Set<NamedPermission>> = {
+  [USER_ROLES.ADMIN]: new Set(["fulfillment.view", "admin.rbac.manage", "agent.run.match"]),
+  [USER_ROLES.TENANT_ADMIN]: new Set(["fulfillment.view", "admin.rbac.manage", "agent.run.match"]),
+  [USER_ROLES.SYSTEM_ADMIN]: new Set(["fulfillment.view", "admin.rbac.manage", "agent.run.match"]),
+  [USER_ROLES.DATA_ACCESS]: new Set(["fulfillment.view"]),
+  [USER_ROLES.RECRUITER]: new Set(["fulfillment.view", "agent.run.match"]),
+  [USER_ROLES.SOURCER]: new Set(["fulfillment.view"]),
+  [USER_ROLES.SALES]: new Set(["fulfillment.view"]),
+  [USER_ROLES.MANAGER]: new Set(),
+  [USER_ROLES.EXEC]: new Set(),
+};
+
 function getUserRole(user: PermissionUser) {
   return normalizeRole(user?.role);
 }
@@ -331,6 +345,7 @@ export function canExportMatches(user: PermissionUser, tenantId?: string | null)
   return hasPermission(user, "EXPORT_MATCHES") && hasTenantAccess(user, tenantId);
 }
 
+<<<<<<< ours
 export function canViewFulfillment(user: PermissionUser, tenantId?: string | null) {
 <<<<<<< ours
 <<<<<<< ours
@@ -400,5 +415,31 @@ export function canPublishDecisions(user: PermissionUser, tenantId?: string | nu
 
 export function canManageDecisions(user: PermissionUser, tenantId?: string | null) {
   return canCreateDecisions(user, tenantId) || canPublishDecisions(user, tenantId);
+>>>>>>> theirs
+=======
+type PermissionCheckSubject = Pick<IdentityUser, "role" | "permissions"> | IdentityClaims | null;
+
+function normalizePermissionName(permission: string | null | undefined) {
+  const normalized = permission?.trim().toLowerCase();
+  return normalized && normalized.length > 0 ? normalized : null;
+}
+
+export function can(user: PermissionCheckSubject, permission: NamedPermission | string) {
+  const normalizedPermission = normalizePermissionName(permission);
+  if (!normalizedPermission) return false;
+
+  const directPermissions = (user?.permissions ?? []).filter(Boolean).map((entry) => entry.trim().toLowerCase());
+  if (directPermissions.includes(normalizedPermission)) {
+    return true;
+  }
+
+  const role = normalizeRole(
+    (user as PermissionUser)?.role ?? (Array.isArray((user as IdentityClaims)?.roles) ? (user as IdentityClaims)?.roles[0] : null),
+  );
+  if (!role) {
+    return false;
+  }
+
+  return ROLE_NAMED_PERMISSION_MAP[role]?.has(normalizedPermission as NamedPermission) ?? false;
 >>>>>>> theirs
 }

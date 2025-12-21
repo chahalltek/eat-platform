@@ -10,6 +10,7 @@ export type SessionPayload = {
   email?: string | null;
   displayName?: string | null;
   role?: string | null;
+  permissions?: string[] | null;
   exp: number;
   iat: number;
 };
@@ -98,6 +99,7 @@ export async function createSessionCookie(user: {
   email?: string | null;
   displayName?: string | null;
   role?: string | null;
+  permissions?: string[] | null;
 }) {
   const issuedAt = Math.floor(Date.now() / 1000);
   const payload: SessionPayload = {
@@ -106,6 +108,7 @@ export async function createSessionCookie(user: {
     email: user.email ?? null,
     displayName: user.displayName ?? user.email ?? null,
     role: user.role ?? null,
+    permissions: user.permissions ?? null,
     iat: issuedAt,
     exp: issuedAt + SESSION_DURATION_SECONDS,
   };

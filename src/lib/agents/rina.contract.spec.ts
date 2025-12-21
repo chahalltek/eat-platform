@@ -67,6 +67,7 @@ describe('RINA contract enforcement', () => {
         email: 'test@example.com',
         displayName: 'Test User',
         role: USER_ROLES.ADMIN,
+        permissions: [],
         tenantId: 'test-tenant',
       };
     },
@@ -81,6 +82,7 @@ describe('RINA contract enforcement', () => {
         userId: 'test-user',
         tenantId: 'test-tenant',
         roles: [USER_ROLES.ADMIN],
+        permissions: [],
         email: 'test@example.com',
         displayName: 'Test User',
       };

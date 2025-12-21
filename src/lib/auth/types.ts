@@ -7,6 +7,7 @@ export type IdentityUser = {
   email: string | null;
   displayName: string | null;
   role: string | null;
+  permissions?: string[] | null;
   tenantId?: string | null;
 };
 
@@ -14,6 +15,7 @@ export type IdentityClaims = {
   userId: string | null;
   tenantId: string | null;
   roles: UserRole[];
+  permissions: string[];
   email?: string | null;
   displayName?: string | null;
 };
