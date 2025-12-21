@@ -229,7 +229,7 @@ export default function SystemMapPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Map</p>
             <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EDGE Talent Engine data flow blueprint</h1>
             <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-              How agents, scoring, and configuration hand off work. Open this when you need the blueprint for dependencies, not just a link.
+              How agents, engines, and control-plane configuration hand off work. Use this as a system-of-truth blueprint for dependencies, guardrails, and failure modes — not as user documentation.
             </p>
           </div>
               <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -247,12 +247,33 @@ export default function SystemMapPage() {
         </div>
       </section>
 
+      <section className="space-y-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Orientation</p>
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">How to read this page</h2>
+        </div>
+        <div className="space-y-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          <p>This page is a system-of-truth blueprint for how ETE works internally.</p>
+          <p>It is not user documentation and not a step-by-step workflow. Use it to understand:</p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Where judgment happens vs. execution</li>
+            <li>Which components depend on which inputs</li>
+            <li>How failures propagate and fail closed</li>
+            <li>Which controls can change behavior without redeploying agents</li>
+          </ul>
+          <p>Flows shown here run at intentional decision moments, not continuously.</p>
+        </div>
+      </section>
+
       <section className="grid gap-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-5 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70 md:grid-cols-[1.1fr_2fr]">
         <div className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">API Surface</p>
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Where these calls live (non-exhaustive)</h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
             Quick pointers so you know where to look without turning this into an endpoint catalog.
+          </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            These routes exist to support agent execution and control-plane operations, not as a public API contract.
           </p>
         </div>
         <ul className="grid gap-2 rounded-2xl border border-indigo-100 bg-white/80 p-4 text-sm leading-relaxed text-zinc-700 shadow-sm dark:border-indigo-800 dark:bg-zinc-950/60 dark:text-zinc-200 sm:grid-cols-2">
@@ -273,6 +294,10 @@ export default function SystemMapPage() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Blueprint</p>
           <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Nodes and directional flows</h2>
         </div>
+
+        <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          These flows are executed at intentional decision moments. Not every flow runs for every action.
+        </p>
 
         <div className="grid gap-4">
           <div className="space-y-4 rounded-2xl border border-indigo-100/60 bg-gradient-to-b from-white to-indigo-50/60 p-4 dark:border-indigo-800/50 dark:from-zinc-900 dark:to-indigo-950/30">
@@ -299,6 +324,17 @@ export default function SystemMapPage() {
                   ) : null}
                 </div>
               ))}
+            </div>
+
+            <div className="space-y-2 rounded-2xl border border-dashed border-indigo-200 bg-white/70 p-4 text-sm leading-relaxed text-zinc-700 dark:border-indigo-800 dark:bg-zinc-900/60 dark:text-zinc-200">
+              <p className="font-semibold text-zinc-900 dark:text-zinc-50">Node type legend:</p>
+              <ul className="grid gap-1 sm:grid-cols-2">
+                <li>• Agent = reasoning and judgment</li>
+                <li>• Engine = deterministic scoring or computation</li>
+                <li>• Adapter = system ingress and egress</li>
+                <li>• Control Plane = configuration, gating, and safety</li>
+                <li>• Data = system of record</li>
+              </ul>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -339,7 +375,7 @@ export default function SystemMapPage() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Control plane</p>
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">How we tune, gate, and shut off flows</h3>
           <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-            Separate the knobs from the engines so we can change behavior without redeploying agents. These controls back the GUARDRAILS flow above.
+            The control plane separates judgment and execution from configuration so behavior can be changed without redeploying agents or rewriting history. These controls back the GUARDRAILS flow above.
           </p>
         </div>
 
