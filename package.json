@@ -70,6 +70,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test",
@@ -101,10 +102,13 @@
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -159,6 +163,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
+=======
+>>>>>>> theirs
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -193,6 +199,7 @@
 <<<<<<< ours
     "@vitest/coverage-v8": "^4.0.15",
 <<<<<<< ours
+<<<<<<< ours
     "babel-plugin-istanbul": "^7.0.1",
 =======
     "@vitest/coverage-istanbul": "^4.0.15",
@@ -201,6 +208,9 @@
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.1.7",
+>>>>>>> theirs
+=======
+    "babel-plugin-istanbul": "^6.1.1",
 >>>>>>> theirs
     "dotenv": "^17.2.3",
     "eslint": "^9",

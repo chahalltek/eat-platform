@@ -14,6 +14,7 @@ const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 const shouldStartLocalServer = !process.env.E2E_BASE_URL;
 const coverageEnabled = process.env.COVERAGE_E2E === "1";
@@ -34,11 +35,26 @@ const coverageEnabled = process.env.COVERAGE_E2E === "1";
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+const shouldStartLocalServer = !process.env.E2E_BASE_URL;
+
+const shouldEnableCoverage = process.env.COVERAGE_E2E === "1" || shouldStartLocalServer;
+
+if (shouldEnableCoverage && !process.env.COVERAGE_E2E) {
+  process.env.COVERAGE_E2E = "1";
+}
+
+if (shouldEnableCoverage && !process.env.BABEL_ENV) {
+  process.env.BABEL_ENV = "coverage_e2e";
+}
+
+>>>>>>> theirs
 const defaultHeaders = {
   "x-eat-user-id": process.env.E2E_USER_ID ?? "routes-smoke-user",
   "x-eat-user-role": process.env.E2E_USER_ROLE ?? "ADMIN",
   "x-eat-tenant-id": process.env.E2E_TENANT_ID ?? "routes-smoke-tenant",
 };
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -84,6 +100,8 @@ if (enableCoverage) {
     }),
   ]);
 }
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -153,4 +171,16 @@ export default defineConfig({
       dependencies: [AUTH_SETUP_PROJECT],
     },
   ],
+  webServer: shouldStartLocalServer
+    ? {
+        command: "npm run dev -- --port 3000",
+        url: "http://127.0.0.1:3000",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+        env: {
+          COVERAGE_E2E: shouldEnableCoverage ? "1" : undefined,
+          BABEL_ENV: shouldEnableCoverage ? "coverage_e2e" : undefined,
+        },
+      }
+    : undefined,
 });
