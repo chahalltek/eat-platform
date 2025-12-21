@@ -1,6 +1,6 @@
 "use client";
 
-import { BoltIcon, CommandLineIcon, FunnelIcon, MagnifyingGlassIcon, ShieldCheckIcon, TagIcon } from "@heroicons/react/24/outline";
+import { BoltIcon, ClipboardDocumentListIcon, CommandLineIcon, FunnelIcon, MagnifyingGlassIcon, ShieldCheckIcon, TagIcon } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState } from "react";
 
 import { CopyButton } from "@/components/CopyButton";

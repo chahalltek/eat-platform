@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowPathIcon, BeakerIcon, FireIcon, FunnelIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BeakerIcon, ClipboardDocumentListIcon, FireIcon, FunnelIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { CopyButton } from "@/components/CopyButton";

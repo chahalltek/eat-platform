@@ -10,10 +10,7 @@ export type ETETableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
 
 export type TableAccessorKey<TData> = Extract<keyof TData, string>;
 
-const STATUS_VARIANT_STYLES: Record<
-  StatusVariant,
-  { className: string; accent: string }
-> = {
+const STATUS_VARIANT_STYLES = {
   success: {
     className:
       "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/45 dark:bg-emerald-500/10 dark:text-emerald-100",
@@ -39,7 +36,7 @@ const STATUS_VARIANT_STYLES: Record<
       "border border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100",
     accent: "rgba(113, 113, 122, 0.34)",
   },
-} as const;
+} as const satisfies Record<string, { className: string; accent: string }>;
 
 export type StatusVariant = keyof typeof STATUS_VARIANT_STYLES;
 

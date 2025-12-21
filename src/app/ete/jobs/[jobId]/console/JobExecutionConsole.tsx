@@ -328,7 +328,7 @@ function describeRecommendedOutcome(outcome: JobConsoleCandidate["recommendedOut
 function actionAlignsWithRecommendation(outcome: JobConsoleCandidate["recommendedOutcome"], action: DecisionStreamAction): boolean {
   if (action === "VIEWED") return true;
   if (outcome === "shortlist") return action === "SHORTLISTED" || action === "FAVORITED";
-  if (outcome === "pass") return action === "REMOVED" || action === "VIEWED";
+  if (outcome === "pass") return action === "REMOVED";
   return true;
 }
 
@@ -775,6 +775,7 @@ function ResultsTable({
                         >
                           {expanded ? "Hide" : "Explain"}
                         </button>
+                      </div>
                       </div>
                     </td>
                   </tr>
@@ -1452,7 +1453,6 @@ export function JobExecutionConsole(props: JobConsoleProps) {
       } as DecisionReceipt["recommendation"];
       const tradeoff = archetype?.defaultTradeoff ?? describeTradeoffFromStrategy(shortlistStrategy);
       const normalizedConfidence = normalizeConfidenceToTenPoint(candidate.confidenceScore ?? 5);
-      const normalizedConfidence = normalizeConfidenceToTenPoint(candidate.confidenceScore ?? 5);
 
       const payload = {
         jobId,
@@ -1620,6 +1620,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
                 confidenceScore: Math.round(match.confidence),
                 confidenceBand: normalizeBand(match.confidenceCategory) ?? normalizeBand(categorizeConfidence(match.confidence)),
                 shortlisted: existing?.shortlisted ?? false,
+                recommendedOutcome: existing?.recommendedOutcome ?? (existing?.shortlisted ? "shortlist" : "pass"),
                 explanation:
                   existing?.explanation ?? normalizeExplanation(match.explanation ?? "Explanation not generated yet.", { summaryOnly: true }),
               };

@@ -292,6 +292,8 @@ export default async function OperationsRunbookPage() {
             </span>
           </div>
 
+        </div>
+
         {changeLogVisible ? (
           <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
             <table className="min-w-full divide-y divide-indigo-100 text-sm">
@@ -339,7 +341,7 @@ export default async function OperationsRunbookPage() {
               Explanatory mapping for the SOP only—process owners stay in control, and agents provide optional system support when those steps are enabled.
             </p>
           </div>
-          <StatusPill status="info" label="Reference only" />
+          <StatusPill status="idle" label="Reference only" />
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-indigo-100/70 bg-white/60 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-950/40">
