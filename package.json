@@ -35,7 +35,13 @@
     "e2e": "playwright test --config=playwright.e2e.config.ts",
     "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts",
     "e2e:visual": "playwright test --config=playwright.visual.config.ts",
+<<<<<<< ours
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts"
+=======
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "PWDEBUG=1 playwright test"
+>>>>>>> theirs
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

@@ -39,6 +39,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
       - name: Detect unresolved merge conflicts
         run: npm run ci:conflict-scan
 
@@ -83,6 +86,11 @@ jobs:
           else
             npm run test:coverage
           fi
+
+      - name: Run Playwright E2E tests
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+        run: npm run test:e2e
 
       - name: Run deployment health gates
         run: npm run predeploy
