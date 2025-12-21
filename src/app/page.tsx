@@ -257,6 +257,12 @@ export default async function Home() {
     getCurrentUser(),
   ]);
 
+  const productName = BRANDING.name;
+  const productNameWithMark = productName === "EDGE Talent Engine" ? "EDGE Talent Engine™" : productName;
+  const heroDescription = BRANDING.description.includes(productName)
+    ? BRANDING.description.replace(productName, productNameWithMark)
+    : BRANDING.description;
+
   const links = buildLinks(metrics, tenantId);
   const coreLinks = links.slice(0, 3);
   const dataLinks = links.slice(3);
@@ -311,7 +317,7 @@ export default async function Home() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-2">
                 <BrandMark withText />
-                <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">{BRANDING.name}</h1>
+                <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">{productNameWithMark}</h1>
               </div>
             <Link
               href="/system-map"
@@ -323,9 +329,10 @@ export default async function Home() {
             </Link>
           </div>
           <p className="max-w-2xl text-base leading-relaxed text-zinc-600">
-            <span className="block">{BRANDING.description}</span>
+            <span className="block">{heroDescription}</span>
             <span className="block text-sm text-zinc-500">{BRANDING.tagline}</span>
           </p>
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500">EDGE Talent Engine™ is a product of Strategic Systems.</p>
           <p className="max-w-2xl text-lg text-zinc-600">
             UI blocks are turned off. Enable the UI Blocks flag to restore navigation and workflows.
           </p>
@@ -346,9 +353,9 @@ export default async function Home() {
               <div className="flex flex-col gap-3">
                 <BrandMark withText />
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">{BRANDING.name}</h1>
+                  <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">{productNameWithMark}</h1>
                   <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-                    <span className="block">{BRANDING.description}</span>
+                    <span className="block">{heroDescription}</span>
                     <span className="block text-sm text-zinc-500 dark:text-zinc-400">{BRANDING.tagline}</span>
                   </p>
                   <p className="max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
@@ -361,6 +368,9 @@ export default async function Home() {
                   <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Workflows</span>
                   <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Data + Controls</span>
                 </div>
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-500">
+                  EDGE Talent Engine™ is a product of Strategic Systems.
+                </p>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <Link
