@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 <<<<<<< ours
+<<<<<<< ours
 const shouldStartLocalServer = !process.env.PLAYWRIGHT_BASE_URL;
 const coverageEnabled = process.env.COVERAGE_E2E === "1";
 <<<<<<< ours
@@ -11,6 +12,10 @@ const shouldStartLocalServer = coverageEnabled || !process.env.PLAYWRIGHT_BASE_U
 >>>>>>> theirs
 =======
 const coverageEnv = coverageEnabled ? { COVERAGE_E2E: "1" } : undefined;
+>>>>>>> theirs
+=======
+const coverageEnabled = process.env.COVERAGE_E2E === "1" || process.env.COVERAGE_E2E === "true";
+const shouldStartLocalServer = coverageEnabled || !process.env.PLAYWRIGHT_BASE_URL;
 >>>>>>> theirs
 
 export default defineConfig({
@@ -29,9 +34,13 @@ export default defineConfig({
   },
   webServer: shouldStartLocalServer
     ? {
+<<<<<<< ours
         command: coverageEnabled
           ? "npm run dev:coverage -- --port 3000"
           : "npm run dev -- --port 3000",
+=======
+        command: coverageEnabled ? "npm run dev:coverage" : "npm run dev -- --port 3000",
+>>>>>>> theirs
         url: "http://127.0.0.1:3000",
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

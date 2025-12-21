@@ -9,9 +9,12 @@ const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 const shouldStartLocalServer = !process.env.E2E_BASE_URL;
 const coverageEnabled = process.env.COVERAGE_E2E === "1";
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -32,9 +35,12 @@ const defaultHeaders = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 const coverageEnabled = process.env.COVERAGE_E2E === "1";
 const coverageEnv = coverageEnabled ? { COVERAGE_E2E: "1" } : undefined;
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
