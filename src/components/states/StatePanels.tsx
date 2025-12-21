@@ -77,7 +77,7 @@ export function ErrorStatePanel({
               onClick={handleCopy}
               className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white px-3 py-1 text-[11px] font-semibold text-rose-800 shadow-sm transition hover:border-rose-300 hover:text-rose-900"
             >
-              {copyStatus === "copied" ? "Copied" : "Copy error"}
+              {copyStatus === "copied" ? "Copied" : copyStatus === "error" ? "Copy failed" : "Copy diagnostics"}
             </button>
             {onRetry ? (
               <button

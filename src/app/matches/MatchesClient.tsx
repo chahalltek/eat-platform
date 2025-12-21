@@ -118,7 +118,7 @@ export function MatchesClient({
   if (!selectedJobId) {
     return (
       <EmptyState
-        title="Select a job to review matches"
+        title="Select a job to view ranked candidates"
         description="Choose a role from the list to load match results."
         action={
           <div className="flex flex-wrap items-center gap-2">
