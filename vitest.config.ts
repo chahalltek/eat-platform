@@ -21,6 +21,7 @@ export default defineConfig({
     exclude: [
       "node_modules/**",
       "tests/admin-layout/**", // Playwright E2E suite runs via its own runner
+      "tests/visual/**", // Playwright visual tests run via their own runner
     ],
     coverage: {
       provider: "v8",

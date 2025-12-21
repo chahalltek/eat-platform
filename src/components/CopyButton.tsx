@@ -86,17 +86,8 @@ export function CopyButton({ text, label, clipboard, className, stopPropagation 
           className,
         )}
       >
-        {copied ? (
-          <>
-            <ClipboardDocumentCheckIcon className="h-4 w-4" />
-            <span className="whitespace-nowrap">Copied</span>
-          </>
-        ) : (
-          <>
-            <ClipboardDocumentListIcon className="h-4 w-4" />
-            <span className="whitespace-nowrap">{label}</span>
-          </>
-        )}
+        {copied ? <ClipboardDocumentCheckIcon className="h-4 w-4" /> : <ClipboardDocumentListIcon className="h-4 w-4" />}
+        <span className="whitespace-nowrap">{label}</span>
       </button>
 
       <span
