@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 
 import { getCurrentTenantId } from "@/lib/tenant";
+import { describeDatabaseUrl } from "./database-url";
 
 // Ensure Prisma uses the Wasm engine in tests to avoid native bindings.
 if (process.env.NODE_ENV === "test" && !process.env.PRISMA_CLIENT_ENGINE_TYPE) {
@@ -17,18 +18,6 @@ function resolveDatabaseUrl(env: NodeJS.ProcessEnv) {
     env.POSTGRES_URL ??
     null
   );
-}
-
-function describeDatabaseUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.host || "unknown-host";
-    const databaseName = parsed.pathname?.replace(/^\//, "") || "unknown-db";
-
-    return `${parsed.protocol}//${host}/${databaseName}`;
-  } catch {
-    return "an invalid DATABASE_URL";
-  }
 }
 
 const resolvedDatabaseUrl = resolveDatabaseUrl(process.env);
