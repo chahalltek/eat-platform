@@ -145,7 +145,10 @@ export default async function AdminHealthPage() {
   const snapshot = await getPlatformHealthSnapshot();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-indigo-50/40 text-zinc-900 dark:from-black dark:via-zinc-950 dark:to-zinc-900 dark:text-zinc-50">
+    <div
+      data-testid="admin-health-page"
+      className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-indigo-50/40 text-zinc-900 dark:from-black dark:via-zinc-950 dark:to-zinc-900 dark:text-zinc-50"
+    >
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 sm:px-10">
         <div className="flex justify-end">
           <BackToConsoleButton />

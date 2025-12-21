@@ -53,7 +53,7 @@ export default async function JobsPage() {
 
   return (
     <ETEClientLayout maxWidthClassName="max-w-5xl" contentClassName="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" data-testid="jobs-page">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Job Requisitions</h1>
           <p className="text-sm text-slate-500">Showing the 50 most recent job requisitions.</p>
