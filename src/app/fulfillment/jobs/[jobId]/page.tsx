@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { getFulfillmentJob } from "../data";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
@@ -35,6 +36,10 @@ export default async function FulfillmentJobDetailPage({ params }: JobDetailProp
   }
 
   const job = await getFulfillmentJob(params.jobId);
+
+  if (!job) {
+    return notFound();
+  }
 
   return (
     <ETEClientLayout contentClassName="space-y-8">
