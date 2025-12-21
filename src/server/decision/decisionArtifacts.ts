@@ -5,6 +5,8 @@ import { withTenantContext } from "@/lib/tenant";
 
 type DecisionArtifactPayload = Prisma.InputJsonValue;
 
+export type DecisionArtifactRecord = Prisma.DecisionArtifact;
+
 type CreateDecisionArtifactInput = {
   tenantId: string;
   jobId?: string | null;
