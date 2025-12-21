@@ -8,6 +8,9 @@ export type StatusPillStatus =
   | "enabled"
   | "healthy"
   | "ok"
+  | "configRequired"
+  | "notYetExercised"
+  | "blocking"
   | "warning"
   | "warn"
   | "error"
@@ -38,9 +41,12 @@ const statusConfig: Record<StatusPillStatus, { tone: StatusTone; label: string }
   idle: { tone: "idle", label: "Idle" },
   healthy: { tone: "healthy", label: "Healthy" },
   ok: { tone: "healthy", label: "Healthy" },
-  warning: { tone: "waiting", label: "Waiting" },
-  warn: { tone: "waiting", label: "Waiting" },
-  waiting: { tone: "waiting", label: "Waiting" },
+  configRequired: { tone: "waiting", label: "Config required" },
+  notYetExercised: { tone: "idle", label: "Not yet exercised" },
+  blocking: { tone: "fault", label: "Blocking" },
+  warning: { tone: "waiting", label: "Warning" },
+  warn: { tone: "waiting", label: "Warning" },
+  waiting: { tone: "waiting", label: "Warning" },
   error: { tone: "fault", label: "Fault" },
   fault: { tone: "fault", label: "Fault" },
   off: { tone: "disabled", label: "Disabled" },

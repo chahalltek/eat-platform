@@ -289,16 +289,15 @@ export function TenantTestTable({ tenantId, executionDisabled = false }: { tenan
               {seeding ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <SparklesIcon className="h-4 w-4" aria-hidden />} Seed sample data
             </button>
 
-            {executionDisabled ? null : (
-              <button
-                type="button"
-                onClick={runAllTests}
-                disabled={runningAll}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
-              >
-                {runningAll ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <PlayIcon className="h-4 w-4" aria-hidden />} Run all tests
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={runAllTests}
+              disabled={runningAll || executionDisabled}
+              title={executionDisabled ? "Execution disabled in this environment." : undefined}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
+            >
+              {runningAll ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden /> : <PlayIcon className="h-4 w-4" aria-hidden />} Run all tests
+            </button>
           </div>
 
           <p className={`text-xs ${seedHelperText.className}`}>{seedHelperText.text}</p>
@@ -308,8 +307,13 @@ export function TenantTestTable({ tenantId, executionDisabled = false }: { tenan
       <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-100">
         <p className="font-semibold">Usage</p>
         <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
-          Catalog only (execution disabled in this environment). Copy commands into local shells or CI workflows to run checks.
+          Run these checks after initial setup, config changes, or unexpected behavior.
         </p>
+        {executionDisabled ? (
+          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+            Catalog only (execution disabled in this environment). Copy commands into local shells or CI workflows to run checks.
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-4 overflow-x-auto">

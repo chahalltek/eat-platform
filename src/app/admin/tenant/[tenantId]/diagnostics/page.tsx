@@ -10,7 +10,7 @@ import {
 } from "@/lib/tenant/diagnostics";
 import { getTenantMembershipsForUser } from "@/lib/tenant/access";
 import { getTenantAdminPageAccess } from "@/lib/tenant/tenantAdminPageAccess";
-import { StatusPill } from "@/components/StatusPill";
+import { StatusPill, type StatusPillStatus } from "@/components/StatusPill";
 import { ETECard } from "@/components/ETECard";
 import { AdminCardTitle } from "@/components/admin/AdminCardTitle";
 import { TenantTestTable } from "./TenantTestTable";
@@ -19,7 +19,7 @@ import { TenantAdminShell } from "../TenantAdminShell";
 
 export const dynamic = "force-dynamic";
 
-type Status = "ok" | "warn" | "off" | "fault";
+type Status = "ok" | "warn" | "off" | "fault" | "info";
 
 type ModeValue = TenantDiagnostics["mode"] | { mode: TenantDiagnostics["mode"] };
 
@@ -34,6 +34,7 @@ function StatusIcon({ status }: { status: Status }) {
 
   if (status === "ok") return <CheckCircleIcon className={`${classes} text-green-600`} />;
   if (status === "warn") return <ExclamationTriangleIcon className={`${classes} text-amber-500`} />;
+  if (status === "info") return <ExclamationTriangleIcon className={`${classes} text-blue-500`} />;
   return <XCircleIcon className={`${classes} text-rose-500`} />;
 }
 
@@ -42,24 +43,42 @@ function DiagnosticCard({
   status,
   description,
   children,
+  helperText,
+  pillStatus,
+  pillLabel,
 }: {
   title: string;
   status: Status;
   description: string;
   children: ReactNode;
+  helperText?: string;
+  pillStatus?: StatusPillStatus;
+  pillLabel?: string;
 }) {
   const tooltipSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   const tooltipId = `diagnostics-title-${tooltipSlug || "title"}`;
-  const pillStatus =
-    status === "warn" ? "warning" : status === "off" ? "off" : status === "fault" ? "fault" : "ok";
-  const pillLabel =
-    status === "warn"
-      ? "Action needed"
+  const resolvedPillStatus =
+    pillStatus ??
+    (status === "warn"
+      ? "warning"
+      : status === "off"
+        ? "off"
+        : status === "fault"
+          ? "fault"
+          : status === "info"
+            ? "notYetExercised"
+            : "ok");
+  const resolvedPillLabel =
+    pillLabel ??
+    (status === "warn"
+      ? "Warning"
       : status === "off"
         ? "Disabled"
         : status === "fault"
           ? "Fault"
-          : "Enabled";
+          : status === "info"
+            ? "Not yet exercised"
+            : "Enabled");
 
   return (
     <ETECard className="gap-3">
@@ -84,10 +103,11 @@ function DiagnosticCard({
               {title}
             </div>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
+            {helperText ? <p className="pt-1 text-xs text-zinc-500 dark:text-zinc-400">{helperText}</p> : null}
           </div>
         </div>
         <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap">
-          <StatusPill status={pillStatus} label={pillLabel} />
+          <StatusPill status={resolvedPillStatus} label={resolvedPillLabel} />
         </div>
       </div>
       <div className="rounded-lg bg-zinc-50 p-3 text-sm text-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-100">
@@ -122,6 +142,7 @@ function mapLlmStatus(status: TenantDiagnostics["llm"]["status"]): Status {
 function mapAtsStatus(status: TenantDiagnostics["ats"]["status"]): Status {
   if (status === "success") return "ok";
   if (status === "running") return "warn";
+  if (status === "unknown") return "info";
   return "warn";
 }
 
@@ -185,6 +206,10 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
   try {
     const diagnostics = await buildTenantDiagnostics(requestedTenant);
     const executionDisabled = Boolean(process.env.VERCEL);
+    const atsNotExercised = !diagnostics.ats.lastRunAt && !diagnostics.ats.summary;
+    const auditNotExercised = !diagnostics.auditLogging.enabled;
+    const retentionConfigRequired = !diagnostics.retention.configured;
+    const planConfigRequired = !diagnostics.plan.id;
 
     return (
       <TenantAdminShell tenantId={requestedTenant} bootstrapTenantId={bootstrapTenantId}>
@@ -215,11 +240,18 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
           <TenantTestTable tenantId={requestedTenant} executionDisabled={executionDisabled} />
 
+          <div className="flex items-center gap-3 pt-2">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Governance</h2>
+            <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+          </div>
+
           <section className="grid gap-4 md:grid-cols-2">
             <DiagnosticCard
               title="ATS sync"
-              status={mapAtsStatus(diagnostics.ats.status)}
+              status={atsNotExercised ? "info" : mapAtsStatus(diagnostics.ats.status)}
               description="Latest ATS ingestion status and retry schedule."
+              helperText="Why this matters: enables job + candidate ingestion and reduces manual entry."
+              pillStatus={atsNotExercised ? "notYetExercised" : undefined}
             >
               <div className="space-y-2 text-sm">
                 <p className="font-medium text-zinc-900 dark:text-zinc-50">Provider: {diagnostics.ats.provider}</p>
@@ -283,6 +315,7 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
               title="Single sign-on"
               status={diagnostics.sso.configured ? "ok" : "off"}
               description={diagnostics.sso.configured ? "SSO is configured for this workspace." : "Enable SSO to centralize access controls."}
+              helperText="Why this matters: centralizes access control and reduces credential sprawl."
             >
               <p>
                 {diagnostics.sso.configured
@@ -378,8 +411,10 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
             <DiagnosticCard
               title="Audit logging"
-              status={diagnostics.auditLogging.enabled ? "ok" : "warn"}
+              status={auditNotExercised ? "info" : "ok"}
               description="Security event ingestion for sign-ins, roles, and plan changes."
+              helperText="Why this matters: required for forensic review of sign-ins, role changes, and sensitive actions."
+              pillStatus={auditNotExercised ? "notYetExercised" : undefined}
             >
               <p>
                 {diagnostics.auditLogging.enabled
@@ -398,8 +433,10 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
             <DiagnosticCard
               title="Retention"
-              status={diagnostics.retention.configured ? "ok" : "warn"}
+              status={retentionConfigRequired ? "warn" : "ok"}
               description="Retention and deletion posture for tenant data."
+              helperText="Why this matters: defines how tenant data is retained and deleted to meet governance obligations."
+              pillStatus={retentionConfigRequired ? "configRequired" : undefined}
             >
               {diagnostics.retention.configured ? (
                 <p>
@@ -414,8 +451,10 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
 
             <DiagnosticCard
               title="Subscription & plan limits"
-              status={diagnostics.plan.id ? "ok" : "warn"}
+              status={planConfigRequired ? "warn" : "ok"}
               description="Active subscription, trial status, and limit overrides."
+              helperText="Why this matters: controls entitlements, throttles, and safety limits for this tenant."
+              pillStatus={planConfigRequired ? "configRequired" : undefined}
             >
               <div className="space-y-1">
                 <p>Plan: {diagnostics.plan.name ?? "No active plan"}</p>
@@ -455,31 +494,37 @@ export default async function TenantDiagnosticsPage({ params }: { params: { tena
           </section>
 
           {access.isGlobalAdmin ? (
-            <section className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Debug</p>
-                  <h2 className="text-lg font-semibold text-zinc-900">Admin context</h2>
-                </div>
-                <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">Visible to admins</span>
+            <>
+              <div className="flex items-center gap-3 pt-2">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Debug</h2>
+                <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
               </div>
-              <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-900 px-3 py-2 text-xs text-zinc-100">
-                {JSON.stringify(
-                  {
-                    user: {
-                      id: user.id,
-                      email: user.email,
-                      role: user.role,
+              <section className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Debug</p>
+                    <h2 className="text-lg font-semibold text-zinc-900">Admin context</h2>
+                  </div>
+                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">Visible to admins</span>
+                </div>
+                <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-900 px-3 py-2 text-xs text-zinc-100">
+                  {JSON.stringify(
+                    {
+                      user: {
+                        id: user.id,
+                        email: user.email,
+                        role: user.role,
+                      },
+                      tenantId: requestedTenant,
+                      currentTenantId: normalizedCurrentTenantId,
+                      tenantRoles,
                     },
-                    tenantId: requestedTenant,
-                    currentTenantId: normalizedCurrentTenantId,
-                    tenantRoles,
-                  },
-                  null,
-                  2,
-                )}
-              </pre>
-            </section>
+                    null,
+                    2,
+                  )}
+                </pre>
+              </section>
+            </>
           ) : null}
         </div>
       </TenantAdminShell>
