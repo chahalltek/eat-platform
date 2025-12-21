@@ -12,7 +12,7 @@ type BrandingPreset = {
 
 const FALLBACKS: BrandingPreset = {
   name: "EDGE Talent Engine",
-  description: "EDGE Talent Engine – Precision and Matching. Explainable Decisions. Faster recruiting.",
+  description: "Precision and Matching. Explainable Decisions. Faster recruiting.",
   tagline: "Employment Access Technology",
   logoHorizontal: "/branding/ete-logo-horizontal.png",
   logoMark: "/branding/ete-logo-mark.png",
