@@ -8,9 +8,10 @@ import { useMemo, useState } from "react";
 
 import type { DecisionArtifactRecord } from "@/server/decision/decisionArtifacts";
 
-function formatRelativeTime(timestamp: string) {
+function formatRelativeTime(timestamp: string | Date) {
   try {
-    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    return formatDistanceToNow(date, { addSuffix: true });
   } catch {
     return "Unknown time";
   }
