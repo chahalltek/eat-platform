@@ -39,7 +39,7 @@ export function LoginContent({ branding }: LoginContentProps) {
       branding.brandLogoUrl ?? null,
       BRANDING.logoHorizontal,
       DEFAULT_BRAND_LOGO,
-      "/ete-logo.svg",
+      "/public/ete-logo.svg",
     ];
 
     return sources.filter(Boolean).map((src) => normalizeLogoPath(src as string));
