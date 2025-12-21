@@ -6,7 +6,7 @@ import type { CellContext, ColumnDef } from "@tanstack/react-table";
 
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
-export type ETETableColumn<TData, TValue = any> = ColumnDef<TData, TValue>;
+export type ETETableColumn<TData, TValue = unknown> = ColumnDef<TData, TValue>;
 
 export type TableAccessorKey<TData> = Extract<keyof TData, string>;
 
@@ -45,6 +45,7 @@ export type TextColumnOptions<TData, TKey extends TableAccessorKey<TData>> = {
   header: string;
   sortable?: boolean;
   cell?: (context: CellContext<TData, TData[TKey]>) => React.ReactNode;
+  filterFn?: ColumnDef<TData, TData[TKey]>["filterFn"];
 };
 
 export type NumberColumnOptions<TData, TKey extends TableAccessorKey<TData>> = {
@@ -67,11 +68,13 @@ export function createTextColumn<TData, TKey extends TableAccessorKey<TData>>({
   header,
   sortable = true,
   cell,
+  filterFn,
 }: TextColumnOptions<TData, TKey>): ETETableColumn<TData, TData[TKey]> {
   return {
     accessorKey,
     header,
     enableSorting: sortable,
+    filterFn,
     cell: cell ?? ((context) => defaultTextCell(context.getValue())),
   } satisfies ETETableColumn<TData, TData[TKey]>;
 }
@@ -137,6 +140,7 @@ export function StatusBadge({ label, variant }: { label: React.ReactNode; varian
   const [isAnimating, setIsAnimating] = useState(true);
   const { accent, className } = STATUS_VARIANT_STYLES[variant];
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (prefersReducedMotion) {
       setIsAnimating(false);
@@ -148,6 +152,7 @@ export function StatusBadge({ label, variant }: { label: React.ReactNode; varian
 
     return () => clearTimeout(timeout);
   }, [label, variant, prefersReducedMotion]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <span
