@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 import type { MetricEvent } from "@prisma/client";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
@@ -193,10 +194,53 @@ function mapArtifact(record: {
     publishedAt: record.publishedAt ? record.publishedAt.toISOString() : null,
     createdBy: record.createdBy,
   };
+=======
+import { DecisionArtifactStatus, type DecisionArtifactType, Prisma, prisma } from "@/server/db/prisma";
+import { withTenantContext } from "@/lib/tenant";
+
+type DecisionArtifactPayload = Prisma.InputJsonValue;
+
+type CreateDecisionArtifactInput = {
+  tenantId: string;
+  jobId?: string | null;
+  candidateIds?: string[];
+  type: DecisionArtifactType;
+  payload: unknown;
+  createdByUserId: string;
+  status?: DecisionArtifactStatus;
+};
+
+type PublishDecisionArtifactInput = {
+  artifactId: string;
+  tenantId: string;
+  payload?: unknown;
+};
+
+type ListDecisionArtifactsInput = {
+  tenantId: string;
+  jobId?: string;
+  candidateId?: string;
+  types?: DecisionArtifactType[];
+  status?: DecisionArtifactStatus | DecisionArtifactStatus[];
+  limit?: number;
+};
+
+function normalizePayload(payload: unknown): DecisionArtifactPayload {
+  if (payload === undefined) {
+    return {} satisfies DecisionArtifactPayload;
+  }
+
+  return payload as DecisionArtifactPayload;
+}
+
+function normalizeCandidateIds(candidateIds?: string[]) {
+  return (candidateIds ?? []).map((candidateId) => candidateId.trim()).filter(Boolean);
+>>>>>>> theirs
 }
 
 export async function createDecisionArtifact({
   tenantId,
+<<<<<<< ours
   payload,
   user,
 }: {
@@ -219,10 +263,45 @@ export async function createDecisionArtifact({
 
   return mapArtifact(created);
 >>>>>>> theirs
+=======
+  jobId,
+  candidateIds,
+  type,
+  payload,
+  createdByUserId,
+  status = DecisionArtifactStatus.DRAFT,
+}: CreateDecisionArtifactInput) {
+  return prisma.decisionArtifact.create({
+    data: {
+      tenantId,
+      jobId: jobId ?? null,
+      candidateIds: normalizeCandidateIds(candidateIds),
+      type,
+      payload: normalizePayload(payload),
+      createdByUserId,
+      status,
+      publishedAt: status === DecisionArtifactStatus.PUBLISHED ? new Date() : null,
+    },
+  });
+}
+
+export async function publishDecisionArtifact({ artifactId, tenantId, payload }: PublishDecisionArtifactInput) {
+  return withTenantContext(tenantId, () =>
+    prisma.decisionArtifact.update({
+      where: { id: artifactId },
+      data: {
+        status: DecisionArtifactStatus.PUBLISHED,
+        payload: payload === undefined ? undefined : normalizePayload(payload),
+        publishedAt: new Date(),
+      },
+    }),
+  );
+>>>>>>> theirs
 }
 
 export async function listDecisionArtifacts({
   tenantId,
+<<<<<<< ours
 <<<<<<< ours
   userId,
   status,
@@ -338,5 +417,24 @@ export async function publishDecisionArtifact({
   });
 
   return mapArtifact(updated);
+>>>>>>> theirs
+=======
+  jobId,
+  candidateId,
+  types,
+  status,
+  limit,
+}: ListDecisionArtifactsInput) {
+  return prisma.decisionArtifact.findMany({
+    where: {
+      tenantId,
+      jobId: jobId ?? undefined,
+      candidateIds: candidateId ? { has: candidateId } : undefined,
+      type: types && types.length > 0 ? { in: types } : undefined,
+      status: Array.isArray(status) ? { in: status } : status ?? undefined,
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
 >>>>>>> theirs
 }

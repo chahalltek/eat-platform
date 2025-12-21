@@ -125,6 +125,17 @@ enum HiringManagerFeedbackStatus {
   PROCESSED
 }
 
+enum DecisionArtifactType {
+  RECOMMENDATION
+  SHORTLIST
+  INTAKE_SUMMARY
+}
+
+enum DecisionArtifactStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model User {
   id          String   @id @default(cuid())
   tenantId    String   @default("default-tenant")
@@ -147,6 +158,7 @@ model User {
   jobCandidateHistories JobCandidateHistory[]
   matchFeedback         MatchFeedback[]
   jobIntents            JobIntent[]
+  decisionArtifacts     DecisionArtifact[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -465,6 +477,7 @@ model JobReq {
   jobIntent            JobIntent?
   hiringManagerBriefs  HiringManagerBrief[]
   hiringManagerFeedbacks HiringManagerFeedback[] @relation("JobReqFeedback")
+  decisionArtifacts    DecisionArtifact[]
 
   @@index([tenantId])
   @@index([tenantId, customerId])
@@ -726,6 +739,26 @@ model HiringManagerBrief {
 
   @@index([tenantId])
   @@index([tenantId, jobReqId])
+}
+
+model DecisionArtifact {
+  id              String                 @id @default(cuid())
+  tenantId        String                 @default("default-tenant")
+  job             JobReq?                @relation(fields: [jobId], references: [id])
+  jobId           String?
+  candidateIds    String[]               @default([])
+  type            DecisionArtifactType
+  status          DecisionArtifactStatus @default(DRAFT)
+  payload         Json
+  createdByUser   User                   @relation(fields: [createdByUserId], references: [id])
+  createdByUserId String
+  createdAt       DateTime               @default(now())
+  publishedAt     DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, jobId])
+  @@index([tenantId, status])
+  @@index([tenantId, createdByUserId])
 }
 
 model DecisionStream {
