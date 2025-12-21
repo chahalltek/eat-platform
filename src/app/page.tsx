@@ -100,14 +100,14 @@ function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
     {
       label: "Upload resumes",
       cta: "Ingest resumes",
-      href: "/rina-test",
+      href: "/resumes/upload",
       description: "RINA — Resume ingestion agent",
       dependency: { subsystem: "agents" },
     },
     {
       label: "Create intake",
       cta: "Launch intake",
-      href: "/rua-test",
+      href: "/intake",
       description: "RUA — Job intake agent",
       dependency: { subsystem: "agents" },
     },
