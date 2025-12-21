@@ -143,7 +143,7 @@ export function DecisionTimeline({ decisions }: { decisions: DecisionArtifactRec
                     <span className="font-semibold text-zinc-800 dark:text-zinc-100">{decision.createdByUserId}</span>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">{decision.candidateIds.map((candidateId) => <Chip key={candidateId} label={`Candidate ${candidateId}`} />)}</div>
+                <div className="flex flex-wrap gap-2">{decision.candidateIds.map((candidateId: string) => <Chip key={candidateId} label={`Candidate ${candidateId}`} />)}</div>
               </Link>
             );
           })
