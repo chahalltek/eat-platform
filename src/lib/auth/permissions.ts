@@ -13,6 +13,7 @@ type Permission =
   | "VIEW_ENVIRONMENT"
   | "VIEW_QUALITY_METRICS"
   | "VIEW_AGENT_LOGS"
+  | "VIEW_FULFILLMENT"
   | "MANAGE_TENANTS"
   | "VIEW_EXEC_INTELLIGENCE"
   | "USE_STRATEGIC_COPILOT"
@@ -29,6 +30,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "VIEW_ENVIRONMENT",
     "VIEW_QUALITY_METRICS",
     "VIEW_AGENT_LOGS",
+    "VIEW_FULFILLMENT",
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
@@ -44,6 +46,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "VIEW_ENVIRONMENT",
     "VIEW_QUALITY_METRICS",
     "VIEW_AGENT_LOGS",
+    "VIEW_FULFILLMENT",
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
@@ -57,15 +60,23 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "VIEW_ENVIRONMENT",
     "VIEW_QUALITY_METRICS",
     "VIEW_AGENT_LOGS",
+    "VIEW_FULFILLMENT",
     "VIEW_EXEC_INTELLIGENCE",
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
   ]),
+<<<<<<< ours
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "DECISION_EXPORT"]),
   [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "DECISION_EXPORT"]),
   [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES"]),
   [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES"]),
+=======
+  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "VIEW_FULFILLMENT"]),
+  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
+  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
+  [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
+>>>>>>> theirs
   [USER_ROLES.SYSTEM_ADMIN]: new Set<Permission>([
     "VIEW_CANDIDATES",
     "MANAGE_PROMPTS",
@@ -74,6 +85,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "VIEW_ENVIRONMENT",
     "VIEW_QUALITY_METRICS",
     "VIEW_AGENT_LOGS",
+    "VIEW_FULFILLMENT",
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
@@ -161,6 +173,14 @@ export function canViewAgentLogs(user: PermissionUser, tenantId?: string | null)
 
 export function canManageTenants(user: PermissionUser) {
   return hasPermission(user, "MANAGE_TENANTS");
+}
+
+export function canViewFulfillment(user: PermissionUser, tenantId?: string | null) {
+  if (!hasPermission(user, "VIEW_FULFILLMENT")) {
+    return false;
+  }
+
+  return hasTenantAccess(user, tenantId);
 }
 
 export function canAccessExecIntelligence(user: PermissionUser, tenantId?: string | null) {

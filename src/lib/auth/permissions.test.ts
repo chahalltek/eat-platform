@@ -12,6 +12,7 @@ import {
   canViewAgentLogs,
   canViewAuditLogs,
   canViewCandidates,
+  canViewFulfillment,
   canViewEnvironment,
   canViewQualityMetrics,
   canUseStrategicCopilot,
@@ -91,6 +92,28 @@ describe("RBAC permission matrix", () => {
     expect(canViewEnvironment(buildUser(USER_ROLES.TENANT_ADMIN, "tenant-a"))).toBe(true);
     expect(canViewEnvironment(buildUser(USER_ROLES.SYSTEM_ADMIN, "tenant-a"))).toBe(true);
     expect(canViewEnvironment(buildUser(USER_ROLES.RECRUITER, "tenant-a"))).toBe(false);
+  });
+
+  it("allows fulfillment visibility for frontline and admin roles within tenant", () => {
+    const tenant = "tenant-a";
+
+    const rolesWithAccess = [
+      USER_ROLES.RECRUITER,
+      USER_ROLES.SOURCER,
+      USER_ROLES.SALES,
+      USER_ROLES.MANAGER,
+      USER_ROLES.ADMIN,
+      USER_ROLES.TENANT_ADMIN,
+      USER_ROLES.SYSTEM_ADMIN,
+    ];
+
+    rolesWithAccess.forEach((role) => {
+      expect(canViewFulfillment(buildUser(role, tenant), tenant)).toBe(true);
+    });
+
+    expect(canViewFulfillment(buildUser(USER_ROLES.RECRUITER, tenant), "tenant-b")).toBe(false);
+    expect(canViewFulfillment(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
+    expect(canViewFulfillment(buildUser(USER_ROLES.DATA_ACCESS, tenant), tenant)).toBe(true);
   });
 
   it("allows only admins to view quality metrics", () => {
