@@ -50,7 +50,7 @@ function LoginContent() {
           className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
         >
           <div className="flex flex-col items-center text-center">
-            <EteLogo variant="horizontal" className="mb-4 items-center" tagline="" />
+            <EteLogo variant="horizontal" image="/ete-logo.svg" className="mb-4 items-center" tagline="" />
             <h1 className="text-xl font-semibold">Sign in</h1>
             <p className="text-sm text-zinc-600">Use your workspace credentials to access the platform.</p>
           </div>
