@@ -10,6 +10,8 @@ import { AgentsStatusPanel } from '@/components/AgentsStatusPanel';
 import { getAgentsStatus } from '@/lib/agents/statusBoard';
 import { getDashboardMetrics } from '@/lib/metrics/dashboard';
 import { ETEClientLayout } from '@/components/ETEClientLayout';
+import { DeepLinkBanner } from '@/components/DeepLinkBanner';
+import { normalizeSearchParamValue } from '@/lib/routing/deepLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,7 +152,13 @@ function HorizontalBarList({
   );
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
+  const from = normalizeSearchParamValue(searchParams?.from);
+  const returnUrl = normalizeSearchParamValue(searchParams?.returnUrl);
   const [metrics, agentsStatus] = await Promise.all([getDashboardMetrics(), getAgentsStatus()]);
 
   const successfulRunsChange =
@@ -163,6 +171,7 @@ export default async function DashboardPage() {
   return (
     <ETEClientLayout>
       <div className="flex flex-col gap-10">
+        <DeepLinkBanner from={from} returnUrl={returnUrl} />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Dashboard</p>

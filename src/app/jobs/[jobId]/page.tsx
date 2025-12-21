@@ -6,6 +6,8 @@ import { prisma } from "@/server/db/prisma";
 import { MatchRunner } from "./MatchRunner";
 import { FreshnessIndicator } from "../FreshnessIndicator";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { DeepLinkBanner } from "@/components/DeepLinkBanner";
+import { normalizeSearchParamValue } from "@/lib/routing/deepLink";
 
 function formatDate(date?: Date | null) {
   if (!date) return "—";
@@ -43,13 +45,17 @@ function formatSource(job: { sourceType: string | null; sourceTag: string | null
 
 export default async function JobDetail({
   params,
+  searchParams,
 }: {
   params: { jobId: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const [uiBlocksEnabled, scoringEnabled] = await Promise.all([
     isFeatureEnabled(FEATURE_FLAGS.UI_BLOCKS),
     isFeatureEnabled(FEATURE_FLAGS.SCORING),
   ]);
+  const from = normalizeSearchParamValue(searchParams?.from);
+  const returnUrl = normalizeSearchParamValue(searchParams?.returnUrl);
 
   const job = await prisma.jobReq
       .findUnique({
@@ -79,6 +85,9 @@ export default async function JobDetail({
     return (
       <div className="mx-auto max-w-4xl px-6 py-10">
         <h1 className="text-2xl font-semibold text-gray-900">Job Requisition</h1>
+        <div className="mt-3">
+          <DeepLinkBanner from={from} returnUrl={returnUrl} />
+        </div>
         <p className="mt-2 text-gray-600">No job requisition found.</p>
         <div className="mt-4">
           <Link href="/jobs" className="text-blue-600 hover:text-blue-800">
@@ -95,6 +104,7 @@ export default async function JobDetail({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 space-y-8">
+      <DeepLinkBanner from={from} returnUrl={returnUrl} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-gray-900">{job.title}</h1>

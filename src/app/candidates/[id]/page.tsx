@@ -5,6 +5,8 @@ import { prisma } from "@/server/db/prisma";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
+import { DeepLinkBanner } from "@/components/DeepLinkBanner";
+import { normalizeSearchParamValue } from "@/lib/routing/deepLink";
 
 type AgentRunRow = {
   id: string;
@@ -48,10 +50,14 @@ async function findRelatedAgentRun(candidateId: string, tenantId: string) {
 
 export default async function CandidateDetail({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const tenantId = await getCurrentTenantId();
+  const from = normalizeSearchParamValue(searchParams?.from);
+  const returnUrl = normalizeSearchParamValue(searchParams?.returnUrl);
 
   const candidate = await prisma.candidate.findUnique({
     where: { id: params.id },
@@ -101,6 +107,7 @@ export default async function CandidateDetail({
         <div className="mb-4 flex justify-end">
           <BackToConsoleButton />
         </div>
+        <DeepLinkBanner from={from} returnUrl={returnUrl} />
         <h1 className="text-2xl font-semibold text-gray-900">Candidate</h1>
         <p className="mt-2 text-gray-600">No candidate found.</p>
         <div className="mt-4">
@@ -117,6 +124,7 @@ export default async function CandidateDetail({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 space-y-8">
+      <DeepLinkBanner from={from} returnUrl={returnUrl} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-gray-900">{candidate.fullName}</h1>
