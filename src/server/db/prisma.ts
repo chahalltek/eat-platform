@@ -71,11 +71,8 @@ const TENANTED_MODELS = new Set([
   "User",
   "FeatureFlag",
   "DecisionReceipt",
-<<<<<<< ours
   "DecisionArtifact",
-=======
   "Decision",
->>>>>>> theirs
   "JudgmentAggregate",
   "Candidate",
   "CandidateSkill",

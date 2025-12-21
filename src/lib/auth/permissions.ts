@@ -21,83 +21,6 @@ type Permission =
   | "DECISION_EXPORT"
   | "EXPORT_SHORTLIST"
   | "EXPORT_MATCHES"
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-  | "FULFILLMENT_VIEW"
-  | "DECISION_CREATE"
-  | "DECISION_PUBLISH";
-=======
-  | "CREATE_DECISION"
-  | "PUBLISH_DECISION";
->>>>>>> theirs
-=======
-  | "CREATE_DECISION"
-  | "PUBLISH_DECISION";
->>>>>>> theirs
-
-const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
-  [USER_ROLES.ADMIN]: new Set([
-    "VIEW_CANDIDATES",
-    "VIEW_FULFILLMENT",
-    "MANAGE_PROMPTS",
-    "VIEW_AUDIT_LOGS",
-    "MANAGE_FEATURE_FLAGS",
-    "VIEW_ENVIRONMENT",
-    "VIEW_QUALITY_METRICS",
-    "VIEW_AGENT_LOGS",
-    "VIEW_FULFILLMENT",
-    "MANAGE_TENANTS",
-    "VIEW_EXEC_INTELLIGENCE",
-    "USE_STRATEGIC_COPILOT",
-    "DECISION_EXPORT",
-    "EXPORT_SHORTLIST",
-    "EXPORT_MATCHES",
-<<<<<<< ours
-<<<<<<< ours
-    "FULFILLMENT_VIEW",
-    "DECISION_CREATE",
-    "DECISION_PUBLISH",
-=======
-    "CREATE_DECISION",
-    "PUBLISH_DECISION",
->>>>>>> theirs
-=======
-    "CREATE_DECISION",
-    "PUBLISH_DECISION",
->>>>>>> theirs
-  ]),
-  [USER_ROLES.TENANT_ADMIN]: new Set([
-    "VIEW_CANDIDATES",
-    "VIEW_FULFILLMENT",
-    "MANAGE_PROMPTS",
-    "VIEW_AUDIT_LOGS",
-    "MANAGE_FEATURE_FLAGS",
-    "VIEW_ENVIRONMENT",
-    "VIEW_QUALITY_METRICS",
-    "VIEW_AGENT_LOGS",
-    "VIEW_FULFILLMENT",
-    "MANAGE_TENANTS",
-    "VIEW_EXEC_INTELLIGENCE",
-    "USE_STRATEGIC_COPILOT",
-    "DECISION_EXPORT",
-    "EXPORT_SHORTLIST",
-    "EXPORT_MATCHES",
-<<<<<<< ours
-<<<<<<< ours
-    "FULFILLMENT_VIEW",
-    "DECISION_CREATE",
-    "DECISION_PUBLISH",
-=======
-    "CREATE_DECISION",
-    "PUBLISH_DECISION",
->>>>>>> theirs
-=======
-    "CREATE_DECISION",
-    "PUBLISH_DECISION",
->>>>>>> theirs
-  ]),
-=======
   | "fulfillment.view"
   | "agent.run.intake"
   | "agent.run.profile"
@@ -149,7 +72,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
 const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
   [USER_ROLES.ADMIN]: new Set(ADMIN_PERMISSIONS),
   [USER_ROLES.TENANT_ADMIN]: new Set(ADMIN_PERMISSIONS),
->>>>>>> theirs
+
   [USER_ROLES.DATA_ACCESS]: new Set([
     "VIEW_CANDIDATES",
     "VIEW_FULFILLMENT",
@@ -162,83 +85,16 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
-    "FULFILLMENT_VIEW",
+    "fulfillment.view",
   ]),
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "DECISION_EXPORT"]),
-  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "DECISION_EXPORT"]),
-  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES"]),
-=======
-  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "FULFILLMENT_VIEW"]),
-  [USER_ROLES.RECRUITER]: new Set([
-    "VIEW_CANDIDATES",
-    "FULFILLMENT_VIEW",
-    "DECISION_CREATE",
-    "DECISION_PUBLISH",
-  ]),
-  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "FULFILLMENT_VIEW", "DECISION_CREATE"]),
->>>>>>> theirs
-=======
-  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "VIEW_FULFILLMENT"]),
-  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT", "CREATE_DECISION", "PUBLISH_DECISION"]),
-  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
->>>>>>> theirs
-=======
-  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS"]),
-  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "CREATE_DECISION", "PUBLISH_DECISION"]),
-  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "CREATE_DECISION"]),
->>>>>>> theirs
-  [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES"]),
-=======
-  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "VIEW_FULFILLMENT"]),
-  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
-  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
-  [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
->>>>>>> theirs
-  [USER_ROLES.SYSTEM_ADMIN]: new Set<Permission>([
-    "VIEW_CANDIDATES",
-    "VIEW_FULFILLMENT",
-    "MANAGE_PROMPTS",
-    "VIEW_AUDIT_LOGS",
-    "MANAGE_FEATURE_FLAGS",
-    "VIEW_ENVIRONMENT",
-    "VIEW_QUALITY_METRICS",
-    "VIEW_AGENT_LOGS",
-    "VIEW_FULFILLMENT",
-    "MANAGE_TENANTS",
-    "VIEW_EXEC_INTELLIGENCE",
-    "USE_STRATEGIC_COPILOT",
-    "DECISION_EXPORT",
-    "EXPORT_SHORTLIST",
-    "EXPORT_MATCHES",
-<<<<<<< ours
-<<<<<<< ours
-    "FULFILLMENT_VIEW",
-    "DECISION_CREATE",
-    "DECISION_PUBLISH",
-=======
-    "CREATE_DECISION",
-    "PUBLISH_DECISION",
->>>>>>> theirs
-=======
-    "CREATE_DECISION",
-    "PUBLISH_DECISION",
->>>>>>> theirs
-  ]),
-=======
-  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS"]),
+  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "fulfillment.view"]),
   [USER_ROLES.RECRUITER]: new Set([...FULFILLMENT_RECRUITER_PERMISSIONS]),
   [USER_ROLES.SOURCER]: new Set([...FULFILLMENT_SOURCER_PERMISSIONS]),
   [USER_ROLES.FULFILLMENT_SOURCER]: new Set([...FULFILLMENT_SOURCER_PERMISSIONS]),
   [USER_ROLES.FULFILLMENT_RECRUITER]: new Set([...FULFILLMENT_RECRUITER_PERMISSIONS]),
   [USER_ROLES.FULFILLMENT_MANAGER]: new Set([...FULFILLMENT_MANAGER_PERMISSIONS]),
-  [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES"]),
+  [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES", "fulfillment.view"]),
   [USER_ROLES.SYSTEM_ADMIN]: new Set<Permission>(ADMIN_PERMISSIONS),
->>>>>>> theirs
   [USER_ROLES.EXEC]: new Set<Permission>(["VIEW_EXEC_INTELLIGENCE", "USE_STRATEGIC_COPILOT"]),
 };
 
@@ -252,7 +108,7 @@ const ROLE_NAMED_PERMISSION_MAP: Record<UserRole, Set<NamedPermission>> = {
   [USER_ROLES.RECRUITER]: new Set(["fulfillment.view", "agent.run.match"]),
   [USER_ROLES.SOURCER]: new Set(["fulfillment.view"]),
   [USER_ROLES.SALES]: new Set(["fulfillment.view"]),
-  [USER_ROLES.MANAGER]: new Set(),
+  [USER_ROLES.MANAGER]: new Set(["fulfillment.view"]),
   [USER_ROLES.EXEC]: new Set(),
 };
 
@@ -344,11 +200,7 @@ export function canManageTenants(user: PermissionUser) {
 }
 
 export function canViewFulfillment(user: PermissionUser, tenantId?: string | null) {
-  if (!hasPermission(user, "VIEW_FULFILLMENT")) {
-    return false;
-  }
-
-  return hasTenantAccess(user, tenantId);
+  return hasFulfillmentPermission(user, "fulfillment.view", tenantId);
 }
 
 export function canAccessExecIntelligence(user: PermissionUser, tenantId?: string | null) {
@@ -360,7 +212,7 @@ export function canUseStrategicCopilot(user: PermissionUser, tenantId?: string |
 }
 
 export function canExportDecisionDrafts(user: PermissionUser, tenantId?: string | null) {
-  return hasPermission(user, "DECISION_EXPORT") && hasTenantAccess(user, tenantId);
+  return hasFulfillmentPermission(user, "decision.export", tenantId);
 }
 
 export function canExportShortlist(user: PermissionUser, tenantId?: string | null) {
@@ -371,22 +223,16 @@ export function canExportMatches(user: PermissionUser, tenantId?: string | null)
   return hasPermission(user, "EXPORT_MATCHES") && hasTenantAccess(user, tenantId);
 }
 
-<<<<<<< ours
-<<<<<<< ours
-export function canViewFulfillment(user: PermissionUser, tenantId?: string | null) {
-<<<<<<< ours
-<<<<<<< ours
-  return hasPermission(user, "FULFILLMENT_VIEW") && hasTenantAccess(user, tenantId);
+export function canViewFulfillmentNav(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "fulfillment.view", tenantId);
 }
 
 export function canCreateDecisionArtifact(user: PermissionUser, tenantId?: string | null) {
-  return hasPermission(user, "DECISION_CREATE") && hasTenantAccess(user, tenantId);
+  return hasFulfillmentPermission(user, "decision.create", tenantId);
 }
 
 export function canPublishDecisionArtifact(user: PermissionUser, tenantId?: string | null) {
-  return hasPermission(user, "DECISION_PUBLISH") && hasTenantAccess(user, tenantId);
-=======
-  return hasFulfillmentPermission(user, "fulfillment.view", tenantId);
+  return hasFulfillmentPermission(user, "decision.publish", tenantId);
 }
 
 export function canRunAgentIntake(user: PermissionUser, tenantId?: string | null) {
@@ -417,6 +263,10 @@ export function canCreateDecision(user: PermissionUser, tenantId?: string | null
   return hasFulfillmentPermission(user, "decision.create", tenantId);
 }
 
+export function canCreateDecisionDraft(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "decision.create", tenantId);
+}
+
 export function canPublishDecision(user: PermissionUser, tenantId?: string | null) {
   return hasFulfillmentPermission(user, "decision.publish", tenantId);
 }
@@ -425,25 +275,14 @@ export function canExportDecisions(user: PermissionUser, tenantId?: string | nul
   return hasFulfillmentPermission(user, "decision.export", tenantId);
 }
 
+export function canManageDecisions(user: PermissionUser, tenantId?: string | null) {
+  return canCreateDecision(user, tenantId) || canPublishDecision(user, tenantId);
+}
+
 export function canManageRbac(user: PermissionUser, tenantId?: string | null) {
   return hasFulfillmentPermission(user, "admin.rbac.manage", tenantId);
->>>>>>> theirs
-=======
-  return hasPermission(user, "VIEW_FULFILLMENT") && hasTenantAccess(user, tenantId);
 }
 
-export function canCreateDecisions(user: PermissionUser, tenantId?: string | null) {
-  return hasPermission(user, "CREATE_DECISION") && hasTenantAccess(user, tenantId);
-}
-
-export function canPublishDecisions(user: PermissionUser, tenantId?: string | null) {
-  return hasPermission(user, "PUBLISH_DECISION") && hasTenantAccess(user, tenantId);
-}
-
-export function canManageDecisions(user: PermissionUser, tenantId?: string | null) {
-  return canCreateDecisions(user, tenantId) || canPublishDecisions(user, tenantId);
->>>>>>> theirs
-=======
 type PermissionCheckSubject = Pick<IdentityUser, "role" | "permissions"> | IdentityClaims | null;
 
 function normalizePermissionName(permission: string | null | undefined) {
@@ -468,14 +307,4 @@ export function can(user: PermissionCheckSubject, permission: NamedPermission | 
   }
 
   return ROLE_NAMED_PERMISSION_MAP[role]?.has(normalizedPermission as NamedPermission) ?? false;
->>>>>>> theirs
 }
-=======
-export function canCreateDecisionDraft(user: PermissionUser, tenantId?: string | null) {
-  return hasPermission(user, "CREATE_DECISION") && hasTenantAccess(user, tenantId);
-}
-
-export function canPublishDecision(user: PermissionUser, tenantId?: string | null) {
-  return hasPermission(user, "PUBLISH_DECISION") && hasTenantAccess(user, tenantId);
-}
->>>>>>> theirs

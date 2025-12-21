@@ -3,19 +3,20 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_TENANT_ID } from "./config";
 import {
   canAccessExecIntelligence,
-<<<<<<< ours
-  canExportDecisionDrafts,
-=======
   canCreateDecision,
   canExportDecisions,
->>>>>>> theirs
+  canCreateDecisionArtifact,
+  canCreateDecisionDraft,
+  canExportDecisionDrafts,
   canExportMatches,
   canExportShortlist,
   canManageFeatureFlags,
   canManageRbac,
   canManagePrompts,
+  canManageDecisions,
   canManageTenants,
   canPublishDecision,
+  canPublishDecisionArtifact,
   canRunAgentConfidence,
   canRunAgentExplain,
   canRunAgentIntake,
@@ -27,23 +28,9 @@ import {
   canViewCandidates,
   canViewFulfillment,
   canViewEnvironment,
-  canViewFulfillment,
   canViewQualityMetrics,
   canUseStrategicCopilot,
-<<<<<<< ours
-  canViewFulfillment,
-<<<<<<< ours
-  canCreateDecisionArtifact,
-  canPublishDecisionArtifact,
-=======
-  canCreateDecisions,
-  canPublishDecisions,
-  canManageDecisions,
->>>>>>> theirs
-=======
-  canCreateDecisionDraft,
-  canPublishDecision,
->>>>>>> theirs
+  canViewFulfillmentNav,
 } from "./permissions";
 import { USER_ROLES } from "./roles";
 
@@ -299,23 +286,22 @@ describe("RBAC permission matrix", () => {
     expect(canExportMatches(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
   });
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
   it("allows recruiters to export decisions while sourcers stay view-only", () => {
     const tenant = "tenant-a";
 
     expect(canExportDecisionDrafts(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
-    expect(canExportDecisionDrafts(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(true);
+    expect(canExportDecisionDrafts(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
     expect(canExportDecisionDrafts(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
     expect(canExportDecisionDrafts(buildUser(USER_ROLES.RECRUITER, tenant), "tenant-b")).toBe(false);
     expect(canExportDecisionDrafts(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
-=======
+  });
+
   it("restricts fulfillment permissions based on role and tenant", () => {
     const tenant = "tenant-a";
     const otherTenant = "tenant-b";
 
     expect(canViewFulfillment(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(true);
+    expect(canViewFulfillment(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
     expect(canViewFulfillment(buildUser(USER_ROLES.SOURCER, tenant), otherTenant)).toBe(false);
 
     expect(canCreateDecisionArtifact(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(true);
@@ -325,31 +311,8 @@ describe("RBAC permission matrix", () => {
     expect(canPublishDecisionArtifact(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
     expect(canPublishDecisionArtifact(buildUser(USER_ROLES.RECRUITER, tenant), otherTenant)).toBe(false);
     expect(canPublishDecisionArtifact(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
->>>>>>> theirs
-=======
-  it("grants fulfillment access to recruiters and sourcers but hides it for exec-only roles", () => {
-    const tenant = "tenant-a";
-
-    expect(canViewFulfillment(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
-    expect(canViewFulfillment(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(true);
-    expect(canViewFulfillment(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(true);
-    expect(canViewFulfillment(buildUser(USER_ROLES.EXEC, tenant), tenant)).toBe(false);
   });
 
-  it("limits decision management to roles with explicit permissions", () => {
-    const tenant = "tenant-a";
-
-    expect(canManageDecisions(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
-    expect(canCreateDecisions(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
-    expect(canPublishDecisions(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
-
-    expect(canManageDecisions(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
-    expect(canCreateDecisions(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
-    expect(canPublishDecisions(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
-
-    expect(canManageDecisions(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
->>>>>>> theirs
-=======
   it("limits decision creation to sourcers and above while reserving publish for recruiters", () => {
     const tenant = "tenant-a";
 
@@ -364,6 +327,5 @@ describe("RBAC permission matrix", () => {
 
     expect(canCreateDecisionDraft(buildUser(USER_ROLES.RECRUITER, tenant), "tenant-b")).toBe(false);
     expect(canPublishDecision(buildUser(USER_ROLES.RECRUITER, tenant), "tenant-b")).toBe(false);
->>>>>>> theirs
   });
 });

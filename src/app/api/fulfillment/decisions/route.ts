@@ -36,7 +36,8 @@ export async function GET(req: NextRequest) {
   try {
     const artifacts = await listDecisionArtifacts({
       tenantId: user.tenantId ?? DEFAULT_TENANT_ID,
-      filters: { jobId, candidateId },
+      jobId,
+      candidateId,
     });
 
     return NextResponse.json({ artifacts }, { status: 200 });
@@ -80,8 +81,16 @@ export async function POST(req: NextRequest) {
   try {
     const artifact = await createDecisionArtifact({
       tenantId: user.tenantId ?? DEFAULT_TENANT_ID,
-      payload: parsed.data,
-      user,
+      jobId: parsed.data.jobId,
+      candidateIds:
+        parsed.data.candidateIds && parsed.data.candidateIds.length > 0
+          ? parsed.data.candidateIds
+          : parsed.data.candidateId
+            ? [parsed.data.candidateId]
+            : [],
+      type: parsed.data.type,
+      payload: parsed.data.payload,
+      createdByUserId: user.id,
     });
 
     return NextResponse.json({ artifact }, { status: 201 });
