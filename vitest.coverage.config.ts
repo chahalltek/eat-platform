@@ -9,7 +9,11 @@ const coverageOverrides: UserConfig = {
     coverage: {
       provider: "istanbul",
       reporter: ["text", "json", "html", "lcov"],
+<<<<<<< ours
       reportsDirectory: "coverage/unit",
+=======
+      reportsDirectory: process.env.COVERAGE_DIR ?? "./coverage",
+>>>>>>> theirs
       reportOnFailure: true,
       include: ["src/**/*.{ts,tsx}"],
       exclude: [

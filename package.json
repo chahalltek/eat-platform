@@ -21,9 +21,13 @@
     "coverage": "npm run test:coverage",
     "coverage:all": "vitest run --coverage --config vitest.config.ts",
 <<<<<<< ours
+<<<<<<< ours
     "coverage:merge": "tsx scripts/merge-coverage.ts",
 =======
     "test:coverage:all": "node -e \"require('fs').rmSync('coverage',{recursive:true,force:true});\" && COVERAGE_RELAXED=true vitest run --coverage --watch=false --config vitest.config.ts --coverage.reportsDirectory=coverage/vitest && tsx scripts/utils/merge-coverage.ts",
+>>>>>>> theirs
+=======
+    "test:coverage:all": "vitest run --coverage --watch=false --config vitest.config.ts",
 >>>>>>> theirs
     "ci:test:coverage": "vitest run --coverage --watch=false --config vitest.coverage.config.ts",
     "ci:config-validate": "tsx scripts/config-validate.ts",
@@ -46,6 +50,7 @@
     "e2e": "playwright test --config=playwright.e2e.config.ts",
     "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts",
     "e2e:visual": "playwright test --config=playwright.visual.config.ts",
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -87,10 +92,13 @@
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -130,6 +138,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test",
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts"
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
