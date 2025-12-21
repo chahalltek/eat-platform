@@ -21,26 +21,21 @@ describe("fulfillment decisions API", () => {
       tenantId: "tenant-1",
       email: "ops@example.com",
       displayName: "Ops User",
-      role: "ADMIN",
+      role: "RECRUITER",
     });
     mocks.listDecisionArtifacts.mockResolvedValue([
       {
         id: "dec-1",
-        status: "published",
-        decisionType: "SUBMIT",
+        status: "PUBLISHED",
+        type: "RECOMMENDATION",
         jobId: "job-1",
-        jobTitle: "Data Engineer",
-        candidateId: "cand-1",
-        candidateName: "Casey Candidate",
-        summary: "Submitted to hiring manager",
-        tradeoff: null,
-        standardizedTradeoff: null,
-        drivers: [],
-        risks: [],
-        standardizedRisks: [],
+        candidateIds: ["cand-1"],
+        payload: { summary: "Submitted to hiring manager" },
         createdAt: new Date("2024-01-01T00:00:00Z").toISOString(),
-        createdBy: { id: "user-1", name: "Ops User", email: "ops@example.com" },
-        visibility: "tenant",
+        updatedAt: new Date("2024-01-01T00:00:00Z").toISOString(),
+        publishedAt: new Date("2024-01-02T00:00:00Z").toISOString(),
+        createdByUserId: "user-1",
+        tenantId: "tenant-1",
       },
     ]);
   });
@@ -54,33 +49,21 @@ describe("fulfillment decisions API", () => {
     expect(mocks.listDecisionArtifacts).not.toHaveBeenCalled();
   });
 
-  it("rejects invalid status filters", async () => {
-    const response = await listDecisions(
-      makeNextRequest({ url: "http://localhost/api/fulfillment/decisions?status=invalid" }),
-    );
-
-    expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ error: "Invalid status" });
-  });
-
   it("returns decisions for the current tenant and forwards filters", async () => {
     const response = await listDecisions(
       makeNextRequest({
         url: "http://localhost/api/fulfillment/decisions",
-        query: { status: "draft", q: "casey", take: 800 },
+        query: { jobId: "job-1" },
       }),
     );
-    const body = await readJson<{ decisions: unknown[] }>(response);
+    const body = await readJson<{ artifacts: unknown[] }>(response);
 
     expect(response.status).toBe(200);
-    expect(body.decisions).toHaveLength(1);
+    expect(body.artifacts).toHaveLength(1);
     expect(mocks.listDecisionArtifacts).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: "tenant-1",
-        userId: "user-1",
-        status: "draft",
-        search: "casey",
-        take: 500,
+        filters: { jobId: "job-1", candidateId: undefined },
       }),
     );
   });

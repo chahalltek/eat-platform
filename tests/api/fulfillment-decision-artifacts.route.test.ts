@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/auth/user", () => ({ getCurrentUser: mocks.getCurrentUser }));
 vi.mock("@/server/db/prisma", () => ({
   DecisionArtifactStatus: { DRAFT: "DRAFT", PUBLISHED: "PUBLISHED" },
+  DecisionArtifactType: { RECOMMENDATION: "RECOMMENDATION", SHORTLIST: "SHORTLIST", INTAKE_SUMMARY: "INTAKE_SUMMARY" },
   prisma: {
     decisionArtifact: {
       create: mocks.createArtifact,
@@ -40,41 +41,44 @@ describe("fulfillment decision artifact routes", () => {
 
     mocks.createArtifact.mockResolvedValue({
       id: "art-1",
-      jobReqId: "job-1",
-      candidateId: "cand-1",
+      jobId: "job-1",
+      candidateIds: ["cand-1"],
+      type: "RECOMMENDATION",
       payload: { summary: "draft" },
       status: "DRAFT",
       createdAt: now,
       updatedAt: now,
       publishedAt: null,
-      createdBy: "user-1",
+      createdByUserId: "user-1",
       tenantId: "tenant-1",
     });
 
     mocks.findManyArtifacts.mockResolvedValue([]);
     mocks.findFirstArtifact.mockResolvedValue({
       id: "art-1",
-      jobReqId: "job-1",
-      candidateId: "cand-1",
+      jobId: "job-1",
+      candidateIds: ["cand-1"],
+      type: "RECOMMENDATION",
       payload: { summary: "draft" },
       status: "DRAFT",
       createdAt: now,
       updatedAt: now,
       publishedAt: null,
-      createdBy: "user-1",
+      createdByUserId: "user-1",
       tenantId: "tenant-1",
     });
 
     mocks.updateArtifact.mockResolvedValue({
       id: "art-1",
-      jobReqId: "job-1",
-      candidateId: "cand-1",
+      jobId: "job-1",
+      candidateIds: ["cand-1"],
+      type: "RECOMMENDATION",
       payload: { summary: "draft" },
       status: "PUBLISHED",
       createdAt: now,
       updatedAt: now,
       publishedAt: new Date("2024-01-02T00:00:00Z"),
-      createdBy: "user-1",
+      createdByUserId: "user-1",
       tenantId: "tenant-1",
     });
   });
@@ -100,17 +104,24 @@ describe("fulfillment decision artifact routes", () => {
     const request = makeNextRequest({
       method: "POST",
       url: "http://localhost/api/fulfillment/decisions",
-      json: { jobId: "job-1", candidateId: "cand-1", payload: { summary: "draft" } },
+      json: { jobId: "job-1", candidateIds: ["cand-1"], type: "RECOMMENDATION", payload: { summary: "draft" } },
     });
 
     const response = await createDecision(request);
-    const body = await readJson<{ artifact: { status: string } }>(response);
+    const body = await readJson<{ artifact: { status: string; candidateIds: string[]; type: string } }>(response);
 
     expect(response.status).toBe(201);
     expect(body.artifact.status).toBe("DRAFT");
+    expect(body.artifact.candidateIds).toEqual(["cand-1"]);
+    expect(body.artifact.type).toBe("RECOMMENDATION");
     expect(mocks.createArtifact).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ jobReqId: "job-1", candidateId: "cand-1", status: "DRAFT" }),
+        data: expect.objectContaining({
+          jobId: "job-1",
+          candidateIds: ["cand-1"],
+          type: "RECOMMENDATION",
+          status: "DRAFT",
+        }),
       }),
     );
   });
@@ -152,14 +163,15 @@ describe("fulfillment decision artifact routes", () => {
     mocks.findManyArtifacts.mockResolvedValue([
       {
         id: "art-1",
-        jobReqId: "job-1",
-        candidateId: "cand-1",
+        jobId: "job-1",
+        candidateIds: ["cand-1"],
+        type: "RECOMMENDATION",
         payload: { summary: "draft" },
         status: "DRAFT",
         createdAt: now,
         updatedAt: now,
         publishedAt: null,
-        createdBy: "user-1",
+        createdByUserId: "user-1",
         tenantId: "tenant-1",
       },
     ]);
@@ -178,19 +190,26 @@ describe("fulfillment decision artifact routes", () => {
     expect(body.artifacts[0].jobId).toBe("job-1");
     expect(mocks.findManyArtifacts).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ tenantId: "tenant-1", jobReqId: "job-1" }),
+        where: expect.objectContaining({ tenantId: "tenant-1", jobId: "job-1" }),
       }),
     );
   });
 
-  it("requires a jobId or candidateId when listing artifacts", async () => {
+  it("returns an empty list when no filters are provided", async () => {
     const request = makeNextRequest({
       method: "GET",
       url: "http://localhost/api/fulfillment/decisions",
     });
 
     const response = await listDecisions(request);
+    const body = await readJson<{ artifacts: unknown[] }>(response);
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(200);
+    expect(body.artifacts).toEqual([]);
+    expect(mocks.findManyArtifacts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tenantId: "tenant-1" }),
+      }),
+    );
   });
 });
