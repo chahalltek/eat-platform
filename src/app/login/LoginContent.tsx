@@ -11,6 +11,19 @@ type LoginContentProps = {
   branding: TenantBranding;
 };
 
+<<<<<<< ours
+=======
+const CANONICAL_DEFAULT_LOGO = "/ete-logo.svg";
+
+function normalizeLogoPath(path: string) {
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+    return path;
+  }
+
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+>>>>>>> theirs
 export function LoginContent({ branding }: LoginContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,11 +40,14 @@ export function LoginContent({ branding }: LoginContentProps) {
   const logoSources = useMemo(() => {
     const sources = [
       branding.brandLogoUrl ?? null,
+      CANONICAL_DEFAULT_LOGO,
       BRANDING.logoHorizontal,
       DEFAULT_BRAND_LOGO,
     ];
 
-    return sources.filter(Boolean).map((src) => normalizeLogoPath(src as string));
+    const normalizedSources = sources.filter(Boolean).map((src) => normalizeLogoPath(src as string));
+
+    return Array.from(new Set(normalizedSources));
   }, [branding.brandLogoUrl]);
 >>>>>>> theirs
   const logoSrc = logoSources[Math.min(logoIndex, logoSources.length - 1)];
