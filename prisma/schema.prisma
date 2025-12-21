@@ -94,30 +94,6 @@ enum HiringManagerBriefStatus {
   SENT
 }
 
-enum DecisionArtifactStatus {
-  DRAFT
-  PUBLISHED
-}
-
-model DecisionArtifact {
-  id          String                 @id @default(cuid())
-  tenantId    String                 @default("default-tenant")
-  jobReq      JobReq                 @relation(fields: [jobReqId], references: [id])
-  jobReqId    String
-  candidate   Candidate              @relation(fields: [candidateId], references: [id])
-  candidateId String
-  status      DecisionArtifactStatus @default(DRAFT)
-  payload     Json
-  createdBy   String
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
-  publishedAt DateTime?
-
-  @@index([tenantId, jobReqId])
-  @@index([tenantId, candidateId])
-  @@index([tenantId, status])
-}
-
 enum HiringManagerFeedbackType {
   REQUIREMENT_CHANGED
   CANDIDATE_REJECTED
