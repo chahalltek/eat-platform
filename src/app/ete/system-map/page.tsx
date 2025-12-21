@@ -228,6 +228,7 @@ const apiSurface = [
 
 export default function SystemMapPage() {
   return (
+<<<<<<< ours
     <OpsImpactOverlayProvider>
       <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-10">
         <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
@@ -237,6 +238,21 @@ export default function SystemMapPage() {
               <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EDGE Talent Engine data flow blueprint</h1>
               <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
                 How agents, engines, and control-plane configuration hand off work. Use this as a system-of-truth blueprint for dependencies, guardrails, and failure modes — not as user documentation.
+=======
+    <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-10">
+      <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Map</p>
+            <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EDGE Talent Engine data flow blueprint</h1>
+            <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+              How agents, engines, and the Control Plane hand off work. Use this as a system-of-truth blueprint for dependencies, guardrails, and failure modes — not as user documentation.
+            </p>
+            <div className="mt-1 rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
+              <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+                This blueprint makes it possible to understand where judgment happens, where automation stops, and how risk is controlled — without relying on individual knowledge or tribal memory.
+>>>>>>> theirs
               </p>
               <div className="mt-1 rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
@@ -245,12 +261,21 @@ export default function SystemMapPage() {
                 </p>
               </div>
             </div>
+<<<<<<< ours
             <div className="flex flex-col items-start gap-3 sm:items-end">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-zinc-900/70 dark:text-indigo-200 dark:ring-indigo-800/60">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
                 <span>
                   Last updated: <time dateTime={apiMapLastUpdatedIso ?? undefined}>{apiMapLastUpdatedDisplay}</time>
                 </span>
+=======
+          </div>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-zinc-900/70 dark:text-indigo-200 dark:ring-indigo-800/60">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+              <span>
+                Last updated: <time dateTime={apiMapLastUpdatedIso ?? undefined}>{apiMapLastUpdatedDisplay}</time>
+>>>>>>> theirs
               </span>
               <OpsImpactOverlayToggle />
               <div className="flex flex-wrap items-center gap-2">
@@ -312,6 +337,15 @@ export default function SystemMapPage() {
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           These flows are executed at intentional decision moments. Not every flow runs for every action.
         </p>
+<<<<<<< ours
+=======
+        <div className="rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
+          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+            Knowing which components reason versus which simply execute prevents over-automation and makes it clear where human accountability must remain.
+          </p>
+        </div>
+>>>>>>> theirs
 
         <div className="grid gap-4">
           <div className="space-y-4 rounded-2xl border border-indigo-100/60 bg-gradient-to-b from-white to-indigo-50/60 p-4 dark:border-indigo-800/50 dark:from-zinc-900 dark:to-indigo-950/30">
