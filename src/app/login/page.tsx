@@ -1,46 +1,22 @@
-"use client";
+import type { Metadata } from "next";
 
-import { FormEvent, Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { LoginContent } from "./LoginContent";
+import { DEFAULT_BRAND_NAME } from "@/lib/tenant/branding.shared";
+import { loadTenantBranding } from "@/lib/tenant/branding";
 
-import { EteLogo } from "@/components/branding/EteLogo";
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await loadTenantBranding();
+  const brandName = branding.brandName || DEFAULT_BRAND_NAME;
 
-function LoginContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        const message = payload?.error || "Invalid email or password";
-        throw new Error(message);
-      }
-
-      const next = searchParams.get("next") ?? "/";
-      router.push(next);
-    } catch (loginError) {
-      const message = loginError instanceof Error ? loginError.message : "Login failed";
-      setError(message);
-    } finally {
-      setSubmitting(false);
-    }
+  return {
+    title: `Sign in to ${brandName}`,
+    description: `Sign in to ${brandName}`,
+    openGraph: {
+      title: `Sign in to ${brandName}`,
+      description: `Sign in to ${brandName}`,
+    },
   };
+<<<<<<< ours
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
@@ -100,12 +76,12 @@ function LoginContent() {
       </main>
     </div>
   );
+=======
+>>>>>>> theirs
 }
 
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-50" aria-busy>Loading...</div>}>
-      <LoginContent />
-    </Suspense>
-  );
+export default async function LoginPage() {
+  const branding = await loadTenantBranding();
+
+  return <LoginContent branding={branding} />;
 }
