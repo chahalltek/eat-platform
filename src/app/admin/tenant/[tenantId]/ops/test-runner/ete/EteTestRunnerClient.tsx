@@ -192,6 +192,20 @@ export function EteTestRunnerClient({
               </button>
             ) : null}
           </div>
+
+          <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-zinc-800 shadow-inner dark:border-indigo-900 dark:bg-indigo-950/50 dark:text-zinc-100">
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-700 dark:text-indigo-200">
+              <ClipboardDocumentListIcon className="h-4 w-4" />
+              <span>Suggested paths</span>
+            </div>
+            <ul className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-200">
+              <li>• Quick sanity: Unit sweep (fast)</li>
+              <li>• Before PR: Unit coverage (parity)</li>
+              <li>• Before deploy: MVP smoke checklist</li>
+              <li>• Post-change validation: Config and safety rails</li>
+              <li>• Auth verification: ETE auth harness</li>
+            </ul>
+          </div>
         </div>
 
         {filteredCatalog.length === 0 ? (
@@ -211,7 +225,7 @@ export function EteTestRunnerClient({
             </button>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-2">
             {filteredCatalog.map((item) => (
               <article
                 key={item.id}
@@ -226,7 +240,7 @@ export function EteTestRunnerClient({
                   {item.blockedInVercel ? (
                     <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 dark:bg-amber-900/40 dark:text-amber-50">
                       <ShieldCheckIcon className="h-4 w-4" />
-                      Local only
+                      Local / CI only
                     </span>
                   ) : null}
                 </div>
@@ -285,12 +299,13 @@ export function EteTestRunnerClient({
                           <span>IM-ready snippet</span>
                         </div>
                       </div>
+                      <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">Copy-pasteable block ready for CI or release workflows.</p>
                       <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.slackSnippet}</pre>
                     </div>
                   ) : null}
                 </div>
 
-                <div className="flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-3 text-xs font-semibold text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
+                <div className="flex items-center gap-2 rounded-xl bg-indigo-50 px-5 py-4 text-xs font-semibold text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100">
                   <BoltIcon className="h-4 w-4" />
                   {isVercelLimited ? "Catalog only in this environment — copy and paste into local shells or CI." : "Copy and paste; no commands are executed from this page."}
                 </div>
