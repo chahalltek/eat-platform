@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import fs from "node:fs";
 import path from "node:path";
 =======
@@ -313,4 +314,106 @@ main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);
 });
+>>>>>>> theirs
+=======
+import fs from "node:fs";
+import path from "node:path";
+import { createCoverageMap, type CoverageMap, type CoverageMapData } from "istanbul-lib-coverage";
+import * as libReport from "istanbul-lib-report";
+import reports from "istanbul-reports";
+
+const repoRoot = path.resolve(__dirname, "..");
+const unitCoveragePath = path.join(repoRoot, "coverage", "unit", "coverage-final.json");
+const e2eCoverageDir = path.join(repoRoot, "coverage", "e2e", "raw");
+const mergedDir = path.join(repoRoot, "coverage", "merged");
+
+function readCoverageFile(filePath: string): CoverageMapData {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(
+      `Missing coverage input at ${path.relative(repoRoot, filePath)}. Run unit and e2e coverage before merging.`,
+    );
+  }
+
+  const raw = fs.readFileSync(filePath, "utf8");
+  return JSON.parse(raw) as CoverageMapData;
+}
+
+function loadUnitCoverage(): CoverageMap {
+  const coverageData = readCoverageFile(unitCoveragePath);
+  return createCoverageMap(coverageData);
+}
+
+function loadE2eCoverage(): CoverageMap {
+  const e2eMap = createCoverageMap({});
+
+  if (!fs.existsSync(e2eCoverageDir)) {
+    console.log("ℹ️ No e2e coverage directory found; merging unit coverage only.");
+    return e2eMap;
+  }
+
+  const files = fs
+    .readdirSync(e2eCoverageDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+    .map((entry) => entry.name);
+
+  if (files.length === 0) {
+    console.log("ℹ️ No e2e coverage JSON files found; merging unit coverage only.");
+    return e2eMap;
+  }
+
+  for (const file of files) {
+    const filePath = path.join(e2eCoverageDir, file);
+    const coverageData = readCoverageFile(filePath);
+    e2eMap.merge(coverageData);
+  }
+
+  console.log(`✅ Loaded ${files.length} e2e coverage file${files.length === 1 ? "" : "s"}.`);
+  return e2eMap;
+}
+
+function writeReports(coverageMap: CoverageMap): void {
+  fs.rmSync(mergedDir, { recursive: true, force: true });
+  fs.mkdirSync(mergedDir, { recursive: true });
+
+  const fileContext = libReport.createContext({
+    dir: mergedDir,
+    coverageMap,
+    defaultSummarizer: "nested",
+  });
+
+  reports.create("json", { file: "coverage-final.json" }).execute(fileContext);
+  reports.create("lcovonly", { file: "lcov.info" }).execute(fileContext);
+  reports.create("html").execute(fileContext);
+
+  const summaryReport = reports.create("text-summary", { file: "text-summary.txt" });
+  summaryReport.execute(fileContext);
+
+  const summaryPath = path.join(mergedDir, "text-summary.txt");
+  if (fs.existsSync(summaryPath)) {
+    const summary = fs.readFileSync(summaryPath, "utf8");
+    console.log("\nMerged coverage summary:\n");
+    console.log(summary.trim());
+  }
+
+  const htmlIndex = path.join(mergedDir, "index.html");
+  console.log(`\nMerged coverage written to ${path.relative(repoRoot, htmlIndex)}.`);
+}
+
+function main(): void {
+  const unitCoverage = loadUnitCoverage();
+  const e2eCoverage = loadE2eCoverage();
+
+  const mergedCoverage = createCoverageMap(unitCoverage.toJSON());
+  mergedCoverage.merge(e2eCoverage);
+
+  writeReports(mergedCoverage);
+}
+
+try {
+  main();
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(message);
+  process.exit(1);
+}
 >>>>>>> theirs

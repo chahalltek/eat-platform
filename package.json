@@ -36,6 +36,7 @@
     "ci:test:coverage": "vitest run --coverage --watch=false --config vitest.coverage.config.ts",
     "ci:config-validate": "tsx scripts/config-validate.ts",
     "ci:coverage-debt": "npm run coverage && tsx scripts/coverage-debt-scan.ts",
+    "coverage:merge": "tsx scripts/merge-coverage.ts",
     "ci:security-baseline": "tsx scripts/security-baseline.ts",
     "ci:client-import-guard": "node scripts/check-client-imports.js",
     "ci:tenant-admin-guard": "tsx scripts/check-tenant-admin-guards.ts",
@@ -54,6 +55,7 @@
     "e2e": "playwright test --config=playwright.e2e.config.ts",
     "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts",
     "e2e:visual": "playwright test --config=playwright.visual.config.ts",
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -151,10 +153,12 @@
 =======
 >>>>>>> theirs
 =======
+=======
+    "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
+>>>>>>> theirs
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
->>>>>>> theirs
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -180,6 +184,9 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.1.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
