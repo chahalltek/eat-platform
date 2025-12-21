@@ -19,7 +19,10 @@ type Permission =
   | "USE_STRATEGIC_COPILOT"
   | "DECISION_EXPORT"
   | "EXPORT_SHORTLIST"
-  | "EXPORT_MATCHES";
+  | "EXPORT_MATCHES"
+  | "FULFILLMENT_VIEW"
+  | "DECISION_CREATE"
+  | "DECISION_PUBLISH";
 
 const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
   [USER_ROLES.ADMIN]: new Set([
@@ -37,6 +40,9 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
+    "FULFILLMENT_VIEW",
+    "DECISION_CREATE",
+    "DECISION_PUBLISH",
   ]),
   [USER_ROLES.TENANT_ADMIN]: new Set([
     "VIEW_CANDIDATES",
@@ -53,6 +59,9 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
+    "FULFILLMENT_VIEW",
+    "DECISION_CREATE",
+    "DECISION_PUBLISH",
   ]),
   [USER_ROLES.DATA_ACCESS]: new Set([
     "VIEW_CANDIDATES",
@@ -65,11 +74,23 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
+    "FULFILLMENT_VIEW",
   ]),
+<<<<<<< ours
 <<<<<<< ours
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "DECISION_EXPORT"]),
   [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "DECISION_EXPORT"]),
   [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES"]),
+=======
+  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "FULFILLMENT_VIEW"]),
+  [USER_ROLES.RECRUITER]: new Set([
+    "VIEW_CANDIDATES",
+    "FULFILLMENT_VIEW",
+    "DECISION_CREATE",
+    "DECISION_PUBLISH",
+  ]),
+  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "FULFILLMENT_VIEW", "DECISION_CREATE"]),
+>>>>>>> theirs
   [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES"]),
 =======
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "VIEW_FULFILLMENT"]),
@@ -92,6 +113,9 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
+    "FULFILLMENT_VIEW",
+    "DECISION_CREATE",
+    "DECISION_PUBLISH",
   ]),
   [USER_ROLES.EXEC]: new Set<Permission>(["VIEW_EXEC_INTELLIGENCE", "USE_STRATEGIC_COPILOT"]),
 };
@@ -201,4 +225,16 @@ export function canExportShortlist(user: PermissionUser, tenantId?: string | nul
 
 export function canExportMatches(user: PermissionUser, tenantId?: string | null) {
   return hasPermission(user, "EXPORT_MATCHES") && hasTenantAccess(user, tenantId);
+}
+
+export function canViewFulfillment(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "FULFILLMENT_VIEW") && hasTenantAccess(user, tenantId);
+}
+
+export function canCreateDecisionArtifact(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "DECISION_CREATE") && hasTenantAccess(user, tenantId);
+}
+
+export function canPublishDecisionArtifact(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "DECISION_PUBLISH") && hasTenantAccess(user, tenantId);
 }

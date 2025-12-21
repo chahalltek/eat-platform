@@ -71,6 +71,7 @@ const TENANTED_MODELS = new Set([
   "User",
   "FeatureFlag",
   "DecisionReceipt",
+  "DecisionArtifact",
   "JudgmentAggregate",
   "Candidate",
   "CandidateSkill",

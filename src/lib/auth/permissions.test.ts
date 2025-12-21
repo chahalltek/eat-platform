@@ -16,6 +16,9 @@ import {
   canViewEnvironment,
   canViewQualityMetrics,
   canUseStrategicCopilot,
+  canViewFulfillment,
+  canCreateDecisionArtifact,
+  canPublishDecisionArtifact,
 } from "./permissions";
 import { USER_ROLES } from "./roles";
 
@@ -212,6 +215,7 @@ describe("RBAC permission matrix", () => {
     expect(canExportMatches(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
   });
 
+<<<<<<< ours
   it("allows recruiters to export decisions while sourcers stay view-only", () => {
     const tenant = "tenant-a";
 
@@ -220,5 +224,21 @@ describe("RBAC permission matrix", () => {
     expect(canExportDecisionDrafts(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
     expect(canExportDecisionDrafts(buildUser(USER_ROLES.RECRUITER, tenant), "tenant-b")).toBe(false);
     expect(canExportDecisionDrafts(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
+=======
+  it("restricts fulfillment permissions based on role and tenant", () => {
+    const tenant = "tenant-a";
+    const otherTenant = "tenant-b";
+
+    expect(canViewFulfillment(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(true);
+    expect(canViewFulfillment(buildUser(USER_ROLES.SOURCER, tenant), otherTenant)).toBe(false);
+
+    expect(canCreateDecisionArtifact(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(true);
+    expect(canCreateDecisionArtifact(buildUser(USER_ROLES.SOURCER, tenant), otherTenant)).toBe(false);
+    expect(canCreateDecisionArtifact(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
+
+    expect(canPublishDecisionArtifact(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
+    expect(canPublishDecisionArtifact(buildUser(USER_ROLES.RECRUITER, tenant), otherTenant)).toBe(false);
+    expect(canPublishDecisionArtifact(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
+>>>>>>> theirs
   });
 });

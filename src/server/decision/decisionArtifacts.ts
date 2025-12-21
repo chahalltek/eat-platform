@@ -1,3 +1,4 @@
+<<<<<<< ours
 import type { MetricEvent } from "@prisma/client";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
@@ -133,10 +134,96 @@ async function resolveJobTitles(tenantId: string, jobIds: string[]) {
   });
 
   return Object.fromEntries(jobs.map((job) => [job.id, job.title])) as Record<string, string>;
+=======
+import { z } from "zod";
+
+import type { IdentityUser } from "@/lib/auth/types";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { prisma, DecisionArtifactStatus } from "@/server/db/prisma";
+
+export const decisionArtifactSchema = z.object({
+  jobId: z.string().trim().min(1),
+  candidateId: z.string().trim().min(1),
+  payload: z.unknown().default({}),
+});
+
+const listFiltersSchema = z
+  .object({
+    jobId: z.string().trim().optional(),
+    candidateId: z.string().trim().optional(),
+  })
+  .refine((value) => Boolean(value.jobId || value.candidateId), {
+    message: "jobId or candidateId is required",
+  });
+
+export type DecisionArtifactInput = z.infer<typeof decisionArtifactSchema>;
+export type DecisionArtifactListFilters = z.infer<typeof listFiltersSchema>;
+
+export type DecisionArtifactRecord = {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  status: DecisionArtifactStatus;
+  payload: unknown;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  createdBy: string;
+};
+
+function mapArtifact(record: {
+  id: string;
+  jobReqId: string;
+  candidateId: string;
+  status: DecisionArtifactStatus;
+  payload: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
+  createdBy: string;
+}) {
+  return {
+    id: record.id,
+    jobId: record.jobReqId,
+    candidateId: record.candidateId,
+    status: record.status,
+    payload: record.payload,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+    publishedAt: record.publishedAt ? record.publishedAt.toISOString() : null,
+    createdBy: record.createdBy,
+  };
+}
+
+export async function createDecisionArtifact({
+  tenantId,
+  payload,
+  user,
+}: {
+  tenantId: string | null | undefined;
+  payload: DecisionArtifactInput;
+  user: IdentityUser;
+}): Promise<DecisionArtifactRecord> {
+  const normalizedTenant = (tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  const created = await prisma.decisionArtifact.create({
+    data: {
+      tenantId: normalizedTenant,
+      jobReqId: payload.jobId.trim(),
+      candidateId: payload.candidateId.trim(),
+      payload: payload.payload ?? {},
+      status: DecisionArtifactStatus.DRAFT,
+      createdBy: user.id,
+    },
+  });
+
+  return mapArtifact(created);
+>>>>>>> theirs
 }
 
 export async function listDecisionArtifacts({
   tenantId,
+<<<<<<< ours
   userId,
   status,
   search,
@@ -199,4 +286,57 @@ export async function getDecisionArtifact(
   if (!isDraftVisibleToUser(artifact, userId)) return null;
 
   return artifact;
+=======
+  filters,
+}: {
+  tenantId: string | null | undefined;
+  filters: DecisionArtifactListFilters;
+}): Promise<DecisionArtifactRecord[]> {
+  const normalizedTenant = (tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  const parsed = listFiltersSchema.parse(filters);
+
+  const artifacts = await prisma.decisionArtifact.findMany({
+    where: {
+      tenantId: normalizedTenant,
+      ...(parsed.jobId ? { jobReqId: parsed.jobId.trim() } : {}),
+      ...(parsed.candidateId ? { candidateId: parsed.candidateId.trim() } : {}),
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return artifacts.map(mapArtifact);
+}
+
+export async function publishDecisionArtifact({
+  id,
+  tenantId,
+}: {
+  id: string;
+  tenantId: string | null | undefined;
+}): Promise<DecisionArtifactRecord | null> {
+  const normalizedTenant = (tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  const existing = await prisma.decisionArtifact.findFirst({
+    where: { id, tenantId: normalizedTenant },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  if (existing.status === DecisionArtifactStatus.PUBLISHED && existing.publishedAt) {
+    return mapArtifact(existing);
+  }
+
+  const updated = await prisma.decisionArtifact.update({
+    where: { id: existing.id },
+    data: {
+      status: DecisionArtifactStatus.PUBLISHED,
+      publishedAt: new Date(),
+    },
+  });
+
+  return mapArtifact(updated);
+>>>>>>> theirs
 }
