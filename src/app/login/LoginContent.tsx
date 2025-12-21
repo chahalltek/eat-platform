@@ -40,7 +40,11 @@ export function LoginContent({ branding }: LoginContentProps) {
   const logoSources = useMemo(() => {
     const sources = [
       branding.brandLogoUrl ?? null,
+<<<<<<< ours
       CANONICAL_DEFAULT_LOGO,
+=======
+      "/ete-logo.svg",
+>>>>>>> theirs
       BRANDING.logoHorizontal,
       DEFAULT_BRAND_LOGO,
     ];
