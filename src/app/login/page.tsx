@@ -25,9 +25,15 @@ export async function generateMetadata(): Promise<Metadata> {
           onSubmit={handleSubmit}
           className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
         >
+<<<<<<< ours
           <div className="flex flex-col items-center text-center">
             <EteLogo variant="horizontal" image="/ete-logo.svg" className="mb-4 items-center" tagline="" />
             <h1 className="text-xl font-semibold">Sign in</h1>
+=======
+          <div className="login-hero flex flex-col items-center text-center">
+            <EteLogo variant="horizontal" className="login-hero__logo mb-4 items-center" tagline="" />
+            <h1 className="login-hero__heading text-xl font-semibold">Sign in</h1>
+>>>>>>> theirs
             <p className="text-sm text-zinc-600">Use your workspace credentials to access the platform.</p>
           </div>
 
@@ -74,6 +80,37 @@ export async function generateMetadata(): Promise<Metadata> {
           </button>
         </form>
       </main>
+
+      <style jsx>{`
+        .login-hero__logo {
+          animation: login-fade-rise 460ms ease-out forwards;
+        }
+
+        .login-hero__heading {
+          animation: login-fade-rise 420ms ease-out 90ms forwards;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .login-hero__logo,
+          .login-hero__heading {
+            animation: none;
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes login-fade-rise {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 =======
