@@ -1,15 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// Terminology note: Use Agent only for reasoning components.
-// Engines are deterministic. Control Plane governs behavior.
-
-import { ClientActionLink } from "@/components/ClientActionLink";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
+<<<<<<< ours
 import { StatusPill } from "@/components/StatusPill";
 import { OpsImpactOverlayProvider } from "./OpsImpactOverlayContext";
 import { OpsImpactOverlayToggle } from "./OpsImpactOverlayToggle";
 import { SystemNodesGrid } from "./SystemNodesGrid";
+=======
+import { SystemMapContent } from "./SystemMapContent";
+import type { HealthStatus, SystemMapNode } from "@/app/system-map/opsImpact";
+>>>>>>> theirs
 
 function getDocLastUpdated(docPath: string): { lastUpdatedIso: string } | null {
   if (!fs.existsSync(docPath)) {
@@ -48,20 +49,22 @@ function getLatestIsoDate(...values: Array<string | null | undefined>) {
   return new Date(Math.max(...timestamps)).toISOString();
 }
 
-const systemNodes = [
+const systemNodes: readonly SystemMapNode[] = [
   {
     id: "intake",
     name: "Intake",
     type: "Entry",
     summary: "Jobs and resumes enter the system before any automation runs.",
     tags: ["Hiring manager inputs", "Resume uploads"],
+    impact: "halts",
   },
   {
-    id: "ats",
+    id: "ats_adapter_sync",
     name: "ATS Adapter / Integrations",
     type: "Adapter",
     summary: "System ingress that syncs jobs and candidates from external systems into Intake and the database.",
     tags: ["Optional", "Sync"],
+    impact: "degrades",
   },
   {
     id: "rua",
@@ -69,6 +72,7 @@ const systemNodes = [
     type: "Agent",
     summary: "Converts job descriptions into structured role profiles.",
     tags: ["Role normalization", "Guardrails applied"],
+    impact: "halts",
   },
   {
     id: "rina",
@@ -76,34 +80,7 @@ const systemNodes = [
     type: "Agent",
     summary: "Standardizes resumes into candidate profiles with comparable fields.",
     tags: ["Resume parsing", "Title normalization"],
-  },
-  {
-    id: "adapter",
-    name: "Integration Adapter",
-    type: "Adapter",
-    summary: "Ingests ATS jobs and candidates, then keeps them synchronized bidirectionally.",
-    tags: ["API ingress", "Webhook sync"],
-  },
-  {
-    id: "scoring",
-    name: "Scoring engine",
-    type: "Engine",
-    summary: "Ranks candidates against the role using job library context and weights.",
-    tags: ["Matcher", "Job library"],
-  },
-  {
-    id: "confidence",
-    name: "Confidence / Explain",
-    type: "Reasoning",
-    summary: "Checks data quality, then produces rationales that cite evidence.",
-    tags: ["Quality gates", "Narratives"],
-  },
-  {
-    id: "agent-sync",
-    name: "Orchestration engine",
-    type: "Coordination",
-    summary: "Synchronizes agent runs and deterministic fan-out across downstream steps.",
-    tags: ["Fan-out", "Scheduling"],
+    impact: "halts",
   },
   {
     id: "database",
@@ -111,34 +88,63 @@ const systemNodes = [
     type: "Data",
     summary: "System of record for profiles, scores, and audit logs.",
     tags: ["Job library", "Run history"],
+    impact: "halts",
   },
   {
-    id: "diagnostics",
+    id: "scoring_engine",
+    name: "Scoring engine",
+    type: "Engine",
+    summary: "Ranks candidates against the role using job library context and weights.",
+    tags: ["Matcher", "Job library"],
+    impact: "halts",
+  },
+  {
+    id: "confidence_explain",
+    name: "Confidence / Explain",
+    type: "Reasoning",
+    summary: "Checks data quality, then produces rationales that cite evidence.",
+    tags: ["Quality gates", "Narratives"],
+    impact: "blocks",
+  },
+  {
+    id: "agent_sync_expand",
+    name: "Orchestration engine",
+    type: "Coordination",
+    summary: "Synchronizes agent runs and deterministic fan-out across downstream steps.",
+    tags: ["Fan-out", "Scheduling"],
+    impact: "degrades",
+  },
+  {
+    id: "diagnostics_audit",
     name: "Diagnostics / Audit log",
     type: "Observability",
     summary: "Traces agent calls, inputs, and outcomes for troubleshooting.",
     tags: ["Audit trail", "Metrics"],
+    impact: "isolated",
   },
   {
-    id: "tenant-config",
+    id: "tenant_config",
     name: "Tenant Config",
     type: "Control plane",
     summary: "Control Plane thresholds, presets, and tuning per tenant.",
     tags: ["Weights", "LLM config", "Presets"],
+    impact: "blocks",
   },
   {
-    id: "feature-flags",
+    id: "feature_flags",
     name: "Feature Flags",
     type: "Control plane",
     summary: "Control Plane gates that combine agents and engines while keeping the UI safe.",
     tags: ["Access gates", "UI safety"],
+    impact: "fails_closed",
   },
   {
-    id: "runtime-controls",
+    id: "runtime_controls",
     name: "Runtime Controls",
     type: "Control plane",
     summary: "Control Plane modes and safety latches that fail closed and log why.",
     tags: ["Pilot mode", "Kill switch", "Fire drill"],
+    impact: "fails_closed",
   },
 ] as const;
 
@@ -168,19 +174,8 @@ const flowSequences = [
     note: "Debug agent runs with linked inputs, outputs, and traces.",
   },
   {
-    label: "ATS flow",
-    steps: ["Integration Adapter", "Jobs + Candidates", "Database", "Downstream engines"],
-    arrowVariant: "dashed",
-  },
-  {
     label: "Guardrails",
-    steps: [
-      "Tenant Config",
-      "Feature Flags",
-      "Runtime Controls",
-      "Scoring engine",
-      "Confidence / Explain",
-    ],
+    steps: ["Tenant Config", "Feature Flags", "Runtime Controls", "Scoring engine", "Confidence / Explain"],
     subtitles: ["thresholds", "gates", "failsafe", "calculations", "interpretation"],
     arrowVariant: "dashed",
   },
@@ -190,14 +185,14 @@ const flowSequences = [
   subtitles?: readonly string[];
   arrowVariant?: "solid" | "dashed";
   note?: string;
-  }[];
+}[];
 
-const statusLegend = [
-  { status: "healthy" as const, label: "Healthy" },
-  { status: "enabled" as const, label: "Idle" },
-  { status: "warning" as const, label: "Waiting" },
-  { status: "error" as const, label: "Fault" },
-  { status: "off" as const, label: "Disabled" },
+const statusLegend: readonly { status: HealthStatus; label: string }[] = [
+  { status: "healthy", label: "Healthy" },
+  { status: "idle", label: "Idle" },
+  { status: "waiting", label: "Waiting" },
+  { status: "fault", label: "Fault" },
+  { status: "disabled", label: "Disabled" },
 ];
 
 const apiMapDocPath = path.join(process.cwd(), "docs/architecture/api-map.md");
@@ -205,26 +200,9 @@ const apiMapDocUrl = "https://github.com/edgeandnode/ete-platform/blob/main/docs
 
 const apiMapFallbackLastUpdatedIso = "2025-12-20T00:00:00.000Z";
 const apiMapDocMetadata = getDocLastUpdated(apiMapDocPath);
-const apiMapLastUpdatedIso = getLatestIsoDate(apiMapFallbackLastUpdatedIso, apiMapDocMetadata?.lastUpdatedIso) ?? apiMapFallbackLastUpdatedIso;
+const apiMapLastUpdatedIso =
+  getLatestIsoDate(apiMapFallbackLastUpdatedIso, apiMapDocMetadata?.lastUpdatedIso) ?? apiMapFallbackLastUpdatedIso;
 const apiMapLastUpdatedDisplay = formatDate(apiMapLastUpdatedIso);
-
-const apiSurface = [
-  {
-    label: "Agent APIs",
-    path: "/api/agents/*",
-    context: "and job-scoped routes (matcher)",
-  },
-  {
-    label: "Admin APIs",
-    path: "/api/admin/*",
-    context: "",
-  },
-  {
-    label: "Tenant Ops APIs",
-    path: "/api/tenant/*",
-    context: "",
-  },
-] as const;
 
 export default function SystemMapPage() {
   return (
@@ -240,6 +218,7 @@ export default function SystemMapPage() {
                 How agents, engines, and control-plane configuration hand off work. Use this as a system-of-truth blueprint for dependencies, guardrails, and failure modes — not as user documentation.
 =======
     <ETEClientLayout maxWidthClassName="max-w-6xl" contentClassName="space-y-10">
+<<<<<<< ours
       <section className="overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-emerald-50 p-6 shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/60 dark:via-zinc-950 dark:to-emerald-950/40">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
@@ -491,30 +470,16 @@ export default function SystemMapPage() {
       </section>
       </ETEClientLayout>
     </OpsImpactOverlayProvider>
-  );
-}
-
-function FlowPill({ label, subtitle }: { label: string; subtitle?: string }) {
-  return (
-    <span className="flex w-full min-w-0 items-start gap-2 rounded-full bg-indigo-50 px-3 py-1 text-left text-[13px] font-semibold leading-snug text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-900/60 dark:text-indigo-100 dark:ring-indigo-700/60 sm:w-auto sm:min-w-[9rem] sm:max-w-[17rem]">
-      <span className="mt-1 h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
-      <span className="flex flex-col whitespace-normal leading-tight">
-        <span className="text-left text-balance break-words line-clamp-2">{label}</span>
-        {subtitle ? (
-          <span className="text-left text-[11px] font-medium text-indigo-700/80 break-words line-clamp-1 dark:text-indigo-200/80">{subtitle}</span>
-        ) : null}
-      </span>
-    </span>
-  );
-}
-
-function FlowArrow({ variant = "solid" }: { variant?: "solid" | "dashed" }) {
-  return (
-    <span className="flex items-center gap-1 self-start text-base font-semibold text-indigo-500 dark:text-indigo-200" aria-hidden>
-      {variant === "dashed" ? (
-        <span className="h-px w-8 border-b border-dashed border-indigo-400/80 dark:border-indigo-300/80" />
-      ) : null}
-      <span>→</span>
-    </span>
+=======
+      <SystemMapContent
+        apiMapDocUrl={apiMapDocUrl}
+        apiMapLastUpdatedIso={apiMapLastUpdatedIso}
+        apiMapLastUpdatedDisplay={apiMapLastUpdatedDisplay}
+        systemNodes={systemNodes}
+        flowSequences={flowSequences}
+        statusLegend={statusLegend}
+      />
+    </ETEClientLayout>
+>>>>>>> theirs
   );
 }
