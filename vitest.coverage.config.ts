@@ -1,6 +1,7 @@
 import type { UserConfig } from "vite";
 import { mergeConfig } from "vitest/config";
 import baseConfig from "./vitest.config";
+import { coverageThresholds } from "./vitest.coverage.thresholds";
 
 const coverageOverrides: UserConfig = {
   test: {
@@ -17,25 +18,7 @@ const coverageOverrides: UserConfig = {
         "src/**/types/**",
         "src/app/**/page.tsx", // Route entrypoints validated through Playwright E2E coverage
       ],
-      thresholds: {
-        lines: 100,
-        functions: 100,
-        branches: 100,
-        statements: 100,
-        perFile: true,
-        "src/lib/**": {
-          lines: 100,
-          functions: 100,
-          branches: 100,
-          statements: 100,
-        },
-        "src/server/**": {
-          lines: 100,
-          functions: 100,
-          branches: 100,
-          statements: 100,
-        },
-      },
+      thresholds: coverageThresholds,
     },
   },
 };

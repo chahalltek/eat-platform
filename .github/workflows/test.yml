@@ -97,3 +97,31 @@ jobs:
 
       - name: Run build to mirror production
         run: npm run build
+
+  coverage-merged:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Generate merged coverage
+        run: npm run test:coverage:all
+
+      - name: Upload merged coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-merged
+          path: coverage/merged
+          if-no-files-found: error

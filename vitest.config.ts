@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { config as loadEnvConfig } from "dotenv";
 import { defineConfig } from "vitest/config";
+import { coverageThresholds } from "./vitest.coverage.thresholds";
 
 const envFilePath = path.resolve(__dirname, process.env.VITEST_ENV_FILE ?? ".env.test");
 
@@ -20,8 +21,10 @@ export default defineConfig({
     include: ["**/*.{test,spec}.{ts,tsx}"],
     exclude: [
       "node_modules/**",
+      "e2e/**",
       "tests/admin-layout/**", // Playwright E2E suite runs via its own runner
       "tests/visual/**", // Playwright visual tests run via their own runner
+      "tests/e2e/**",
     ],
     coverage: {
       provider: "istanbul",
@@ -40,25 +43,7 @@ export default defineConfig({
         "src/**/types/**",
         "src/app/**/page.tsx", // Route entrypoints validated through Playwright E2E coverage
       ],
-      thresholds: {
-        lines: 100,
-        functions: 100,
-        branches: 100,
-        statements: 100,
-        perFile: true,
-        "src/lib/**": {
-          lines: 100,
-          functions: 100,
-          branches: 100,
-          statements: 100,
-        },
-        "src/server/**": {
-          lines: 100,
-          functions: 100,
-          branches: 100,
-          statements: 100,
-        },
-      },
+      thresholds: coverageThresholds,
     },
   },
   resolve: {
