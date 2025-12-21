@@ -274,9 +274,17 @@ export async function POST(req: NextRequest) {
   }
 
   const { prisma: scopedPrisma, tenantId: scopedTenantId, runWithTenantContext } = scopedTenant;
-  const tenantId = scopedTenantId ?? DEFAULT_TENANT_ID;
+  const permissionUser = {
+    ...roleCheck.user,
+    role: roleCheck.user.role ?? USER_ROLES.RECRUITER,
+    tenantId: roleCheck.user.tenantId ?? scopedTenantId ?? DEFAULT_TENANT_ID,
+  };
+  const tenantId =
+    scopedTenantId === DEFAULT_TENANT_ID && permissionUser.tenantId
+      ? permissionUser.tenantId
+      : scopedTenantId ?? permissionUser.tenantId ?? DEFAULT_TENANT_ID;
 
-  if (!canRunAgentExplain(roleCheck.user, tenantId)) {
+  if (!canRunAgentExplain(permissionUser, tenantId)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

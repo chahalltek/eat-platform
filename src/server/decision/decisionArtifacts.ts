@@ -30,6 +30,12 @@ type ListDecisionArtifactsInput = {
   types?: DecisionArtifactType[];
   status?: DecisionArtifactStatus | DecisionArtifactStatus[];
   limit?: number;
+  filters?: {
+    jobId?: string;
+    candidateId?: string;
+    types?: DecisionArtifactType[];
+    status?: DecisionArtifactStatus | DecisionArtifactStatus[];
+  };
 };
 
 type GetDecisionArtifactInput = {
@@ -109,14 +115,21 @@ export async function listDecisionArtifacts({
   types,
   status,
   limit,
+  filters,
 }: ListDecisionArtifactsInput) {
+  const normalizedFilters = filters ?? {};
+  const resolvedJobId = jobId ?? normalizedFilters.jobId;
+  const resolvedCandidateId = candidateId ?? normalizedFilters.candidateId;
+  const resolvedTypes = types ?? normalizedFilters.types;
+  const resolvedStatus = status ?? normalizedFilters.status;
+
   return prisma.decisionArtifact.findMany({
     where: {
       tenantId,
-      jobId: jobId ?? undefined,
-      candidateIds: candidateId ? { has: candidateId } : undefined,
-      type: types && types.length > 0 ? { in: types } : undefined,
-      status: Array.isArray(status) ? { in: status } : status ?? undefined,
+      jobId: resolvedJobId ?? undefined,
+      candidateIds: resolvedCandidateId ? { has: resolvedCandidateId } : undefined,
+      type: resolvedTypes && resolvedTypes.length > 0 ? { in: resolvedTypes } : undefined,
+      status: Array.isArray(resolvedStatus) ? { in: resolvedStatus } : resolvedStatus ?? undefined,
     },
     orderBy: { createdAt: "desc" },
     take: limit,

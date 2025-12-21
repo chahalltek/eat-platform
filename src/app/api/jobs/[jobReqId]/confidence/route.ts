@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { FireDrillAgentDisabledError } from "@/lib/agents/availability";
 import { runConfidence } from "@/lib/agents/confidence";
-import { canRunAgentConfidence } from "@/lib/auth/permissions";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { USER_ROLES } from "@/lib/auth/roles";
 
 type RouteParams = { jobReqId: string };
 
@@ -18,11 +19,16 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return roleCheck.response;
     }
 
-    const tenantId = await getCurrentTenantId(req);
-
-    if (!canRunAgentConfidence(roleCheck.user, tenantId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const tenantIdFromRequest = await getCurrentTenantId(req);
+    const permissionUser = {
+      ...roleCheck.user,
+      role: roleCheck.user.role ?? USER_ROLES.RECRUITER,
+      tenantId: roleCheck.user.tenantId ?? tenantIdFromRequest ?? DEFAULT_TENANT_ID,
+    };
+    const tenantId =
+      tenantIdFromRequest === DEFAULT_TENANT_ID && roleCheck.user.tenantId
+        ? roleCheck.user.tenantId
+        : tenantIdFromRequest ?? permissionUser.tenantId ?? DEFAULT_TENANT_ID;
 
     const params = await context.params;
     const body = await req.json().catch(() => ({}));

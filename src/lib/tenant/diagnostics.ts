@@ -320,15 +320,8 @@ const EXPLAIN_FAILURE_THRESHOLD = 0.3;
 const LLM_FAILURE_THRESHOLD = 0.25;
 const MATCH_FAILURE_THRESHOLD = 0.25;
 const FIRE_DRILL_IMPACT = ["Agent dispatch paused", "Guardrails forced to conservative"] as const;
-const TENANT_CONFIG_EXPECTED_COLUMNS = [
-  "preset",
-  "llm",
-  "networkLearningOptIn",
-  "networkLearning",
-  "brandName",
-  "brandLogoUrl",
-  "brandLogoAlt",
-] as const;
+const TENANT_CONFIG_REQUIRED_COLUMNS = ["preset", "llm", "networkLearningOptIn", "networkLearning"] as const;
+const TENANT_CONFIG_OPTIONAL_COLUMNS = ["brandName", "brandLogoUrl", "brandLogoAlt"] as const;
 
 const AGENT_RUN_STATUS =
   AgentRunStatus ??
@@ -458,13 +451,18 @@ async function evaluateTenantConfigSchemaDrift(): Promise<TenantDiagnostics["sch
       .map((column) => column.column_name?.toLowerCase?.())
       .filter((value): value is string => Boolean(value));
 
-    const missingColumns = TENANT_CONFIG_EXPECTED_COLUMNS.filter(
+    const missingRequired = TENANT_CONFIG_REQUIRED_COLUMNS.filter(
       (name) => !presentColumns.includes(name.toLowerCase()),
     );
 
-    if (missingColumns.length === 0) {
-      return { status: "ok", missingColumns, reason: null };
+    if (missingRequired.length === 0) {
+      return { status: "ok", missingColumns: [], reason: null };
     }
+
+    const missingOptional = TENANT_CONFIG_OPTIONAL_COLUMNS.filter((name) =>
+      !presentColumns.includes(name.toLowerCase()),
+    );
+    const missingColumns = [...missingRequired, ...missingOptional];
 
     return {
       status: "fault",
@@ -475,7 +473,7 @@ async function evaluateTenantConfigSchemaDrift(): Promise<TenantDiagnostics["sch
     console.error("Unable to evaluate TenantConfig schema drift", error);
     return {
       status: "fault",
-      missingColumns: [...TENANT_CONFIG_EXPECTED_COLUMNS],
+      missingColumns: [...TENANT_CONFIG_REQUIRED_COLUMNS, ...TENANT_CONFIG_OPTIONAL_COLUMNS],
       reason: "TenantConfig schema could not be inspected; check recent migrations.",
     };
   }

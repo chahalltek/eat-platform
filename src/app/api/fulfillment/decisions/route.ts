@@ -36,8 +36,10 @@ export async function GET(req: NextRequest) {
   try {
     const artifacts = await listDecisionArtifacts({
       tenantId: user.tenantId ?? DEFAULT_TENANT_ID,
-      jobId,
-      candidateId,
+      filters: {
+        jobId,
+        candidateId,
+      },
     });
 
     return NextResponse.json({ artifacts }, { status: 200 });

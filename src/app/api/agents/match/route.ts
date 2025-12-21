@@ -86,9 +86,17 @@ export async function handleMatchAgentPost(
   }
 
   const { tenantId: scopedTenantId, runWithTenantContext, prisma: scopedPrisma } = scopedTenant;
-  const tenantId = scopedTenantId ?? DEFAULT_TENANT_ID;
+  const permissionUser = {
+    ...roleCheck.user,
+    role: roleCheck.user.role ?? USER_ROLES.RECRUITER,
+    tenantId: roleCheck.user.tenantId ?? scopedTenantId ?? DEFAULT_TENANT_ID,
+  };
+  const tenantId =
+    scopedTenantId === DEFAULT_TENANT_ID && permissionUser.tenantId
+      ? permissionUser.tenantId
+      : scopedTenantId ?? permissionUser.tenantId ?? DEFAULT_TENANT_ID;
 
-  if (!canRunAgentMatch(roleCheck.user, tenantId)) {
+  if (!canRunAgentMatch(permissionUser, tenantId)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

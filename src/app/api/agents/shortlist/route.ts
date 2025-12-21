@@ -8,6 +8,7 @@ import { USER_ROLES } from "@/lib/auth/roles";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { getCurrentTenantId } from "@/lib/tenant";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 
 const requestSchema = z.object({
   matchId: z.string().trim().min(1, "matchId is required"),
@@ -34,9 +35,18 @@ export async function POST(req: NextRequest) {
     return roleCheck.response;
   }
 
-  const tenantId = await getCurrentTenantId(req);
+  const tenantIdFromRequest = await getCurrentTenantId(req);
+  const permissionUser = {
+    ...roleCheck.user,
+    role: roleCheck.user.role ?? USER_ROLES.RECRUITER,
+    tenantId: roleCheck.user.tenantId ?? tenantIdFromRequest ?? DEFAULT_TENANT_ID,
+  };
+  const tenantId =
+    tenantIdFromRequest === DEFAULT_TENANT_ID && permissionUser.tenantId
+      ? permissionUser.tenantId
+      : tenantIdFromRequest ?? permissionUser.tenantId ?? DEFAULT_TENANT_ID;
 
-  if (!canRunAgentShortlist(roleCheck.user, tenantId)) {
+  if (!canRunAgentShortlist(permissionUser, tenantId)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

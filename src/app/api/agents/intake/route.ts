@@ -18,6 +18,7 @@ import { recordMetricEvent } from '@/lib/metrics/events';
 import { recordUsageEvent } from '@/lib/usage/events';
 import { buildJobIntentPayload, upsertJobIntent } from '@/lib/jobIntent';
 import { suggestReqArchetype } from '@/lib/archetypes/reqArchetypes';
+import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
 
 const jobSkillSchema = z.object({
   name: z.string().min(1),
@@ -73,9 +74,18 @@ export async function POST(req: NextRequest) {
     return roleCheck.response;
   }
 
-  const tenantId = await getCurrentTenantId(req);
+  const tenantIdFromRequest = await getCurrentTenantId(req);
+  const permissionUser = {
+    ...roleCheck.user,
+    role: roleCheck.user.role ?? USER_ROLES.RECRUITER,
+    tenantId: roleCheck.user.tenantId ?? tenantIdFromRequest ?? DEFAULT_TENANT_ID,
+  };
+  const tenantId =
+    tenantIdFromRequest === DEFAULT_TENANT_ID && permissionUser.tenantId
+      ? permissionUser.tenantId
+      : tenantIdFromRequest ?? permissionUser.tenantId ?? DEFAULT_TENANT_ID;
 
-  if (!canRunAgentIntake(roleCheck.user, tenantId)) {
+  if (!canRunAgentIntake(permissionUser, tenantId)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

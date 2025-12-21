@@ -26,7 +26,7 @@ const STATUS_VARIANT_STYLES = {
   },
   error: {
     className:
-      "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/45 dark:bg-rose-500/12 dark:text-rose-100",
+      "border border-rose-200 bg-rose-50 bg-red-100 text-rose-800 dark:border-rose-500/45 dark:bg-rose-500/12 dark:text-rose-100",
     accent: "rgba(244, 63, 94, 0.4)",
   },
   info: {
@@ -36,7 +36,7 @@ const STATUS_VARIANT_STYLES = {
   },
   neutral: {
     className:
-      "border border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100",
+      "border border-zinc-200 bg-zinc-50 bg-gray-100 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100",
     accent: "rgba(113, 113, 122, 0.34)",
   },
 } as const satisfies Record<string, { className: string; accent: string }>;

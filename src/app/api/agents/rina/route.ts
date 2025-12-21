@@ -61,7 +61,11 @@ export async function POST(req: NextRequest) {
       return flagCheck;
     }
 
-    const tenantId = await getCurrentTenantId(req);
+    const tenantIdFromRequest = await getCurrentTenantId(req);
+    const tenantId =
+      tenantIdFromRequest === DEFAULT_TENANT_ID && currentUser.tenantId
+        ? currentUser.tenantId
+        : tenantIdFromRequest ?? currentUser.tenantId ?? DEFAULT_TENANT_ID;
     const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.RINA, tenantId);
 
     if (killSwitchResponse) {
