@@ -98,6 +98,34 @@ function getTelemetrySummary(telemetry: HomeTelemetryMetrics) {
 function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
   return [
     {
+      label: "Match results",
+      cta: "Review matches",
+      href: "/matches",
+      description: "Ranked candidates per job",
+      dependency: { subsystem: "agents", flow: { source: "Match results", target: "Matcher" } },
+    },
+    {
+      label: "Explain",
+      cta: "Generate rationale",
+      href: "/explain",
+      description: "Explain why a candidate was ranked",
+      dependency: { subsystem: "agents", flow: { source: "Explain", target: "Explain agent" } },
+    },
+    {
+      label: "Confidence",
+      cta: "Assess reliability",
+      href: "/confidence",
+      description: "Confidence buckets for matches",
+      dependency: { subsystem: "agents", flow: { source: "Confidence", target: "Confidence agent" } },
+    },
+    {
+      label: "Shortlist",
+      cta: "Export shortlist",
+      href: "/shortlist",
+      description: "Top candidates ready to submit",
+      dependency: { subsystem: "agents", flow: { source: "Shortlist", target: "Shortlist agent" } },
+    },
+    {
       label: "Upload resumes",
       cta: "Ingest resumes",
       href: "/resumes/upload",
@@ -114,7 +142,7 @@ function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
     {
       label: "Execution history",
       cta: "Trace executions",
-      href: "/agents/runs",
+      href: "/executions",
       description: "Latest agent runs",
       executionSummary: {
         runsLast7d: metrics.agentRunsLast7d,
