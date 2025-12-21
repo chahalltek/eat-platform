@@ -1,3 +1,6 @@
+// Terminology note: Use Agent only for reasoning components.
+// Engines are deterministic. Control Plane governs behavior.
+
 export type HelpContentSection = {
   heading: string;
   bullets?: string[];

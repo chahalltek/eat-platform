@@ -13,6 +13,9 @@ import { TenantAdminShell } from "../TenantAdminShell";
 
 export const dynamic = "force-dynamic";
 
+// Terminology note: Use Agent only for reasoning components.
+// Engines are deterministic. Control Plane governs behavior.
+
 const MODE_DEFINITIONS = {
   pilot: {
     label: "Pilot",
@@ -352,7 +355,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin</p>
               <h1 className="text-3xl font-semibold text-zinc-900">EDGE Talent Engine Operations Runbook</h1>
               <p className="max-w-2xl text-sm text-zinc-600">
-                Flight manual for tenant {tenantId} covering system modes, guardrails, agent kill switches, and Fire Drill
+                Flight manual for tenant {tenantId} covering Control Plane modes, guardrails, agent kill switches, and the Fire Drill
                 playbook.
               </p>
             </div>
@@ -406,15 +409,15 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
         </section>
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-zinc-900">Overview</h2>
-            <p className="text-sm text-zinc-700">
-              This Operations Runbook explains how EDGE Talent Engine behaves under different System Modes, how guardrails are
-              applied, how agent kill switches work, and how to activate Fire Drill mode during instability.
-            </p>
-            <div className="grid gap-3 text-sm text-zinc-700 md:grid-cols-3">
-              <div className="rounded-xl bg-zinc-50 p-4">Modes determine the personality of the system.</div>
-              <div className="rounded-xl bg-zinc-50 p-4">Guardrails determine strictness and thresholds.</div>
+            <div className="flex flex-col gap-3">
+              <h2 className="text-xl font-semibold text-zinc-900">Overview</h2>
+              <p className="text-sm text-zinc-700">
+                This Operations Runbook explains how EDGE Talent Engine behaves under different System Modes, how Control Plane guardrails are
+                applied, how agent kill switches work, and how to activate Fire Drill mode during instability.
+              </p>
+              <div className="grid gap-3 text-sm text-zinc-700 md:grid-cols-3">
+                <div className="rounded-xl bg-zinc-50 p-4">Modes determine the personality of the system.</div>
+                <div className="rounded-xl bg-zinc-50 p-4">Guardrails determine strictness and thresholds.</div>
               <div className="rounded-xl bg-zinc-50 p-4">Agent kill switches control what functions are available.</div>
             </div>
           </div>
@@ -639,7 +642,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
               <li>EXPLAIN and CONFIDENCE are forcibly disabled.</li>
               <li>MATCH and SHORTLIST use deterministic scoring with no LLM dependencies.</li>
               <li>Guardrails switch to the conservative preset.</li>
-              <li>Only essential agents remain enabled (RUA, RINA, MATCH, SHORTLIST).</li>
+              <li>Only essential reasoning agents remain enabled (RUA, RINA); deterministic engines (MATCH, SHORTLIST) stay on for continuity.</li>
               <li>The entire system operates in stability-first mode.</li>
             </ul>
           </div>

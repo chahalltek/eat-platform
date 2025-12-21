@@ -15,6 +15,9 @@ import { SystemModePanel } from "./SystemModePanel";
 
 export const dynamic = "force-dynamic";
 
+// Terminology note: Use Agent only for reasoning components.
+// Engines are deterministic. Control Plane governs behavior.
+
 const DEFAULT_GUARDRAIL_CONFIG = {
   preset: "Balanced" as const,
   scoringMode: "auto (Prefer blocks)",
@@ -57,9 +60,9 @@ export default async function GuardrailsAdminPage() {
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin</p>
-            <h1 className="text-3xl font-semibold text-zinc-900">Guardrails control</h1>
+            <h1 className="text-3xl font-semibold text-zinc-900">Control Plane: Guardrails</h1>
             <p className="text-sm text-zinc-600">
-              Choose presets and tune platform guardrails before activating them for production.
+              Choose presets and tune platform guardrails before activating them for production; these Control Plane settings gate how agents and engines behave.
             </p>
           </div>
 
@@ -95,7 +98,7 @@ export default async function GuardrailsAdminPage() {
               },
               {
                 label: "Open Runtime Controls",
-                description: "Triage feature flags and runtime protections for incidents.",
+                description: "Triage Control Plane feature flags and runtime protections for incidents.",
                 href: "/admin/feature-flags",
                 icon: <BoltIcon className="h-6 w-6" aria-hidden />,
               },

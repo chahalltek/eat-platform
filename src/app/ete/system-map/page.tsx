@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
+// Terminology note: Use Agent only for reasoning components.
+// Engines are deterministic. Control Plane governs behavior.
+
 import { ClientActionLink } from "@/components/ClientActionLink";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { StatusPill } from "@/components/StatusPill";
@@ -52,9 +55,9 @@ const systemNodes = [
   },
   {
     id: "ats",
-    name: "ATS / Integrations",
+    name: "ATS Adapter / Integrations",
     type: "Adapter",
-    summary: "Optionally syncs jobs and candidates from external systems into Intake and the database.",
+    summary: "System ingress that syncs jobs and candidates from external systems into Intake and the database.",
     tags: ["Optional", "Sync"],
   },
   {
@@ -73,9 +76,9 @@ const systemNodes = [
   },
   {
     id: "adapter",
-    name: "ATS Adapter / Sync",
-    type: "Integration",
-    summary: "Ingests ATS jobs and candidates, then keeps them synchronized.",
+    name: "Integration Adapter",
+    type: "Adapter",
+    summary: "Ingests ATS jobs and candidates, then keeps them synchronized bidirectionally.",
     tags: ["API ingress", "Webhook sync"],
   },
   {
@@ -94,9 +97,9 @@ const systemNodes = [
   },
   {
     id: "agent-sync",
-    name: "Agent Sync / Expand",
+    name: "Orchestration engine",
     type: "Coordination",
-    summary: "Synchronizes agent runs and expands workloads across downstream steps.",
+    summary: "Synchronizes agent runs and deterministic fan-out across downstream steps.",
     tags: ["Fan-out", "Scheduling"],
   },
   {
@@ -117,21 +120,21 @@ const systemNodes = [
     id: "tenant-config",
     name: "Tenant Config",
     type: "Control plane",
-    summary: "Thresholds, presets, and tuning per tenant.",
+    summary: "Control Plane thresholds, presets, and tuning per tenant.",
     tags: ["Weights", "LLM config", "Presets"],
   },
   {
     id: "feature-flags",
     name: "Feature Flags",
     type: "Control plane",
-    summary: "Gates agent combinations and UI surface safety.",
+    summary: "Control Plane gates that combine agents and engines while keeping the UI safe.",
     tags: ["Access gates", "UI safety"],
   },
   {
     id: "runtime-controls",
     name: "Runtime Controls",
     type: "Control plane",
-    summary: "Modes and safety latches that fail closed and log why.",
+    summary: "Control Plane modes and safety latches that fail closed and log why.",
     tags: ["Pilot mode", "Kill switch", "Fire drill"],
   },
 ] as const;
@@ -140,11 +143,11 @@ const flowSequences = [
   {
     label: "Role flow",
     steps: ["Intake (RUA)", "Normalize", "Role profile"],
-    note: "Role is stored and later used by matching and scoring agents.",
+    note: "Role is stored and later used by matching and scoring engines.",
   },
   {
     label: "ATS / Integrations",
-    steps: ["ATS / Integrations", "Jobs / Candidates", "Database", "Agents"],
+    steps: ["ATS Adapter / Integrations", "Jobs / Candidates", "Database", "Agents"],
     note: "Optional lane; resume uploads and manual intake remain valid entry points.",
   },
   {
@@ -163,7 +166,7 @@ const flowSequences = [
   },
   {
     label: "ATS flow",
-    steps: ["ATS Adapter / Sync", "Jobs + Candidates", "Database", "Downstream agents"],
+    steps: ["Integration Adapter", "Jobs + Candidates", "Database", "Downstream engines"],
     arrowVariant: "dashed",
   },
   {
@@ -229,7 +232,11 @@ export default function SystemMapPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Map</p>
             <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">EDGE Talent Engine data flow blueprint</h1>
             <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+<<<<<<< ours
               How agents, engines, and control-plane configuration hand off work. Use this as a system-of-truth blueprint for dependencies, guardrails, and failure modes — not as user documentation.
+=======
+              How agents, engines, and the Control Plane hand off work. Open this when you need the blueprint for dependencies, not just a link.
+>>>>>>> theirs
             </p>
             <div className="mt-1 rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
@@ -398,7 +405,11 @@ export default function SystemMapPage() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Control plane</p>
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">How we tune, gate, and shut off flows</h3>
           <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+<<<<<<< ours
             The control plane separates judgment and execution from configuration so behavior can be changed without redeploying agents or rewriting history. These controls back the GUARDRAILS flow above.
+=======
+            Separate the knobs from the engines so we can change behavior without redeploying agents. These Control Plane controls back the GUARDRAILS flow above.
+>>>>>>> theirs
           </p>
           <div className="rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
@@ -413,7 +424,7 @@ export default function SystemMapPage() {
             <strong className="text-zinc-900 dark:text-zinc-100">Tenant Config.</strong> Thresholds, presets, and tuning per tenant.
           </li>
           <li>
-            <strong className="text-zinc-900 dark:text-zinc-100">Feature Flags.</strong> Gates agent combinations and UI surface safety.
+            <strong className="text-zinc-900 dark:text-zinc-100">Feature Flags.</strong> Control Plane gates that pair agents with engines and keep UI surfaces safe.
           </li>
           <li>
             <strong className="text-zinc-900 dark:text-zinc-100">Runtime Controls.</strong> Modes and safety latches that fail closed and log why.
@@ -435,7 +446,7 @@ export default function SystemMapPage() {
             <li>Confidence / Explain block bad data and record rationales alongside scores for auditability.</li>
             <li>Tenant Config injects feature flags and weighting rules; if disabled, dependent steps halt instead of falling back.</li>
             <li>Runtime Controls + Feature Flags gate execution; disabled features fail closed and log why.</li>
-            <li>Control plane feeds thresholds, flags, and runtime latches; dependent steps halt instead of falling back when controls disable them.</li>
+            <li>Control Plane feeds thresholds, flags, and runtime latches; dependent steps halt instead of falling back when controls disable them.</li>
             <li>Agent runs emit structured run logs and audit events (success/failure + rationale).</li>
           </ul>
         </div>
@@ -475,7 +486,7 @@ export default function SystemMapPage() {
           <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Dependencies</h3>
           <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
             <li>Database / Job Library is the source of truth for roles, candidates, and scoring history; if unavailable, matching halts.</li>
-            <li>Tenant Config feeds Feature Flags and Runtime Controls; disabled controls block the dependent agent call instead of silently passing while logging why.</li>
+            <li>Tenant Config feeds Feature Flags and Runtime Controls; disabled controls block the dependent agent or engine call instead of silently passing while logging why.</li>
             <li>Scoring pipeline expects structured profiles; malformed data fails fast rather than auto-correcting.</li>
             <li>Blueprint view mirrors the dashboard header style to reinforce that this is part of the core control plane.</li>
           </ul>
@@ -487,7 +498,7 @@ export default function SystemMapPage() {
             <li>UI collects inputs and surfaces results; it never rewrites agent outputs.</li>
             <li>Agents own interpretation: RUA shapes roles, RINA normalizes resumes, Scoring engine ranks, Confidence / Explain gate quality.</li>
             <li>Data correctness checks live in Confidence / Explain; downstream consumers reuse those signals instead of revalidating.</li>
-            <li>System Status pulls live subsystem health (agents, scoring, database, runtime controls) and aligns with this blueprint.</li>
+            <li>System Status pulls live subsystem health (agents, scoring, database, Control Plane runtime controls) and aligns with this blueprint.</li>
             <li>Diagnostics aggregates health across ATS, flags, guardrails, retention, and logging.</li>
           </ul>
         </div>
