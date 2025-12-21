@@ -121,7 +121,7 @@ export function EteTestRunnerClient({
           {QUICK_COMMANDS.map((entry) => (
             <div
               key={entry.id}
-              className="relative flex flex-col gap-3 rounded-2xl border border-indigo-100 bg-white/70 p-5 shadow-sm backdrop-blur dark:border-indigo-900 dark:bg-zinc-900"
+              className="flex flex-col gap-3 rounded-2xl border border-indigo-100 bg-white/70 p-5 shadow-sm backdrop-blur dark:border-indigo-900 dark:bg-zinc-900"
               {...copyAreaProps(entry.command)}
             >
               <div className="flex items-start justify-between gap-3">
@@ -129,7 +129,7 @@ export function EteTestRunnerClient({
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{entry.title}</h3>
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">{entry.description}</p>
                 </div>
-                <CopyButton text={entry.command} label="Copy command" className="absolute right-4 top-4" stopPropagation />
+                <CopyButton text={entry.command} label="Copy command" className="shrink-0" stopPropagation />
               </div>
               <code className="block rounded-xl bg-zinc-900 px-4 py-3 text-xs text-emerald-100 shadow-inner">{entry.command}</code>
             </div>
@@ -247,31 +247,29 @@ export function EteTestRunnerClient({
 
                 <div className={cn("grid gap-3", item.slackSnippet ? "md:grid-cols-3" : "md:grid-cols-2")}>
                   <div
-                    className="relative rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-800 shadow-inner transition hover:-translate-y-0.5 hover:border-indigo-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-800 shadow-inner transition hover:-translate-y-0.5 hover:border-indigo-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
                     {...copyAreaProps(item.localCommand)}
                   >
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
-                      <div className="flex items-center gap-2">
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
                         <CommandLineIcon className="h-4 w-4" />
-                        Local command
+                        <span>Local command</span>
                       </div>
-                      <CopyButton text={item.localCommand} label="Copy local" className="absolute right-3 top-3" stopPropagation />
+                      <CopyButton text={item.localCommand} label="Copy local" className="shrink-0" stopPropagation />
                     </div>
                     <code className="block whitespace-pre-wrap font-mono text-sm leading-relaxed text-indigo-700 dark:text-indigo-200">{item.localCommand}</code>
                   </div>
 
                   <div
-                    className="relative rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-800 shadow-inner transition hover:-translate-y-0.5 hover:border-indigo-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-800 shadow-inner transition hover:-translate-y-0.5 hover:border-indigo-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
                     {...(item.ciStep ? copyAreaProps(item.ciStep) : {})}
                   >
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
-                      <div className="flex items-center gap-2">
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
                         <ShieldCheckIcon className="h-4 w-4" />
-                        CI snippet
+                        <span>CI snippet</span>
                       </div>
-                      {item.ciStep ? (
-                        <CopyButton text={item.ciStep} label="Copy GH Actions" className="absolute right-3 top-3" stopPropagation />
-                      ) : null}
+                      {item.ciStep ? <CopyButton text={item.ciStep} label="Copy GH Actions" className="shrink-0" stopPropagation /> : null}
                     </div>
                     {item.ciStep ? (
                       <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.ciStep}</pre>
@@ -282,15 +280,15 @@ export function EteTestRunnerClient({
 
                   {item.slackSnippet ? (
                     <div
-                      className="relative rounded-xl border border-indigo-100 bg-zinc-50 p-4 text-sm text-zinc-800 shadow-inner transition hover:-translate-y-0.5 hover:border-indigo-200 dark:border-indigo-900 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="rounded-xl border border-indigo-100 bg-zinc-50 p-4 text-sm text-zinc-800 shadow-inner transition hover:-translate-y-0.5 hover:border-indigo-200 dark:border-indigo-900 dark:bg-zinc-900 dark:text-zinc-100"
                       {...copyAreaProps(item.slackSnippet)}
                     >
-                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
-                        <div className="flex items-center gap-2">
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600 dark:text-zinc-300">
                           <ChatBubbleLeftEllipsisIcon className="h-4 w-4" />
-                          IM-ready snippet
+                          <span>IM-ready snippet</span>
                         </div>
-                        <CopyButton text={item.slackSnippet} label="Copy IM snippet" className="absolute right-3 top-3" stopPropagation />
+                        <CopyButton text={item.slackSnippet} label="Copy IM snippet" className="shrink-0" stopPropagation />
                       </div>
                       <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.slackSnippet}</pre>
                     </div>
