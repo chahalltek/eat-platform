@@ -39,6 +39,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test",
@@ -54,10 +55,13 @@
 =======
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
+<<<<<<< ours
 <<<<<<< ours
 >>>>>>> theirs
 =======
@@ -65,6 +69,8 @@
     "test:e2e": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e:ui": "playwright test --config=playwright.e2e.config.ts --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test --config=playwright.e2e.config.ts"
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -95,8 +101,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+<<<<<<< ours
     "@vitest/coverage-v8": "^4.0.15",
     "babel-plugin-istanbul": "^7.0.1",
+=======
+    "@vitest/coverage-istanbul": "^4.0.15",
+>>>>>>> theirs
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",

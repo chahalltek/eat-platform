@@ -24,9 +24,9 @@ export default defineConfig({
       "tests/visual/**", // Playwright visual tests run via their own runner
     ],
     coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "json-summary", "lcov", "html"],
-      reportsDirectory: "./coverage",
+      provider: "istanbul",
+      reporter: ["text", "json", "html", "lcov"],
+      reportsDirectory: "coverage/unit",
       reportOnFailure: true,
       include: [
         "src/lib/**/*.{ts,tsx}",
