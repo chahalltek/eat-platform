@@ -5,9 +5,12 @@ import { AUTH_SETUP_PROJECT, AUTH_STORAGE_STATE, E2E_AUTH_SETUP_TEST_MATCH } fro
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 const shouldStartLocalServer = !process.env.E2E_BASE_URL;
 const coverageEnabled = process.env.COVERAGE_E2E === "1";
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -16,6 +19,11 @@ const defaultHeaders = {
   "x-eat-user-role": process.env.E2E_USER_ROLE ?? "ADMIN",
   "x-eat-tenant-id": process.env.E2E_TENANT_ID ?? "routes-smoke-tenant",
 };
+<<<<<<< ours
+=======
+const coverageEnabled = process.env.COVERAGE_E2E === "1";
+const coverageEnv = coverageEnabled ? { COVERAGE_E2E: "1" } : undefined;
+>>>>>>> theirs
 
 export default defineConfig({
   testDir: ".",
@@ -26,11 +34,15 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
+  metadata: {
+    coverageEnabled,
+  },
   use: {
     baseURL,
     extraHTTPHeaders: defaultHeaders,
     trace: "retain-on-failure",
     headless: true,
+    launchOptions: coverageEnv ? { env: { ...process.env, ...coverageEnv } } : undefined,
   },
   reporter: [["list"], ["html", { outputFolder: "test-results/e2e/html-report", open: "never" }]],
   webServer: shouldStartLocalServer
