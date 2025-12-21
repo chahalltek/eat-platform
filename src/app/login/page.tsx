@@ -4,7 +4,6 @@ import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { EteLogo } from "@/components/branding/EteLogo";
-import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 
 function LoginContent() {
   const router = useRouter();
@@ -46,9 +45,6 @@ function LoginContent() {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center px-6 py-12">
-        <div className="mb-6 flex justify-end">
-          <BackToConsoleButton />
-        </div>
         <form
           onSubmit={handleSubmit}
           className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"

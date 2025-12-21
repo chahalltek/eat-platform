@@ -12,14 +12,21 @@ type EteLogoProps = {
   className?: string;
 };
 
+function normalizeLogoPath(path: string) {
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+    return path;
+  }
+
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
 export function EteLogo({
   variant = "horizontal",
   image,
   tagline = BRANDING.tagline,
   className,
 }: EteLogoProps) {
-  const src =
-    image ?? (variant === "horizontal" ? BRANDING.logoHorizontal : BRANDING.logoMark);
+  const src = normalizeLogoPath(image ?? (variant === "horizontal" ? BRANDING.logoHorizontal : BRANDING.logoMark));
   const dimensions = variant === "horizontal" ? { width: 420, height: 160 } : { width: 240, height: 240 };
 
   return (
