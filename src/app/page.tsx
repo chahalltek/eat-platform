@@ -4,6 +4,7 @@ import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 import {
   getSystemExecutionState,
   getSystemStatus,
+  type SystemStatus,
   type SubsystemKey,
   type SubsystemState,
   type SystemStatusMap,
@@ -13,7 +14,7 @@ import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { BrandMark } from "@/components/BrandMark";
 import { AgentAvailabilityHints } from "@/components/AgentAvailabilityHints";
 import { getHomeCardMetrics, type HomeCardMetrics, type HomeTelemetryMetrics } from "@/lib/metrics/home";
-import { WorkflowCard } from "@/components/home/WorkflowCard";
+import { WorkflowCard, type WorkflowCardState } from "@/components/home/WorkflowCard";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { BRANDING } from "@/config/branding";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -165,13 +166,13 @@ function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
   ];
 }
 
-function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
+function getDependencyState(link: HomeLink, statusMap: SystemStatusMap): WorkflowCardState {
   if (!link.dependency) {
     return { status: "enabled", isActive: true } as const;
   }
 
-  const dependency = statusMap[link.dependency.subsystem] ?? { status: "unknown" };
-  const dependencyStatus = dependency.status ?? "unknown";
+  const dependency: SystemStatus = statusMap[link.dependency.subsystem] ?? { status: "unknown" };
+  const dependencyStatus: WorkflowCardState["dependencyStatus"] = dependency.status ?? "unknown";
   const dataAvailable = (link.dependency.dataCount ?? 0) > 0;
   const canOpenWithData = link.dependency.allowWhenDataPresent && dataAvailable;
 
@@ -185,7 +186,7 @@ function getDependencyState(link: HomeLink, statusMap: SystemStatusMap) {
     } as const;
   }
 
-  const statusLabel = dependency.status ?? "unknown";
+  const statusLabel: SubsystemState = dependency.status ?? "unknown";
   const detail =
     dependency.detail ?? `${link.dependency.label ?? dependencyLabels[link.dependency.subsystem]} subsystem ${statusLabel.toLowerCase()}`;
 
@@ -283,7 +284,7 @@ export default async function Home() {
   const canResetDegraded = isAdminRole(normalizeRole(currentUser?.role));
 
   const renderLinkCard = (link: HomeLink) => {
-    const dependencyState = getDependencyState(link, systemStatus);
+    const dependencyState: WorkflowCardState = getDependencyState(link, systemStatus);
     const isExecutionHistory = link.label === "Execution history";
     const runsLast7d = link.executionSummary?.runsLast7d ?? 0;
     const hasRuns = runsLast7d > 0;
@@ -346,7 +347,7 @@ export default async function Home() {
     const dependencyMessage =
       dependencyState.message ??
       (isIdleContext ? "Ready to run — platform is healthy but idle." : `${link.label} depends on ${dependencyLabel}`);
-    const normalizedDependencyState = {
+    const normalizedDependencyState: WorkflowCardState = {
       ...dependencyState,
       dependencyStatus,
       message: dependencyMessage,
