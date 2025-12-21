@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../playwright-coverage";
 
 test.describe("status badge contrast", () => {
   test.use({

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { expect, test as setup } from "@playwright/test";
+import { expect, test as setup } from "../playwright-coverage";
 
 import { AUTH_STORAGE_STATE } from "../playwrightAuth";
 

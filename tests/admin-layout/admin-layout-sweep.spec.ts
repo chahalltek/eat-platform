@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../playwright-coverage";
 
 import { DEFAULT_TENANT_ID } from "../../src/lib/auth/config";
 
