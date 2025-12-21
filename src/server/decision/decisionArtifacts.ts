@@ -30,6 +30,11 @@ type ListDecisionArtifactsInput = {
   limit?: number;
 };
 
+type GetDecisionArtifactInput = {
+  artifactId: string;
+  tenantId?: string;
+};
+
 function normalizePayload(payload: unknown): DecisionArtifactPayload {
   if (payload === undefined) {
     return {} satisfies DecisionArtifactPayload;
@@ -84,6 +89,15 @@ export async function publishDecisionArtifact({ artifactId, tenantId, payload }:
       },
     }),
   );
+}
+
+export async function getDecisionArtifact({ artifactId, tenantId }: GetDecisionArtifactInput) {
+  return prisma.decisionArtifact.findFirst({
+    where: {
+      id: artifactId,
+      tenantId: tenantId ?? undefined,
+    },
+  });
 }
 
 export async function listDecisionArtifacts({

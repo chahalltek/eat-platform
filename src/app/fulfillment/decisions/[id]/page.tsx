@@ -14,7 +14,7 @@ export default async function DecisionDetailPage({ params }: { params: { id: str
 
   if (!user) return notFound();
 
-  const decision = await getDecisionArtifact(params.id, { tenantId: user.tenantId });
+  const decision = await getDecisionArtifact({ artifactId: params.id, tenantId: user.tenantId });
   if (!decision) return notFound();
 
   const createdAt = format(new Date(decision.createdAt), "PPP p");

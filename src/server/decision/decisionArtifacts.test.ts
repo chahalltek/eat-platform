@@ -2,14 +2,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createDecisionArtifact,
+  getDecisionArtifact,
   listDecisionArtifacts,
   publishDecisionArtifact,
 } from "@/server/decision/decisionArtifacts";
 
-const { DecisionArtifactStatus, DecisionArtifactType, mockCreate, mockUpdate, mockFindMany, mockWithTenantContext } = vi.hoisted(() => ({
+const {
+  DecisionArtifactStatus,
+  DecisionArtifactType,
+  mockCreate,
+  mockUpdate,
+  mockFindMany,
+  mockFindFirst,
+  mockWithTenantContext,
+} = vi.hoisted(() => ({
   mockCreate: vi.fn(),
   mockUpdate: vi.fn(),
   mockFindMany: vi.fn(),
+  mockFindFirst: vi.fn(),
   mockWithTenantContext: vi.fn(async (_tenantId: string, callback: () => Promise<unknown>) => callback()),
   DecisionArtifactStatus: {
     DRAFT: "DRAFT",
@@ -28,6 +38,7 @@ vi.mock("@/server/db/prisma", () => ({
       create: mockCreate,
       update: mockUpdate,
       findMany: mockFindMany,
+      findFirst: mockFindFirst,
     },
   },
   DecisionArtifactStatus,
@@ -45,6 +56,7 @@ describe("decision artifacts", () => {
     mockCreate.mockReset();
     mockUpdate.mockReset();
     mockFindMany.mockReset();
+    mockFindFirst.mockReset();
     mockWithTenantContext.mockClear();
   });
 
@@ -122,6 +134,21 @@ describe("decision artifacts", () => {
       },
       orderBy: { createdAt: "desc" },
       take: 10,
+    });
+  });
+
+  it("retrieves a single artifact scoped to tenant", async () => {
+    const artifact = { id: "artifact-4", tenantId: "tenant-1" };
+    mockFindFirst.mockResolvedValue(artifact);
+
+    const result = await getDecisionArtifact({ artifactId: "artifact-4", tenantId: "tenant-1" });
+
+    expect(result).toBe(artifact);
+    expect(mockFindFirst).toHaveBeenCalledWith({
+      where: {
+        id: "artifact-4",
+        tenantId: "tenant-1",
+      },
     });
   });
 });
