@@ -83,7 +83,7 @@ describe('RINA agent (BDD)', () => {
         ...fixture.llmResponse,
       });
 
-      const spec: AgentBehaviorSpec<RinaInput, { candidateId: string; agentRunId: string }> = {
+      const spec: AgentBehaviorSpec<RinaInput, { candidateId: string; agentRunId: string; profile: typeof fixture.llmResponse }> = {
         clauses: {
           given: 'a raw resume containing a frontend engineer profile',
           when: 'RINA runs with a mocked LLM response',
@@ -99,6 +99,7 @@ describe('RINA agent (BDD)', () => {
         then: ({ result, snapshot }) => {
           expect(result.candidateId).toBe('candidate-123');
           expect(result.agentRunId).toBe('agent-run-001');
+          expect(result.profile).toEqual(fixture.llmResponse);
 
           expect(candidateCreate).toHaveBeenCalledTimes(1);
           snapshot(candidateCreate.mock.calls[0]?.[0], 'candidate write payload');

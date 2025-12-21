@@ -52,6 +52,16 @@ export default async function RinaTestPage() {
     <ETEClientLayout maxWidthClassName="max-w-4xl" contentClassName="space-y-6">
       {header}
 
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+        <div className="text-sm font-semibold text-slate-800">What to look for</div>
+        <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-600">
+          <li>Skills normalized consistently (no duplication, no hallucinated tools)</li>
+          <li>Title normalization matches seniority and role</li>
+          <li>Location, experience, and employer fields correctly extracted</li>
+          <li>No inferred attributes beyond the resume text</li>
+        </ul>
+      </div>
+
       {!agentsEnabled ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Agents are disabled. Enable the Agents feature flag to run this workflow.

@@ -43,5 +43,32 @@ exports[`RINA agent (BDD) > GIVEN a raw resume containing a frontend engineer pr
 {
   "agentRunId": "agent-run-001",
   "candidateId": "candidate-123",
+  "profile": {
+    "currentCompany": null,
+    "currentTitle": "Frontend Engineer",
+    "email": "jane@example.com",
+    "fullName": "Jane Doe",
+    "location": null,
+    "parsingConfidence": 0.92,
+    "phone": null,
+    "seniorityLevel": "mid",
+    "skills": [
+      {
+        "name": "React",
+        "normalizedName": "React",
+        "proficiency": "advanced",
+        "yearsOfExperience": 4,
+      },
+      {
+        "name": "TypeScript",
+        "normalizedName": "TypeScript",
+        "proficiency": "advanced",
+        "yearsOfExperience": 3,
+      },
+    ],
+    "summary": "Frontend engineer focused on React and TypeScript.",
+    "totalExperienceYears": 5,
+    "warnings": [],
+  },
 }
 `;

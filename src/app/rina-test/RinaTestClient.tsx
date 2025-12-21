@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+
+import type { RinaLLMResponse } from "@/lib/agents/contracts/rinaContract";
 
 type RinaResult = {
   candidateId: string;
   agentRunId: string;
+  profile?: RinaLLMResponse;
 };
 
 type RinaTestClientProps = {
@@ -20,6 +23,9 @@ export function RinaTestClient({ agentsEnabled }: RinaTestClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [sourceType, setSourceType] = useState<string>("manual");
   const [sourceTag, setSourceTag] = useState<string>("");
+  const responseRef = useRef<HTMLPreElement | null>(null);
+
+  const profile = result?.profile;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,6 +108,7 @@ export function RinaTestClient({ agentsEnabled }: RinaTestClientProps) {
               className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               placeholder="e.g. manual"
             />
+            <p className="text-xs text-zinc-500">Used to differentiate ingestion paths in diagnostics and audits.</p>
           </div>
 
           <div className="space-y-1">
@@ -116,10 +123,11 @@ export function RinaTestClient({ agentsEnabled }: RinaTestClientProps) {
               className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               placeholder="e.g. uploaded-by-jane"
             />
+            <p className="text-xs text-zinc-500">Helps trace where this resume originated (upload, ATS, test).</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <button
             type="submit"
             disabled={loading || !agentsEnabled}
@@ -128,6 +136,9 @@ export function RinaTestClient({ agentsEnabled }: RinaTestClientProps) {
             {loading ? "Sending to RINA…" : "Run RINA"}
           </button>
           <p className="text-xs text-zinc-500">Payload: &#123; recruiterId: "charlie", rawResumeText &#125;</p>
+          <p className="text-xs text-zinc-500">
+            • RINA outputs feed matching and scoring. If normalization looks wrong here, downstream results will degrade.
+          </p>
         </div>
       </form>
 
@@ -136,16 +147,172 @@ export function RinaTestClient({ agentsEnabled }: RinaTestClientProps) {
       )}
 
       {result && (
-        <section className="mt-4 space-y-2 text-sm">
-          <h2 className="text-base font-semibold text-zinc-800">Response</h2>
-          <pre className="overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-800">
-            {JSON.stringify(result, null, 2)}
-          </pre>
-          <p className="text-zinc-600">
-            Use <code>candidateId</code> to find the record and <code>agentRunId</code> for the agent log.
-          </p>
+        <section className="mt-4 space-y-3 text-sm">
+          <NormalizedSummary
+            profile={profile}
+            onJumpToJson={() => {
+              if (responseRef.current) {
+                responseRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
+          />
+
+          <div className="space-y-2">
+            <h2 className="text-base font-semibold text-zinc-800">Response</h2>
+            <pre
+              ref={responseRef}
+              className="overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-800"
+            >
+              {JSON.stringify(result, null, 2)}
+            </pre>
+            <p className="text-zinc-600">
+              Use <code>candidateId</code> to find the record and <code>agentRunId</code> for the agent log.
+            </p>
+          </div>
         </section>
       )}
+    </div>
+  );
+}
+
+function valueOrDash(value?: string | number | null) {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "number") return Number.isFinite(value) ? value : "—";
+  const trimmed = value.toString().trim();
+  return trimmed ? trimmed : "—";
+}
+
+function NormalizedSummary({
+  profile,
+  onJumpToJson,
+}: {
+  profile?: RinaLLMResponse | null;
+  onJumpToJson?: () => void;
+}) {
+  const skills = useMemo(() => {
+    if (!profile?.skills) return [];
+    const normalized = profile.skills.map((skill) => skill.normalizedName || skill.name).filter(Boolean);
+    const seen = new Set<string>();
+    const deduped: string[] = [];
+
+    for (const entry of normalized) {
+      const key = entry.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(entry);
+      if (deduped.length >= 12) break;
+    }
+
+    return deduped;
+  }, [profile]);
+
+  const recentEmployers = useMemo(() => {
+    if (!profile) return [];
+    const employers = (profile as Record<string, unknown>).recentEmployers;
+    const normalized = Array.isArray(employers)
+      ? employers
+          .map((entry) => (typeof entry === "string" ? entry : null))
+          .filter((entry): entry is string => Boolean(entry?.trim()))
+          .slice(0, 3)
+      : [];
+
+    if (normalized.length > 0) return normalized;
+    if (profile.currentCompany) return [profile.currentCompany];
+    return [];
+  }, [profile]);
+
+  const certifications = useMemo(() => {
+    const certs = (profile as Record<string, unknown> | undefined)?.certifications;
+    if (Array.isArray(certs)) {
+      return certs
+        .map((entry) => (typeof entry === "string" ? entry : null))
+        .filter((entry): entry is string => Boolean(entry?.trim()))
+        .slice(0, 6);
+    }
+    return [];
+  }, [profile]);
+
+  return (
+    <details open className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-inner transition">
+      <summary className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-slate-800">
+        <span>Normalized summary</span>
+        {onJumpToJson ? (
+          <button
+            type="button"
+            onClick={onJumpToJson}
+            className="text-xs font-medium text-indigo-600 underline decoration-indigo-300 decoration-2 underline-offset-4 hover:text-indigo-500"
+          >
+            Jump to JSON
+          </button>
+        ) : null}
+      </summary>
+
+      <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+        <SummaryField label="Normalized title" value={valueOrDash(profile?.currentTitle)} />
+        <SummaryField label="Seniority / level" value={valueOrDash(profile?.seniorityLevel)} />
+        <SummaryField label="Location" value={valueOrDash(profile?.location)} />
+        <SummaryField label="Years of experience" value={valueOrDash(profile?.totalExperienceYears)} />
+        <SummaryField
+          label="Primary skills"
+          value={
+            skills.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {skills.map((skill) => (
+                  <span key={skill} className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              "—"
+            )
+          }
+        />
+        <SummaryField
+          label="Recent employers"
+          value={
+            recentEmployers.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {recentEmployers.map((employer) => (
+                  <span key={employer} className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200">
+                    {employer}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              "—"
+            )
+          }
+        />
+        <SummaryField
+          label="Certifications"
+          value={
+            certifications.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {certifications.map((certification) => (
+                  <span
+                    key={certification}
+                    className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200"
+                  >
+                    {certification}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              "—"
+            )
+          }
+        />
+      </div>
+    </details>
+  );
+}
+
+function SummaryField({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="space-y-1 rounded-lg bg-white/60 px-3 py-2 ring-1 ring-slate-200">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-sm text-slate-800">{value}</div>
     </div>
   );
 }

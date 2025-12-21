@@ -30,7 +30,7 @@ export async function runRina(
   input: RinaInput,
   retryMetadata?: AgentRetryMetadata,
   llmAdapter?: OpenAIAdapter,
-): Promise<{ candidateId: string; agentRunId: string }> {
+): Promise<{ candidateId: string; agentRunId: string; profile: RinaLLMResponse }> {
   const { rawResumeText, sourceType, sourceTag, currentUser } = input;
   const normalizedRawResumeText = rawResumeText.trim();
   const user =
@@ -54,7 +54,7 @@ export async function runRina(
       version: RINA_PROMPT_VERSION,
     })) ?? ({ prompt: '', version: RINA_PROMPT_VERSION } as const);
 
-  const [result, agentRunId] = await withAgentRun<{ candidateId: string }>(
+  const [result, agentRunId] = await withAgentRun<{ candidateId: string; profile: RinaLLMResponse }>(
     {
       agentName: 'ETE-TS.RINA',
       recruiterId: user.id,
@@ -120,7 +120,7 @@ export async function runRina(
       });
 
       return {
-        result: { candidateId: candidate.id },
+        result: { candidateId: candidate.id, profile: parsed },
         outputSnapshot: parsed,
       };
     },
