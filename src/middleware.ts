@@ -27,6 +27,7 @@ const PUBLIC_PATHS = [
   '/login',
   '/visual/status-badges',
 ];
+const ASSET_PATH_PATTERN = /\.(png|svg|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest)$/i;
 const ADMIN_PATH_PREFIXES = ['/admin', '/api/admin'];
 const RECRUITER_PATH_PREFIXES = ['/candidates', '/jobs', '/agents', '/dashboard', '/api', '/ete/jobs', '/fulfillment'];
 const HIRING_MANAGER_PATH_PREFIXES = ['/ete/hiring-manager'];
@@ -104,6 +105,10 @@ export async function middleware(request: NextRequest) {
   const headerUserId = request.headers.get(USER_HEADER)?.trim();
   const headerRole = request.headers.get(ROLE_HEADER)?.trim();
   const headerTenantId = request.headers.get(TENANT_HEADER)?.trim();
+
+  if (ASSET_PATH_PATTERN.test(requestPath)) {
+    return NextResponse.next();
+  }
 
   if (
     isPublicDemoMode() &&

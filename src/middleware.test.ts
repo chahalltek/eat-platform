@@ -59,6 +59,14 @@ describe('middleware role enforcement', () => {
     expect(response.status).toBe(200);
   });
 
+  it('allows unauthenticated requests for static assets', async () => {
+    vi.mocked(getValidatedSession).mockResolvedValue({ session: null, error: null });
+
+    const response = await middleware(createRequest('/ete-logo.svg'));
+
+    expect(response.status).toBe(200);
+  });
+
   it('redirects legacy eat paths to ete', async () => {
     const response = await middleware(createRequest('/eat/system-map'));
 
