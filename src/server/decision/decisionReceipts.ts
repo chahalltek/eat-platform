@@ -758,3 +758,48 @@ export async function listDecisionReceipts({
 
   return mapped.reverse().filter((entry) => entry.jobId === jobId);
 }
+
+export async function getDecisionReceiptById({
+  id,
+  tenantId,
+  historyLimit = 200,
+}: {
+  id: string;
+  tenantId?: string | null;
+  historyLimit?: number;
+}): Promise<DecisionReceiptRecord | null> {
+  const normalizedTenantId = (tenantId ?? DEFAULT_TENANT_ID).trim();
+  const trimmedId = id.trim();
+
+  if (!trimmedId) return null;
+
+  const event = await prisma.metricEvent.findFirst({
+    where: {
+      id: trimmedId,
+      tenantId: normalizedTenantId,
+      eventType: "DECISION_RECEIPT_CREATED",
+    },
+    select: {
+      id: true,
+      entityId: true,
+      meta: true,
+    },
+  });
+
+  if (!event) return null;
+
+  const meta = (event.meta ?? {}) as Record<string, unknown>;
+  const jobId = typeof meta.jobId === "string" ? meta.jobId.trim() : event.entityId?.trim() ?? "";
+  const candidateId = typeof meta.candidateId === "string" ? meta.candidateId.trim() : null;
+
+  if (!jobId) return null;
+
+  const receipts = await listDecisionReceipts({
+    tenantId: normalizedTenantId,
+    jobId,
+    candidateId,
+    take: historyLimit,
+  });
+
+  return receipts.find((receipt) => receipt.id === trimmedId) ?? null;
+}

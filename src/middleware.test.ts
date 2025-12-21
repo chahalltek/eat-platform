@@ -75,6 +75,15 @@ describe('middleware role enforcement', () => {
     expect(response.headers.get(ROLE_HEADER)).toBe('RECRUITER');
   });
 
+  it('allows fulfillment decision pages for recruiter users', async () => {
+    const response = await middleware(createRequest('/fulfillment/decisions/rec-123'));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get(USER_HEADER)).toBe('charlie');
+    expect(response.headers.get(TENANT_HEADER)).toBe('default-tenant');
+    expect(response.headers.get(ROLE_HEADER)).toBe('RECRUITER');
+  });
+
   it('blocks admin pages for non-admin users', async () => {
     const response = await middleware(createRequest('/admin/feature-flags'));
 

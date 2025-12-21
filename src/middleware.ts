@@ -27,7 +27,7 @@ const PUBLIC_PATHS = [
   '/visual/status-badges',
 ];
 const ADMIN_PATH_PREFIXES = ['/admin', '/api/admin'];
-const RECRUITER_PATH_PREFIXES = ['/candidates', '/jobs', '/agents', '/dashboard', '/api', '/ete/jobs'];
+const RECRUITER_PATH_PREFIXES = ['/candidates', '/jobs', '/agents', '/dashboard', '/api', '/ete/jobs', '/fulfillment'];
 const HIRING_MANAGER_PATH_PREFIXES = ['/ete/hiring-manager'];
 const EXEC_PATH_PREFIXES = ['/exec'];
 const LEGACY_PATH_PREFIXES = [

@@ -4,6 +4,7 @@ import type { IdentityUser } from "@/lib/auth/types";
 import {
   CONFIDENCE_FRAMES,
   createDecisionReceipt,
+  getDecisionReceiptById,
   frameConfidence,
   listDecisionReceipts,
   standardizeRisks,
@@ -68,7 +69,20 @@ const mocks = vi.hoisted(() => {
     },
   );
 
-  return { metricEvents, mockCreate, mockFindMany };
+  const mockFindFirst = vi.fn(async (params: { where: Record<string, unknown> }) => {
+    const { where } = params;
+    const id = where.id as string | undefined;
+    const tenantId = where.tenantId as string | undefined;
+    const eventType = where.eventType as string | undefined;
+
+    return (
+      metricEvents.find(
+        (entry) => entry.id === id && entry.tenantId === tenantId && entry.eventType === eventType,
+      ) ?? null
+    );
+  });
+
+  return { metricEvents, mockCreate, mockFindMany, mockFindFirst };
 });
 
 vi.mock("@/server/db/prisma", () => ({
@@ -76,6 +90,7 @@ vi.mock("@/server/db/prisma", () => ({
     metricEvent: {
       create: mocks.mockCreate,
       findMany: mocks.mockFindMany,
+      findFirst: mocks.mockFindFirst,
     },
   },
 }));
@@ -102,6 +117,7 @@ describe("decision receipts governance and audit trail", () => {
     mocks.metricEvents.splice(0, mocks.metricEvents.length);
     mocks.mockCreate.mockClear();
     mocks.mockFindMany.mockClear();
+    mocks.mockFindFirst.mockClear();
   });
 
   it("tracks chain integrity, overrides, and missing signals", async () => {
@@ -156,6 +172,46 @@ describe("decision receipts governance and audit trail", () => {
     expect(latest.governance.missingSignals).toContain("risks");
 
     expect(first.governance.missingSignals).toEqual(expect.arrayContaining(["drivers", "risks", "confidence"]));
+  });
+});
+
+describe("getDecisionReceiptById", () => {
+  const user: IdentityUser = {
+    id: "user-1",
+    tenantId: "tenant-1",
+    email: "recruiter@example.com",
+    displayName: "Recruiter",
+  };
+
+  beforeEach(() => {
+    mocks.metricEvents.splice(0, mocks.metricEvents.length);
+  });
+
+  it("returns null for other tenants and resolves full receipt for matching tenant", async () => {
+    const created = await createDecisionReceipt({
+      tenantId: "tenant-1",
+      payload: {
+        jobId: "job-42",
+        candidateId: "cand-42",
+        candidateName: "Candidate Forty Two",
+        decisionType: "RECOMMEND",
+        drivers: ["Coverage match"],
+        risks: ["Data quality"],
+        confidenceScore: 7,
+        summary: "Recommendation recorded.",
+        bullhornTarget: "note",
+      },
+      user,
+    });
+
+    const crossTenant = await getDecisionReceiptById({ id: created.id, tenantId: "tenant-2" });
+    expect(crossTenant).toBeNull();
+
+    const resolved = await getDecisionReceiptById({ id: created.id, tenantId: "tenant-1" });
+    expect(resolved).not.toBeNull();
+    expect(resolved?.id).toBe(created.id);
+    expect(resolved?.jobId).toBe("job-42");
+    expect(resolved?.candidateId).toBe("cand-42");
   });
 });
 
