@@ -33,7 +33,8 @@
     "verify:mvp:smoke": "vitest run tests/smoke/mvp-smoke.test.ts",
     "verify:mvp": "vitest run --config tests/mvp-verify/verify.mvp.config.ts && node scripts/verify-mvp-summary.js",
     "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts",
-    "e2e:visual": "playwright test --config=playwright.visual.config.ts"
+    "e2e:visual": "playwright test --config=playwright.visual.config.ts",
+    "e2e:routes": "playwright test --config=playwright.e2e.config.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
