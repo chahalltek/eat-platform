@@ -4,7 +4,6 @@ import {
   JobCandidateStatus,
   prisma,
   type Decision,
-  type Prisma,
 } from "@/server/db/prisma";
 
 export type DecisionPayload = {
@@ -118,9 +117,7 @@ function inferMatchScore(candidate: { lastMatch?: { score: number | null } | nul
   return Number.isFinite(rounded) ? rounded : null;
 }
 
-function describeCandidateSummary(candidate: Prisma.JobCandidateGetPayload<{
-  include: { candidate: true; lastMatch: true };
-}>) {
+function describeCandidateSummary(candidate: DecisionJob["jobCandidates"][number]) {
   const headlineParts = [candidate.candidate.currentTitle, candidate.candidate.currentCompany].filter(Boolean);
   const headline = headlineParts.length ? headlineParts.join(" @ ") : null;
   return headline ?? candidate.candidate.summary ?? null;
