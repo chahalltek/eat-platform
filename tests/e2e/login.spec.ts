@@ -1,7 +1,11 @@
 <<<<<<< ours
+<<<<<<< ours
 import { expect, test } from "./fixtures";
 =======
 import { expect, test } from "../../e2e/testBase";
+>>>>>>> theirs
+=======
+import { expect, test } from "./fixtures";
 >>>>>>> theirs
 
 test.describe("login page branding", () => {

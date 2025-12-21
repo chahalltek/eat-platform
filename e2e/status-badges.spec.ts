@@ -1,4 +1,8 @@
+<<<<<<< ours
 import { expect, test } from "./testBase";
+=======
+import { expect, test } from "../tests/e2e/fixtures";
+>>>>>>> theirs
 
 test.describe("Status badges showcase", () => {
   test("renders the visual gallery without authentication", async ({ page }) => {
