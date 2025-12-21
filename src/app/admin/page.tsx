@@ -2,6 +2,7 @@ import {
   BanknotesIcon,
   BoltIcon,
   BuildingOffice2Icon,
+  ChartBarIcon,
   FunnelIcon,
   ExclamationTriangleIcon,
   PlayCircleIcon,
@@ -231,6 +232,26 @@ export default async function AdminHealthPage() {
                   </p>
                   <span className="text-sm font-semibold text-indigo-600 transition group-hover:text-indigo-700 dark:text-indigo-300 dark:group-hover:text-indigo-200">
                     Open feature flags
+                  </span>
+                </div>
+              </Link>
+              <Link
+                href="/admin/usage"
+                className="group flex items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
+                  <ChartBarIcon className="h-6 w-6" aria-hidden />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Usage metering</p>
+                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-purple-800 dark:bg-purple-900/50 dark:text-purple-100">Reporting</span>
+                  </div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    View monthly ETE usage across tenants to validate billing dimensions and growth.
+                  </p>
+                  <span className="text-sm font-semibold text-indigo-600 transition group-hover:text-indigo-700 dark:text-indigo-300 dark:group-hover:text-indigo-200">
+                    View usage
                   </span>
                 </div>
               </Link>
