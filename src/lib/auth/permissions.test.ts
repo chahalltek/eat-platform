@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_TENANT_ID } from "./config";
 import {
   canAccessExecIntelligence,
+  canExportDecisionDrafts,
   canExportMatches,
   canExportShortlist,
   canManageFeatureFlags,
@@ -186,5 +187,15 @@ describe("RBAC permission matrix", () => {
 
     expect(canExportMatches(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), tenant)).toBe(true);
     expect(canExportMatches(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(false);
+  });
+
+  it("allows recruiters to export decisions while sourcers stay view-only", () => {
+    const tenant = "tenant-a";
+
+    expect(canExportDecisionDrafts(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
+    expect(canExportDecisionDrafts(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(true);
+    expect(canExportDecisionDrafts(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
+    expect(canExportDecisionDrafts(buildUser(USER_ROLES.RECRUITER, tenant), "tenant-b")).toBe(false);
+    expect(canExportDecisionDrafts(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), "tenant-b")).toBe(true);
   });
 });

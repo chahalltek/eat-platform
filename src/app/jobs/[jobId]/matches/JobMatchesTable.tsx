@@ -92,8 +92,9 @@ export function JobMatchesTable({
   matches,
   jobTitle,
   jobId,
+  canExportDecisions,
   showSopLink = false,
-}: { matches: MatchRow[]; jobTitle: string; jobId: string; showSopLink?: boolean }) {
+}: { matches: MatchRow[]; jobTitle: string; jobId: string; canExportDecisions: boolean; showSopLink?: boolean }) {
   const [shortlistState, setShortlistState] = useState<Map<string, ShortlistState>>(
     () =>
       new Map(
@@ -586,7 +587,7 @@ export function JobMatchesTable({
   return (
     <>
       <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-        <ShortlistActions jobId={jobId} matches={filteredMatches} />
+        <ShortlistActions jobId={jobId} jobTitle={jobTitle} matches={filteredMatches} canExportDecisions={canExportDecisions} />
       </div>
       <StandardTable
         data={filteredMatches}

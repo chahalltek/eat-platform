@@ -5,12 +5,14 @@ import { JobCandidateStatus } from "@/server/db/prisma";
 import { JobMatchesTable, type MatchRow } from "./JobMatchesTable";
 import { RunMatcherButton } from "./RunMatcherButton";
 import { computeCandidateConfidenceScore } from "@/lib/candidates/confidenceScore";
+import { canExportDecisionDrafts } from "@/lib/auth/permissions";
 import { categorizeConfidence } from "./confidence";
 import { getJobPredictiveSignals } from "@/lib/metrics/eteInsights";
 import { prisma } from "@/server/db/prisma";
 import { type HiringOutcomeStatus } from "@/lib/hiringOutcomes";
 import { BackToConsoleButton } from "@/components/BackToConsoleButton";
 import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
+import { getCurrentUser } from "@/lib/auth/user";
 
 export default async function JobMatchesPage({
   params,
@@ -53,6 +55,8 @@ export default async function JobMatchesPage({
     return null;
   });
 
+  const currentUser = await getCurrentUser();
+
   if (!job) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-10 space-y-4">
@@ -75,6 +79,7 @@ export default async function JobMatchesPage({
 
   const predictiveSignals = await getJobPredictiveSignals(job.id, job.tenantId);
   const showSopLink = await isFeatureEnabled(FEATURE_FLAGS.SOP_CONTEXTUAL_LINKS);
+  const canExportShortlistDecisions = canExportDecisionDrafts(currentUser, job.tenantId);
 
   const matchRows: MatchRow[] = job.matchResults.map((match) => {
     const candidateId = match.candidateId ?? match.candidate.id;
@@ -238,7 +243,13 @@ export default async function JobMatchesPage({
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <JobMatchesTable matches={matchRows} jobTitle={job.title} jobId={job.id} showSopLink={showSopLink} />
+        <JobMatchesTable
+          matches={matchRows}
+          jobTitle={job.title}
+          jobId={job.id}
+          showSopLink={showSopLink}
+          canExportDecisions={canExportShortlistDecisions}
+        />
       </div>
     </div>
   );

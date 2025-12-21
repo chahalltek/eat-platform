@@ -1,107 +1,150 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
+import { normalizeMatchExplanation } from "@/lib/matching/explanation";
 import { type JobCandidateStatus } from "@/lib/jobs/status";
 
 import type { MatchRow } from "./JobMatchesTable";
 
 type Props = {
   jobId: string;
+  jobTitle: string;
   matches: MatchRow[];
+  canExportDecisions: boolean;
 };
 
 type CopyState = "idle" | "success" | "error";
 type ExportState = "idle" | "loading" | "success" | "error";
 
-const SHORTLISTED_STATUS: JobCandidateStatus = "SHORTLISTED";
+type ShortlistExportRow = {
+  name: string;
+  title: string;
+  strengths: string[];
+  risks: string[];
+  confidence: string;
+};
 
-export function ShortlistActions({ jobId, matches }: Props) {
+const SHORTLISTED_STATUS: JobCandidateStatus = "SHORTLISTED";
+const SHORTLIST_COLUMNS = ["Name", "Title", "Key strengths", "Risks", "Confidence"] as const;
+
+function normalizePercent(value?: number | null) {
+  if (typeof value !== "number" || Number.isNaN(value)) return "—";
+  const normalized = value > 1 ? value : value * 100;
+  return `${Math.round(normalized)}%`;
+}
+
+function formatList(values: string[], fallback: string, limit = 3) {
+  const normalized = values.map((value) => value.trim()).filter(Boolean);
+  if (normalized.length === 0) {
+    return [fallback];
+  }
+
+  return Array.from(new Set(normalized)).slice(0, limit);
+}
+
+function formatConfidence(match: MatchRow) {
+  const score = normalizePercent(match.confidenceScore);
+  const category = match.confidenceCategory ?? null;
+
+  if (score === "—" && !category) return "—";
+  if (category) return `${score} (${category})`;
+  return score;
+}
+
+function extractReasonList(explanation: unknown, key: "topReasons" | "riskAreas") {
+  if (explanation && typeof explanation === "object" && Array.isArray((explanation as Record<string, unknown>)[key])) {
+    return ((explanation as Record<string, unknown>)[key] as unknown[])
+      .map((entry) => (typeof entry === "string" ? entry : String(entry)))
+      .filter(Boolean);
+  }
+
+  return null;
+}
+
+export function buildShortlistRows(matches: MatchRow[]): ShortlistExportRow[] {
+  return matches.map((match) => {
+    const explanation = normalizeMatchExplanation(match.explanation);
+    const explicitTopReasons = extractReasonList(match.explanation, "topReasons");
+    const explicitRiskAreas = extractReasonList(match.explanation, "riskAreas");
+    const strengths = formatList(
+      [...(explicitTopReasons ?? explanation.topReasons), ...(match.keySkills ?? []).map((skill) => `${skill} coverage`)],
+      "Key strengths not captured yet.",
+    );
+    const risks = formatList(explicitRiskAreas ?? explanation.riskAreas, "No risks recorded yet.");
+
+    return {
+      name: match.candidateName ?? "Name not provided",
+      title: match.currentTitle ?? match.jobTitle ?? "—",
+      strengths,
+      risks,
+      confidence: formatConfidence(match),
+    };
+  });
+}
+
+export function buildShortlistClipboard(jobTitle: string, jobId: string, rows: ShortlistExportRow[]) {
+  const lines: string[] = [];
+  lines.push(`Shortlist export for ${jobTitle} (${jobId})`);
+  lines.push(`Total shortlisted: ${rows.length}`);
+  lines.push("");
+  lines.push(`| ${SHORTLIST_COLUMNS.join(" | ")} |`);
+  lines.push(`| ${SHORTLIST_COLUMNS.map(() => "---").join(" | ")} |`);
+  for (const row of rows) {
+    lines.push(
+      `| ${row.name} | ${row.title} | ${row.strengths.join("; ")} | ${row.risks.join("; ")} | ${row.confidence} |`,
+    );
+  }
+  lines.push("");
+  lines.push("_Generated via decision.export access for recruiting._");
+
+  return lines.join("\n");
+}
+
+export function buildShortlistCsv(rows: ShortlistExportRow[]) {
+  const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+
+  const csvLines = [
+    SHORTLIST_COLUMNS.map(escapeCsv).join(","),
+    ...rows.map((row) =>
+      [
+        row.name,
+        row.title,
+        row.strengths.join("; "),
+        row.risks.join("; "),
+        row.confidence,
+      ].map(escapeCsv).join(","),
+    ),
+  ];
+
+  return csvLines.join("\r\n");
+}
+
+export function ShortlistActions({ jobId, jobTitle, matches, canExportDecisions }: Props) {
   const shortlisted = useMemo(
     () =>
-      matches
-        .filter((match) => match.shortlisted ?? match.jobCandidateStatus === SHORTLISTED_STATUS)
-        .map((match) => ({
-          ...match,
-          confidenceBand: match.confidenceCategory ?? null,
-        })),
+      matches.filter((match) => match.shortlisted ?? match.jobCandidateStatus === SHORTLISTED_STATUS).map((match) => ({
+        ...match,
+        confidenceBand: match.confidenceCategory ?? null,
+      })),
     [matches],
   );
+  const shortlistRows = useMemo(() => buildShortlistRows(shortlisted), [shortlisted]);
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [exportState, setExportState] = useState<ExportState>("idle");
 
-  const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
-
-  function formatPercent(value?: number | null) {
-    if (typeof value !== "number") return "—";
-    return `${Math.round(value)}%`;
-  }
-
-  function deriveStrengths(match: MatchRow): string[] {
-    const explanation = match.explanation as { topReasons?: string[] } | undefined;
-    const reasons = explanation?.topReasons ?? [];
-    const skills = match.keySkills ?? [];
-    const combined = [...reasons, ...skills.map((skill) => `${skill} coverage`)];
-
-    while (combined.length < 3) {
-      combined.push("Relevant strengths recorded by the matcher.");
-    }
-
-    return combined.slice(0, 3);
-  }
-
-  function deriveRisks(match: MatchRow): string[] {
-    const explanation = match.explanation as { riskAreas?: string[] } | undefined;
-    const risks = explanation?.riskAreas ?? [];
-
-    if (risks.length === 0) {
-      return ["No critical risks recorded", "Confirm details during outreach"];
-    }
-
-    const padded = [...risks];
-    while (padded.length < 2) {
-      padded.push("Confirm role expectations in follow-up.");
-    }
-
-    return padded.slice(0, 2);
-  }
+  const exportsBlocked = shortlistRows.length === 0 || !canExportDecisions;
 
   async function handleDownloadCsv() {
     setExportState("loading");
 
-    if (shortlisted.length === 0) {
+    if (exportsBlocked) {
       setExportState("error");
       return;
     }
 
-    const headers = [
-      "Candidate",
-      "Score",
-      "Confidence",
-      "Top strength 1",
-      "Top strength 2",
-      "Top strength 3",
-      "Risk 1",
-      "Risk 2",
-    ];
-
-    const rows = shortlisted.map((match) => {
-      const strengths = deriveStrengths(match);
-      const risks = deriveRisks(match);
-
-      return [
-        match.candidateName ?? "Name not provided",
-        formatPercent(match.score),
-        match.confidenceCategory ?? "—",
-        strengths[0],
-        strengths[1],
-        strengths[2],
-        risks[0],
-        risks[1],
-      ];
-    });
-
-    const csvLines = [headers.map(escapeCsv).join(","), ...rows.map((row) => row.map(escapeCsv).join(","))];
-    const blob = new Blob([csvLines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const csvContent = buildShortlistCsv(shortlistRows);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -117,39 +160,15 @@ export function ShortlistActions({ jobId, matches }: Props) {
   async function handleCopyShortlist() {
     setCopyState("idle");
 
-    if (shortlisted.length === 0) {
+    if (exportsBlocked || !navigator?.clipboard?.writeText) {
       setCopyState("error");
       return;
     }
 
-    if (!navigator?.clipboard?.writeText) {
-      setCopyState("error");
-      return;
-    }
-
-    const headers = ["Candidate", "Email", "Title", "Match", "Confidence", "Notes"];
-    const rows = shortlisted.map((match) => [
-      match.candidateName ?? "Name not provided",
-      match.candidateEmail ?? "—",
-      match.currentTitle ?? "—",
-      formatPercent(match.score),
-      formatPercent(match.confidenceScore),
-      match.jobCandidateNotes ?? "",
-    ]);
-
-    const lines: string[] = [];
-    lines.push(`Shortlist for Job ${jobId}`);
-    lines.push("");
-    lines.push(`| ${headers.join(" | ")} |`);
-    lines.push(`| ${headers.map(() => "---").join(" | ")} |`);
-    for (const row of rows) {
-      lines.push(`| ${row.join(" | ")} |`);
-    }
-    lines.push("");
-    lines.push("_Generated by EDGE Talent Engine shortlist export._");
+    const payload = buildShortlistClipboard(jobTitle, jobId, shortlistRows);
 
     try {
-      await navigator.clipboard.writeText(lines.join("\n"));
+      await navigator.clipboard.writeText(payload);
       setCopyState("success");
     } catch (error) {
       console.error("Failed to copy shortlist", error);
@@ -159,25 +178,32 @@ export function ShortlistActions({ jobId, matches }: Props) {
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="text-sm text-gray-700">
-        Shortlisted candidates: <span className="font-semibold">{shortlisted.length}</span>
+      <div className="space-y-1 text-sm text-gray-700">
+        <div>
+          Shortlisted candidates: <span className="font-semibold">{shortlistRows.length}</span>
+        </div>
+        <p className="text-xs text-gray-600">
+          {canExportDecisions
+            ? "Copy an email-ready table or download a CSV with strengths, risks, and confidence."
+            : "decision.export is required to copy or download. Sourcers can still view the shortlist."}
+        </p>
       </div>
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
           onClick={handleCopyShortlist}
-          disabled={shortlisted.length === 0}
+          disabled={exportsBlocked}
           className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {copyState === "success" ? "Copied" : "Copy shortlist to clipboard"}
+          {copyState === "success" ? "Copied" : copyState === "error" ? "Copy unavailable" : "Copy to clipboard"}
         </button>
         <button
           type="button"
           onClick={handleDownloadCsv}
-          disabled={shortlisted.length === 0 || exportState === "loading"}
+          disabled={exportsBlocked || exportState === "loading"}
           className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
         >
-          {exportState === "loading" ? "Preparing…" : "Download shortlist CSV"}
+          {exportState === "loading" ? "Preparing…" : exportState === "error" ? "Download blocked" : "Download CSV"}
         </button>
       </div>
     </div>

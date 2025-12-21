@@ -16,6 +16,7 @@ type Permission =
   | "MANAGE_TENANTS"
   | "VIEW_EXEC_INTELLIGENCE"
   | "USE_STRATEGIC_COPILOT"
+  | "DECISION_EXPORT"
   | "EXPORT_SHORTLIST"
   | "EXPORT_MATCHES";
 
@@ -31,6 +32,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
+    "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
   ]),
@@ -45,6 +47,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
+    "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
   ]),
@@ -55,11 +58,12 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "VIEW_QUALITY_METRICS",
     "VIEW_AGENT_LOGS",
     "VIEW_EXEC_INTELLIGENCE",
+    "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
   ]),
-  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS"]),
-  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES"]),
+  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "DECISION_EXPORT"]),
+  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "DECISION_EXPORT"]),
   [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES"]),
   [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES"]),
   [USER_ROLES.SYSTEM_ADMIN]: new Set<Permission>([
@@ -73,6 +77,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "MANAGE_TENANTS",
     "VIEW_EXEC_INTELLIGENCE",
     "USE_STRATEGIC_COPILOT",
+    "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
   ]),
@@ -164,6 +169,10 @@ export function canAccessExecIntelligence(user: PermissionUser, tenantId?: strin
 
 export function canUseStrategicCopilot(user: PermissionUser, tenantId?: string | null) {
   return hasPermission(user, "USE_STRATEGIC_COPILOT") && hasTenantAccess(user, tenantId);
+}
+
+export function canExportDecisionDrafts(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "DECISION_EXPORT") && hasTenantAccess(user, tenantId);
 }
 
 export function canExportShortlist(user: PermissionUser, tenantId?: string | null) {
