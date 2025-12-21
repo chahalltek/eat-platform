@@ -387,13 +387,18 @@ export default async function Home() {
               className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-indigo-200 bg-white/90 px-4 py-2 text-sm font-semibold text-indigo-700 shadow-md transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-lg"
             >
               <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" aria-hidden />
-              System Map
+              <span className="text-[13px] font-semibold tracking-[0.14em] text-indigo-700">
+                <span className="uppercase">System Map</span>
+                <span className="ml-1 text-[11px] font-medium tracking-normal text-indigo-500">· How ETE thinks</span>
+              </span>
             </Link>
           </div>
-          <p className="max-w-2xl text-base leading-relaxed text-zinc-600">
-            <span className="block">{heroDescription}</span>
-            <span className="block text-sm text-zinc-500">{BRANDING.tagline}</span>
-          </p>
+          <div className="flex flex-col gap-1.5">
+            <p className="max-w-2xl text-base font-semibold leading-relaxed text-zinc-700">
+              {heroDescription}
+            </p>
+            <p className="text-sm font-medium text-zinc-500">{BRANDING.tagline}</p>
+          </div>
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500">EDGE Talent Engine™ is a product of Strategic Systems.</p>
           <p className="max-w-2xl text-lg text-zinc-600">
             UI blocks are turned off. Enable the UI Blocks flag to restore navigation and workflows.
@@ -414,21 +419,45 @@ export default async function Home() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-3">
                 <BrandMark withText />
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">{productNameWithMark}</h1>
-                  <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-                    <span className="block">{heroDescription}</span>
-                    <span className="block text-sm text-zinc-500 dark:text-zinc-400">{BRANDING.tagline}</span>
-                  </p>
-                  <p className="max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                    “ETE is an agentic decision-support system where specialized agents reason at key moments, humans retain authority, and
-                    the system preserves judgment as durable memory.”
+                  <div className="flex flex-col gap-1.5">
+                    <p className="max-w-2xl text-lg font-semibold leading-relaxed text-zinc-900 dark:text-zinc-100">
+                      {heroDescription}
+                    </p>
+                    <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{BRANDING.tagline}</p>
+                  </div>
+                  <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    ETE is an agentic decision-support system where specialized agents reason at key moments, humans retain authority, and
+                    the system preserves judgment as durable memory.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300">
-                  <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Agents</span>
-                  <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Workflows</span>
-                  <span className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-200 dark:bg-zinc-800 dark:ring-slate-700">Data + Controls</span>
+                <div
+                  className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300"
+                  role="tablist"
+                  aria-label="EDGE Talent Engine navigation"
+                >
+                  <span
+                    role="tab"
+                    aria-selected="false"
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-zinc-800 dark:text-slate-200 dark:hover:border-slate-600"
+                  >
+                    Agents
+                  </span>
+                  <span
+                    role="tab"
+                    aria-selected="true"
+                    className="inline-flex items-center rounded-full border border-indigo-500 bg-indigo-600 px-4 py-1.5 text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:border-indigo-400 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                  >
+                    Workflows
+                  </span>
+                  <span
+                    role="tab"
+                    aria-selected="false"
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-zinc-800 dark:text-slate-200 dark:hover:border-slate-600"
+                  >
+                    Data + Controls
+                  </span>
                 </div>
                 <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-500">
                   EDGE Talent Engine™ is a product of Strategic Systems.
@@ -449,7 +478,12 @@ export default async function Home() {
                   className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-zinc-800 dark:text-slate-100 dark:hover:border-slate-600"
                 >
                   <span className="inline-flex h-2 w-2 rounded-full bg-slate-400 shadow-sm" aria-hidden />
-                  <span className="text-[13px] uppercase tracking-[0.14em] text-slate-700 dark:text-slate-200">System Map</span>
+                  <span className="text-[13px] font-semibold tracking-[0.14em] text-slate-700 dark:text-slate-200">
+                    <span className="uppercase">System Map</span>
+                    <span className="ml-1 text-[11px] font-medium tracking-normal text-slate-500 dark:text-slate-300">
+                      · How ETE thinks
+                    </span>
+                  </span>
                 </Link>
               </div>
             </div>
