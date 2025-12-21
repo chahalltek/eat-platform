@@ -31,8 +31,14 @@ import {
   canViewQualityMetrics,
   canUseStrategicCopilot,
   canViewFulfillment,
+<<<<<<< ours
   canCreateDecisionArtifact,
   canPublishDecisionArtifact,
+=======
+  canCreateDecisions,
+  canPublishDecisions,
+  canManageDecisions,
+>>>>>>> theirs
 } from "./permissions";
 import { USER_ROLES } from "./roles";
 
@@ -289,6 +295,7 @@ describe("RBAC permission matrix", () => {
   });
 
 <<<<<<< ours
+<<<<<<< ours
   it("allows recruiters to export decisions while sourcers stay view-only", () => {
     const tenant = "tenant-a";
 
@@ -312,6 +319,29 @@ describe("RBAC permission matrix", () => {
     expect(canPublishDecisionArtifact(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
     expect(canPublishDecisionArtifact(buildUser(USER_ROLES.RECRUITER, tenant), otherTenant)).toBe(false);
     expect(canPublishDecisionArtifact(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
+>>>>>>> theirs
+=======
+  it("grants fulfillment access to recruiters and sourcers but hides it for exec-only roles", () => {
+    const tenant = "tenant-a";
+
+    expect(canViewFulfillment(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
+    expect(canViewFulfillment(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(true);
+    expect(canViewFulfillment(buildUser(USER_ROLES.MANAGER, tenant), tenant)).toBe(true);
+    expect(canViewFulfillment(buildUser(USER_ROLES.EXEC, tenant), tenant)).toBe(false);
+  });
+
+  it("limits decision management to roles with explicit permissions", () => {
+    const tenant = "tenant-a";
+
+    expect(canManageDecisions(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
+    expect(canCreateDecisions(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
+    expect(canPublishDecisions(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(true);
+
+    expect(canManageDecisions(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
+    expect(canCreateDecisions(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
+    expect(canPublishDecisions(buildUser(USER_ROLES.SOURCER, tenant), tenant)).toBe(false);
+
+    expect(canManageDecisions(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
 >>>>>>> theirs
   });
 });

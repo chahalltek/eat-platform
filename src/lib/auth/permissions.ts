@@ -7,6 +7,7 @@ type PermissionUser = Pick<IdentityUser, "role" | "tenantId" | "id"> | null;
 
 type Permission =
   | "VIEW_CANDIDATES"
+  | "VIEW_FULFILLMENT"
   | "MANAGE_PROMPTS"
   | "VIEW_AUDIT_LOGS"
   | "MANAGE_FEATURE_FLAGS"
@@ -21,13 +22,19 @@ type Permission =
   | "EXPORT_SHORTLIST"
   | "EXPORT_MATCHES"
 <<<<<<< ours
+<<<<<<< ours
   | "FULFILLMENT_VIEW"
   | "DECISION_CREATE"
   | "DECISION_PUBLISH";
+=======
+  | "CREATE_DECISION"
+  | "PUBLISH_DECISION";
+>>>>>>> theirs
 
 const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
   [USER_ROLES.ADMIN]: new Set([
     "VIEW_CANDIDATES",
+    "VIEW_FULFILLMENT",
     "MANAGE_PROMPTS",
     "VIEW_AUDIT_LOGS",
     "MANAGE_FEATURE_FLAGS",
@@ -41,12 +48,18 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
+<<<<<<< ours
     "FULFILLMENT_VIEW",
     "DECISION_CREATE",
     "DECISION_PUBLISH",
+=======
+    "CREATE_DECISION",
+    "PUBLISH_DECISION",
+>>>>>>> theirs
   ]),
   [USER_ROLES.TENANT_ADMIN]: new Set([
     "VIEW_CANDIDATES",
+    "VIEW_FULFILLMENT",
     "MANAGE_PROMPTS",
     "VIEW_AUDIT_LOGS",
     "MANAGE_FEATURE_FLAGS",
@@ -60,9 +73,14 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
+<<<<<<< ours
     "FULFILLMENT_VIEW",
     "DECISION_CREATE",
     "DECISION_PUBLISH",
+=======
+    "CREATE_DECISION",
+    "PUBLISH_DECISION",
+>>>>>>> theirs
   ]),
 =======
   | "fulfillment.view"
@@ -119,6 +137,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
 >>>>>>> theirs
   [USER_ROLES.DATA_ACCESS]: new Set([
     "VIEW_CANDIDATES",
+    "VIEW_FULFILLMENT",
     "VIEW_AUDIT_LOGS",
     "VIEW_ENVIRONMENT",
     "VIEW_QUALITY_METRICS",
@@ -130,6 +149,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "EXPORT_MATCHES",
     "FULFILLMENT_VIEW",
   ]),
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -146,6 +166,11 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
   ]),
   [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "FULFILLMENT_VIEW", "DECISION_CREATE"]),
 >>>>>>> theirs
+=======
+  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "VIEW_FULFILLMENT"]),
+  [USER_ROLES.RECRUITER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT", "CREATE_DECISION", "PUBLISH_DECISION"]),
+  [USER_ROLES.SOURCER]: new Set(["VIEW_CANDIDATES", "VIEW_FULFILLMENT"]),
+>>>>>>> theirs
   [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES"]),
 =======
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "VIEW_FULFILLMENT"]),
@@ -155,6 +180,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
 >>>>>>> theirs
   [USER_ROLES.SYSTEM_ADMIN]: new Set<Permission>([
     "VIEW_CANDIDATES",
+    "VIEW_FULFILLMENT",
     "MANAGE_PROMPTS",
     "VIEW_AUDIT_LOGS",
     "MANAGE_FEATURE_FLAGS",
@@ -168,9 +194,14 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_EXPORT",
     "EXPORT_SHORTLIST",
     "EXPORT_MATCHES",
+<<<<<<< ours
     "FULFILLMENT_VIEW",
     "DECISION_CREATE",
     "DECISION_PUBLISH",
+=======
+    "CREATE_DECISION",
+    "PUBLISH_DECISION",
+>>>>>>> theirs
   ]),
 =======
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS"]),
@@ -302,6 +333,7 @@ export function canExportMatches(user: PermissionUser, tenantId?: string | null)
 
 export function canViewFulfillment(user: PermissionUser, tenantId?: string | null) {
 <<<<<<< ours
+<<<<<<< ours
   return hasPermission(user, "FULFILLMENT_VIEW") && hasTenantAccess(user, tenantId);
 }
 
@@ -353,5 +385,20 @@ export function canExportDecisions(user: PermissionUser, tenantId?: string | nul
 
 export function canManageRbac(user: PermissionUser, tenantId?: string | null) {
   return hasFulfillmentPermission(user, "admin.rbac.manage", tenantId);
+>>>>>>> theirs
+=======
+  return hasPermission(user, "VIEW_FULFILLMENT") && hasTenantAccess(user, tenantId);
+}
+
+export function canCreateDecisions(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "CREATE_DECISION") && hasTenantAccess(user, tenantId);
+}
+
+export function canPublishDecisions(user: PermissionUser, tenantId?: string | null) {
+  return hasPermission(user, "PUBLISH_DECISION") && hasTenantAccess(user, tenantId);
+}
+
+export function canManageDecisions(user: PermissionUser, tenantId?: string | null) {
+  return canCreateDecisions(user, tenantId) || canPublishDecisions(user, tenantId);
 >>>>>>> theirs
 }
