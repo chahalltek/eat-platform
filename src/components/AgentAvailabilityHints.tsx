@@ -1,9 +1,15 @@
 import clsx from "clsx";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 import { getAgentAvailability } from "@/lib/agents/agentAvailability";
 import { getCurrentTenantId } from "@/lib/tenant";
 
 const AGENT_ORDER = ["RINA", "RUA", "MATCH", "CONFIDENCE", "EXPLAIN", "SHORTLIST"] as const;
+const AGENT_GROUPS = [
+  { label: "Intake", agents: ["RUA", "RINA"] as const },
+  { label: "Reasoning", agents: ["MATCH", "CONFIDENCE", "EXPLAIN"] as const },
+  { label: "Output", agents: ["SHORTLIST"] as const },
+] as const;
 
 const agentDescriptions: Record<(typeof AGENT_ORDER)[number], string> = {
   RINA: "Resume ingestion",
@@ -34,6 +40,13 @@ export async function AgentAvailabilityHints({ className }: { className?: string
       modeReason,
     };
   });
+  const agentLookup = new Map(agents.map((agent) => [agent.name, agent]));
+  const groupedAgents = AGENT_GROUPS.map((group) => ({
+    label: group.label,
+    members: group.agents
+      .map((agentName) => agentLookup.get(agentName))
+      .filter((agent): agent is (typeof agents)[number] => Boolean(agent)),
+  }));
 
   const headerTone = availability.mode.mode === "fire_drill" ? "amber" : "indigo";
 
@@ -67,30 +80,51 @@ export async function AgentAvailabilityHints({ className }: { className?: string
         </span>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {agents.map((agent) => (
-          <div
-            key={agent.name}
-            className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-800"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex flex-col">
-                <p className="text-sm font-semibold text-slate-900">{agent.name}</p>
-                <p className="text-xs text-slate-600">{agent.description}</p>
-              </div>
-              <span
-                className={clsx(
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",
-                  agent.enabled ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800",
-                )}
-              >
-                <span className="h-2 w-2 rounded-full bg-current" aria-hidden />
-                {agent.enabled ? "Enabled" : "Disabled"}
-              </span>
+      <div className="mt-4 space-y-4">
+        {groupedAgents.map((group) => (
+          <div key={group.label} className="space-y-3">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
+              <span className="h-px w-4 rounded-full bg-slate-300" aria-hidden />
+              <span>{group.label}</span>
             </div>
-            {!agent.enabled && agent.modeReason ? (
-              <p className="mt-2 text-xs font-medium text-rose-700">{agent.modeReason}</p>
-            ) : null}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {group.members.map((agent) => (
+                <div
+                  key={agent.name}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-800"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-semibold text-slate-900">{agent.name}</p>
+                      <div className="flex items-center gap-1 text-xs text-slate-600">
+                        <InformationCircleIcon className="h-4 w-4 text-slate-400" aria-hidden title={agent.description} />
+                        <span className="line-clamp-1">{agent.description}</span>
+                      </div>
+                    </div>
+                    <span
+                      className={clsx(
+                        "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",
+                        agent.enabled
+                          ? "bg-slate-100 text-slate-900 ring-1 ring-slate-200"
+                          : "bg-rose-100 text-rose-800 ring-1 ring-rose-200",
+                      )}
+                    >
+                      <span
+                        className={clsx(
+                          "h-2 w-2 rounded-full",
+                          agent.enabled ? "bg-slate-500" : "bg-rose-500",
+                        )}
+                        aria-hidden
+                      />
+                      {agent.enabled ? "Enabled" : "Disabled"}
+                    </span>
+                  </div>
+                  {!agent.enabled && agent.modeReason ? (
+                    <p className="mt-2 text-xs font-medium text-rose-700">{agent.modeReason}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>

@@ -7,7 +7,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { SubsystemKey, SubsystemState } from "@/lib/systemStatus";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
-type BadgeState = "enabled" | SubsystemState;
+type BadgeState = "enabled" | "idle" | SubsystemState;
+type WorkflowDependencyState = SubsystemState | "idle";
 
 export type WorkflowCardLink = {
   label: string;
@@ -28,7 +29,7 @@ export type WorkflowCardLink = {
 export type WorkflowCardState = {
   status: BadgeState;
   isActive: boolean;
-  dependencyStatus?: SubsystemState;
+  dependencyStatus?: WorkflowDependencyState;
   dependencyLabel?: string;
   message?: string;
 };
@@ -53,6 +54,8 @@ function formatStatusText(status: BadgeState) {
   switch (status) {
     case "healthy":
       return "Healthy";
+    case "idle":
+      return "Idle / ready";
     case "warning":
       return "Waiting";
     case "error":
@@ -65,9 +68,11 @@ function formatStatusText(status: BadgeState) {
   }
 }
 
-function formatDependencyStatus(status: SubsystemState) {
+function formatDependencyStatus(status: WorkflowDependencyState) {
   switch (status) {
     case "healthy":
+      return "Healthy";
+    case "idle":
       return "Healthy";
     case "warning":
       return "Waiting";
@@ -124,14 +129,16 @@ function WorkflowDependencies({
   variant = "default",
 }: {
   label: string;
-  status: SubsystemState;
+  status: WorkflowDependencyState;
   message: string;
   systemLink: string;
   variant?: "default" | "strong";
 }) {
-  const pillStyles: Record<SubsystemState, string> = {
+  const pillStyles: Record<WorkflowDependencyState, string> = {
     healthy:
       "border-emerald-200 bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200 dark:border-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-50 dark:ring-emerald-600",
+    idle:
+      "border-slate-300 bg-slate-50 text-slate-900 ring-1 ring-slate-200 dark:border-slate-700 dark:bg-zinc-900/60 dark:text-slate-50 dark:ring-slate-600",
     warning:
       "border-amber-200 bg-amber-50 text-amber-900 ring-1 ring-amber-200 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-50 dark:ring-amber-600",
     error:
@@ -140,8 +147,9 @@ function WorkflowDependencies({
       "border-slate-200 bg-slate-50 text-slate-900 ring-1 ring-slate-200 dark:border-slate-700 dark:bg-zinc-900/60 dark:text-slate-50 dark:ring-slate-600",
   };
 
-  const dotStyles: Record<SubsystemState, string> = {
+  const dotStyles: Record<WorkflowDependencyState, string> = {
     healthy: "bg-emerald-500",
+    idle: "bg-slate-500",
     warning: "bg-amber-500",
     error: "bg-rose-500",
     unknown: "bg-slate-400",
@@ -255,7 +263,7 @@ export function WorkflowCard({
     previousBadgeState.current = badgeState;
   }, [badgeState, prefersReducedMotion]);
 
-  const dependencyStatus = dependencyState.dependencyStatus ?? "unknown";
+  const dependencyStatus: WorkflowDependencyState = dependencyState.dependencyStatus ?? "unknown";
   const dependencyLabel =
     dependencyState.dependencyLabel ?? dependencyLabels[link.dependency?.subsystem ?? "agents"];
 

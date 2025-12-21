@@ -12,7 +12,7 @@ import { SystemHealthPanel } from "@/components/SystemHealthPanel";
 import { ETEClientLayout } from "@/components/ETEClientLayout";
 import { BrandMark } from "@/components/BrandMark";
 import { AgentAvailabilityHints } from "@/components/AgentAvailabilityHints";
-import { getHomeCardMetrics, type HomeCardMetrics } from "@/lib/metrics/home";
+import { getHomeCardMetrics, type HomeCardMetrics, type HomeTelemetryMetrics } from "@/lib/metrics/home";
 import { WorkflowCard } from "@/components/home/WorkflowCard";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { BRANDING } from "@/config/branding";
@@ -22,7 +22,7 @@ import { isAdminRole, normalizeRole } from "@/lib/auth/roles";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-type BadgeState = "enabled" | SubsystemState;
+type BadgeState = "enabled" | "idle" | SubsystemState;
 
 type HomeLink = {
   label: string;
@@ -78,11 +78,21 @@ const dependencyLabels: Record<SubsystemKey, string> = {
 
 const badgeStyles: Record<BadgeState, string> = {
   enabled: "border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-zinc-900 dark:text-slate-100",
+  idle: "border-slate-300 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-zinc-900 dark:text-slate-50",
   healthy: "border-emerald-200 bg-white text-emerald-800 dark:border-emerald-800 dark:bg-zinc-900 dark:text-emerald-200",
   warning: "border-amber-200 bg-white text-amber-800 dark:border-amber-800 dark:bg-zinc-900 dark:text-amber-200",
   error: "border-rose-200 bg-white text-rose-800 dark:border-rose-800 dark:bg-zinc-900 dark:text-rose-200",
   unknown: "border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-zinc-900 dark:text-slate-100",
 };
+
+function getTelemetrySummary(telemetry: HomeTelemetryMetrics) {
+  const incidents = telemetry.incidentsLast24h ?? 0;
+  const executedToday = telemetry.agentsExecutedToday ?? 0;
+
+  if (incidents > 0) return "Status: Attention needed — incidents detected in last 24h.";
+  if (executedToday > 0) return "Status: Active — agents executed today.";
+  return "Status: Healthy and idle — no agent executions today.";
+}
 
 function buildLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[] {
   return [
@@ -262,6 +272,10 @@ export default async function Home() {
   const heroDescription = BRANDING.description.includes(productName)
     ? BRANDING.description.replace(productName, productNameWithMark)
     : BRANDING.description;
+  const telemetrySummary = getTelemetrySummary(metrics.telemetry);
+  const isIdleExecution = executionState.state === "idle";
+  const hasRunsInLastWeek = (metrics.agentRunsLast7d ?? 0) > 0;
+  const isIdleContext = isIdleExecution && !hasRunsInLastWeek;
 
   const links = buildLinks(metrics, tenantId);
   const coreLinks = links.slice(0, 3);
@@ -276,7 +290,9 @@ export default async function Home() {
     const lastRunAt = link.executionSummary?.lastRunAt ?? null;
     const failuresLast7d = link.executionSummary?.failedRunsLast7d ?? 0;
     const hasFailures = failuresLast7d > 0;
-    const badgeState: BadgeState = isExecutionHistory && hasFailures ? "error" : dependencyState.status;
+    const isIdleExecutionHistory = isExecutionHistory && !hasRuns && isIdleContext;
+    const badgeState: BadgeState = isExecutionHistory && hasFailures ? "error" : isIdleExecutionHistory ? "idle" : dependencyState.status;
+    const safeTestHref = "/rua-test?source=telemetry&mode=test";
 
     const statusPanel = isExecutionHistory ? (
       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -287,20 +303,62 @@ export default async function Home() {
         </p>
         {hasRuns ? (
           <p className="mt-1 text-xs text-slate-600 dark:text-zinc-400">Last run: {formatExecutionTimestamp(lastRunAt)}</p>
-        ) : null}
+        ) : (
+          <div className="mt-3 space-y-2 rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-zinc-900/80">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200">
+              Recommended next step
+            </p>
+            <p className="text-sm text-slate-700 dark:text-slate-200">
+              Run a safe test workflow to validate end-to-end execution and confirm dependencies.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={safeTestHref}
+                className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+              >
+                Run test execution
+              </Link>
+              {lastRunAt ? (
+                <Link
+                  href="/agents/runs"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:border-slate-700 dark:bg-zinc-800 dark:text-slate-100 dark:hover:border-slate-600"
+                >
+                  View last run
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        )}
       </div>
     ) : null;
 
     const alert = hasFailures
       ? { title: "Recent failures detected", description: "Inspect execution logs.", tone: "error" as const }
       : undefined;
+    const cardBadgeState: BadgeState =
+      isIdleContext && dependencyState.status === "enabled" && !hasFailures ? "idle" : badgeState;
+    const dependencyStatus: SubsystemState | "idle" =
+      isIdleContext && dependencyState.dependencyStatus === "healthy"
+        ? "idle"
+        : dependencyState.dependencyStatus ?? "unknown";
+    const dependencyLabel =
+      dependencyState.dependencyLabel ?? dependencyLabels[link.dependency?.subsystem ?? "agents"];
+    const dependencyMessage =
+      dependencyState.message ??
+      (isIdleContext ? "Ready to run — platform is healthy but idle." : `${link.label} depends on ${dependencyLabel}`);
+    const normalizedDependencyState = {
+      ...dependencyState,
+      dependencyStatus,
+      message: dependencyMessage,
+      status: cardBadgeState === "idle" ? "idle" : dependencyState.status,
+    };
 
     return (
       <WorkflowCard
         key={link.href}
         link={link}
-        badgeState={badgeState}
-        dependencyState={dependencyState}
+        badgeState={cardBadgeState}
+        dependencyState={normalizedDependencyState}
         badgeStyles={badgeStyles}
         dependencyLabels={dependencyLabels}
         statusPanel={statusPanel}
@@ -400,6 +458,7 @@ export default async function Home() {
                   Telemetry
                 </span>
                 <span className="text-xs text-slate-600 dark:text-zinc-400">Live activity snapshot</span>
+                <p className="text-xs font-medium text-slate-700 dark:text-slate-200">{telemetrySummary}</p>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
