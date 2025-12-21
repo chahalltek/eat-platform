@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { TENANT_HEADER } from "@/lib/auth/config";
@@ -23,6 +24,60 @@ type RuntimeControlsDashboardProps = {
 
 function classNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
+}
+
+const MODE_CONSEQUENCES: Partial<
+  Record<
+    SystemModeName,
+    {
+      bullets: readonly string[];
+    }
+  >
+> = {
+  production: {
+    bullets: ["All agents available", "Balanced guardrails", "Normal throughput"],
+  },
+  pilot: {
+    bullets: ["Core agents only", "Conservative defaults", "Reduced fan-out"],
+  },
+  fire_drill: {
+    bullets: ["Nonessential agents disabled", "Strict guardrails enforced", "Automation paths suppressed"],
+  },
+};
+
+const SAFETY_FLAG_ALLOWLIST = new Set<FeatureFlagRecord["name"]>(["fire-drill-mode", "agents", "scoring"]);
+
+function getFlagCategory(flag: FeatureFlagRecord) {
+  if (SAFETY_FLAG_ALLOWLIST.has(flag.name)) return "safety" as const;
+
+  const safetyPattern = /(fire|guard|safety|access|retention|rate|limit|drill)/i;
+
+  return safetyPattern.test(flag.name) ? "safety" : ("ux" as const);
+}
+
+function getKillSwitchImpact(agentName: AgentKillSwitchRecord["agentName"]) {
+  switch (agentName) {
+    case "ETE-TS.MATCHER":
+      return "Impact: matching, ranking inputs, shortlist quality";
+    case "ETE-TS.RANKER":
+      return "Impact: scoring order, weights, rank stability";
+    case "ETE-TS.INTAKE":
+      return "Impact: structured role intake and downstream matching context";
+    case "ETE-TS.RINA":
+      return "Impact: resume normalization and candidate profile consistency";
+    case "ETE-TS.RUA":
+      return "Impact: job description normalization and role profile quality";
+    case "ETE-TS.OUTREACH":
+      return "Impact: candidate communication workflows";
+    case "ETE-TS.OUTREACH_AUTOMATION":
+      return "Impact: automated outreach scheduling and follow-ups";
+    case "ETE-TS.NEXT_BEST_ACTION":
+      return "Impact: recommendations and action prompts";
+    case "ETE-TS.HM_BRIEF":
+      return "Impact: hiring manager summary generation";
+    default:
+      return "Impact: downstream automation for this agent";
+  }
 }
 
 export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardProps) {
@@ -72,6 +127,17 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
       (flag) => flag.name.toLowerCase().includes(query) || (flag.description ?? "").toLowerCase().includes(query),
     );
   }, [payload, search]);
+
+  const groupedFlags = useMemo(() => {
+    const groups = { safety: [] as FeatureFlagRecord[], ux: [] as FeatureFlagRecord[] };
+
+    for (const flag of filteredFlags) {
+      const bucket = getFlagCategory(flag);
+      groups[bucket].push(flag);
+    }
+
+    return groups;
+  }, [filteredFlags]);
 
   async function updateMode(nextMode: SystemModeName) {
     if (!payload || payload.readOnly || nextMode === payload.executionMode) return;
@@ -246,6 +312,19 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                   {savingMode === mode.id ? <span className="text-xs text-indigo-700">Saving…</span> : null}
                 </div>
                 <p className="text-xs text-zinc-600">{mode.description}</p>
+
+                {MODE_CONSEQUENCES[mode.id] ? (
+                  <div className="mt-3 space-y-1 rounded-lg bg-white/60 p-3 text-left shadow-inner ring-1 ring-inset ring-indigo-100 sm:space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-indigo-700">What this changes</p>
+                    <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-700">
+                      {MODE_CONSEQUENCES[mode.id]?.bullets.map((item) => (
+                        <li key={item} className="leading-relaxed">
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </button>
             );
           })}
@@ -272,6 +351,7 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
                   <p className="text-xs text-zinc-600">
                     {statusLabel} {record.reason ? `· ${record.reason}` : ""}
                   </p>
+                  <p className="text-xs text-zinc-500">{getKillSwitchImpact(record.agentName)}</p>
                 </div>
                 <Switch
                   checked={record.latched}
@@ -287,6 +367,17 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
             );
           })}
         </div>
+
+        <p className="text-xs text-zinc-500">
+          All changes are logged and visible in{" "}
+          <Link
+            href={`/admin/tenant/${tenantId}/diagnostics#diagnostics-title-audit-logging`}
+            className="font-semibold text-indigo-700 underline decoration-indigo-200 underline-offset-2 hover:text-indigo-800"
+          >
+            Diagnostics → Audit logging
+          </Link>
+          .
+        </p>
       </section>
 
       <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -305,22 +396,45 @@ export function RuntimeControlsDashboard({ tenantId }: RuntimeControlsDashboardP
             className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none"
           />
 
-          <div className="divide-y divide-zinc-100 rounded-xl border border-zinc-200">
-            {filteredFlags.map((flag) => (
-              <div key={flag.name} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col">
-                  <p className="text-sm font-semibold text-zinc-900">{flag.name}</p>
-                  <p className="text-xs text-zinc-600">{flag.description}</p>
-                </div>
+          <div className="space-y-3">
+            {[
+              { key: "safety" as const, title: "Safety & control" },
+              { key: "ux" as const, title: "UX & guidance" },
+            ].map(({ key, title }) => {
+              const flags = groupedFlags[key];
 
-                <Switch
-                  checked={flag.enabled}
-                  onCheckedChange={() => toggleFlag(flag)}
-                  disabled={payload.readOnly || pendingFlag === flag.name}
-                  aria-label="Toggle feature flag"
-                />
-              </div>
-            ))}
+              return (
+                <div key={key} className="rounded-xl border border-zinc-200 shadow-sm">
+                  <div className="rounded-t-xl border-b border-zinc-100 bg-zinc-50 px-4 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-zinc-700">{title}</p>
+                  </div>
+                  <div className="divide-y divide-zinc-100">
+                    {flags.length ? (
+                      flags.map((flag) => (
+                        <div
+                          key={flag.name}
+                          className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="flex flex-col">
+                            <p className="text-sm font-semibold text-zinc-900">{flag.name}</p>
+                            <p className="text-xs text-zinc-600">{flag.description}</p>
+                          </div>
+
+                          <Switch
+                            checked={flag.enabled}
+                            onCheckedChange={() => toggleFlag(flag)}
+                            disabled={payload.readOnly || pendingFlag === flag.name}
+                            aria-label="Toggle feature flag"
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <p className="px-4 py-3 text-xs text-zinc-500">No flags match this search.</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
