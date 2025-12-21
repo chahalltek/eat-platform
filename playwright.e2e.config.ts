@@ -1,4 +1,4 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices, type ReporterDescription } from "@playwright/test";
 
 import { AUTH_SETUP_PROJECT, AUTH_STORAGE_STATE, E2E_AUTH_SETUP_TEST_MATCH } from "./tests/playwrightAuth";
 
@@ -12,7 +12,7 @@ const defaultHeaders = {
   "x-eat-tenant-id": process.env.E2E_TENANT_ID ?? "routes-smoke-tenant",
 };
 
-const reporter = [
+const reporter: ReporterDescription[] = [
   ["list"],
   ["html", { outputFolder: "test-results/e2e/html-report", open: "never" }],
 ];
