@@ -19,11 +19,11 @@ export async function POST(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = await params;
+  const { id: artifactId } = await params;
 
   try {
     const artifact = await publishDecisionArtifact({
-      id,
+      artifactId,
       tenantId: user.tenantId ?? DEFAULT_TENANT_ID,
     });
 
