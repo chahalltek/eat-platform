@@ -1,6 +1,7 @@
 import { ArchiveBoxIcon, SparklesIcon } from "@heroicons/react/24/outline";
 
 import { ETECard } from "@/components/ETECard";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { getCurrentUser } from "@/lib/auth/user";
 import { listDecisionArtifacts } from "@/server/decision/decisionArtifacts";
 
@@ -24,7 +25,8 @@ export default async function FulfillmentDecisionsPage() {
     );
   }
 
-  const decisions = await listDecisionArtifacts({ tenantId: user.tenantId });
+  const tenantId = (user.tenantId ?? DEFAULT_TENANT_ID).trim();
+  const decisions = await listDecisionArtifacts({ tenantId });
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
