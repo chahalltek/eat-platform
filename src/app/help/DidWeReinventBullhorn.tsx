@@ -1,16 +1,20 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { CheckIcon, ClipboardIcon } from "@heroicons/react/24/outline";
 
 import { buildHelpEntryFullText, eteVsBullhornContent, type HelpEntry } from "@/content/help/eteVsBullhorn";
 
 type DidWeReinventBullhornProps = {
   entry?: HelpEntry;
+  anchorId?: string;
+  additionalContent?: ReactNode;
 };
 
-export function DidWeReinventBullhorn({ entry = eteVsBullhornContent }: DidWeReinventBullhornProps) {
+export function DidWeReinventBullhorn({ entry = eteVsBullhornContent, anchorId, additionalContent }: DidWeReinventBullhornProps) {
   const [copyState, setCopyState] = useState<"idle" | "success" | "error">("idle");
+
+  const isDecisionSop = entry.key === "decision_sop";
 
   const fullCopy = useMemo(() => buildHelpEntryFullText(entry), [entry]);
 
@@ -32,7 +36,10 @@ export function DidWeReinventBullhorn({ entry = eteVsBullhornContent }: DidWeRei
   }, [copyState, fullCopy]);
 
   return (
-    <section className="space-y-6 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+    <section
+      id={anchorId}
+      className="space-y-6 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
@@ -97,13 +104,19 @@ export function DidWeReinventBullhorn({ entry = eteVsBullhornContent }: DidWeRei
         ))}
       </div>
 
+      {additionalContent ? <div className="space-y-4">{additionalContent}</div> : null}
+
       {entry.links?.length ? (
         <div className="flex flex-wrap gap-3 rounded-2xl bg-indigo-50/60 p-4 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-100 dark:ring-indigo-900/60">
           {entry.links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-indigo-700 ring-1 ring-indigo-200 transition hover:-translate-y-0.5 hover:ring-indigo-300 dark:bg-indigo-900/60 dark:text-indigo-100 dark:ring-indigo-800/60"
+              className={
+                isDecisionSop
+                  ? "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-indigo-700 underline decoration-indigo-200 underline-offset-4 transition hover:text-indigo-900 hover:decoration-indigo-400 dark:text-indigo-100 dark:hover:text-indigo-50"
+                  : "inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-indigo-700 ring-1 ring-indigo-200 transition hover:-translate-y-0.5 hover:ring-indigo-300 dark:bg-indigo-900/60 dark:text-indigo-100 dark:ring-indigo-800/60"
+              }
             >
               {link.label}
             </a>

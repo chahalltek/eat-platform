@@ -29,7 +29,7 @@ export const decisionSopContent: HelpEntry = {
   ],
   sections: [
     {
-      heading: "SOP (exact language)",
+      heading: "SOP (use this language verbatim)",
       bullets: [
         "SOPs define behavior.",
         "ETE supports judgment.",
