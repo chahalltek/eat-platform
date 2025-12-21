@@ -38,6 +38,7 @@
     "e2e:visual": "playwright test --config=playwright.visual.config.ts",
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test",
@@ -51,16 +52,21 @@
     "test:coverage:all": "npm run test:coverage:unit && npm run test:coverage:e2e && npm run coverage:merge"
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test"
+<<<<<<< ours
 >>>>>>> theirs
 =======
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e:ui": "playwright test --config=playwright.e2e.config.ts --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test --config=playwright.e2e.config.ts"
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   },
   "dependencies": {
@@ -90,6 +96,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.0.15",
+    "babel-plugin-istanbul": "^7.0.1",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",

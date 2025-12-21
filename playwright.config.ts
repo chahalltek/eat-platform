@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 const shouldStartLocalServer = !process.env.PLAYWRIGHT_BASE_URL;
+const coverageEnabled = process.env.COVERAGE_E2E === "1";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -19,6 +20,13 @@ export default defineConfig({
         url: "http://127.0.0.1:3000",
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
+        env: coverageEnabled
+          ? {
+              ...process.env,
+              BABEL_ENV: "coverage_e2e",
+              COVERAGE_E2E: "1",
+            }
+          : undefined,
       }
     : undefined,
   projects: [

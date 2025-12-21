@@ -3,6 +3,11 @@ import { defineConfig, devices } from "@playwright/test";
 import { AUTH_SETUP_PROJECT, AUTH_STORAGE_STATE, E2E_AUTH_SETUP_TEST_MATCH } from "./tests/playwrightAuth";
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
+<<<<<<< ours
+=======
+const shouldStartLocalServer = !process.env.E2E_BASE_URL;
+const coverageEnabled = process.env.COVERAGE_E2E === "1";
+>>>>>>> theirs
 const defaultHeaders = {
   "x-eat-user-id": process.env.E2E_USER_ID ?? "routes-smoke-user",
   "x-eat-user-role": process.env.E2E_USER_ROLE ?? "ADMIN",
@@ -25,6 +30,21 @@ export default defineConfig({
     headless: true,
   },
   reporter: [["list"], ["html", { outputFolder: "test-results/e2e/html-report", open: "never" }]],
+  webServer: shouldStartLocalServer
+    ? {
+        command: "npm run dev -- --port 3000",
+        url: "http://127.0.0.1:3000",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+        env: coverageEnabled
+          ? {
+              ...process.env,
+              BABEL_ENV: "coverage_e2e",
+              COVERAGE_E2E: "1",
+            }
+          : undefined,
+      }
+    : undefined,
   projects: [
     {
       name: AUTH_SETUP_PROJECT,
