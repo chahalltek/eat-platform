@@ -4,25 +4,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { BRANDING } from "@/config/branding";
-import {
-  DEFAULT_BRAND_LOGO,
-  DEFAULT_BRAND_LOGO_ALT,
-  DEFAULT_BRAND_NAME,
-  type TenantBranding,
-} from "@/lib/tenant/branding.shared";
+import { DEFAULT_BRAND_LOGO_ALT, DEFAULT_BRAND_NAME, type TenantBranding } from "@/lib/tenant/branding.shared";
+import { resolveLoginLogoSources } from "./loginBranding";
 
 type LoginContentProps = {
   branding: TenantBranding;
 };
-
-function normalizeLogoPath(path: string) {
-  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
-    return path;
-  }
-
-  return path.startsWith("/") ? path : `/${path}`;
-}
 
 export function LoginContent({ branding }: LoginContentProps) {
   const router = useRouter();
@@ -34,16 +21,7 @@ export function LoginContent({ branding }: LoginContentProps) {
   const [logoIndex, setLogoIndex] = useState(0);
 
   const logoAlt = useMemo(() => branding.brandLogoAlt || DEFAULT_BRAND_LOGO_ALT, [branding.brandLogoAlt]);
-  const logoSources = useMemo(() => {
-    const sources = [
-      branding.brandLogoUrl ?? null,
-      BRANDING.logoHorizontal,
-      DEFAULT_BRAND_LOGO,
-      "/public/ete-logo.svg",
-    ];
-
-    return sources.filter(Boolean).map((src) => normalizeLogoPath(src as string));
-  }, [branding.brandLogoUrl]);
+  const logoSources = useMemo(() => resolveLoginLogoSources(branding), [branding]);
   const logoSrc = logoSources[Math.min(logoIndex, logoSources.length - 1)];
 
   useEffect(() => {
