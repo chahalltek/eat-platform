@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 
 import { DEFAULT_TENANT_ID } from "../../src/lib/auth/config";
-import { createSessionCookie } from "../../src/lib/auth/session";
-
-const ADMIN_EMAIL = process.env.ADMIN_SWEEP_EMAIL ?? "admin@test.demo";
 
 const VIEWPORTS = [
   { width: 768, height: 960 },
@@ -11,34 +8,10 @@ const VIEWPORTS = [
   { width: 1440, height: 960 },
 ];
 
-test.beforeEach(async ({ page, baseURL }) => {
+test.beforeEach(({ baseURL }) => {
   if (!baseURL) {
     throw new Error("baseURL is not configured; set ADMIN_SWEEP_BASE_URL or use Playwright baseURL.");
   }
-
-  const session = await createSessionCookie({
-    id: "visual-admin",
-    email: ADMIN_EMAIL,
-    displayName: "Visual Guardrails Admin",
-    role: "ADMIN",
-    tenantId: DEFAULT_TENANT_ID,
-  });
-
-  const baseHost = new URL(baseURL).hostname;
-  const sameSite = session.sameSite === "strict" ? "Strict" : session.sameSite === "none" ? "None" : "Lax";
-
-  await page.context().addCookies([
-    {
-      name: session.name,
-      value: session.value,
-      path: session.path,
-      domain: session.domain ?? baseHost,
-      httpOnly: session.httpOnly,
-      secure: session.secure,
-      sameSite,
-      expires: Math.floor(Date.now() / 1000) + 60 * 60,
-    },
-  ]);
 });
 
 for (const viewport of VIEWPORTS) {

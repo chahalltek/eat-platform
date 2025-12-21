@@ -5,10 +5,6 @@ import { expect, test } from "@playwright/test";
 
 import { DEFAULT_TENANT_ID } from "../../src/lib/auth/config";
 
-const ADMIN_EMAIL = process.env.ADMIN_SWEEP_EMAIL ?? "admin@test.demo";
-const ADMIN_PASSWORD =
-  process.env.ADMIN_SWEEP_PASSWORD ?? process.env.AUTH_PASSWORD ?? process.env.AUTH_PASSWORD_LOCAL ?? "password";
-
 const VIEWPORTS = [
   { width: 1024, height: 768 },
   { width: 1440, height: 900 },
@@ -28,19 +24,10 @@ const ROUTES = [
   `/admin/tenants/${DEFAULT_TENANT_ID}`,
 ];
 
-test.beforeEach(async ({ page, baseURL }) => {
+test.beforeEach(({ baseURL }) => {
   if (!baseURL) {
     throw new Error("baseURL is not configured; set ADMIN_SWEEP_BASE_URL or use Playwright baseURL.");
   }
-
-  const response = await page.request.post("/api/auth/login", {
-    data: {
-      email: ADMIN_EMAIL,
-      password: ADMIN_PASSWORD,
-    },
-  });
-
-  expect(response.ok()).toBeTruthy();
 });
 
 test("admin layout sweep captures screenshots and checks overflow", async ({ page }, testInfo) => {
