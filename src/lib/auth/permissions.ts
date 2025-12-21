@@ -109,6 +109,9 @@ const ROLE_NAMED_PERMISSION_MAP: Record<UserRole, Set<NamedPermission>> = {
   [USER_ROLES.SOURCER]: new Set(["fulfillment.view"]),
   [USER_ROLES.SALES]: new Set(["fulfillment.view"]),
   [USER_ROLES.MANAGER]: new Set(["fulfillment.view"]),
+  [USER_ROLES.FULFILLMENT_SOURCER]: new Set(["fulfillment.view", "agent.run.match"]),
+  [USER_ROLES.FULFILLMENT_RECRUITER]: new Set(["fulfillment.view", "agent.run.match"]),
+  [USER_ROLES.FULFILLMENT_MANAGER]: new Set(["fulfillment.view", "agent.run.match"]),
   [USER_ROLES.EXEC]: new Set(),
 };
 
