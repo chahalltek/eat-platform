@@ -231,6 +231,12 @@ export default function SystemMapPage() {
             <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
               How agents, engines, and control-plane configuration hand off work. Use this as a system-of-truth blueprint for dependencies, guardrails, and failure modes — not as user documentation.
             </p>
+            <div className="mt-1 rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
+              <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+                This blueprint makes it possible to understand where judgment happens, where automation stops, and how risk is controlled — without relying on individual knowledge or tribal memory.
+              </p>
+            </div>
           </div>
               <div className="flex flex-col items-start gap-2 sm:items-end">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 ring-1 ring-indigo-100 dark:bg-zinc-900/70 dark:text-indigo-200 dark:ring-indigo-800/60">
@@ -295,9 +301,18 @@ export default function SystemMapPage() {
           <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Nodes and directional flows</h2>
         </div>
 
+<<<<<<< ours
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           These flows are executed at intentional decision moments. Not every flow runs for every action.
         </p>
+=======
+        <div className="rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
+          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+            Knowing which components reason versus which simply execute prevents over-automation and makes it clear where human accountability must remain.
+          </p>
+        </div>
+>>>>>>> theirs
 
         <div className="grid gap-4">
           <div className="space-y-4 rounded-2xl border border-indigo-100/60 bg-gradient-to-b from-white to-indigo-50/60 p-4 dark:border-indigo-800/50 dark:from-zinc-900 dark:to-indigo-950/30">
@@ -353,6 +368,14 @@ export default function SystemMapPage() {
                     </span>
                   </div>
                   <p className="text-sm leading-relaxed text-zinc-700 line-clamp-3 dark:text-zinc-300">{node.summary}</p>
+                  {node.id === "confidence" ? (
+                    <div className="rounded-lg border border-indigo-100 bg-indigo-50/70 p-3 text-xs leading-relaxed text-indigo-900 dark:border-indigo-800/60 dark:bg-indigo-900/40 dark:text-indigo-100/80">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
+                      <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+                        This is where decisions become explainable, defensible, and auditable — turning outcomes into durable organizational memory.
+                      </p>
+                    </div>
+                  ) : null}
                   <div className="mt-auto flex flex-wrap gap-2">
                     {node.tags.map((tag) => (
                       <span
@@ -377,6 +400,12 @@ export default function SystemMapPage() {
           <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
             The control plane separates judgment and execution from configuration so behavior can be changed without redeploying agents or rewriting history. These controls back the GUARDRAILS flow above.
           </p>
+          <div className="rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
+            <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+              Separating control from execution allows leadership to change behavior safely, respond to risk, and enforce policy without redeploying code or re-litigating past decisions.
+            </p>
+          </div>
         </div>
 
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
@@ -421,6 +450,22 @@ export default function SystemMapPage() {
                 <StatusPill status={item.status} label={item.label} />
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3 rounded-3xl border border-indigo-100/70 bg-white/80 p-6 shadow-sm dark:border-indigo-900/40 dark:bg-zinc-900/70">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">Diagnostics</p>
+          <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Diagnostics / Audit log</h3>
+          <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+            Trace every agent call, input, and outcome with context so troubleshooting connects back to the exact decision path.
+          </p>
+          <div className="rounded-xl border border-indigo-100 bg-white/80 p-3 text-sm leading-relaxed text-indigo-900 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900/80 dark:text-indigo-100/80">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">Why this matters</p>
+            <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">
+              When something goes wrong, this is how the system explains what happened, why it happened, and whether it should happen again.
+            </p>
           </div>
         </div>
       </section>
