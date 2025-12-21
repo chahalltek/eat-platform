@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { LoginContent } from "./LoginContent";
@@ -21,5 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function LoginPage() {
   const branding = await loadTenantBranding();
 
-  return <LoginContent branding={branding} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-50" aria-label="Loading login page" />}>
+      <LoginContent branding={branding} />
+    </Suspense>
+  );
 }
