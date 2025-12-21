@@ -268,14 +268,18 @@ export default async function Home() {
   ]);
 
   const productName = BRANDING.name;
-  const productNameWithMark = productName === "EDGE Talent Engine" ? "EDGE Talent Engine™" : productName;
+  const productNameWithMark = productName.includes("EDGE Talent Engine") ? "EDGE Talent Engine™" : productName;
   const heroDescription = BRANDING.description.includes(productName)
     ? BRANDING.description.replace(productName, productNameWithMark)
+<<<<<<< ours
     : BRANDING.description;
   const telemetrySummary = getTelemetrySummary(metrics.telemetry);
   const isIdleExecution = executionState.state === "idle";
   const hasRunsInLastWeek = (metrics.agentRunsLast7d ?? 0) > 0;
   const isIdleContext = isIdleExecution && !hasRunsInLastWeek;
+=======
+    : BRANDING.description.replace("EDGE Talent Engine", productNameWithMark);
+>>>>>>> theirs
 
   const links = buildLinks(metrics, tenantId);
   const coreLinks = links.slice(0, 3);

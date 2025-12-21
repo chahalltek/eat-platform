@@ -156,7 +156,7 @@ export default async function AdminHealthPage() {
         <div className="flex flex-wrap items-center gap-4 rounded-3xl border border-indigo-100 bg-white/90 p-5 shadow-sm ring-1 ring-white/80 dark:border-indigo-900/50 dark:bg-zinc-900/60">
           <EteLogo variant="horizontal" />
           <div className="text-sm text-zinc-700 dark:text-zinc-300">
-            <p className="font-semibold text-zinc-900 dark:text-zinc-50">EDGE Talent Engine admin</p>
+            <p className="font-semibold text-zinc-900 dark:text-zinc-50">EDGE Talent Engine™ admin</p>
             <p className="text-xs text-indigo-700 dark:text-indigo-200">Platform controls</p>
           </div>
         </div>
@@ -247,7 +247,7 @@ export default async function AdminHealthPage() {
                     <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-800 dark:bg-sky-900/50 dark:text-sky-100">ETE</span>
                   </div>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Launch the EDGE Talent Engine test runner to validate admin workflows and guardrails.
+                    Launch the EDGE Talent Engine™ test runner to validate admin workflows and guardrails.
                   </p>
                   <span className="text-sm font-semibold text-indigo-600 transition group-hover:text-indigo-700 dark:text-indigo-300 dark:group-hover:text-indigo-200">
                     Open Test Runner

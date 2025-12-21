@@ -31,7 +31,7 @@ export function EteLogo({
 
   return (
     <div className={clsx("flex flex-col", className)}>
-      <Image src={src} alt="EDGE Talent Engine logo" priority {...dimensions} />
+      <Image src={src} alt="EDGE Talent Engine™ logo" priority {...dimensions} />
       {tagline ? <p className="mt-1 text-xs text-slate-600">{tagline}</p> : null}
     </div>
   );

@@ -27,7 +27,7 @@ export default async function HealthPage() {
             <EteLogo variant="horizontal" />
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Admin</p>
-              <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">EDGE Talent Engine system status</h1>
+              <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">EDGE Talent Engine™ system status</h1>
               <p className="mt-2 text-zinc-600 dark:text-zinc-400">
                 Live snapshot of infrastructure and dependency checks.
               </p>

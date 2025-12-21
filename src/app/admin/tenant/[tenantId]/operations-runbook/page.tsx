@@ -353,7 +353,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
             <EteLogo variant="horizontal" />
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">Admin</p>
-              <h1 className="text-3xl font-semibold text-zinc-900">EDGE Talent Engine Operations Runbook</h1>
+              <h1 className="text-3xl font-semibold text-zinc-900">EDGE Talent Engine™ Operations Runbook</h1>
               <p className="max-w-2xl text-sm text-zinc-600">
                 Flight manual for tenant {tenantId} covering Control Plane modes, guardrails, agent kill switches, and the Fire Drill
                 playbook.
@@ -412,7 +412,7 @@ export default async function OperationsRunbookPage({ params }: { params: { tena
             <div className="flex flex-col gap-3">
               <h2 className="text-xl font-semibold text-zinc-900">Overview</h2>
               <p className="text-sm text-zinc-700">
-                This Operations Runbook explains how EDGE Talent Engine behaves under different System Modes, how Control Plane guardrails are
+                This Operations Runbook explains how EDGE Talent Engine™ behaves under different System Modes, how Control Plane guardrails are
                 applied, how agent kill switches work, and how to activate Fire Drill mode during instability.
               </p>
               <div className="grid gap-3 text-sm text-zinc-700 md:grid-cols-3">

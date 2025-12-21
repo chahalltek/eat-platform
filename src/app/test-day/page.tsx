@@ -7,7 +7,7 @@ export default function TestDayPage() {
     <ETEClientLayout contentClassName="space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">EDGE Talent Engine Test Day</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">EDGE Talent Engine™ Test Day</h1>
           <p className="text-sm text-slate-500">One-day validation checklist for MVP readiness</p>
         </div>
         <Link
@@ -20,7 +20,7 @@ export default function TestDayPage() {
 
       <div className="prose prose-slate max-w-none">
         <h2>Objective</h2>
-        <p>In one day, validate that the EDGE Talent Engine works end-to-end for a single tenant:</p>
+        <p>In one day, validate that the EDGE Talent Engine™ works end-to-end for a single tenant:</p>
         <ul>
           <li>Tenant access &amp; diagnostics</li>
           <li>Resume ingestion (RINA)</li>

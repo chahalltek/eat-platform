@@ -99,7 +99,7 @@ export function SystemMapContent({
           <div className="flex flex-col gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">System Map</p>
             <h1 className="text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">
-              EDGE Talent Engine data flow blueprint
+              EDGE Talent Engine™ data flow blueprint
             </h1>
             <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
               How agents, engines, and the Control Plane hand off work. Open this when you need the blueprint for dependencies, guardrails,

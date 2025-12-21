@@ -16,7 +16,7 @@ const TESTS = [
   {
     key: "databaseConnectivity" as const,
     name: "Database connectivity",
-    description: "Checks EDGE Talent Engine database connection for this tenant.",
+    description: "Checks EDGE Talent Engine™ database connection for this tenant.",
   },
   {
     key: "tenantConfig" as const,
