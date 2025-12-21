@@ -9,6 +9,7 @@ import { createAgentRunLog } from "@/lib/agents/agentRunLog";
 import { buildExplanation, maybePolishExplanation, type Explanation } from "@/lib/agents/explainEngine";
 import type { MatchResult } from "@/lib/agents/matchEngine";
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
+import { canRunAgentExplain } from "@/lib/auth/permissions";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { guardrailsPresets } from "@/lib/guardrails/presets";
@@ -18,6 +19,7 @@ import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
 import { callLLM } from "@/lib/llm";
 import { recordUsageEvent } from "@/lib/usage/events";
 import { extractArchetypeFromIntent } from "@/lib/jobIntent";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 
 const requestSchema = z
   .object({
@@ -227,7 +229,16 @@ function isPersistedExplanationValid(
 }
 
 export async function POST(req: NextRequest) {
-  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
+  const roleCheck = await requireRole(req, [
+    USER_ROLES.ADMIN,
+    USER_ROLES.SYSTEM_ADMIN,
+    USER_ROLES.TENANT_ADMIN,
+    USER_ROLES.RECRUITER,
+    USER_ROLES.FULFILLMENT_RECRUITER,
+    USER_ROLES.FULFILLMENT_MANAGER,
+    USER_ROLES.FULFILLMENT_SOURCER,
+    USER_ROLES.SOURCER,
+  ]);
 
   if (!roleCheck.ok) {
     return roleCheck.response;
@@ -262,7 +273,13 @@ export async function POST(req: NextRequest) {
     throw error;
   }
 
-  const { prisma: scopedPrisma, tenantId, runWithTenantContext } = scopedTenant;
+  const { prisma: scopedPrisma, tenantId: scopedTenantId, runWithTenantContext } = scopedTenant;
+  const tenantId = scopedTenantId ?? DEFAULT_TENANT_ID;
+
+  if (!canRunAgentExplain(roleCheck.user, tenantId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { matchId, candidateMatchId, force } = parsed.data;
 
   return runWithTenantContext(async () => {

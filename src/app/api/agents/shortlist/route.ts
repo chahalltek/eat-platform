@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { setShortlistState } from "@/lib/agents/shortlistState";
+import { canRunAgentShortlist } from "@/lib/auth/permissions";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 const requestSchema = z.object({
   matchId: z.string().trim().min(1, "matchId is required"),
@@ -19,10 +21,23 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
+  const roleCheck = await requireRole(req, [
+    USER_ROLES.ADMIN,
+    USER_ROLES.SYSTEM_ADMIN,
+    USER_ROLES.TENANT_ADMIN,
+    USER_ROLES.RECRUITER,
+    USER_ROLES.FULFILLMENT_RECRUITER,
+    USER_ROLES.FULFILLMENT_MANAGER,
+  ]);
 
   if (!roleCheck.ok) {
     return roleCheck.response;
+  }
+
+  const tenantId = await getCurrentTenantId(req);
+
+  if (!canRunAgentShortlist(roleCheck.user, tenantId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const flagCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: "Agents" });

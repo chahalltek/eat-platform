@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { runMatcher } from '@/lib/agents/matcher';
+import { canRunAgentMatch } from '@/lib/auth/permissions';
 import { getCurrentUser } from '@/lib/auth';
 import { requireRecruiterOrAdmin } from '@/lib/auth/requireRole';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 type RouteParams = { jobReqId: string };
 
@@ -20,6 +22,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     if (!roleCheck.ok) {
       return roleCheck.response;
+    }
+
+    const tenantId = await getCurrentTenantId(req);
+
+    if (!canRunAgentMatch(roleCheck.user, tenantId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const params = await context.params;

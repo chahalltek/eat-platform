@@ -3,17 +3,31 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_TENANT_ID } from "./config";
 import {
   canAccessExecIntelligence,
+<<<<<<< ours
   canExportDecisionDrafts,
+=======
+  canCreateDecision,
+  canExportDecisions,
+>>>>>>> theirs
   canExportMatches,
   canExportShortlist,
   canManageFeatureFlags,
+  canManageRbac,
   canManagePrompts,
   canManageTenants,
+  canPublishDecision,
+  canRunAgentConfidence,
+  canRunAgentExplain,
+  canRunAgentIntake,
+  canRunAgentMatch,
+  canRunAgentProfile,
+  canRunAgentShortlist,
   canViewAgentLogs,
   canViewAuditLogs,
   canViewCandidates,
   canViewFulfillment,
   canViewEnvironment,
+  canViewFulfillment,
   canViewQualityMetrics,
   canUseStrategicCopilot,
   canViewFulfillment,
@@ -36,6 +50,9 @@ describe("RBAC permission matrix", () => {
       USER_ROLES.MANAGER,
       USER_ROLES.SOURCER,
       USER_ROLES.SALES,
+      USER_ROLES.FULFILLMENT_RECRUITER,
+      USER_ROLES.FULFILLMENT_SOURCER,
+      USER_ROLES.FULFILLMENT_MANAGER,
       USER_ROLES.ADMIN,
       USER_ROLES.TENANT_ADMIN,
       USER_ROLES.SYSTEM_ADMIN,
@@ -160,6 +177,62 @@ describe("RBAC permission matrix", () => {
 
     expect(canViewCandidates(buildUser(USER_ROLES.ADMIN, "tenant-b"), bootstrapTenant)).toBe(true);
     expect(canViewCandidates(buildUser(USER_ROLES.MANAGER, "tenant-b"), bootstrapTenant)).toBe(false);
+  });
+
+  it("applies fulfillment permission tiers to new roles", () => {
+    const tenant = "tenant-a";
+    const sourcer = buildUser(USER_ROLES.FULFILLMENT_SOURCER, tenant);
+
+    expect(canViewFulfillment(sourcer, tenant)).toBe(true);
+    expect(canRunAgentIntake(sourcer, tenant)).toBe(true);
+    expect(canRunAgentProfile(sourcer, tenant)).toBe(true);
+    expect(canRunAgentMatch(sourcer, tenant)).toBe(true);
+    expect(canRunAgentConfidence(sourcer, tenant)).toBe(true);
+    expect(canRunAgentExplain(sourcer, tenant)).toBe(true);
+    expect(canCreateDecision(sourcer, tenant)).toBe(true);
+    expect(canRunAgentShortlist(sourcer, tenant)).toBe(false);
+    expect(canPublishDecision(sourcer, tenant)).toBe(false);
+    expect(canExportDecisions(sourcer, tenant)).toBe(false);
+
+    const recruiter = buildUser(USER_ROLES.FULFILLMENT_RECRUITER, tenant);
+    expect(canRunAgentShortlist(recruiter, tenant)).toBe(true);
+    expect(canPublishDecision(recruiter, tenant)).toBe(true);
+    expect(canExportDecisions(recruiter, tenant)).toBe(true);
+
+    const manager = buildUser(USER_ROLES.FULFILLMENT_MANAGER, tenant);
+    expect(canRunAgentMatch(manager, tenant)).toBe(true);
+    expect(canPublishDecision(manager, tenant)).toBe(true);
+  });
+
+  it("aligns legacy recruiter roles with fulfillment permissions", () => {
+    const tenant = "tenant-a";
+    const recruiter = buildUser(USER_ROLES.RECRUITER, tenant);
+
+    expect(canRunAgentShortlist(recruiter, tenant)).toBe(true);
+    expect(canPublishDecision(recruiter, tenant)).toBe(true);
+    expect(canExportDecisions(recruiter, tenant)).toBe(true);
+
+    const sourcer = buildUser(USER_ROLES.SOURCER, tenant);
+    expect(canRunAgentExplain(sourcer, tenant)).toBe(true);
+    expect(canRunAgentShortlist(sourcer, tenant)).toBe(false);
+  });
+
+  it("enforces tenant boundaries for fulfillment permissions", () => {
+    const sourcer = buildUser(USER_ROLES.FULFILLMENT_SOURCER, "tenant-a");
+    const systemAdmin = buildUser(USER_ROLES.SYSTEM_ADMIN, "tenant-a");
+
+    expect(canRunAgentIntake(sourcer, "tenant-b")).toBe(false);
+    expect(canPublishDecision(sourcer, "tenant-b")).toBe(false);
+    expect(canRunAgentIntake(systemAdmin, "tenant-b")).toBe(true);
+  });
+
+  it("limits RBAC administration to admin roles", () => {
+    const tenant = "tenant-a";
+
+    expect(canManageRbac(buildUser(USER_ROLES.ADMIN, tenant), tenant)).toBe(true);
+    expect(canManageRbac(buildUser(USER_ROLES.TENANT_ADMIN, tenant), tenant)).toBe(true);
+    expect(canManageRbac(buildUser(USER_ROLES.SYSTEM_ADMIN, tenant), tenant)).toBe(true);
+    expect(canManageRbac(buildUser(USER_ROLES.RECRUITER, tenant), tenant)).toBe(false);
   });
 
   it("denies everything for unknown roles", () => {

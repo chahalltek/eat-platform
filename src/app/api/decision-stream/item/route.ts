@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { canPublishDecision } from "@/lib/auth/permissions";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { recordMetricEvent } from "@/lib/metrics/events";
 
@@ -33,6 +34,10 @@ export async function POST(req: NextRequest) {
 
   const tenantId = (roleCheck.user.tenantId ?? DEFAULT_TENANT_ID).trim();
   const confidenceScore = parsed.data.confidence ?? 5;
+
+  if (!canPublishDecision(roleCheck.user, tenantId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     await recordMetricEvent({

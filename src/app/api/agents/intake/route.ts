@@ -5,6 +5,7 @@ import type { UsageEventType } from '@/server/db/prisma';
 
 import { callLLM } from '@/lib/llm';
 import { requireRole } from '@/lib/auth/requireRole';
+import { canRunAgentIntake } from '@/lib/auth/permissions';
 import { USER_ROLES } from '@/lib/auth/roles';
 import { FEATURE_FLAGS } from '@/lib/featureFlags';
 import { assertFeatureEnabled } from '@/lib/featureFlags/middleware';
@@ -57,10 +58,25 @@ function trimString(value: unknown) {
 }
 
 export async function POST(req: NextRequest) {
-  const roleCheck = await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]);
+  const roleCheck = await requireRole(req, [
+    USER_ROLES.ADMIN,
+    USER_ROLES.SYSTEM_ADMIN,
+    USER_ROLES.TENANT_ADMIN,
+    USER_ROLES.RECRUITER,
+    USER_ROLES.SOURCER,
+    USER_ROLES.FULFILLMENT_RECRUITER,
+    USER_ROLES.FULFILLMENT_MANAGER,
+    USER_ROLES.FULFILLMENT_SOURCER,
+  ]);
 
   if (!roleCheck.ok) {
     return roleCheck.response;
+  }
+
+  const tenantId = await getCurrentTenantId(req);
+
+  if (!canRunAgentIntake(roleCheck.user, tenantId)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const featureCheck = await assertFeatureEnabled(FEATURE_FLAGS.AGENTS, { featureName: 'Agents' });
@@ -105,7 +121,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'rawDescription is required' }, { status: 400 });
   }
 
-  const tenantId = await getCurrentTenantId(req);
   const killSwitchResponse = await enforceAgentKillSwitch(AGENT_KILL_SWITCHES.INTAKE, tenantId);
 
   if (killSwitchResponse) {

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { FireDrillAgentDisabledError } from '@/lib/agents/availability';
 import { runShortlist } from '@/lib/agents/shortlist';
+import { canRunAgentShortlist } from '@/lib/auth/permissions';
 import { requireRecruiterOrAdmin } from '@/lib/auth/requireRole';
+import { getCurrentTenantId } from '@/lib/tenant';
 
 type RouteContext =
   | { params: { jobReqId: string } }
@@ -14,6 +16,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     if (!roleCheck.ok) {
       return roleCheck.response;
+    }
+
+    const tenantId = await getCurrentTenantId(req);
+
+    if (!canRunAgentShortlist(roleCheck.user, tenantId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { jobReqId } = await Promise.resolve(context.params);

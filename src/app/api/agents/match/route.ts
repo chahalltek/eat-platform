@@ -9,6 +9,8 @@ import { AGENT_KILL_SWITCHES, enforceAgentKillSwitch } from "@/lib/agents/killSw
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from "@/lib/agents/tenantScope";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import { assertFeatureEnabled } from "@/lib/featureFlags/middleware";
+import { canRunAgentMatch } from "@/lib/auth/permissions";
+import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
 import { requireRole } from "@/lib/auth/requireRole";
 import { USER_ROLES } from "@/lib/auth/roles";
 import { upsertJobCandidateForMatch } from "@/lib/matching/jobCandidate";
@@ -47,7 +49,18 @@ export async function handleMatchAgentPost(
 ) {
   const { jobReqId, candidateIds, limit = 50 } = request;
 
-  const roleCheck = options?.roleCheckResult ?? (await requireRole(req, [USER_ROLES.ADMIN, USER_ROLES.RECRUITER]));
+  const roleCheck =
+    options?.roleCheckResult ??
+    (await requireRole(req, [
+      USER_ROLES.ADMIN,
+      USER_ROLES.SYSTEM_ADMIN,
+      USER_ROLES.TENANT_ADMIN,
+      USER_ROLES.RECRUITER,
+      USER_ROLES.FULFILLMENT_RECRUITER,
+      USER_ROLES.FULFILLMENT_MANAGER,
+      USER_ROLES.FULFILLMENT_SOURCER,
+      USER_ROLES.SOURCER,
+    ]));
 
   if (!roleCheck.ok) {
     return roleCheck.response;
@@ -72,7 +85,12 @@ export async function handleMatchAgentPost(
     throw error;
   }
 
-  const { tenantId, runWithTenantContext, prisma: scopedPrisma } = scopedTenant;
+  const { tenantId: scopedTenantId, runWithTenantContext, prisma: scopedPrisma } = scopedTenant;
+  const tenantId = scopedTenantId ?? DEFAULT_TENANT_ID;
+
+  if (!canRunAgentMatch(roleCheck.user, tenantId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const [availability, killSwitchResponse] = await Promise.all([
     getAgentAvailability(tenantId),

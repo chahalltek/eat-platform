@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { decisionReceiptSchema, createDecisionReceipt, listDecisionReceipts } from "@/server/decision/decisionReceipts";
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { canPublishDecision } from "@/lib/auth/permissions";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 
 export async function GET(req: NextRequest) {
@@ -15,6 +16,10 @@ export async function GET(req: NextRequest) {
   const jobId = searchParams.get("jobId")?.trim();
   const candidateId = searchParams.get("candidateId")?.trim() || null;
   const tenantId = (roleCheck.user.tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  if (!canPublishDecision(roleCheck.user, tenantId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   if (!jobId) {
     return NextResponse.json({ error: "jobId is required" }, { status: 400 });
@@ -49,6 +54,10 @@ export async function POST(req: NextRequest) {
   }
 
   const tenantId = (roleCheck.user.tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  if (!canPublishDecision(roleCheck.user, tenantId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const receipt = await createDecisionReceipt({

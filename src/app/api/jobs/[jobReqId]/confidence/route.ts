@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { FireDrillAgentDisabledError } from "@/lib/agents/availability";
 import { runConfidence } from "@/lib/agents/confidence";
+import { canRunAgentConfidence } from "@/lib/auth/permissions";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
+import { getCurrentTenantId } from "@/lib/tenant";
 
 type RouteParams = { jobReqId: string };
 
@@ -14,6 +16,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     if (!roleCheck.ok) {
       return roleCheck.response;
+    }
+
+    const tenantId = await getCurrentTenantId(req);
+
+    if (!canRunAgentConfidence(roleCheck.user, tenantId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const params = await context.params;

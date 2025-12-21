@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { DEFAULT_TENANT_ID } from "@/lib/auth/config";
+import { canCreateDecision } from "@/lib/auth/permissions";
 import { requireRecruiterOrAdmin } from "@/lib/auth/requireRole";
 import { prisma } from "@/server/db/prisma";
 import { tradeoffDeclarationSchema } from "@/lib/matching/tradeoffs";
@@ -27,6 +28,10 @@ export async function POST(req: NextRequest) {
 
   const jobId = parsed.data.jobId.trim();
   const tenantId = (roleCheck.user.tenantId ?? DEFAULT_TENANT_ID).trim();
+
+  if (!canCreateDecision(roleCheck.user, tenantId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const existingStream = await prisma.metricEvent.findFirst({

@@ -20,6 +20,7 @@ type Permission =
   | "DECISION_EXPORT"
   | "EXPORT_SHORTLIST"
   | "EXPORT_MATCHES"
+<<<<<<< ours
   | "FULFILLMENT_VIEW"
   | "DECISION_CREATE"
   | "DECISION_PUBLISH";
@@ -63,6 +64,59 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_CREATE",
     "DECISION_PUBLISH",
   ]),
+=======
+  | "fulfillment.view"
+  | "agent.run.intake"
+  | "agent.run.profile"
+  | "agent.run.match"
+  | "agent.run.confidence"
+  | "agent.run.explain"
+  | "agent.run.shortlist"
+  | "decision.create"
+  | "decision.publish"
+  | "decision.export"
+  | "admin.rbac.manage";
+
+const FULFILLMENT_SOURCER_PERMISSIONS: Permission[] = [
+  "VIEW_CANDIDATES",
+  "fulfillment.view",
+  "agent.run.intake",
+  "agent.run.profile",
+  "agent.run.match",
+  "agent.run.confidence",
+  "agent.run.explain",
+  "decision.create",
+];
+
+const FULFILLMENT_RECRUITER_PERMISSIONS: Permission[] = [
+  ...FULFILLMENT_SOURCER_PERMISSIONS,
+  "agent.run.shortlist",
+  "decision.publish",
+  "decision.export",
+];
+
+const FULFILLMENT_MANAGER_PERMISSIONS: Permission[] = [...FULFILLMENT_RECRUITER_PERMISSIONS];
+
+const ADMIN_PERMISSIONS: Permission[] = [
+  ...FULFILLMENT_MANAGER_PERMISSIONS,
+  "VIEW_AUDIT_LOGS",
+  "MANAGE_PROMPTS",
+  "MANAGE_FEATURE_FLAGS",
+  "VIEW_ENVIRONMENT",
+  "VIEW_QUALITY_METRICS",
+  "VIEW_AGENT_LOGS",
+  "MANAGE_TENANTS",
+  "VIEW_EXEC_INTELLIGENCE",
+  "USE_STRATEGIC_COPILOT",
+  "EXPORT_SHORTLIST",
+  "EXPORT_MATCHES",
+  "admin.rbac.manage",
+];
+
+const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
+  [USER_ROLES.ADMIN]: new Set(ADMIN_PERMISSIONS),
+  [USER_ROLES.TENANT_ADMIN]: new Set(ADMIN_PERMISSIONS),
+>>>>>>> theirs
   [USER_ROLES.DATA_ACCESS]: new Set([
     "VIEW_CANDIDATES",
     "VIEW_AUDIT_LOGS",
@@ -76,6 +130,7 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "EXPORT_MATCHES",
     "FULFILLMENT_VIEW",
   ]),
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
   [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS", "DECISION_EXPORT"]),
@@ -117,6 +172,16 @@ const ROLE_PERMISSION_MAP: Record<UserRole, Set<Permission>> = {
     "DECISION_CREATE",
     "DECISION_PUBLISH",
   ]),
+=======
+  [USER_ROLES.MANAGER]: new Set(["VIEW_CANDIDATES", "VIEW_AUDIT_LOGS"]),
+  [USER_ROLES.RECRUITER]: new Set([...FULFILLMENT_RECRUITER_PERMISSIONS]),
+  [USER_ROLES.SOURCER]: new Set([...FULFILLMENT_SOURCER_PERMISSIONS]),
+  [USER_ROLES.FULFILLMENT_SOURCER]: new Set([...FULFILLMENT_SOURCER_PERMISSIONS]),
+  [USER_ROLES.FULFILLMENT_RECRUITER]: new Set([...FULFILLMENT_RECRUITER_PERMISSIONS]),
+  [USER_ROLES.FULFILLMENT_MANAGER]: new Set([...FULFILLMENT_MANAGER_PERMISSIONS]),
+  [USER_ROLES.SALES]: new Set(["VIEW_CANDIDATES"]),
+  [USER_ROLES.SYSTEM_ADMIN]: new Set<Permission>(ADMIN_PERMISSIONS),
+>>>>>>> theirs
   [USER_ROLES.EXEC]: new Set<Permission>(["VIEW_EXEC_INTELLIGENCE", "USE_STRATEGIC_COPILOT"]),
 };
 
@@ -153,6 +218,14 @@ function hasTenantAccess(user: PermissionUser, tenantId?: string | null) {
   const userTenant = (user?.tenantId ?? DEFAULT_TENANT_ID).trim();
 
   return normalizedTenant === userTenant;
+}
+
+function hasFulfillmentPermission(user: PermissionUser, permission: Permission, tenantId?: string | null) {
+  if (!hasPermission(user, permission)) {
+    return false;
+  }
+
+  return hasTenantAccess(user, tenantId);
 }
 
 export function canViewCandidates(user: PermissionUser, tenantId?: string | null) {
@@ -228,6 +301,7 @@ export function canExportMatches(user: PermissionUser, tenantId?: string | null)
 }
 
 export function canViewFulfillment(user: PermissionUser, tenantId?: string | null) {
+<<<<<<< ours
   return hasPermission(user, "FULFILLMENT_VIEW") && hasTenantAccess(user, tenantId);
 }
 
@@ -237,4 +311,47 @@ export function canCreateDecisionArtifact(user: PermissionUser, tenantId?: strin
 
 export function canPublishDecisionArtifact(user: PermissionUser, tenantId?: string | null) {
   return hasPermission(user, "DECISION_PUBLISH") && hasTenantAccess(user, tenantId);
+=======
+  return hasFulfillmentPermission(user, "fulfillment.view", tenantId);
+}
+
+export function canRunAgentIntake(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "agent.run.intake", tenantId);
+}
+
+export function canRunAgentProfile(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "agent.run.profile", tenantId);
+}
+
+export function canRunAgentMatch(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "agent.run.match", tenantId);
+}
+
+export function canRunAgentConfidence(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "agent.run.confidence", tenantId);
+}
+
+export function canRunAgentExplain(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "agent.run.explain", tenantId);
+}
+
+export function canRunAgentShortlist(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "agent.run.shortlist", tenantId);
+}
+
+export function canCreateDecision(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "decision.create", tenantId);
+}
+
+export function canPublishDecision(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "decision.publish", tenantId);
+}
+
+export function canExportDecisions(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "decision.export", tenantId);
+}
+
+export function canManageRbac(user: PermissionUser, tenantId?: string | null) {
+  return hasFulfillmentPermission(user, "admin.rbac.manage", tenantId);
+>>>>>>> theirs
 }

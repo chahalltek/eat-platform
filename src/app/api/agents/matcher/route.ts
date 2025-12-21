@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runMatcher } from '@/lib/agents/matcher';
+import { canRunAgentMatch } from '@/lib/auth/permissions';
 import { requireRole } from '@/lib/auth/requireRole';
 import { normalizeRole, USER_ROLES } from '@/lib/auth/roles';
 import { FEATURE_FLAGS } from '@/lib/featureFlags';
@@ -15,6 +16,10 @@ export async function POST(req: NextRequest) {
       USER_ROLES.SYSTEM_ADMIN,
       USER_ROLES.TENANT_ADMIN,
       USER_ROLES.RECRUITER,
+      USER_ROLES.SOURCER,
+      USER_ROLES.FULFILLMENT_RECRUITER,
+      USER_ROLES.FULFILLMENT_MANAGER,
+      USER_ROLES.FULFILLMENT_SOURCER,
     ]);
 
     if (!roleCheck.ok) {
@@ -41,6 +46,10 @@ export async function POST(req: NextRequest) {
     const tenantId = await getCurrentTenantId(req);
     const userRole = normalizeRole(roleCheck.user.role);
     const isSystemAdmin = userRole === USER_ROLES.SYSTEM_ADMIN;
+
+    if (!canRunAgentMatch(roleCheck.user, tenantId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const job = await prisma.jobReq.findUnique({ select: { tenantId: true }, where: { id: jobId } });
 

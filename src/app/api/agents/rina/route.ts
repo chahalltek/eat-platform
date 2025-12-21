@@ -8,6 +8,7 @@ import { isRateLimitError } from '@/lib/rateLimiting/rateLimiter';
 import { toRateLimitResponse } from '@/lib/rateLimiting/http';
 import { validateRecruiterId } from '@/app/api/agents/recruiterValidation';
 import { getTenantScopedPrismaClient, toTenantErrorResponse } from '@/lib/agents/tenantScope';
+import { canRunAgentProfile } from '@/lib/auth/permissions';
 import { normalizeRole, USER_ROLES, type UserRole } from '@/lib/auth/roles';
 import { getCurrentTenantId } from '@/lib/tenant';
 import { onCandidateChanged } from '@/lib/orchestration/triggers';
@@ -32,6 +33,10 @@ export async function POST(req: NextRequest) {
       USER_ROLES.SYSTEM_ADMIN,
       USER_ROLES.TENANT_ADMIN,
       USER_ROLES.RECRUITER,
+      USER_ROLES.SOURCER,
+      USER_ROLES.FULFILLMENT_RECRUITER,
+      USER_ROLES.FULFILLMENT_MANAGER,
+      USER_ROLES.FULFILLMENT_SOURCER,
     ];
 
     if (!normalizedRole || !allowedRoles.includes(normalizedRole)) {
@@ -67,6 +72,10 @@ export async function POST(req: NextRequest) {
 
     const { recruiterId, rawResumeText, sourceType, sourceTag } = body ?? {};
     const jobReqId = typeof body?.jobReqId === 'string' ? body.jobReqId.trim() : undefined;
+
+    if (!canRunAgentProfile(currentUser, tenantId)) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
 
     const recruiterValidation =
       (await validateRecruiterId(recruiterId ?? currentUser.id, { required: true })) ??
