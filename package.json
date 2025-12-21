@@ -4,11 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-<<<<<<< ours
     "dev:coverage": "COVERAGE_E2E=1 BABEL_ENV=coverage_e2e next dev",
-=======
-    "dev:coverage": "COVERAGE_E2E=1 BABEL_ENV=coverage_e2e next dev -p 3000",
->>>>>>> theirs
     "build": "node scripts/db-safety.js --ci && prisma migrate deploy && prisma generate && next build",
     "vercel-build": "node scripts/db-safety.js --ci && node scripts/prisma-migrate-if-configured.js && prisma generate && next build",
     "postinstall": "prisma generate",
@@ -17,33 +13,22 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage --watch=false --config vitest.coverage.config.ts",
     "test:coverage:unit": "COVERAGE_DIR=coverage/unit vitest run --coverage --watch=false --config vitest.unit.config.ts",
-    "test:coverage:e2e": "PLAYWRIGHT_COVERAGE=1 COVERAGE_DIR=coverage/e2e playwright test --config=playwright.e2e.config.ts",
+    "test:coverage:e2e": "COVERAGE_E2E=1 BABEL_ENV=coverage_e2e playwright test --config=playwright.e2e.config.ts",
     "test:coverage:all": "npm run test:coverage:unit && npm run test:coverage:e2e && npm run coverage:merge",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "coverage:unit": "vitest run --coverage --config vitest.unit.config.ts",
     "coverage": "npm run test:coverage",
-    "coverage:merge": "node scripts/merge-coverage.js",
-    "coverage:all": "vitest run --coverage --config vitest.config.ts",
-<<<<<<< ours
-<<<<<<< ours
     "coverage:merge": "tsx scripts/merge-coverage.ts",
-=======
-    "test:coverage:all": "node -e \"require('fs').rmSync('coverage',{recursive:true,force:true});\" && COVERAGE_RELAXED=true vitest run --coverage --watch=false --config vitest.config.ts --coverage.reportsDirectory=coverage/vitest && tsx scripts/utils/merge-coverage.ts",
->>>>>>> theirs
-=======
-    "test:coverage:all": "vitest run --coverage --watch=false --config vitest.config.ts",
->>>>>>> theirs
+    "coverage:all": "vitest run --coverage --config vitest.config.ts",
     "ci:test:coverage": "vitest run --coverage --watch=false --config vitest.coverage.config.ts",
     "ci:config-validate": "tsx scripts/config-validate.ts",
     "ci:coverage-debt": "npm run coverage && tsx scripts/coverage-debt-scan.ts",
-    "coverage:merge": "tsx scripts/merge-coverage.ts",
     "ci:security-baseline": "tsx scripts/security-baseline.ts",
     "ci:client-import-guard": "node scripts/check-client-imports.js",
     "ci:tenant-admin-guard": "tsx scripts/check-tenant-admin-guards.ts",
     "ci:todo-scan": "tsx scripts/check-todos.ts",
     "ci:conflict-scan": "node scripts/check-merge-conflicts.js",
     "predeploy": "node scripts/deployment-health.js",
-    "coverage:merge": "tsx scripts/merge-coverage.ts",
     "seed": "ts-node prisma/seed.ts",
     "seed:demo": "ts-node scripts/seed-demo-tenant.ts",
     "provision-demo-users": "ts-node scripts/provision-demo-users.ts",
@@ -55,116 +40,10 @@
     "e2e": "playwright test --config=playwright.e2e.config.ts",
     "e2e:admin-layout": "playwright test --config=playwright.admin-layout.config.ts",
     "e2e:visual": "playwright test --config=playwright.visual.config.ts",
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "PWDEBUG=1 playwright test",
-<<<<<<< ours
-    "e2e:routes": "playwright test --config=playwright.e2e.config.ts"
-=======
-    "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
-    "test:coverage:unit": "vitest run --coverage --watch=false --config vitest.unit.config.ts --coverage.reportsDirectory=coverage/unit",
-    "test:coverage:e2e": "COVERAGE_E2E=1 BABEL_ENV=coverage_e2e playwright test --config=playwright.e2e.config.ts",
-    "coverage:merge": "tsx scripts/merge-coverage.ts",
-    "test:coverage:all": "npm run test:coverage:unit && npm run test:coverage:e2e && npm run coverage:merge"
->>>>>>> theirs
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-    "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "PWDEBUG=1 playwright test"
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
     "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e": "playwright test --config=playwright.e2e.config.ts",
     "test:e2e:ui": "playwright test --config=playwright.e2e.config.ts --ui",
     "test:e2e:debug": "PWDEBUG=1 playwright test --config=playwright.e2e.config.ts"
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-    "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "PWDEBUG=1 playwright test",
-    "test:coverage:e2e": "COVERAGE_E2E=1 playwright test"
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-    "test:e2e": "playwright test --config=playwright.e2e.config.ts",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "PWDEBUG=1 playwright test",
-    "e2e:routes": "playwright test --config=playwright.e2e.config.ts"
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-=======
-    "e2e:routes": "playwright test --config=playwright.e2e.config.ts",
->>>>>>> theirs
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "PWDEBUG=1 playwright test"
-=======
->>>>>>> theirs
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -190,48 +69,19 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "istanbul-lib-coverage": "^3.2.2",
-    "istanbul-lib-report": "^3.0.1",
-    "istanbul-reports": "^3.1.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-<<<<<<< ours
-    "@vitest/coverage-v8": "^4.0.15",
-<<<<<<< ours
-<<<<<<< ours
-    "babel-plugin-istanbul": "^7.0.1",
-=======
     "@vitest/coverage-istanbul": "^4.0.15",
->>>>>>> theirs
-=======
-    "istanbul-lib-coverage": "^3.2.2",
-    "istanbul-lib-report": "^3.0.1",
-    "istanbul-reports": "^3.1.7",
->>>>>>> theirs
-=======
-    "babel-plugin-istanbul": "^6.1.1",
->>>>>>> theirs
+    "babel-plugin-istanbul": "^7.0.1",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
-<<<<<<< ours
-<<<<<<< ours
-    "istanbul-lib-coverage": "^3.2.2",
-<<<<<<< ours
-    "istanbul-lib-report": "^3.0.1",
-    "istanbul-reports": "^3.2.0",
-=======
->>>>>>> theirs
-=======
+    "fast-glob": "^3.3.3",
     "glob": "^11.1.0",
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",
->>>>>>> theirs
-=======
-    "istanbul-lib-coverage": "^3.2.2",
->>>>>>> theirs
     "jsdom": "^27.3.0",
     "pg-mem": "^3.0.5",
     "png-to-ico": "^3.0.1",
@@ -239,7 +89,7 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
-    "tsx": "^4.19.2",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.0.15"
   }
