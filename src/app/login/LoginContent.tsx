@@ -25,7 +25,8 @@ export function LoginContent({ branding }: LoginContentProps) {
   const [logoError, setLogoError] = useState(false);
 
   const logoAlt = useMemo(() => branding.brandLogoAlt || DEFAULT_BRAND_LOGO_ALT, [branding.brandLogoAlt]);
-  const showRemoteLogo = branding.brandLogoUrl && !logoError;
+  const remoteLogoUrl = branding.brandLogoUrl ?? undefined;
+  const showRemoteLogo = Boolean(remoteLogoUrl && !logoError);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -66,7 +67,7 @@ export function LoginContent({ branding }: LoginContentProps) {
           <div className="flex flex-col items-center text-center">
             {showRemoteLogo ? (
               <img
-                src={branding.brandLogoUrl}
+                src={remoteLogoUrl}
                 alt={logoAlt}
                 onError={() => setLogoError(true)}
                 className="mb-4 max-h-12 w-auto max-w-[220px]"
