@@ -320,7 +320,15 @@ const EXPLAIN_FAILURE_THRESHOLD = 0.3;
 const LLM_FAILURE_THRESHOLD = 0.25;
 const MATCH_FAILURE_THRESHOLD = 0.25;
 const FIRE_DRILL_IMPACT = ["Agent dispatch paused", "Guardrails forced to conservative"] as const;
-const TENANT_CONFIG_EXPECTED_COLUMNS = ["preset", "llm", "networkLearningOptIn", "networkLearning"] as const;
+const TENANT_CONFIG_EXPECTED_COLUMNS = [
+  "preset",
+  "llm",
+  "networkLearningOptIn",
+  "networkLearning",
+  "brandName",
+  "brandLogoUrl",
+  "brandLogoAlt",
+] as const;
 
 const AGENT_RUN_STATUS =
   AgentRunStatus ??

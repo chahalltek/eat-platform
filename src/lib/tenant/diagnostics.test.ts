@@ -357,8 +357,8 @@ describe("buildTenantDiagnostics", () => {
 
     expect(diagnostics.schemaDrift).toEqual({
       status: "fault",
-      missingColumns: ["llm", "networkLearningOptIn", "networkLearning"],
-      reason: "Missing columns: llm, networkLearningOptIn, networkLearning",
+      missingColumns: ["llm", "networkLearningOptIn", "networkLearning", "brandName", "brandLogoUrl", "brandLogoAlt"],
+      reason: "Missing columns: llm, networkLearningOptIn, networkLearning, brandName, brandLogoUrl, brandLogoAlt",
     });
   });
 
@@ -373,6 +373,9 @@ describe("buildTenantDiagnostics", () => {
       "llm",
       "networkLearningOptIn",
       "networkLearning",
+      "brandName",
+      "brandLogoUrl",
+      "brandLogoAlt",
     ]);
     expect(diagnostics.schemaDrift.reason).toContain("could not be inspected");
   });
@@ -454,4 +457,3 @@ describe("buildTenantDiagnostics", () => {
       .rejects.toBeInstanceOf(TenantNotFoundError);
   });
 });
-

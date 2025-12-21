@@ -186,6 +186,9 @@ model TenantConfig {
   llm                  Json?
   networkLearningOptIn Boolean  @default(false)
   networkLearning      Json?
+  brandName            String?
+  brandLogoUrl         String?
+  brandLogoAlt         String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
