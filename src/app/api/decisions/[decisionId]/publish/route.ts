@@ -8,14 +8,15 @@ import { DecisionStatus } from "@/server/db/prisma";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { decisionId: string } },
+  { params }: { params: Promise<{ decisionId: string }> },
 ) {
   const user = await getCurrentUser(req);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const decisionId = params.decisionId?.trim();
+  const { decisionId: decisionIdParam } = await params;
+  const decisionId = decisionIdParam?.trim();
   if (!decisionId) {
     return NextResponse.json({ error: "decisionId is required" }, { status: 400 });
   }
