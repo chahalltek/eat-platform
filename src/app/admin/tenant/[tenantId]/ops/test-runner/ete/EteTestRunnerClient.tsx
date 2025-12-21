@@ -3,7 +3,6 @@
 import { BoltIcon, ChatBubbleLeftEllipsisIcon, ClipboardDocumentListIcon, CommandLineIcon, FunnelIcon, MagnifyingGlassIcon, ShieldCheckIcon, TagIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState, type KeyboardEvent } from "react";
 
-import { CopyButton } from "@/components/CopyButton";
 import type { TestCatalogItem } from "@/lib/testing/testCatalog";
 import { cn } from "@/lib/utils";
 
@@ -129,7 +128,6 @@ export function EteTestRunnerClient({
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{entry.title}</h3>
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">{entry.description}</p>
                 </div>
-                <CopyButton text={entry.command} label="Copy command" className="shrink-0" stopPropagation />
               </div>
               <code className="block rounded-xl bg-zinc-900 px-4 py-3 text-xs text-emerald-100 shadow-inner">{entry.command}</code>
             </div>
@@ -255,7 +253,6 @@ export function EteTestRunnerClient({
                         <CommandLineIcon className="h-4 w-4" />
                         <span>Local command</span>
                       </div>
-                      <CopyButton text={item.localCommand} label="Copy local" className="shrink-0" stopPropagation />
                     </div>
                     <code className="block whitespace-pre-wrap font-mono text-sm leading-relaxed text-indigo-700 dark:text-indigo-200">{item.localCommand}</code>
                   </div>
@@ -269,7 +266,6 @@ export function EteTestRunnerClient({
                         <ShieldCheckIcon className="h-4 w-4" />
                         <span>CI snippet</span>
                       </div>
-                      {item.ciStep ? <CopyButton text={item.ciStep} label="Copy GH Actions" className="shrink-0" stopPropagation /> : null}
                     </div>
                     {item.ciStep ? (
                       <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.ciStep}</pre>
@@ -288,7 +284,6 @@ export function EteTestRunnerClient({
                           <ChatBubbleLeftEllipsisIcon className="h-4 w-4" />
                           <span>IM-ready snippet</span>
                         </div>
-                        <CopyButton text={item.slackSnippet} label="Copy IM snippet" className="shrink-0" stopPropagation />
                       </div>
                       <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">{item.slackSnippet}</pre>
                     </div>
