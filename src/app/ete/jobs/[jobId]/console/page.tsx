@@ -184,6 +184,7 @@ export default async function JobConsolePage({ params }: { params: { jobId: stri
           jobTitle={job.title}
           jobLocation={job.location}
           summary={job.rawDescription}
+          userRole={normalizedRole}
           mustHaveSkills={mustHaveSkills}
           initialCandidates={initialCandidates}
           agentState={agents}

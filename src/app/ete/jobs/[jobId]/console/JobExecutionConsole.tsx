@@ -6,6 +6,7 @@ import clsx from "clsx";
 
 import { StatusPill } from "@/components/StatusPill";
 import { SopContextualLink } from "@/components/SopContextualLink";
+import { AgentToolbar } from "./AgentToolbar";
 import { categorizeConfidence } from "@/app/jobs/[jobId]/matches/confidence";
 import type { Explanation } from "@/lib/agents/explainEngine";
 import {
@@ -17,6 +18,7 @@ import {
 import { describeAssignment } from "@/lib/archetypes/reqArchetypes";
 import { formatTradeoffDeclaration, resolveTradeoffs, type TradeoffDeclaration } from "@/lib/matching/tradeoffs";
 import type { DecisionAuditContext, DecisionGovernanceSignals } from "@/server/decision/decisionReceipts";
+import type { UserRole } from "@/lib/auth/roles";
 
 export type AgentName = "MATCH" | "CONFIDENCE" | "EXPLAIN" | "SHORTLIST";
 
@@ -36,6 +38,7 @@ export type JobConsoleProps = {
   jobTitle: string;
   jobLocation: string | null;
   summary: string | null;
+  userRole: UserRole | null;
   mustHaveSkills: string[];
   initialCandidates: JobConsoleCandidate[];
   agentState: {
@@ -1005,123 +1008,43 @@ function ClientTrustArtifactCard({ receipt, copied, onCopy }: { receipt: Decisio
   );
 }
 
-function ExecutionToolbar({
-  onRun,
-  disabled,
-  running,
-  shortlistStrategy,
-  onShortlistStrategyChange,
+function ShortlistStrategySelector({
+  value,
+  onChange,
 }: {
-  onRun: (agent: AgentName) => void;
-  disabled: Record<AgentName, boolean>;
-  running: AgentName | null;
-  shortlistStrategy: "quality" | "strict" | "fast";
-  onShortlistStrategyChange: (strategy: "quality" | "strict" | "fast") => void;
+  value: "quality" | "strict" | "fast";
+  onChange: (strategy: "quality" | "strict" | "fast") => void;
 }) {
-  const buttonClasses = {
-    MATCH: "bg-slate-900 text-white",
-    CONFIDENCE: "bg-indigo-50 text-indigo-900 ring-1 ring-indigo-200",
-    EXPLAIN: "bg-slate-100 text-slate-900",
-  } as const;
-
-  const labels: Record<Exclude<AgentName, "SHORTLIST">, string> = {
-    MATCH: "Run MATCH",
-    CONFIDENCE: "Run CONFIDENCE",
-    EXPLAIN: "Run EXPLAIN",
-  };
-
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-      <div className="flex flex-wrap gap-3">
-        {(Object.keys(labels) as Exclude<AgentName, "SHORTLIST">[]).map((agent) => {
-          const isRunning = running === agent;
-          const isDisabled = disabled[agent] || Boolean(running);
-
-          return (
-            <button
-              key={agent}
-              type="button"
-              onClick={() => onRun(agent)}
-              disabled={isDisabled}
-              title={disabled[agent] ? "Disabled in current mode." : undefined}
+    <div className="flex flex-col gap-3 rounded-xl bg-white p-4 ring-1 ring-emerald-100 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Shortlist strategy</p>
+        <p className="text-sm text-slate-600">Choose how aggressive the shortlist should be before running the agent.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {["quality", "strict", "fast"].map((option) => (
+            <label
+              key={option}
               className={clsx(
-                "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition",
-                isDisabled ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-md",
-                buttonClasses[agent],
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] ring-1 transition",
+                value === option
+                  ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                  : "bg-slate-50 text-slate-600 ring-slate-200 hover:bg-slate-100",
               )}
             >
-              <span className="relative flex items-center gap-2">
-                {isRunning ? (
-                  <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
-                    <span className="relative flex h-2 w-2 items-center justify-center">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60" aria-hidden />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-current" aria-hidden />
-                    </span>
-                    Running
-                  </span>
-                ) : null}
-                <span>{labels[agent]}</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-col gap-3 rounded-xl bg-white p-4 ring-1 ring-emerald-100 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Shortlist strategy</p>
-          <p className="text-sm text-slate-600">Choose how aggressive the shortlist should be before running the agent.</p>
-          <div className="flex flex-wrap items-center gap-2">
-            {["quality", "strict", "fast"].map((option) => (
-              <label
-                key={option}
-                className={clsx(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] ring-1 transition",
-                  shortlistStrategy === option
-                    ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
-                    : "bg-slate-50 text-slate-600 ring-slate-200 hover:bg-slate-100",
-                )}
-              >
-                <input
-                  type="radio"
-                  name="shortlist-strategy"
-                  value={option}
-                  checked={shortlistStrategy === option}
-                  onChange={() => onShortlistStrategyChange(option as "quality" | "strict" | "fast")}
-                  className="sr-only"
-                />
-                {option}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-col items-start gap-2 sm:items-end">
-          <button
-            type="button"
-            onClick={() => onRun("SHORTLIST")}
-            disabled={disabled.SHORTLIST || Boolean(running)}
-            title={disabled.SHORTLIST ? "Shortlist agent disabled in this mode." : undefined}
-            className={clsx(
-              "inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition",
-              disabled.SHORTLIST || Boolean(running) ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-md",
-            )}
-          >
-            <span className="relative flex items-center gap-2">
-              {running === "SHORTLIST" ? (
-                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
-                  <span className="relative flex h-2 w-2 items-center justify-center">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60" aria-hidden />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-white" aria-hidden />
-                  </span>
-                  Running
-                </span>
-              ) : null}
-              <span>Run Shortlist!</span>
-            </span>
-          </button>
-          <p className="text-[11px] text-slate-500">Default strategy is quality-focused.</p>
+              <input
+                type="radio"
+                name="shortlist-strategy"
+                value={option}
+                checked={value === option}
+                onChange={() => onChange(option as "quality" | "strict" | "fast")}
+                className="sr-only"
+              />
+              {option}
+            </label>
+          ))}
         </div>
       </div>
+      <p className="text-[11px] text-slate-500">Default strategy is quality-focused.</p>
     </div>
   );
 }
@@ -1200,6 +1123,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     jobTitle,
     jobLocation,
     summary,
+    userRole,
     mustHaveSkills,
     initialCandidates,
     agentState,
@@ -1584,6 +1508,66 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     return null;
   }
 
+  async function runIntakeAgent() {
+    setMessage(null);
+    setError(null);
+
+    try {
+      const trimmedSummary = summary?.trim();
+
+      if (!trimmedSummary) {
+        throw new Error("Job description is required to run intake.");
+      }
+
+      const res = await fetch(`/api/agents/intake`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobReqId: jobId, rawDescription: trimmedSummary }),
+      });
+
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error ?? `INTAKE failed with ${res.status}`);
+      }
+
+      setMessage("Intake agent started for this job description.");
+      setLastUpdated(new Date());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Agent run failed");
+      throw err;
+    }
+  }
+
+  async function runProfileAgent() {
+    setMessage(null);
+    setError(null);
+
+    try {
+      const profileText = summary?.trim() || jobTitle;
+
+      if (!profileText) {
+        throw new Error("Profile agent needs job context to run.");
+      }
+
+      const res = await fetch(`/api/agents/profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawResumeText: profileText, jobReqId: jobId }),
+      });
+
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error ?? `PROFILE failed with ${res.status}`);
+      }
+
+      setMessage("Profile agent triggered. Check candidates for new profiles.");
+      setLastUpdated(new Date());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Agent run failed");
+      throw err;
+    }
+  }
+
   async function runAgent(agent: AgentName) {
     setMessage(null);
     setError(null);
@@ -1712,6 +1696,7 @@ export function JobExecutionConsole(props: JobConsoleProps) {
     } catch (err) {
       console.error("Failed to run agent", err);
       setError(err instanceof Error ? err.message : "Agent run failed");
+      throw err;
     } finally {
       setRunningAgent(null);
       startTransition(() => {});
@@ -1792,13 +1777,25 @@ export function JobExecutionConsole(props: JobConsoleProps) {
 
         <TradeoffSelector value={tradeoffs} onChange={handleTradeoffChange} />
 
-        <ExecutionToolbar
-          onRun={runAgent}
-          disabled={disabled}
-          running={runningAgent || (isPending ? runningAgent : null)}
-          shortlistStrategy={shortlistStrategy}
-          onShortlistStrategyChange={setShortlistStrategy}
+        <AgentToolbar
+          role={userRole}
+          onRun={{
+            intake: runIntakeAgent,
+            profile: runProfileAgent,
+            match: () => runAgent("MATCH"),
+            confidence: () => runAgent("CONFIDENCE"),
+            explain: () => runAgent("EXPLAIN"),
+            shortlist: () => runAgent("SHORTLIST"),
+          }}
+          disabledActions={{
+            match: disabled.MATCH,
+            confidence: disabled.CONFIDENCE,
+            explain: disabled.EXPLAIN,
+            shortlist: disabled.SHORTLIST,
+          }}
         />
+
+        <ShortlistStrategySelector value={shortlistStrategy} onChange={setShortlistStrategy} />
 
         <div className="flex flex-col gap-1 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
           {runningAgent ? (
