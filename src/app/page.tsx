@@ -466,7 +466,7 @@ export default async function Home() {
             <p className="max-w-2xl text-base font-semibold leading-relaxed text-zinc-700">
               {heroDescription}
             </p>
-            <p className="text-sm font-medium text-zinc-500">{BRANDING.tagline}</p>
+            {BRANDING.tagline ? <p className="text-sm font-medium text-zinc-500">{BRANDING.tagline}</p> : null}
           </div>
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500">EDGE Talent Engine™ is a product of Strategic Systems.</p>
           <p className="max-w-2xl text-lg text-zinc-600">
@@ -494,7 +494,9 @@ export default async function Home() {
                     <p className="max-w-2xl text-lg font-semibold leading-relaxed text-zinc-900 dark:text-zinc-100">
                       {heroDescription}
                     </p>
-                    <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{BRANDING.tagline}</p>
+                    {BRANDING.tagline ? (
+                      <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{BRANDING.tagline}</p>
+                    ) : null}
                   </div>
                   <p className="max-w-3xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
                     ETE is an agentic decision-support system where specialized agents reason at key moments, humans retain authority, and
