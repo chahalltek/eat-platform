@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 ETE Decision Model (MVP)
 Purpose
 
@@ -189,4 +190,58 @@ End of document
 | Data retention and guardrails | 🔵 accountable | 🟢 consulted | 🔵 accountable |
 
 Legend: 🔵 = owns/approves; 🟢 = consulted.
+>>>>>>> theirs
+=======
+# ETE decision model
+
+The EDGE Talent Engine™ (ETE) decision model combines structured signals, judgment safeguards, and evidence-backed explanations to reach consistent hiring recommendations. This document captures the steady-state logic so admins can validate behavior without reading the GitHub source.
+
+## Purpose and scope
+- Create repeatable, auditable decisions across resume intake, job understanding, matching, and shortlisting.
+- Balance precision (quality of matches) with coverage (enough candidates progress) while respecting tenant guardrails.
+- Keep human control in the loop: recommendations must be explainable and reversible.
+
+## Inputs and signals
+- **Job profile**: normalized role, required and preferred skills, seniority, location, comp band, and hiring constraints.
+- **Candidate profile**: structured resume facts, inferred skills, experience depth, mobility, and recent activity.
+- **Context**: tenant feature flags, safety policies, market benchmarks, and execution health (latency/error budgets).
+- **Feedback loop**: explicit recruiter feedback, shortlisting outcomes, and blocked matches for continuous tuning.
+
+## Scoring approach
+- Build a feature vector from overlapping skills, seniority alignment, location/remote fit, salary harmony, and risk flags.
+- Weight signals using guardrail-aware coefficients (e.g., penalize missing must-have skills more than soft skills gaps).
+- Generate component scores:
+  - **Fit score** (skills + seniority + location)
+  - **Confidence** (model certainty given evidence depth and recency)
+  - **Risk** (policy conflicts, stale data, low evidence density)
+- Produce a composite **ETE score** in the 0–100 range; clamp and normalize for consistent admin reviews.
+
+## Decision rules
+- **Auto-include**: candidates with fit ≥ threshold, confidence high, and zero critical risks.
+- **Review**: borderline fit or low evidence but no blocking risks; surface for human judgment with clear rationales.
+- **Block**: guardrail violations (policy blocks, missing must-have skills, PII or safety concerns) or repeated execution errors.
+- Apply tenant-level overrides (pilot rules, exec-only features) before finalizing the decision.
+
+## Explanations
+- Every recommendation must attach:
+  - Top positive signals (skills alignment, relevant accomplishments, recent role match)
+  - Top cautions (skill gaps, location/comp mismatch, outdated experience)
+  - Evidence trace (source documents, run IDs) for auditability
+- Keep language concise and specific to the job/candidate pair; avoid generic phrasing.
+
+## Outputs
+- **Decision label**: include, review, or block.
+- **Score bundle**: ETE score, component scores, and contributing factors.
+- **Audit data**: guardrail state, model version, and execution timestamps.
+- **UI payload**: human-readable summary and bulletized rationale for display in Explain/Shortlist views.
+
+## Operational notes
+- Decisions must be deterministic for the same inputs and guardrail state; log every run for diagnostics.
+- Favor stable models over experimental ones in production builds; route experiments through feature flags.
+- If upstream data quality degrades, downgrade confidence, increase review cases, and alert admins.
+
+## Change management
+- Track coefficient or threshold changes through feature flags and migration scripts.
+- Provide test fixtures that validate include/review/block transitions for key personas.
+- Update this document when the scoring rubric or guardrail policies materially change.
 >>>>>>> theirs
