@@ -1,6 +1,7 @@
 import {
   BanknotesIcon,
   BoltIcon,
+  BookOpenIcon,
   BuildingOffice2Icon,
   ChartBarIcon,
   FunnelIcon,
@@ -195,6 +196,24 @@ export default async function AdminHealthPage() {
           </div>
           <nav data-testid="admin-nav" aria-label="Admin navigation">
             <div className="grid gap-4 md:grid-cols-2">
+              <Link
+                href="/admin/docs/ete-decision-model"
+                className="group flex items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+                  <BookOpenIcon className="h-6 w-6" aria-hidden />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">ETE decision model</p>
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-900/50 dark:text-amber-100">Doctrine</span>
+                  </div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">What this system is/is not and the rules we protect.</p>
+                  <span className="text-sm font-semibold text-indigo-600 transition group-hover:text-indigo-700 dark:text-indigo-300 dark:group-hover:text-indigo-200">
+                    Open doc
+                  </span>
+                </div>
+              </Link>
               <Link
                 href="/admin/tenants"
                 className="group flex items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
