@@ -1,3 +1,4 @@
+<<<<<<< ours
 ETE Decision Model (MVP)
 Purpose
 
@@ -140,3 +141,52 @@ If the system requires verbal explanation to be used correctly, this document is
 If a change feels reasonable but violates this model, the model wins until reviewed.
 
 End of document
+=======
+# ETE Decision Model
+
+## Purpose
+- ETE is a human-in-the-loop decision-support layer that surfaces evidence, options, and confidence to recruiters and fulfillment leaders.
+- It is not an ATS replacement, ATS enhancement pack, or “automation-first” workflow engine; Bullhorn remains the workflow system of record.
+- Agents advise and draft actions; humans authorize and execute decisions with clear explanations and auditability.
+
+## MVP scope and non-goals
+- **In scope:** Profile enrichment, signal gathering, match scoring, confidence scoring, shortlist creation, explanation payloads, and Bullhorn-safe write-backs that keep humans in charge.
+- **Out of scope:** Autonomous outreach or scheduling, ATS workflow changes, silent updates to Bullhorn records, role-based access model changes, data retention policy changes, and unreviewed automation that bypasses explanations.
+
+## Decision moments (human vs agent)
+- **INTAKE:** Agent gathers signals and drafts intake summary; human confirms requirements and constraints.
+- **PROFILE:** Agent enriches candidate profiles and highlights gaps; human approves what becomes candidate-of-record.
+- **MATCH:** Agent scores and ranks options; human decides candidate and job pairing to pursue.
+- **CONFIDENCE:** Agent computes confidence and tradeoffs; human sets thresholds and go/no-go.
+- **EXPLAIN:** Agent generates rationale, risks, and alternatives; human reviews explanations before action.
+- **SHORTLIST:** Agent drafts shortlist and write-back payload; human approves push to Bullhorn and downstream comms.
+
+## Do Not Violate
+- Humans retain final authority on candidate/job decisions; no silent automation of tradeoffs.
+- Explanations are required for every recommended action; no opaque scoring or hidden overrides.
+- Durable memory (decision history, rationale, and constraints) is first-class and must be preserved with write-backs.
+- Bullhorn is the authoritative system of record; ETE writes back only through approved, auditable paths.
+- Confidence logic and thresholds cannot change without review; no auto-tuning in production.
+- RBAC boundaries (especially for Fulfillment) must not be weakened or bypassed by agents or tools.
+- Data retention and guardrails (PII, tenancy, consent) must be honored; no speculative storage outside approved scopes.
+- Sandbox or demo shortcuts must never leak into production tenants.
+
+## Change control triggers (requires explicit review)
+- Automation behavior changes that alter human approval points or make writes without confirmation.
+- Confidence scoring logic, input weights, or threshold defaults.
+- Explanation format, required fields, or omission of rationale and alternatives.
+- RBAC, permissions, or delegation changes that affect Fulfillment or Bullhorn write paths.
+- Data retention, logging, or guardrail adjustments that impact privacy, tenancy, or auditability.
+
+## Ownership
+| Decision area | Product | Ops | Eng |
+| --- | --- | --- | --- |
+| Scope boundaries and non-goals | 🔵 accountable | 🟢 consulted | 🟢 consulted |
+| Human approval points and UX | 🔵 accountable | 🟢 consulted | 🟢 consulted |
+| Confidence logic and thresholds | 🟢 consulted | 🔵 accountable | 🟢 consulted |
+| Explanation requirements and format | 🔵 accountable | 🟢 consulted | 🟢 consulted |
+| Bullhorn write-back safety and RBAC | 🟢 consulted | 🔵 accountable | 🔵 accountable |
+| Data retention and guardrails | 🔵 accountable | 🟢 consulted | 🔵 accountable |
+
+Legend: 🔵 = owns/approves; 🟢 = consulted.
+>>>>>>> theirs
