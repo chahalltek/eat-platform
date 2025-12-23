@@ -109,7 +109,12 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
   const [users, setUsers] = useState<UserAccessListItem[]>(() => initialUsers);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [createState, setCreateState] = useState({
+  const [createState, setCreateState] = useState<{
+    email: string;
+    displayName: string;
+    role: string;
+    tenantRole: string;
+  }>({
     email: "",
     displayName: "",
     role: USER_ROLES.RECRUITER,
