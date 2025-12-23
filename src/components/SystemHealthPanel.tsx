@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { SystemStateBanner } from "@/components/SystemStateBanner";
 import { SystemStatus } from "@/components/SystemStatus";
-import type { SystemExecutionState, SystemStatusMap } from "@/lib/systemStatus";
+import type { SystemExecutionState, SystemStatusMap } from "@/lib/systemStatusTypes";
 
 type Props = {
   initialStatus: SystemStatusMap;

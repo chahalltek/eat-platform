@@ -4,25 +4,10 @@ import { FEATURE_FLAGS, isFeatureEnabled } from './featureFlags';
 import { isPrismaUnavailableError, isTableAvailable, prisma } from './prisma';
 import { loadTenantGuardrailConfig } from './guardrails/config';
 import { getCurrentTenantId } from './tenant';
-import { getSystemMode, type SystemMode } from './systemMode';
+import { getSystemMode } from './systemMode';
+import type { SubsystemKey, SubsystemState, SystemExecutionState, SystemStatus, SystemStatusMap } from './systemStatusTypes';
 
-export type SubsystemKey = 'agents' | 'scoring' | 'database' | 'tenantConfig' | 'guardrails';
-export type SubsystemState = 'healthy' | 'warning' | 'error' | 'unknown';
-
-export type SystemExecutionState = {
-  state: 'operational' | 'idle' | 'degraded';
-  mode: SystemMode;
-  activeRuns: number;
-  latestRunAt: string | null;
-  latestSuccessAt: string | null;
-  latestFailureAt: string | null;
-  runsToday: number;
-  latestFailureAgentName: string | null;
-  failureCountLast24h: number;
-};
-
-export type SystemStatus = { status: SubsystemState; detail?: string };
-export type SystemStatusMap = Record<SubsystemKey, SystemStatus>;
+export type { SubsystemKey, SubsystemState, SystemExecutionState, SystemStatus, SystemStatusMap };
 
 async function checkDatabase(): Promise<SystemStatus> {
   try {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import type { SubsystemKey, SubsystemState } from "@/lib/systemStatus";
+import type { SubsystemKey, SubsystemState } from "@/lib/systemStatusTypes";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 type BadgeState = "enabled" | "idle" | SubsystemState;

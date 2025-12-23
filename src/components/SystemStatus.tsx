@@ -14,7 +14,7 @@ import type {
   SubsystemState,
   SystemExecutionState,
   SystemStatusMap,
-} from "@/lib/systemStatus";
+} from "@/lib/systemStatusTypes";
 
 const statusLabels: Record<SubsystemKey, string> = {
   agents: "Agents",

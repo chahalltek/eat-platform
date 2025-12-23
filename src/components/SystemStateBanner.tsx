@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
-import type { SystemExecutionState } from "@/lib/systemStatus";
+import type { SystemExecutionState } from "@/lib/systemStatusTypes";
 
 const bannerStyles: Record<SystemExecutionState["state"], { border: string; bg: string }> = {
   degraded: { border: "border-red-200", bg: "bg-red-50" },
