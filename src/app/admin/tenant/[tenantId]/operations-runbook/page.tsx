@@ -42,6 +42,11 @@ const MODE_DEFINITIONS = {
     summary: "Only essential agents active, strictest guardrails, no LLM-dependent features",
     usage: "When upstream LLM systems or scoring pipelines are unstable",
   },
+  maintenance: {
+    label: "Maintenance",
+    summary: "Agents paused, guardrails locked to conservative defaults",
+    usage: "Planned downtime or system maintenance windows",
+  },
 } as const;
 
 const GUARDRAIL_PRESETS = {
@@ -127,35 +132,35 @@ const AGENTS: AgentConfig[] = [
   {
     key: "RUA",
     description: "Role intake",
-    modeAllows: (mode: RunbookMode) => mode !== "fire_drill",
+    modeAllows: (mode: RunbookMode) => mode !== "fire_drill" && mode !== "maintenance",
     killSwitchName: "ETE-TS.RUA",
   },
   {
     key: "RINA",
     description: "Resume ingestion",
-    modeAllows: (mode: RunbookMode) => mode !== "fire_drill",
+    modeAllows: (mode: RunbookMode) => mode !== "fire_drill" && mode !== "maintenance",
     killSwitchName: "ETE-TS.RINA",
   },
   {
     key: "MATCH",
     description: "Scoring engine",
-    modeAllows: (_mode: RunbookMode) => true,
+    modeAllows: (mode: RunbookMode) => mode !== "maintenance",
     killSwitchName: "ETE-TS.MATCHER",
   },
   {
     key: "CONFIDENCE",
     description: "Confidence banding",
-    modeAllows: (mode: RunbookMode) => mode !== "pilot" && mode !== "fire_drill",
+    modeAllows: (mode: RunbookMode) => mode !== "pilot" && mode !== "fire_drill" && mode !== "maintenance",
   },
   {
     key: "EXPLAIN",
     description: "Match explanation",
-    modeAllows: (mode: RunbookMode) => mode !== "fire_drill",
+    modeAllows: (mode: RunbookMode) => mode !== "fire_drill" && mode !== "maintenance",
   },
   {
     key: "SHORTLIST",
     description: "Shortlist generator",
-    modeAllows: (_mode: RunbookMode) => true,
+    modeAllows: (mode: RunbookMode) => mode !== "maintenance",
     killSwitchName: "ETE-TS.RANKER",
   },
 ];
@@ -180,6 +185,10 @@ async function getTenantMode(tenantId: string): Promise<RunbookMode> {
 function resolveGuardrails(mode: RunbookMode): GuardrailSnapshot {
   if (mode === "fire_drill") {
     return { ...GUARDRAIL_PRESETS.conservative, source: { preset: "Conservative", reason: "due to Fire Drill mode" } };
+  }
+
+  if (mode === "maintenance") {
+    return { ...GUARDRAIL_PRESETS.conservative, source: { preset: "Conservative", reason: "due to Maintenance mode" } };
   }
 
   if (mode === "pilot") {
