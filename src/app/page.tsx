@@ -183,6 +183,13 @@ function buildAdminLinks(metrics: HomeCardMetrics, tenantId: string): HomeLink[]
       dependency: { subsystem: "tenantConfig" },
     },
     {
+      label: "User admin",
+      cta: "Manage access",
+      href: "/admin",
+      description: "Review user activity and access summaries",
+      dependency: { subsystem: "tenantConfig" },
+    },
+    {
       label: "Runtime controls",
       cta: "Adjust settings",
       href: `/admin/tenant/${tenantId}/ops/runtime-controls`,
