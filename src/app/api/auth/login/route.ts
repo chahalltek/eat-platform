@@ -67,6 +67,11 @@ export async function POST(request: Request) {
     return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
   }
 
+  const normalizedStatus = user.status?.trim().toUpperCase();
+  if (normalizedStatus === "SUSPENDED" || normalizedStatus === "DELETED") {
+    return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
+  }
+
   const expectedPassword = process.env.AUTH_PASSWORD ?? process.env.AUTH_PASSWORD_LOCAL ?? 'password';
   const now = new Date();
   const temporaryPasswordValid =

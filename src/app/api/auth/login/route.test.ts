@@ -41,6 +41,7 @@ describe("POST /api/auth/login", () => {
       displayName: "Recruiter",
       role: "RECRUITER",
       tenantId: "default-tenant",
+      status: "ACTIVE",
     });
 
     const response = await POST(
@@ -76,6 +77,7 @@ describe("POST /api/auth/login", () => {
       displayName: "Recruiter",
       role: "RECRUITER",
       tenantId: "default-tenant",
+      status: "ACTIVE",
     });
 
     const response = await POST(
@@ -92,9 +94,28 @@ describe("POST /api/auth/login", () => {
       displayName: "Recruiter",
       role: "RECRUITER",
       tenantId: "default-tenant",
+      status: "ACTIVE",
     });
 
     const response = await POST(buildRequest({ email: "recruiter@test.demo", password: "wrong" }));
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: "Invalid email or password" });
+  });
+
+  it("rejects suspended users", async () => {
+    findFirst.mockResolvedValue({
+      id: "user-123",
+      email: "recruiter@test.demo",
+      displayName: "Recruiter",
+      role: "RECRUITER",
+      tenantId: "default-tenant",
+      status: "SUSPENDED",
+    });
+
+    const response = await POST(
+      buildRequest({ email: "recruiter@test.demo", password: "super-secret" }),
+    );
 
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: "Invalid email or password" });
