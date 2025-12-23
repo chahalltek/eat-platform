@@ -124,6 +124,9 @@ model User {
   displayName String
   role        String // "Recruiter", "Sourcer", "Sales", "Admin"
   status      String   @default("ACTIVE") // "ACTIVE", "SUSPENDED", "DELETED"
+  temporaryPasswordHash      String?
+  temporaryPasswordSetAt     DateTime?
+  temporaryPasswordExpiresAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -88,9 +88,11 @@ async function createUser(payload: {
   return (await response.json()) as { user: UserAccessListItem | null };
 }
 
-async function resetUserPassword(userId: string) {
+async function resetUserPassword(userId: string, temporaryPassword: string) {
   const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/reset-password`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ temporaryPassword }),
   });
 
   if (!response.ok) {
@@ -140,6 +142,7 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [temporaryPasswords, setTemporaryPasswords] = useState<Record<string, string>>({});
   const [createState, setCreateState] = useState<{
     email: string;
     displayName: string;
@@ -216,18 +219,26 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
 
   const handleResetPassword = useCallback(
     async (userId: string) => {
+      const temporaryPassword = (temporaryPasswords[userId] ?? "").trim();
+
+      if (!temporaryPassword) {
+        setError("Enter a temporary password before resetting.");
+        return;
+      }
+
       setSavingUserId(userId);
       setError(null);
       setNotice(null);
 
       try {
-        const result = await resetUserPassword(userId);
+        const result = await resetUserPassword(userId, temporaryPassword);
         const updatedAt = result.user.updatedAt ?? new Date().toISOString();
 
         setUsers((current) =>
           current.map((entry) => (entry.id === userId ? { ...entry, updatedAt } : entry)),
         );
-        setNotice("Password reset initiated.");
+        setTemporaryPasswords((current) => ({ ...current, [userId]: "" }));
+        setNotice("Temporary password set.");
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unable to reset password";
         setError(message);
@@ -235,7 +246,7 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
         setSavingUserId(null);
       }
     },
-    [setUsers],
+    [setUsers, temporaryPasswords],
   );
 
   const handleToggleSuspend = useCallback(
@@ -437,32 +448,50 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
                   </span>
                 </div>
                 <div className="text-xs text-zinc-500">{formatTimestamp(user.updatedAt)}</div>
-                <div className="flex flex-wrap items-center justify-start gap-2 text-xs md:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleResetPassword(user.id)}
-                    disabled={isSaving}
-                    className="text-indigo-600 transition hover:text-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Reset password
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleSuspend(user)}
-                    disabled={isSaving}
-                    className="text-amber-700 transition hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {statusValue === "SUSPENDED" ? "Activate" : "Suspend"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteUser(user)}
-                    disabled={isSaving}
-                    className="text-red-600 transition hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Delete
-                  </button>
-                  {isSaving ? <span className="text-xs text-zinc-500">Saving…</span> : null}
+                <div className="flex flex-col gap-2 text-xs md:items-end">
+                  <div className="flex w-full flex-col gap-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 md:text-right">
+                      Temporary password
+                    </label>
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      value={temporaryPasswords[user.id] ?? ""}
+                      onChange={(event) =>
+                        setTemporaryPasswords((current) => ({ ...current, [user.id]: event.target.value }))
+                      }
+                      placeholder="Set temp password"
+                      className="w-full rounded-lg border border-zinc-300 px-2 py-1 text-xs text-zinc-900 shadow-sm md:w-40"
+                      disabled={isSaving}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center justify-start gap-2 md:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleResetPassword(user.id)}
+                      disabled={isSaving || !(temporaryPasswords[user.id] ?? "").trim()}
+                      className="text-indigo-600 transition hover:text-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Reset password
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSuspend(user)}
+                      disabled={isSaving}
+                      className="text-amber-700 transition hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {statusValue === "SUSPENDED" ? "Activate" : "Suspend"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteUser(user)}
+                      disabled={isSaving}
+                      className="text-red-600 transition hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Delete
+                    </button>
+                    {isSaving ? <span className="text-xs text-zinc-500">Saving…</span> : null}
+                  </div>
                 </div>
               </div>
             );

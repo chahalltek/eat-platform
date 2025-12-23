@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/server/db/prisma';
 import { createSessionCookie } from '@/lib/auth/session';
 import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
+import { verifyTemporaryPassword } from '@/lib/auth/passwords';
 
 const VALIDATION_ERROR = { error: 'Invalid email or password' };
 
@@ -54,13 +55,7 @@ export async function POST(request: Request) {
     return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 400 }));
   }
 
-  const expectedPassword = process.env.AUTH_PASSWORD ?? process.env.AUTH_PASSWORD_LOCAL ?? 'password';
-
   const normalizedEmail = email.trim().toLowerCase();
-
-  if (!normalizedEmail || password !== expectedPassword) {
-    return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
-  }
 
   const user = await prisma.user.findFirst({
     where: {
@@ -70,6 +65,29 @@ export async function POST(request: Request) {
 
   if (!user) {
     return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
+  }
+
+  const expectedPassword = process.env.AUTH_PASSWORD ?? process.env.AUTH_PASSWORD_LOCAL ?? 'password';
+  const now = new Date();
+  const temporaryPasswordValid =
+    typeof user.temporaryPasswordHash === 'string' &&
+    user.temporaryPasswordHash.length > 0 &&
+    (!user.temporaryPasswordExpiresAt || user.temporaryPasswordExpiresAt >= now) &&
+    verifyTemporaryPassword(password, user.temporaryPasswordHash);
+
+  if (password !== expectedPassword && !temporaryPasswordValid) {
+    return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
+  }
+
+  if (temporaryPasswordValid) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        temporaryPasswordHash: null,
+        temporaryPasswordExpiresAt: null,
+        temporaryPasswordSetAt: null,
+      },
+    });
   }
 
   const cookie = await createSessionCookie({
