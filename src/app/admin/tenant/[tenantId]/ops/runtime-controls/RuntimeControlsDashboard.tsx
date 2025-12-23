@@ -43,6 +43,9 @@ const MODE_CONSEQUENCES: Partial<
   fire_drill: {
     bullets: ["Nonessential agents disabled", "Strict guardrails enforced", "Automation paths suppressed"],
   },
+  maintenance: {
+    bullets: ["Non-admin users see the maintenance page", "Admin access remains available", "Agents paused by default"],
+  },
 };
 
 const SAFETY_FLAG_ALLOWLIST = new Set<FeatureFlagRecord["name"]>(["fire-drill-mode", "agents", "scoring"]);

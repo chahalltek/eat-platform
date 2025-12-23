@@ -12,7 +12,7 @@ import {
   USER_HEADER,
   USER_QUERY_PARAM,
 } from './lib/auth/config';
-import { normalizeRole, USER_ROLES, type UserRole } from './lib/auth/roles';
+import { isAdminRole, normalizeRole, USER_ROLES, type UserRole } from './lib/auth/roles';
 import { clearSessionCookie, getValidatedSession } from './lib/auth/session';
 import { isDemoMutationAllowed, isPublicDemoMode, isReadOnlyHttpMethod } from './lib/demoMode';
 import { consumeRateLimit, isRateLimitError, RATE_LIMIT_ACTIONS } from './lib/rateLimiting/rateLimiter';
@@ -26,6 +26,8 @@ const PUBLIC_PATHS = [
   '/api/ats/bullhorn/webhook',
   '/login',
   '/visual/status-badges',
+  '/maintenance',
+  '/api/tenant/mode',
 ];
 const ASSET_PATH_PATTERN = /\.(png|svg|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest)$/i;
 const ADMIN_PATH_PREFIXES = ['/admin', '/api/admin'];
@@ -95,6 +97,24 @@ function buildLoginRedirect(request: NextRequest) {
   loginUrl.search = loginUrl.searchParams.toString();
 
   return loginUrl;
+}
+
+async function fetchTenantMode(request: NextRequest, tenantId: string) {
+  const url = new URL('/api/tenant/mode', request.url);
+  url.searchParams.set('tenantId', tenantId);
+
+  const response = await fetch(url, {
+    headers: { [TENANT_HEADER]: tenantId },
+    cache: 'no-store',
+  }).catch(() => null);
+
+  if (!response?.ok) {
+    return null;
+  }
+
+  const payload = (await response.json().catch(() => null)) as { mode?: string } | null;
+
+  return payload?.mode ?? null;
 }
 
 export async function middleware(request: NextRequest) {
@@ -178,6 +198,32 @@ export async function middleware(request: NextRequest) {
 
   if (!normalizedRole) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const shouldBypassMaintenance =
+    isAdminRole(normalizedRole) ||
+    requestPath.startsWith('/admin') ||
+    requestPath.startsWith('/api/admin') ||
+    requestPath.startsWith('/api/auth') ||
+    requestPath.startsWith('/api/health') ||
+    requestPath.startsWith('/api/tenant/mode') ||
+    requestPath.startsWith('/maintenance') ||
+    requestPath.startsWith('/health') ||
+    requestPath.startsWith('/login');
+
+  if (!shouldBypassMaintenance) {
+    const tenantMode = await fetchTenantMode(request, resolvedTenantId);
+
+    if (tenantMode === 'maintenance') {
+      if (requestPath.startsWith('/api')) {
+        return NextResponse.json({ error: 'Maintenance mode active' }, { status: 503 });
+      }
+
+      const maintenanceUrl = request.nextUrl.clone();
+      maintenanceUrl.pathname = '/maintenance';
+      maintenanceUrl.search = '';
+      return NextResponse.redirect(maintenanceUrl);
+    }
   }
 
   const isAdminPath = ADMIN_PATH_PREFIXES.some((path) => requestPath.startsWith(path));

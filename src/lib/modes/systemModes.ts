@@ -1,4 +1,4 @@
-export type SystemModeName = "pilot" | "production" | "sandbox" | "fire_drill" | "demo";
+export type SystemModeName = "pilot" | "production" | "sandbox" | "fire_drill" | "demo" | "maintenance";
 
 export const SYSTEM_MODES: Record<
   SystemModeName,
@@ -23,5 +23,9 @@ export const SYSTEM_MODES: Record<
   demo: {
     guardrailsPreset: "demo-safe",
     agentsEnabled: ["MATCH", "SHORTLIST"],
+  },
+  maintenance: {
+    guardrailsPreset: "conservative",
+    agentsEnabled: [],
   },
 };

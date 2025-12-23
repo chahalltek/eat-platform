@@ -37,6 +37,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       warnings.push("Fire Drill mode active. Non-essential agents are disabled.");
     }
 
+    if (mode.mode === "maintenance") {
+      warnings.push("Maintenance mode active. Non-admin traffic is routed to the maintenance page.");
+    }
+
     const latched = killSwitches.filter((item) => item.latched);
 
     if (latched.length) {
@@ -56,6 +60,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           id: "pilot",
           label: "Pilot",
           description: "Conservative defaults with core agents only",
+        },
+        {
+          id: "maintenance",
+          label: "Maintenance",
+          description: "Take the site offline for non-admin users",
         },
         {
           id: "fire_drill",

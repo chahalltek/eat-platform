@@ -8,6 +8,12 @@ const MODE_OPTIONS: { value: SystemModeName; label: string; description: string;
   { value: "pilot", label: "Pilot", description: "Limited rollout with human review", accent: "bg-indigo-100 text-indigo-800" },
   { value: "production", label: "Production", description: "Full protections and live automations", accent: "bg-emerald-100 text-emerald-800" },
   {
+    value: "maintenance",
+    label: "Maintenance",
+    description: "Take the tenant offline for non-admin users",
+    accent: "bg-rose-100 text-rose-900",
+  },
+  {
     value: "fire_drill",
     label: "Fire Drill",
     description: "Pause non-essential agents and tighten guardrails",
@@ -62,7 +68,7 @@ export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
   function handleSelect(nextMode: SystemModeName) {
     if (nextMode === mode) return;
 
-    if (nextMode === "fire_drill") {
+    if (nextMode === "fire_drill" || nextMode === "maintenance") {
       setConfirming(true);
       setPendingMode(nextMode);
       return;
@@ -72,6 +78,7 @@ export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
   }
 
   const isFireDrill = mode === "fire_drill";
+  const isMaintenance = mode === "maintenance";
 
   return (
     <section className="space-y-4 rounded-xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
@@ -82,6 +89,8 @@ export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
           <p className="text-sm text-amber-800">
             {isFireDrill
               ? "Fire Drill is active. Non-essential agents are paused and conservative guardrails are enforced."
+              : isMaintenance
+                ? "Maintenance mode is active. Non-admin users are routed to the maintenance page."
               : "Select the posture for this tenant. Modes adjust risk tolerance and automation levels."}
           </p>
         </div>
@@ -127,6 +136,11 @@ export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
                   Pauses Explain + Confidence agents and locks conservative guardrails.
                 </p>
               ) : null}
+              {option.value === "maintenance" ? (
+                <p className="mt-1 text-xs font-semibold text-rose-800">
+                  Sends non-admin users to the maintenance page until cleared.
+                </p>
+              ) : null}
             </button>
           );
         })}
@@ -135,9 +149,13 @@ export function TenantModeCard({ tenantId, initialMode }: TenantModeCardProps) {
       {confirming ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <h3 className="text-xl font-semibold text-amber-900">Activate Fire Drill mode?</h3>
+            <h3 className="text-xl font-semibold text-amber-900">
+              {pendingMode === "maintenance" ? "Activate Maintenance mode?" : "Activate Fire Drill mode?"}
+            </h3>
             <p className="mt-2 text-sm text-amber-800">
-              This will disable non-essential agents (Explain, Confidence) and force conservative guardrails. Proceed?
+              {pendingMode === "maintenance"
+                ? "This will route non-admin traffic to the maintenance page until you switch back. Proceed?"
+                : "This will disable non-essential agents (Explain, Confidence) and force conservative guardrails. Proceed?"}
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button

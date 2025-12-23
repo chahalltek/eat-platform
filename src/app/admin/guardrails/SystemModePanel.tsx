@@ -9,6 +9,12 @@ const MODE_OPTIONS: { value: SystemModeName; label: string; description: string;
   { value: "pilot", label: "Pilot", description: "Limited rollout with human review", accent: "bg-indigo-100 text-indigo-800" },
   { value: "production", label: "Production", description: "Full protections and live automations", accent: "bg-emerald-100 text-emerald-800" },
   {
+    value: "maintenance",
+    label: "Maintenance",
+    description: "Take the tenant offline for non-admin users",
+    accent: "bg-rose-100 text-rose-900",
+  },
+  {
     value: "fire_drill",
     label: "Fire Drill",
     description: "Pause non-essential agents and tighten guardrails",
@@ -28,6 +34,7 @@ export function SystemModePanel({ initialMode }: SystemModePanelProps) {
 
   const modeLabel = useMemo(() => MODE_OPTIONS.find((option) => option.value === mode)?.label ?? mode, [mode]);
   const isFireDrill = mode === "fire_drill";
+  const isMaintenance = mode === "maintenance";
 
   async function persistMode(nextMode: SystemModeName) {
     setPendingMode(nextMode);
@@ -81,6 +88,12 @@ export function SystemModePanel({ initialMode }: SystemModePanelProps) {
               Fire Drill active
             </span>
           ) : null}
+          {isMaintenance ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-900">
+              <span className="h-2 w-2 rounded-full bg-rose-500" aria-hidden />
+              Maintenance active
+            </span>
+          ) : null}
           <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{modeLabel}</span>
         </div>
       </div>
@@ -122,6 +135,11 @@ export function SystemModePanel({ initialMode }: SystemModePanelProps) {
               {option.value === "fire_drill" ? (
                 <p className="mt-1 text-xs font-semibold text-amber-700">
                   Explain and Confidence agents are paused; conservative guardrails enforced.
+                </p>
+              ) : null}
+              {option.value === "maintenance" ? (
+                <p className="mt-1 text-xs font-semibold text-rose-700">
+                  Non-admin traffic is routed to the maintenance page.
                 </p>
               ) : null}
             </button>

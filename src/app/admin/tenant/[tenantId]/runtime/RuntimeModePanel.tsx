@@ -12,6 +12,7 @@ const MODE_LABELS: Record<SystemModeName, string> = {
   sandbox: "Sandbox",
   fire_drill: "Fire Drill",
   demo: "Demo",
+  maintenance: "Maintenance",
 };
 
 const MODE_HELP: Record<SystemModeName, string> = {
@@ -20,6 +21,7 @@ const MODE_HELP: Record<SystemModeName, string> = {
   sandbox: "Exploratory defaults with larger shortlists and lower thresholds.",
   fire_drill: "Strict guardrails, no LLM-reliant agents, reduced blast radius.",
   demo: "Safe demo profile with limited agents and outputs.",
+  maintenance: "Routes non-admins to the maintenance page while admins keep access.",
 };
 
 type RuntimeModePanelProps = {
