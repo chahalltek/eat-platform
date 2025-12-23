@@ -7,6 +7,7 @@ export type AdminUserSummary = {
   email: string;
   displayName: string;
   role: string | null;
+  status: string | null;
   tenantId: string;
   tenantRole: string | null;
   createdAt: Date;
@@ -15,13 +16,14 @@ export type AdminUserSummary = {
 
 export async function listUsersForTenant(tenantId: string): Promise<AdminUserSummary[]> {
   const users = await prisma.user.findMany({
-    where: { tenantId },
+    where: { tenantId, status: { not: "DELETED" } },
     orderBy: [{ createdAt: "asc" }],
     select: {
       id: true,
       email: true,
       displayName: true,
       role: true,
+      status: true,
       tenantId: true,
       createdAt: true,
       updatedAt: true,
@@ -37,6 +39,7 @@ export async function listUsersForTenant(tenantId: string): Promise<AdminUserSum
     email: user.email,
     displayName: user.displayName,
     role: user.role,
+    status: user.status,
     tenantId: user.tenantId,
     tenantRole: user.tenantMemberships[0]?.role ?? null,
     createdAt: user.createdAt,

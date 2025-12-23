@@ -9,6 +9,25 @@ import { prisma } from "@/server/db/prisma";
 export const dynamic = "force-dynamic";
 
 const TENANT_ROLE_VALUES = new Set(["TENANT_ADMIN", "RECRUITER"]);
+const USER_STATUS_VALUES = new Set(["ACTIVE", "SUSPENDED", "DELETED"]);
+
+function parseUserStatus(value: unknown) {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim().toUpperCase();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  return USER_STATUS_VALUES.has(normalized) ? normalized : undefined;
+}
 
 function parseTenantRole(value: unknown) {
   if (value === null) {
@@ -49,6 +68,7 @@ export async function PATCH(
   const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : undefined;
   const role = body?.role !== undefined ? normalizeRole(body?.role ?? null) : undefined;
   const tenantRole = parseTenantRole(body?.tenantRole ?? undefined);
+  const status = parseUserStatus(body?.status ?? undefined);
 
   if (body?.role !== undefined && !role) {
     return NextResponse.json({ error: "role is invalid" }, { status: 400 });
@@ -62,6 +82,14 @@ export async function PATCH(
     return NextResponse.json({ error: "displayName is required" }, { status: 400 });
   }
 
+  if (body?.status !== undefined && status === undefined) {
+    return NextResponse.json({ error: "status is invalid" }, { status: 400 });
+  }
+
+  if (status === "DELETED") {
+    return NextResponse.json({ error: "status cannot be set to deleted via update" }, { status: 400 });
+  }
+
   try {
     const updated = await prisma.$transaction(async (tx) => {
       const userUpdate = await tx.user.update({
@@ -69,6 +97,7 @@ export async function PATCH(
         data: {
           ...(role ? { role } : null),
           ...(displayName ? { displayName } : null),
+          ...(status ? { status } : null),
         },
       });
 
@@ -96,11 +125,54 @@ export async function PATCH(
         displayName: updated.displayName,
         role: updated.role,
         tenantId: updated.tenantId,
+        status: updated.status,
         updatedAt: updated.updatedAt.toISOString(),
       },
     });
   } catch (error) {
     console.warn("Failed to update user access", error);
     return NextResponse.json({ error: "Unable to update user" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> },
+) {
+  const { userId } = await params;
+  const normalizedUserId = userId?.trim();
+  const actor = await getCurrentUser(request);
+  const tenantId = await getCurrentTenantId(request);
+
+  if (!canManageRbac(actor, tenantId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (!normalizedUserId) {
+    return NextResponse.json({ error: "userId is required" }, { status: 400 });
+  }
+
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.tenantUser.deleteMany({
+        where: { userId: normalizedUserId, tenantId },
+      });
+
+      return tx.user.update({
+        where: { id: normalizedUserId },
+        data: { status: "DELETED" },
+      });
+    });
+
+    return NextResponse.json({
+      user: {
+        id: updated.id,
+        status: updated.status,
+        updatedAt: updated.updatedAt.toISOString(),
+      },
+    });
+  } catch (error) {
+    console.warn("Failed to delete user", error);
+    return NextResponse.json({ error: "Unable to delete user" }, { status: 500 });
   }
 }

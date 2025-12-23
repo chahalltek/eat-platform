@@ -11,6 +11,7 @@ type UserAccessListItem = {
   email: string;
   displayName: string;
   role: string | null;
+  status: string | null;
   tenantId: string;
   tenantRole: string | null;
   createdAt: string;
@@ -26,6 +27,7 @@ type UserAccessUpdate = {
   role?: string | null;
   displayName?: string | null;
   tenantRole?: string | null;
+  status?: string | null;
 };
 
 const ROLE_OPTIONS = [
@@ -86,6 +88,34 @@ async function createUser(payload: {
   return (await response.json()) as { user: UserAccessListItem | null };
 }
 
+async function resetUserPassword(userId: string) {
+  const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/reset-password`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const message = typeof errorBody.error === "string" ? errorBody.error : "Unable to reset password";
+    throw new Error(message);
+  }
+
+  return (await response.json()) as { user: { updatedAt?: string } };
+}
+
+async function deleteUser(userId: string) {
+  const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const message = typeof errorBody.error === "string" ? errorBody.error : "Unable to delete user";
+    throw new Error(message);
+  }
+
+  return (await response.json()) as { user: { updatedAt?: string } };
+}
+
 function formatTimestamp(value: string) {
   return new Date(value).toLocaleString();
 }
@@ -109,6 +139,7 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
   const [users, setUsers] = useState<UserAccessListItem[]>(() => initialUsers);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [createState, setCreateState] = useState<{
     email: string;
     displayName: string;
@@ -130,6 +161,7 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
     async (userId: string, nextState: Partial<UserAccessListItem>, payload: UserAccessUpdate) => {
       setSavingUserId(userId);
       setError(null);
+      setNotice(null);
 
       const previous = users;
       setUsers((current) => current.map((entry) => (entry.id === userId ? { ...entry, ...nextState } : entry)));
@@ -154,6 +186,7 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
 
   const handleCreate = useCallback(async () => {
     setError(null);
+    setNotice(null);
     setSavingUserId("new");
 
     try {
@@ -181,6 +214,65 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
     }
   }, [createState]);
 
+  const handleResetPassword = useCallback(
+    async (userId: string) => {
+      setSavingUserId(userId);
+      setError(null);
+      setNotice(null);
+
+      try {
+        const result = await resetUserPassword(userId);
+        const updatedAt = result.user.updatedAt ?? new Date().toISOString();
+
+        setUsers((current) =>
+          current.map((entry) => (entry.id === userId ? { ...entry, updatedAt } : entry)),
+        );
+        setNotice("Password reset initiated.");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unable to reset password";
+        setError(message);
+      } finally {
+        setSavingUserId(null);
+      }
+    },
+    [setUsers],
+  );
+
+  const handleToggleSuspend = useCallback(
+    async (user: UserAccessListItem) => {
+      const nextStatus = user.status?.toUpperCase() === "SUSPENDED" ? "ACTIVE" : "SUSPENDED";
+
+      await handleUpdate(
+        user.id,
+        { status: nextStatus, updatedAt: new Date().toISOString() },
+        { status: nextStatus },
+      );
+    },
+    [handleUpdate],
+  );
+
+  const handleDeleteUser = useCallback(async (user: UserAccessListItem) => {
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm(`Delete ${user.displayName}? This cannot be undone.`);
+      if (!confirmed) return;
+    }
+
+    setSavingUserId(user.id);
+    setError(null);
+    setNotice(null);
+
+    try {
+      await deleteUser(user.id);
+      setUsers((current) => current.filter((entry) => entry.id !== user.id));
+      setNotice("User deleted.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to delete user";
+      setError(message);
+    } finally {
+      setSavingUserId(null);
+    }
+  }, []);
+
   const isCreateDisabled = !createState.email.trim() || !createState.displayName.trim();
 
   return (
@@ -194,6 +286,11 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
 
       {error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      ) : null}
+      {notice ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {notice}
+        </div>
       ) : null}
 
       <div className="rounded-2xl border border-zinc-200 bg-white/60 p-4">
@@ -264,10 +361,11 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/60">
-        <div className="grid grid-cols-1 gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 md:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 md:grid-cols-6">
           <span>User</span>
           <span>Role</span>
           <span>Tenant access</span>
+          <span>Status</span>
           <span>Last updated</span>
           <span />
         </div>
@@ -277,11 +375,17 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
             const roleOptions = resolveRoleOptions(user.role);
             const roleValue = user.role ? user.role.trim().toUpperCase() : USER_ROLES.RECRUITER;
             const tenantRoleValue = user.tenantRole ? user.tenantRole.trim().toUpperCase() : "NONE";
+            const statusValue = user.status?.trim().toUpperCase() ?? "ACTIVE";
+            const statusLabel = statusValue === "SUSPENDED" ? "Suspended" : "Active";
+            const statusTone =
+              statusValue === "SUSPENDED"
+                ? "bg-amber-100 text-amber-700"
+                : "bg-emerald-100 text-emerald-700";
 
             return (
               <div
                 key={user.id}
-                className="grid grid-cols-1 gap-3 px-4 py-4 text-sm text-zinc-700 md:grid-cols-5 md:items-center"
+                className="grid grid-cols-1 gap-3 px-4 py-4 text-sm text-zinc-700 md:grid-cols-6 md:items-center"
               >
                 <div>
                   <p className="font-semibold text-zinc-900">{user.displayName}</p>
@@ -327,9 +431,38 @@ export function UserAccessPanel({ tenantId, initialUsers }: UserAccessPanelProps
                     ))}
                   </select>
                 </div>
+                <div>
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusTone}`}>
+                    {statusLabel}
+                  </span>
+                </div>
                 <div className="text-xs text-zinc-500">{formatTimestamp(user.updatedAt)}</div>
-                <div className="flex items-center justify-start text-xs text-zinc-500 md:justify-end">
-                  {isSaving ? "Saving…" : " "}
+                <div className="flex flex-wrap items-center justify-start gap-2 text-xs md:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleResetPassword(user.id)}
+                    disabled={isSaving}
+                    className="text-indigo-600 transition hover:text-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Reset password
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSuspend(user)}
+                    disabled={isSaving}
+                    className="text-amber-700 transition hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {statusValue === "SUSPENDED" ? "Activate" : "Suspend"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteUser(user)}
+                    disabled={isSaving}
+                    className="text-red-600 transition hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Delete
+                  </button>
+                  {isSaving ? <span className="text-xs text-zinc-500">Saving…</span> : null}
                 </div>
               </div>
             );

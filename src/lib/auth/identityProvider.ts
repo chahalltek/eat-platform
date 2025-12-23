@@ -93,7 +93,7 @@ async function resolveUserFromDatabase(userId: string | null | undefined) {
   try {
     return await prisma.user.findUnique({
       where: { id: userId },
-      select: { role: true, email: true, displayName: true, tenantId: true },
+      select: { role: true, email: true, displayName: true, tenantId: true, status: true },
     });
   } catch (error) {
     console.warn("Failed to load user for identity resolution", error);
@@ -108,9 +108,13 @@ async function resolveUserFromSession(req: NextRequest | undefined) {
   }
 
   const [databaseUser, resolvedTenantId] = await Promise.all([
-    normalizeRole(session.role) ? null : resolveUserFromDatabase(session.userId),
+    resolveUserFromDatabase(session.userId),
     resolveTenantId(req, session.tenantId ?? null),
   ]);
+
+  if (!databaseUser || databaseUser.status === "SUSPENDED" || databaseUser.status === "DELETED") {
+    return { user: null, roles: [] as UserRole[], tenantId: resolvedTenantId };
+  }
 
   const roleSource = session.role ?? databaseUser?.role ?? null;
   const roles = resolveRoles(roleSource);
