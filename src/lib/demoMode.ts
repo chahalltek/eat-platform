@@ -42,7 +42,7 @@ export function getRedactedSystemStatus(): SystemStatusMap {
 export function getRedactedExecutionState(): SystemExecutionState {
   return {
     state: "operational",
-    mode: redactedMode,
+    mode: redactedMode.mode,
     activeRuns: 0,
     latestRunAt: null,
     latestSuccessAt: null,
