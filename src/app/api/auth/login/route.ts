@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 
 import { prisma } from '@/server/db/prisma';
 import { createSessionCookie } from '@/lib/auth/session';
-import { DEFAULT_TENANT_ID } from '@/lib/auth/config';
+import { DEFAULT_TENANT_ID, DEFAULT_USER_ROLE } from '@/lib/auth/config';
 import { verifyTemporaryPassword } from '@/lib/auth/passwords';
+import { USER_ROLES, normalizeRole } from '@/lib/auth/roles';
 
 const VALIDATION_ERROR = { error: 'Invalid email or password' };
 
@@ -57,11 +58,27 @@ export async function POST(request: Request) {
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  const user = await prisma.user.findFirst({
+  const expectedPassword = process.env.AUTH_PASSWORD ?? process.env.AUTH_PASSWORD_LOCAL ?? 'password';
+  const defaultRole = normalizeRole(DEFAULT_USER_ROLE) ?? USER_ROLES.RECRUITER;
+
+  const existingUser = await prisma.user.findFirst({
     where: {
       email: normalizedEmail,
     },
   });
+
+  const user =
+    existingUser ??
+    (password === expectedPassword
+      ? await prisma.user.create({
+          data: {
+            email: normalizedEmail,
+            displayName: normalizedEmail,
+            role: defaultRole,
+            tenantId: DEFAULT_TENANT_ID,
+          },
+        })
+      : null);
 
   if (!user) {
     return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
@@ -72,7 +89,6 @@ export async function POST(request: Request) {
     return withCors(request, NextResponse.json(VALIDATION_ERROR, { status: 401 }));
   }
 
-  const expectedPassword = process.env.AUTH_PASSWORD ?? process.env.AUTH_PASSWORD_LOCAL ?? 'password';
   const now = new Date();
   const temporaryPasswordValid =
     typeof user.temporaryPasswordHash === 'string' &&

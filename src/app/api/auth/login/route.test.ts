@@ -4,11 +4,13 @@ import { makeRequest } from "@tests/test-utils/routeHarness";
 import { GET, POST } from "./route";
 
 const findFirst = vi.hoisted(() => vi.fn());
+const create = vi.hoisted(() => vi.fn());
 
 vi.mock("@/server/db/prisma", () => ({
   prisma: {
     user: {
       findFirst,
+      create,
     },
   },
 }));
@@ -119,6 +121,41 @@ describe("POST /api/auth/login", () => {
 
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: "Invalid email or password" });
+  });
+
+  it("creates a new user when credentials are valid but the user is missing", async () => {
+    findFirst.mockResolvedValue(null);
+    create.mockResolvedValue({
+      id: "user-999",
+      email: "new.user@test.demo",
+      displayName: "new.user@test.demo",
+      role: "RECRUITER",
+      tenantId: "default-tenant",
+      status: "ACTIVE",
+    });
+
+    const response = await POST(
+      buildRequest({ email: "new.user@test.demo", password: "super-secret" }),
+    );
+
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        email: "new.user@test.demo",
+        displayName: "new.user@test.demo",
+        role: "RECRUITER",
+        tenantId: "default-tenant",
+      },
+    });
+    expect(payload.user).toEqual({
+      id: "user-999",
+      email: "new.user@test.demo",
+      displayName: "new.user@test.demo",
+      role: "RECRUITER",
+      tenantId: "default-tenant",
+    });
   });
 });
 
